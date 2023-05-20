@@ -1,0 +1,115 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ovenmediaengine
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ovenmediaengine
+  template:
+    metadata:
+      labels:
+        app: ovenmediaengine
+    spec:
+      terminationGracePeriodSeconds: 3
+      containers:
+      - name: ovenmediaengine
+        image: docker.io/airensoft/ovenmediaengine:0.15.10
+        # rtmp is the main port for OBS, srt also required for OBS
+        # webrtc requires publish and turn
+        ports:
+        - name: rtmp
+          containerPort: 1935
+        - name: srt
+          containerPort: 9999
+          protocol: UDP
+        - name: publish
+          containerPort: 3333
+        - name: turn
+          containerPort: 3478
+        - name: webrtc-10000
+          containerPort: 10000
+          protocol: UDP
+        env:
+        - name: OME_WEBRTC_CANDIDATE_IP
+          value: '1.2.3.4'
+        - name: OME_RTMP_PROV_PORT
+          value: '1935'
+        - name: OME_SRT_PROV_PORT
+          value: 9999/udp
+        - name: OME_LLHLS_STREAM_PORT
+          # - name: OME_MPEGTS_PROV_PORT
+          #   value: 4000/udp
+          value: '3333'
+        - name: OME_WEBRTC_SIGNALLING_PORT
+          value: '3333'
+        - name: OME_LLHLS_STREAM_TLS_PORT
+          value: '3334'
+        - name: OME_WEBRTC_SIGNALLING_TLS_PORT
+          value: '3334'
+        - name: OME_WEBRTC_TCP_RELAY_PORT
+          value: '3478'
+        - name: OME_WEBRTC_CANDIDATE_PORT
+          value: 10000/udp
+        resources:
+          requests:
+            cpu: 0m
+            memory: 100Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        volumeMounts:
+        - name: config
+          mountPath: /opt/ovenmediaengine/bin/origin_conf/Server.xml
+          subPath: ome-config.xml
+      volumes:
+      - name: config
+        configMap:
+          name: ome-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: provide
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 10.0.3.16
+  selector:
+    app: ovenmediaengine
+  ports:
+  - name: rtmp
+    port: 1935
+  - name: srt
+    port: 9999
+    protocol: UDP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: publish
+spec:
+  selector:
+    app: ovenmediaengine
+  ports:
+  - name: downstream
+    port: 3333
+# - name: downstream-tls
+#   port: 3334
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: webrtc-ice
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 10.0.3.17
+  selector:
+    app: ovenmediaengine
+  ports:
+  - name: '10000'
+    port: 10000
+    protocol: UDP
+  - name: turn
+    port: 3478

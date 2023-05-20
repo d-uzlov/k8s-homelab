@@ -1,0 +1,151 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mariadb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mariadb
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mariadb
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+      - name: mariadb
+        image: docker.io/mariadb:10.9.5
+        args:
+        - --transaction-isolation=READ-COMMITTED
+        - --log-bin=/mnt/binlog/binlog
+        - --max-binlog-size=52428800 # 50 MiB
+        - --binlog-expire-logs-seconds=86400 # 1 day
+        - --binlog-format=MIXED
+        - --master-verify-checksum=ON
+        ports:
+        - containerPort: 3306
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mariadb
+              key: root_password
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mariadb
+              key: user_password
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: mariadb
+              key: user_name
+        - name: MYSQL_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: mariadb
+              key: db_name
+        volumeMounts:
+        - mountPath: /var/lib/mysql
+          name: data
+        - mountPath: /mnt/binlog
+          name: binlog
+        startupProbe:
+          initialDelaySeconds: 1
+          periodSeconds: 5
+          timeoutSeconds: 1
+          failureThreshold: 25
+          exec:
+            command:
+            - /bin/bash
+            - -ec
+            - |
+              mysqladmin status -uroot -p"${MYSQL_ROOT_PASSWORD}"
+        livenessProbe:
+          failureThreshold: 5
+          periodSeconds: 10
+          successThreshold: 1
+          exec:
+            command:
+            - /bin/bash
+            - -ec
+            - |
+              mysqladmin status -uroot -p"${MYSQL_ROOT_PASSWORD}"
+        readinessProbe:
+          failureThreshold: 2
+          periodSeconds: 10
+          successThreshold: 1
+          exec:
+            command:
+            - /bin/bash
+            - -ec
+            - |
+              mysqladmin status -uroot -p"${MYSQL_ROOT_PASSWORD}"
+        resources:
+          requests:
+            cpu: 0m
+            memory: 100Mi
+          limits:
+            cpu: 4
+            memory: 1Gi
+      - name: free-space-check
+        image: docker.io/alpine:3.17.3
+        command: ["/bin/sh", "-c", "trap : TERM INT; sleep infinity & wait"]
+        readinessProbe:
+          failureThreshold: 1
+          periodSeconds: 10
+          successThreshold: 1
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - |
+              main_path=/var/lib/mysql
+              main_used=$(df -P "${main_path}" | awk 'NR == 2{print $5+0}')
+              echo "main mount: ${main_path}: used ${main_used}% of space"
+              [ "$main_used" -lt "80" ] || exit 1
+              
+              binlog_path=/mnt/binlog
+              binlog_used=$(df -P "${binlog_path}" | awk 'NR == 2{print $5+0}')
+              echo "main mount: ${binlog_path}: used ${binlog_used}% of space"
+              [ "$binlog_used" -lt "80" ] || exit 1
+        volumeMounts:
+        - mountPath: /var/lib/mysql
+          name: data
+        - mountPath: /mnt/binlog
+          name: binlog
+        resources:
+          requests:
+            cpu: 0m
+            memory: 1Mi
+          limits:
+            cpu: 100m
+            memory: 50Mi
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: mariadb
+      - name: binlog
+        persistentVolumeClaim:
+          claimName: mariadb-binlog
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+spec:
+  selector:
+    app: mariadb
+  ports:
+  - name: mariadb
+    protocol: TCP
+    port: 3306
+    targetPort: 3306

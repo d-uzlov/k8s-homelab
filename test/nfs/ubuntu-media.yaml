@@ -1,0 +1,65 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ubuntu-media
+spec:
+  terminationGracePeriodSeconds: 0
+  containers:
+  - name: ubuntu
+    image: ubuntu:latest
+    # Just sleep forever
+    command: ["sleep"]
+    args: ["infinity"]
+    volumeMounts:
+      - mountPath: /mnt/data
+        name: data
+      - mountPath: /mnt/test
+        name: test
+      - mountPath: /mnt/manual
+        name: manual
+      - mountPath: /mnt/manual2
+        name: manual-2
+    resources: {}
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: music
+  - name: test
+    persistentVolumeClaim:
+      claimName: test-media
+  - name: manual
+    nfs:
+      server: truenas.example
+      path: /mnt/main/k8s/media/music
+  - name: manual-2
+    nfs:
+      server: truenas.example
+      path: /mnt/main/k8s/media
+
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: music
+spec:
+  storageClassName: media
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      # ignored by media storage class
+      storage: 10Ti
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: test-media
+spec:
+  storageClassName: media
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      # ignored by media storage class
+      storage: 1Gi

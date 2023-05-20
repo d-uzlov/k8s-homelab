@@ -1,0 +1,43 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nn-p40
+spec:
+  type: ExternalName
+  externalName: p40.example
+  ports:
+  - name: ugabuga
+    port: 7860
+  - name: midjourney
+    port: 7862
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nn-p40
+spec:
+  ingressClassName: nginx
+  tls:
+  - secretName: wild--example.duckdns.org
+  rules:
+  - host: ugabuga.example.duckdns.org
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nn-p40
+            port:
+              name: ugabuga
+  - host: midjourney.example.duckdns.org
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nn-p40
+            port:
+              name: midjourney

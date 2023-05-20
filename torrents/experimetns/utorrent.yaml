@@ -1,0 +1,110 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: torrent-utorrent
+
+---
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: utorrent-storage-class
+  namespace: torrent-utorrent
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: utorrent-persistent-volume
+  namespace: torrent-utorrent
+spec:
+  storageClassName: utorrent-storage-class
+  capacity:
+    storage: 100Gi
+  accessModes:
+  - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: "/storage/hd0/utorrent"
+
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: utorrent-persistent-volume-claim
+  namespace: torrent-utorrent
+spec:
+  storageClassName: utorrent-storage-class
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: utorrent-service
+  namespace: torrent-utorrent
+spec:
+  loadBalancerIP: 10.0.3.0
+  allocateLoadBalancerNodePorts: false
+  ports:
+  - name: web-ui
+    protocol: TCP
+    port: 80
+    targetPort: 8080
+  - name: tcp
+    protocol: TCP
+    port: 6881
+    targetPort: 6881
+  - name: udp
+    protocol: UDP
+    port: 6881
+    targetPort: 6881
+  selector:
+    app: utorrent
+  type: LoadBalancer
+status:
+  loadBalancer: {}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: utorrent
+  namespace: torrent-utorrent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: utorrent
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: utorrent
+    spec:
+      containers:
+      - image: docker.io/ekho/utorrent:ubuntu-20.04
+        name: utorrent
+        ports:
+        - containerPort: 8080
+        - containerPort: 6881
+        resources: {}
+        volumeMounts:
+        - mountPath: /data
+          subPath: ekho-data
+          name: utorrent-data
+        - mountPath: /utorrent/settings
+          subPath: ekho-settings
+          name: utorrent-data
+      volumes:
+      - name: utorrent-data
+        persistentVolumeClaim:
+          claimName: utorrent-persistent-volume-claim
+status: {}

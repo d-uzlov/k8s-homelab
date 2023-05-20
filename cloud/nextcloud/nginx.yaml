@@ -1,0 +1,68 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      securityContext:
+        runAsUser: 33
+        runAsGroup: 65534
+      containers:
+      - name: nginx
+        image: docker.io/nginx:1.23
+        ports:
+        - name: web
+          containerPort: 8080
+        volumeMounts:
+        - name: web
+          mountPath: /var/www/html
+        - name: nginx-conf
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+        resources:
+          requests:
+            cpu: 0m
+            memory: 100Mi
+          limits:
+            cpu: 2
+            memory: 1Gi
+        livenessProbe:
+          initialDelaySeconds: 1
+          periodSeconds: 3
+          failureThreshold: 5
+          successThreshold: 1
+          httpGet:
+            path: /health
+            port: 8080
+      volumes:
+      - name: web
+        persistentVolumeClaim:
+          claimName: web
+          readOnly: false
+      - name: nginx-conf
+        configMap:
+          name: nginx-conf
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+spec:
+  selector:
+    app: nginx
+  ports:
+  - name: web
+    protocol: TCP
+    port: 80
+    targetPort: 8080

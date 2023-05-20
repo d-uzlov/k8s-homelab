@@ -1,0 +1,114 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: torrent-qbittorrent
+
+---
+
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: torrent-qbittorrent-storage
+  namespace: torrent-qbittorrent
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+
+---
+
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: torrent-qbittorrent-persistent-volume
+  namespace: torrent-qbittorrent
+spec:
+  storageClassName: torrent-qbittorrent-storage
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: "/storage/hd0/torrent-qbittorrent"
+
+---
+
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: torrent-qbittorrent-persistent-volume-claim
+  namespace: torrent-qbittorrent
+spec:
+  storageClassName: torrent-qbittorrent-storage
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: torrent-qbittorrent-service
+  namespace: torrent-qbittorrent
+spec:
+  loadBalancerIP: 10.0.3.2
+  allocateLoadBalancerNodePorts: false
+  ports:
+   - name: web-ui
+     protocol: TCP
+     port: 80
+     targetPort: 8080
+   - name: port-tcp
+     protocol: TCP
+     port: 6881
+     targetPort: 6881
+   - name: port-udp
+     protocol: UDP
+     port: 6881
+     targetPort: 6881
+  selector:
+    app: torrent-qbittorrent
+  type: LoadBalancer
+status:
+  loadBalancer: {}
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: torrent-qbittorrent-deployment
+  namespace: torrent-qbittorrent
+spec:
+  replicas: 1
+  selector:
+      matchLabels:
+        app: torrent-qbittorrent
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: torrent-qbittorrent
+    spec:
+      containers:
+      - name: torrent-qbittorrent
+        image: docker.io/linuxserver/qbittorrent:4.5.1
+        ports:
+        - containerPort: 8080
+        - containerPort: 6881
+        resources: {}
+        volumeMounts:
+        - mountPath: /config
+          name: torrent-qbittorrent-data
+          subPath: config
+        - mountPath: /downloads
+          name: torrent-qbittorrent-data
+          subPath: downloads
+      volumes:
+      - name: torrent-qbittorrent-data
+        persistentVolumeClaim:
+          claimName: torrent-qbittorrent-persistent-volume-claim
+status: {}

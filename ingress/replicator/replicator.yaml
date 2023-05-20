@@ -1,0 +1,125 @@
+---
+# Source: kubernetes-replicator/templates/rbac.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: replicator
+  labels:
+    helm.sh/chart: kubernetes-replicator-2.8.0
+    app.kubernetes.io/name: replicator
+    app.kubernetes.io/instance: kubernetes-replicator
+    app.kubernetes.io/version: "v2.8.0"
+    app.kubernetes.io/managed-by: Helm
+automountServiceAccountToken: true
+---
+# Source: kubernetes-replicator/templates/rbac.yaml
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: replicator
+  labels:
+    helm.sh/chart: kubernetes-replicator-2.8.0
+    app.kubernetes.io/name: replicator
+    app.kubernetes.io/instance: kubernetes-replicator
+    app.kubernetes.io/version: "v2.8.0"
+    app.kubernetes.io/managed-by: Helm
+rules:
+  - apiGroups: [ "" ]
+    resources: [ "namespaces" ]
+    verbs: [ "get", "watch", "list" ]
+  - apiGroups: [""]
+    resources: ["secrets", "configmaps"]
+    verbs: ["get", "watch", "list", "create", "update", "patch", "delete"]
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["roles", "rolebindings"]
+    verbs: ["get", "watch", "list", "create", "update", "patch", "delete"]
+---
+# Source: kubernetes-replicator/templates/rbac.yaml
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: replicator
+  labels:
+    helm.sh/chart: kubernetes-replicator-2.8.0
+    app.kubernetes.io/name: replicator
+    app.kubernetes.io/instance: kubernetes-replicator
+    app.kubernetes.io/version: "v2.8.0"
+    app.kubernetes.io/managed-by: Helm
+roleRef:
+  kind: ClusterRole
+  name: replicator
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+  - kind: ServiceAccount
+    name: replicator
+    namespace: "default"
+---
+# Source: kubernetes-replicator/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: replicator
+  labels:
+    helm.sh/chart: kubernetes-replicator-2.8.0
+    app.kubernetes.io/name: replicator
+    app.kubernetes.io/instance: kubernetes-replicator
+    app.kubernetes.io/version: "v2.8.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: replicator
+      app.kubernetes.io/instance: kubernetes-replicator
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: replicator
+        app.kubernetes.io/instance: kubernetes-replicator
+    spec:
+      serviceAccountName: replicator
+      automountServiceAccountToken: true
+      securityContext:
+        {}
+      containers:
+        - name: kubernetes-replicator
+          securityContext:
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+          image: "quay.io/mittwald/kubernetes-replicator:v2.8.0"
+          imagePullPolicy: IfNotPresent
+          args:
+            []
+          ports:
+            - name: health
+              containerPort: 9102
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 1
+            successThreshold: 1
+            failureThreshold: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 1
+            successThreshold: 1
+            failureThreshold: 2
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 10Mi

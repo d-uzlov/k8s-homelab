@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: memcached
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: memcached
+  # revisionHistoryLimit: 2
+  template:
+    metadata:
+      labels:
+        run: memcached
+    spec:
+      containers:
+      - name: memcached
+        image: memcached:1.6.18
+        command:
+          - memcached
+        args:
+          - -m
+          - "256"
+        ports:
+        - containerPort: 11211
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    run: memcached
+  name: memcached
+spec:
+  ports:
+  - port: 11211
+    protocol: TCP
+    targetPort: 11211
+  selector:
+    run: memcached

@@ -1,0 +1,88 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cron
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cron
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: cron
+    spec:
+      securityContext:
+        runAsUser: 33
+        runAsGroup: 65534
+      initContainers:
+      - name: download-cron
+        image: docker.io/alpine:3.17.3
+        command:
+        - sh
+        - -c
+        - |
+          trap : TERM INT
+          apk add curl &&
+          SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.2.24/supercronic-linux-amd64 &&
+          SUPERCRONIC=supercronic-linux-amd64 &&
+          SUPERCRONIC_SHA1SUM=6817299e04457e5d6ec4809c72ee13a43e95ba41 &&
+          curl -fsSLO "$SUPERCRONIC_URL" &&
+          echo "${SUPERCRONIC_SHA1SUM}  ${SUPERCRONIC}" | sha1sum -c - &&
+          chmod +x "$SUPERCRONIC" &&
+          mv "$SUPERCRONIC" "/mnt/cron/supercronic"
+        volumeMounts:
+        - name: cron
+          mountPath: /mnt/cron
+        securityContext:
+          runAsUser: 0
+      - name: wait-filesystem-ready
+        image: busybox
+        command:
+        - sh
+        - -c
+        - |
+          trap : TERM INT
+          until nc -w 1 -z backend 9000 > /dev/null
+          do
+            echo $(date +"%Y-%m-%dT%H:%M:%S%z") Waiting...
+            sleep 1
+          done
+          echo connected to backend:9000 successfully!
+      containers:
+      - name: cron
+        image: docker.io/nextcloud:26.0-fpm
+        command:
+        - /mnt/cron/supercronic
+        - /var/spool/cron/crontabs/www-data
+        volumeMounts:
+        - name: cron
+          mountPath: /mnt/cron
+        - name: web
+          mountPath: /var/www/html
+        - name: config
+          mountPath: /var/www/html/config
+        - name: user-data
+          mountPath: /mnt/user-data
+        resources:
+          requests:
+            cpu: 0m
+            memory: 100Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+      volumes:
+      - name: cron
+        emptyDir:
+      - name: web
+        persistentVolumeClaim:
+          claimName: web
+      - name: user-data
+        persistentVolumeClaim:
+          claimName: user-data
+      - name: config
+        persistentVolumeClaim:
+          claimName: config

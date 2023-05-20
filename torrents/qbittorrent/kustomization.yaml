@@ -1,0 +1,57 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: bt-qbittorrent
+
+resources:
+- qbittorrent.yaml
+- ingress.yaml
+
+configMapGenerator:
+- name: entrypoint
+  files:
+  - entrypoint.sh
+  - set-tag.sh
+- name: default-config
+  files:
+  - default-config/qBittorrent.conf
+  - default-config/watched_folders.json
+- name: settings
+  envs:
+  - env/settings.env
+- name: ingress
+  envs:
+  - env/ingress.env
+
+replacements:
+- source:
+    kind: ConfigMap
+    name: ingress
+    fieldPath: data.public_domain
+  targets:
+  - select:
+      kind: Ingress
+      name: qbittorrent
+    fieldPaths:
+    - spec.rules.0.host
+- source:
+    kind: ConfigMap
+    name: ingress
+    fieldPath: data.wildcard_secret_name
+  targets:
+  - select:
+      kind: Ingress
+      name: qbittorrent
+    fieldPaths:
+    - spec.tls.0.secretName
+- source:
+    kind: ConfigMap
+    name: ingress
+    fieldPath: data.allowed_sources
+  targets:
+  - select:
+      kind: Ingress
+      name: qbittorrent
+    fieldPaths:
+    - metadata.annotations.[nginx.ingress.kubernetes.io/whitelist-source-range]

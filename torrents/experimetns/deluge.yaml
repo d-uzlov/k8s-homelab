@@ -1,0 +1,122 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: torrent-deluge
+
+---
+
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: torrent-deluge-storage
+  namespace: torrent-deluge
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+
+---
+
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: torrent-deluge-persistent-volume
+  namespace: torrent-deluge
+spec:
+  storageClassName: torrent-deluge-storage
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: "/storage/hd0/torrent-deluge"
+
+---
+
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: torrent-deluge-persistent-volume-claim
+  namespace: torrent-deluge
+spec:
+  storageClassName: torrent-deluge-storage
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: torrent-deluge-service
+  namespace: torrent-deluge
+spec:
+  loadBalancerIP: 10.0.3.3
+  allocateLoadBalancerNodePorts: false
+  ports:
+   - name: web-ui
+     protocol: TCP
+     port: 80
+     targetPort: 8112
+   - name: port-tcp
+     protocol: TCP
+     port: 6881
+     targetPort: 6881
+   - name: port-udp
+     protocol: UDP
+     port: 6881
+     targetPort: 6881
+   - name: remote-access
+     protocol: TCP
+     port: 58846
+     targetPort: 58846
+  selector:
+    app: torrent-deluge
+  type: LoadBalancer
+status:
+  loadBalancer: {}
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: torrent-deluge-deployment
+  namespace: torrent-deluge
+spec:
+  replicas: 1
+  selector:
+      matchLabels:
+        app: torrent-deluge
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: torrent-deluge
+    spec:
+      containers:
+      - name: torrent-deluge
+        image: docker.io/linuxserver/deluge:2.1.1
+        ports:
+        - name: web-ui
+          containerPort: 8112
+        - name: torrents
+          containerPort: 6881
+        - name: remote-access
+          containerPort: 58846
+        resources: {}
+        volumeMounts:
+        - mountPath: /config
+          name: torrent-deluge-data
+          subPath: config
+        - mountPath: /downloads
+          name: torrent-deluge-data
+          subPath: downloads
+      volumes:
+      - name: torrent-deluge-data
+        persistentVolumeClaim:
+          claimName: torrent-deluge-persistent-volume-claim
+status: {}

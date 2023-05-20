@@ -1,0 +1,45 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+      - name: rabbitmq
+        image: docker.io/rabbitmq:3.11
+        ports:
+        - containerPort: 5672
+        env:
+        - name: RABBITMQ_NODE_PORT
+          value: '5672'
+        resources:
+          requests:
+            cpu: 0m
+            memory: 100Mi
+          limits:
+            cpu: 4
+            memory: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq
+spec:
+  selector:
+    app: rabbitmq
+  ports:
+  - name: rabbitmq
+    protocol: TCP
+    port: 5672
+    targetPort: 5672

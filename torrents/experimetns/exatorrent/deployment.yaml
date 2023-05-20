@@ -1,0 +1,74 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: exatorrent
+  namespace: torrents
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app-type: torrent
+      app: exatorrent
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app-type: torrent
+        app: exatorrent
+    spec:
+      containers:
+      - name: exatorrent
+        image: ghcr.io/varbhat/exatorrent:1.1
+        ports:
+        - name: web-ui
+          containerPort: 5000
+        - name: incoming
+          containerPort: 42069
+        resources:
+          requests:
+            cpu: 1m
+            memory: 50Mi
+          limits:
+            cpu: 4000m
+            memory: 500Mi
+        volumeMounts:
+        - mountPath: /config
+          name: config
+          subPath: config
+        - mountPath: /exa/exadir
+          name: torrent-data
+          subPath: exatorrent
+      volumes:
+      - name: torrent-data
+        persistentVolumeClaim:
+          claimName: torrent-data-claim
+      - name: config
+        persistentVolumeClaim:
+          claimName: exatorrent-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: exatorrent-service
+  namespace: torrents
+spec:
+  selector:
+    app: exatorrent
+  # type: LoadBalancer
+  # loadBalancerIP: 10.0.3.2
+  # allocateLoadBalancerNodePorts: false
+  ports:
+  - name: web-ui
+    protocol: TCP
+    port: 80
+    targetPort: 5000
+  - name: incoming-tcp
+    protocol: TCP
+    port: 42069
+    targetPort: 42069
+  - name: incoming-udp
+    protocol: UDP
+    port: 42069
+    targetPort: 42069

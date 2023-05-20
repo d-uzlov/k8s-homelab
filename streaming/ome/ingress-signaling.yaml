@@ -1,0 +1,28 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: signaling
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-production
+    # nginx.ingress.kubernetes.io/whitelist-source-range: 10.0.0.0/16,1.2.3.4,1.2.3.4
+    # set timeout to 10 hours
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "36000"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "36000"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - ome-signal.example.duckdns.org
+    secretName: ome-signal.example.duckdns.org-secret-production
+  rules:
+  - host: ome-signal.example.duckdns.org
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: publish
+            port:
+              name: downstream

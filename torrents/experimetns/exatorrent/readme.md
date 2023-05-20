@@ -1,0 +1,2 @@
+adminuser
+adminpassword

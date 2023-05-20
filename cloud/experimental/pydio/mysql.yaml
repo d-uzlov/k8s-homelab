@@ -1,0 +1,68 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: docker.io/mysql:8
+        args:
+          - --character-set-server=utf8mb4
+          - --collation-server=utf8mb4_unicode_ci
+        ports:
+        - containerPort: 3306
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: cells
+        - name: MYSQL_DATABASE
+          value: cells
+        - name: MYSQL_USER
+          value: pydio
+        - name: MYSQL_PASSWORD
+          value: pydio
+        # volumeMounts:
+        # - mountPath: /var/lib/mysql
+        #   name: data
+        securityContext:
+          runAsUser: 1000
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: mysql-data
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: mysql-data
+spec:
+  storageClassName: local-path
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+spec:
+  selector:
+    app: mysql
+  ports:
+  - name: mysql
+    protocol: TCP
+    port: 3306
+    targetPort: 3306

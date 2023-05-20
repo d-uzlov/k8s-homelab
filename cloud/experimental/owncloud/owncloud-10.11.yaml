@@ -1,0 +1,102 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: owncloud
+  namespace: owncloud
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: owncloud
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: owncloud
+    spec:
+      containers:
+      - name: owncloud
+        image: docker.io/owncloud/server:10.11
+        # # image: ubuntu:latest
+        # # Just spin & wait forever
+        # command: ["/bin/bash", "-c", "--"]
+        # args: ["/usr/bin/owncloud server; while true; do sleep 1; done;"]
+        ports:
+        - name: web-ui
+          containerPort: 8080
+        env:
+        - name: OWNCLOUD_DOMAIN
+          value: owncloud.example.duckdns.org
+        - name: OWNCLOUD_TRUSTED_DOMAINS
+          value: owncloud.example.duckdns.org,owncloud-service.owncloud,owncloud.local
+        - name: OWNCLOUD_DB_TYPE
+          value: mysql
+        - name: OWNCLOUD_DB_NAME
+          value: owncloud
+        - name: OWNCLOUD_DB_USERNAME
+          value: owncloud
+        - name: OWNCLOUD_DB_PASSWORD
+          value: owncloud
+        - name: OWNCLOUD_DB_HOST
+          value: mariadb-service
+        - name: OWNCLOUD_ADMIN_USERNAME
+          value: admin
+        - name: OWNCLOUD_ADMIN_PASSWORD
+          value: admin
+        - name: OWNCLOUD_MYSQL_UTF8MB4
+          value: "true"
+        - name: OWNCLOUD_REDIS_ENABLED
+          value: "true"
+        - name: OWNCLOUD_REDIS_HOST
+          value: redis-service
+          # https://github.com/owncloud-docker/base/blob/9df7aa89b8811702dc99d555d1e0cf07da7d8186/v20.04/overlay/etc/owncloud.d/25-chown.sh
+        - name: OWNCLOUD_SKIP_CHOWN
+          value: "true"
+        # resources:
+        #   requests:
+        #     cpu: 1m
+        #     memory: 50Mi
+        #   limits:
+        #     cpu: 4000m
+        #     memory: 500Mi
+        # volumeMounts:
+        # - mountPath: /mnt/data
+        #   name: owncloud-data
+        securityContext: {}
+        #   runAsUser: 33
+      volumes:
+      - name: owncloud-data
+        persistentVolumeClaim:
+          claimName: owncloud-data
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: owncloud-data
+  namespace: owncloud
+spec:
+  storageClassName: nfs-64k-cached
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: owncloud-service
+  namespace: torrents
+spec:
+  selector:
+    app: owncloud
+  # type: LoadBalancer
+  # loadBalancerIP: 10.0.3.12
+  # allocateLoadBalancerNodePorts: false
+  ports:
+  - name: web-ui
+    protocol: TCP
+    port: 80
+    targetPort: 8080

@@ -1,0 +1,78 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mariadb
+  namespace: owncloud
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mariadb
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mariadb
+    spec:
+      containers:
+      - name: mariadb
+        image: docker.io/mariadb:10.6
+        args:
+        - --max-allowed-packet=128M
+        - --innodb-log-file-size=64M
+        ports:
+        - containerPort: 3306
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: owncloud
+        - name: MYSQL_USER
+          value: owncloud
+        - name: MYSQL_PASSWORD
+          value: owncloud
+        - name: MYSQL_DATABASE
+          value: owncloud
+        # resources:
+        #   requests:
+        #     cpu: 1m
+        #     memory: 50Mi
+        #   limits:
+        #     cpu: 4000m
+        #     memory: 500Mi
+        # volumeMounts:
+        # - mountPath: /var/lib/mysql
+        #   name: mariadb-data
+        securityContext: {}
+        #   runAsUser: 1000
+      volumes:
+      - name: mariadb-data
+        persistentVolumeClaim:
+          claimName: mariadb-data
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: mariadb-data
+  namespace: owncloud
+spec:
+  storageClassName: nfs-64k-cached
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mariadb-service
+  namespace: torrents
+spec:
+  selector:
+    app: mariadb
+  ports:
+  - name: mariadb
+    protocol: TCP
+    port: 3306
+    targetPort: 3306

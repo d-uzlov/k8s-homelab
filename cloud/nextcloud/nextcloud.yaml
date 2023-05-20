@@ -1,0 +1,233 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextcloud
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nextcloud
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: nextcloud
+    spec:
+      securityContext:
+        runAsUser: 33
+        runAsGroup: 65534
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      initContainers:
+      - name: wait-database-ready
+        image: busybox
+        command:
+        - sh
+        - -c
+        - |
+          trap : TERM INT
+          until nc -w 1 -z db 3306 > /dev/null
+          do
+            echo $(date +"%Y-%m-%dT%H:%M:%S%z") Waiting...
+            sleep 1
+          done
+          echo connected to db:3306 successfully!
+      - name: install
+        image: docker.io/nextcloud:26.0-fpm
+        env:
+        - name: MYSQL_HOST
+          value: db
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: mariadb
+              key: user_name
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mariadb
+              key: user_password
+        - name: MYSQL_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: mariadb
+              key: db_name
+        - name: NEXTCLOUD_ADMIN_USER
+          valueFrom:
+            secretKeyRef:
+              name: nextcloud
+              key: admin_name
+        - name: NEXTCLOUD_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: nextcloud
+              key: admin_password
+        - name: NEXTCLOUD_DATA_DIR
+          value: /mnt/user-data
+        - name: NEXTCLOUD_TRUSTED_DOMAINS
+          valueFrom:
+            configMapKeyRef:
+              name: settings
+              key: trusted_domains
+        - name: TRUSTED_PROXIES
+          valueFrom:
+            configMapKeyRef:
+              name: settings
+              key: trusted_proxies
+        - name: NEXTCLOUD_INIT_HTACCESS
+          value: 'true'
+        volumeMounts:
+        - name: entrypoint
+          mountPath: /entrypoint.sh
+          subPath: entrypoint-install.sh
+        - name: entrypoint
+          mountPath: /entrypoint-post-install.sh
+          subPath: entrypoint-post-install.sh
+        - name: php-conf
+          mountPath: /usr/local/etc/php-fpm.d/zzz-custom.conf
+          subPath: custom.conf.ini
+        - name: web
+          mountPath: /var/www/html
+        - name: user-data
+          mountPath: /mnt/user-data
+        - name: config
+          mountPath: /var/www/html/config
+      - name: install-apps
+        image: docker.io/nextcloud:26.0-fpm
+        env:
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis
+              key: redis_password
+        - name: ONLYOFFICE_NAMESPACE
+          value: onlyoffice
+        - name: ONLYOFFICE_HEADER
+          valueFrom:
+            secretKeyRef:
+              name: onlyoffice-api
+              key: jwt_header
+              optional: true
+        - name: ONLYOFFICE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: onlyoffice-api
+              key: jwt_secret
+              optional: true
+        - name: ONLYOFFICE_PUBLIC_DOMAIN
+          valueFrom:
+            configMapKeyRef:
+              name: onlyoffice-public-domain
+              key: public_domain
+              optional: true
+        - name: NEXTCLOUD_PUBLIC_DOMAIN
+          valueFrom:
+            configMapKeyRef:
+              name: ingress
+              key: public_domain
+        volumeMounts:
+        - name: entrypoint
+          mountPath: /entrypoint.sh
+          subPath: entrypoint-apps.sh
+        - name: web
+          mountPath: /var/www/html
+        - name: config
+          mountPath: /var/www/html/config
+        - name: user-data
+          mountPath: /mnt/user-data
+      containers:
+      - name: nextcloud
+        image: docker.io/nextcloud:26.0-fpm
+        ports:
+        - name: web
+          containerPort: 9000
+        volumeMounts:
+        - name: entrypoint
+          mountPath: /entrypoint.sh
+          subPath: entrypoint-run.sh
+        - name: php-conf
+          mountPath: /usr/local/etc/php-fpm.d/zzz-custom.conf
+          subPath: custom.conf.ini
+        - name: web
+          mountPath: /var/www/html
+        - name: config
+          mountPath: /var/www/html/config
+        - name: user-data
+          mountPath: /mnt/user-data
+        - name: tmp
+          mountPath: /tmp
+        resources:
+          requests:
+            cpu: 0m
+            memory: 100Mi
+          limits:
+            cpu: 4
+            memory: 8Gi
+      - name: healthcheck
+        # compiled manually from Dockerfile:
+        # FROM alpine:3.17.3
+        # RUN apk add --no-cache fcgi
+        # COPY ./php-fpm-healthcheck /usr/local/bin/
+        # Where php-fpm-healthcheck is from https://github.com/renatomefi/php-fpm-healthcheck
+        #
+        # Requires `pm.status_path = /status` in php-fpm config
+        image: docker.io/exampleexample/k8s-snippets:fpm-healthcheck
+        command:
+        - /bin/sh
+        - -c
+        - |
+          trap : TERM INT; sleep infinity & wait
+        resources:
+          requests:
+            cpu: 0m
+            memory: 10Mi
+          limits:
+            cpu: 10m
+            memory: 10Mi
+        readinessProbe:
+          failureThreshold: 2
+          periodSeconds: 10
+          successThreshold: 1
+          exec:
+            command:
+            - /usr/local/bin/php-fpm-healthcheck
+      volumes:
+      - name: entrypoint
+        configMap:
+          name: nextcloud-entrypoint
+          defaultMode: 0555
+      - name: php-conf
+        configMap:
+          name: php-conf
+      - name: web
+        persistentVolumeClaim:
+          claimName: web
+      - name: user-data
+        persistentVolumeClaim:
+          claimName: user-data
+      - name: config
+        persistentVolumeClaim:
+          claimName: config
+      - name: tmp
+        emptyDir:
+          medium: Memory
+          sizeLimit: 1500Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+spec:
+  selector:
+    app: nextcloud
+  ports:
+  - name: php
+    protocol: TCP
+    port: 9000
+    targetPort: 9000

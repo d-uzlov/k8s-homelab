@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ingress-nginx-controller
+  namespace: ingress-nginx
+data:
+  log-format-upstream: >-
+    $remote_addr > this > $upstream_addr
+    [$time_iso8601]
+    s=$status sup=$upstream_status dur=$request_time dup=$upstream_response_time req_bytes=$request_length sent_bytes=$body_bytes_sent
+    host=$http_host
+    up=$proxy_upstream_name
+    req="$request"
+    ua="$http_user_agent"
+  enable-access-log-for-default-backend: 'true'
+  # Required for file uploads, to avoid writing temporary files
+  # when client sends a request that doesn't fit into buffer.
+  proxy-request-buffering: 'off'
+  # required to avoid infinite redirects:
+  # http://domain/file/ -> https://domain/file -> http://domain/file/
+  preserve-trailing-slash: 'true'
+  # Disable search engine crawlers
+  server-snippet: |
+    proxy_hide_header X-Robots-Tag;
+    add_header X-Robots-Tag 'noindex, nofollow';

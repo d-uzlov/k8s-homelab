@@ -1,0 +1,85 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notify
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notify
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: notify
+    spec:
+      securityContext:
+        runAsUser: 33
+        runAsGroup: 65534
+      initContainers:
+      - name: wait-filesystem-ready
+        image: busybox
+        command:
+        - sh
+        - -c
+        - |
+          trap : TERM INT
+          until nc -w 1 -z backend 9000 > /dev/null
+          do
+            echo $(date +"%Y-%m-%dT%H:%M:%S%z") Waiting...
+            sleep 1
+          done
+          echo connected to backend:9000 successfully!
+      containers:
+      - name: notify
+        image: docker.io/fpco/pid1:22.04
+        args:
+        - /var/www/html/custom_apps/notify_push/bin/x86_64/notify_push
+        - /var/www/html/config/config.php
+        ports:
+        - name: notify
+          containerPort: 7867
+        env:
+        - name: PORT
+          value: '7867'
+        - name: NEXTCLOUD_URL
+          value: 'http://frontend.nextcloud.svc/'
+        volumeMounts:
+        - name: web
+          mountPath: /var/www/html
+        - name: config
+          mountPath: /var/www/html/config
+        - name: user-data
+          mountPath: /mnt/user-data
+        resources:
+          requests:
+            cpu: 0m
+            memory: 100Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+      volumes:
+      - name: web
+        persistentVolumeClaim:
+          claimName: web
+      - name: user-data
+        persistentVolumeClaim:
+          claimName: user-data
+      - name: config
+        persistentVolumeClaim:
+          claimName: config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notify
+spec:
+  selector:
+    app: notify
+  ports:
+  - name: notify
+    protocol: TCP
+    port: 7867
+    targetPort: 7867

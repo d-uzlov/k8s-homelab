@@ -1,0 +1,44 @@
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ssd-persist
+provisioner: nfs.csi.k8s.io
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+parameters:
+  server: truenas.example
+  share: /mnt/ssd/k8s/nfs-persist
+  onDelete: retain
+  subDir: ${pvc.metadata.namespace}/${pvc.metadata.name}
+  mountPermissions: '777'
+  csi.storage.k8s.io/provisioner-secret-name: nfs-csi-mount-options
+  csi.storage.k8s.io/provisioner-secret-namespace: pv-nfs-csi
+mountOptions:
+- hard
+- nfsvers=4.2
+- rsize=262144
+- wsize=262144
+- fsc
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ssd
+provisioner: nfs.csi.k8s.io
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+parameters:
+  server: truenas.example
+  share: /mnt/ssd/k8s/nfs
+  onDelete: delete
+  subDir: ${pvc.metadata.namespace}/${pvc.metadata.name}
+  mountPermissions: '777'
+  csi.storage.k8s.io/provisioner-secret-name: nfs-csi-mount-options
+  csi.storage.k8s.io/provisioner-secret-namespace: pv-nfs-csi
+mountOptions:
+- hard
+- nfsvers=4.2
+- rsize=262144
+- wsize=262144
+- fsc

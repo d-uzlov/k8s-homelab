@@ -1,0 +1,44 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: screego
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: screego
+  template:
+    metadata:
+      labels:
+        app: screego
+    spec:
+      containers:
+      - name: screego
+        image: ghcr.io/screego/server:1.8.1
+        ports:
+          - name: web
+            containerPort: 5050
+        env:
+        - name: SCREEGO_EXTERNAL_IP
+          value: '1.2.3.4'
+        resources:
+          requests:
+            cpu: 0m
+            memory: 100Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: screego
+spec:
+  selector:
+    app: screego
+  ports:
+  - name: web
+    protocol: TCP
+    port: 80
+    targetPort: 5050

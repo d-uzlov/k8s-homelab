@@ -1,0 +1,51 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: docker.io/redis:7.0.11
+        args:
+        - --requirepass
+        - $(NEXTCLOUD_REDIS_PASS)
+        ports:
+        - containerPort: 6379
+        env:
+        - name: NEXTCLOUD_REDIS_PASS
+          valueFrom:
+            secretKeyRef:
+              name: redis
+              key: redis_password
+        resources:
+          requests:
+            cpu: 1m
+            memory: 50Mi
+          limits:
+            cpu: 4000m
+            memory: 500Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+spec:
+  selector:
+    app: redis
+  ports:
+  - name: redis
+    protocol: TCP
+    port: 6379
+    targetPort: 6379

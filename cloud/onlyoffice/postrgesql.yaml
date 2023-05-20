@@ -1,0 +1,81 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgresql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgresql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: postgresql
+    spec:
+      securityContext:
+        # user 70 is built-in in docker.io/postgres
+        runAsUser: 70
+        runAsGroup: 70
+      containers:
+      - name: postgresql
+        image: docker.io/postgres:15.3-alpine3.18
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postrgesql
+              key: db_root_name
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postrgesql
+              key: db_root_password
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: postrgesql
+              key: db_name
+        volumeMounts:
+        - mountPath: /var/lib/postgresql
+          name: data
+        resources:
+          requests:
+            cpu: 0m
+            memory: 100Mi
+          limits:
+            cpu: 4
+            memory: 1Gi
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: postgresql
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+spec:
+  selector:
+    app: postgresql
+  ports:
+  - name: postgresql
+    protocol: TCP
+    port: 5432
+    targetPort: 5432
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: postgresql
+spec:
+  storageClassName: iscsi
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

@@ -1,0 +1,26 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: seafile
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    nginx.ingress.kubernetes.io/whitelist-source-range: 10.0.0.0/16,1.2.3.4,1.2.3.4
+    nginx.ingress.kubernetes.io/proxy-body-size: 8m
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - seafile-local.example.duckdns.org
+    secretName: seafile-local.example.duckdns.org-secret-staging
+  rules:
+  - host: seafile-local.example.duckdns.org
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: seafile
+            port:
+              number: 80

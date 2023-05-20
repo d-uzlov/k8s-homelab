@@ -1,0 +1,33 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fortio
+  namespace: fortio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fortio
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: fortio
+    spec:
+      containers:
+      - name: fortio
+        image: docker.io/fortio/fortio:1.53.0
+        args:
+        - server
+        - --https-insecure
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - mountPath: /var/lib/fortio
+          name: data
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: fortio-data

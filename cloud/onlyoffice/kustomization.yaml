@@ -1,0 +1,74 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: onlyoffice
+
+resources:
+- onlyoffice.yaml
+- postrgesql.yaml
+- rabbitmq.yaml
+- ingress.yaml
+
+configMapGenerator:
+- name: settings
+  envs:
+  - env/settings.env
+- name: onlyoffice-public-domain
+  envs:
+  - env/public_domain.env
+  options:
+    disableNameSuffixHash: true
+    annotations:
+      replicator.v1.mittwald.de/replicate-to-matching: >
+        onlyoffice.replicator.io/public-domain
+- name: entrypoint
+  files:
+    # same as original but delay nginx start until the pod is truly ready
+    # to have a way to measure how long it takes to start
+  - run-document-server.sh
+
+secretGenerator:
+- name: postrgesql
+  envs:
+  - env/postrgesql.env
+- name: onlyoffice-api
+  envs:
+  - env/api.env
+  options:
+    disableNameSuffixHash: true
+    annotations:
+      replicator.v1.mittwald.de/replicate-to-matching: >
+        onlyoffice.replicator.io/api
+
+replacements:
+- source:
+    kind: ConfigMap
+    name: onlyoffice-public-domain
+    fieldPath: data.public_domain
+  targets:
+  - select:
+      kind: Ingress
+      name: onlyoffice
+    fieldPaths:
+    - spec.rules.0.host
+- source:
+    kind: ConfigMap
+    name: settings
+    fieldPath: data.wildcard_secret_name
+  targets:
+  - select:
+      kind: Ingress
+      name: onlyoffice
+    fieldPaths:
+    - spec.tls.0.secretName
+- source:
+    kind: ConfigMap
+    name: settings
+    fieldPath: data.ingress_allowed_sources
+  targets:
+  - select:
+      kind: Ingress
+      name: onlyoffice
+    fieldPaths:
+    - metadata.annotations.[nginx.ingress.kubernetes.io/whitelist-source-range]

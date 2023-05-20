@@ -1,0 +1,31 @@
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nfs-64k
+# must match deployment's env PROVISIONER_NAME'
+provisioner: k8s-sigs.io/nfs-subdir-external-provisioner
+# Don't leave zombie PVs
+# Doesn't affect the actual data deletion because of parameters.onDelete
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+parameters:
+  # type:bool
+  # if true, creates archive with name "archived-<volume.Name>" when PV is deleted
+  # ignored when onDelete is specified
+  archiveOnDelete: "false"
+  # allowed values:
+  #   delete
+  #   retain
+  onDelete: retain
+  # available variables:
+  #   .PVC.name
+  #   .PVC.namespace
+  #   .PVC.annotations.<pvc-annotation-name>
+  #   .PVC.labels.<pvc-label-name>
+  pathPattern: "ns=${.PVC.namespace}/pvc=${.PVC.name}"
+mountOptions:
+- hard
+- nfsvers=4.2
+- rsize=65536
+- wsize=65536

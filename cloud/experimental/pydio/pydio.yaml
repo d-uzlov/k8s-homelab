@@ -1,0 +1,86 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pydio
+  namespace: seafile
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pydio
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: pydio
+    spec:
+      containers:
+      - name: pydio
+        image: docker.io/pydio/cells:4.1
+        ports:
+        - name: web-ui
+          containerPort: 8080
+        # - name: web-ui-2
+        #   containerPort: 8000
+        # - name: web-ui-3
+        #   containerPort: 8082
+        env:
+        - name: CELLS_SITE_NO_TLS
+          value: "1"
+        # - name: CELLS_INSTALL_YAML
+        #   value: /pydio/config/install.yaml
+        volumeMounts:
+        - name: conf
+          mountPath: /pydio/config/install.yaml
+          subPath: pydio-conf.yaml
+        - name: data
+          mountPath: /var/cells
+        # securityContext:
+        #   runAsUser: 1000
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: pydio-data
+      - name: conf
+        configMap:
+          name: pydio-conf
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: pydio-data
+  namespace: seafile
+spec:
+  storageClassName: local-path
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pydio
+  namespace: seafile
+spec:
+  selector:
+    app: pydio
+  ports:
+  - name: web-ui
+    protocol: TCP
+    port: 80
+    targetPort: 8080
+  # - name: web-ui-2
+  #   protocol: TCP
+  #   port: 8000
+  #   targetPort: 8000
+  # - name: web-ui-3
+  #   protocol: TCP
+  #   port: 8082
+  #   targetPort: 8082
+
+

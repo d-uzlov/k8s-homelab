@@ -1,0 +1,77 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: nextcloud
+
+resources:
+- nextcloud.yaml
+- mariadb.yaml
+- nginx.yaml
+- redis.yaml
+- notify.yaml
+- cron.yaml
+- ingress.yaml
+
+configMapGenerator:
+- name: settings
+  envs:
+  - env/settings.env
+- name: ingress
+  envs:
+  - env/ingress.env
+- name: nginx-conf
+  files:
+  - configs/nginx.conf
+- name: php-conf
+  files:
+  - configs/custom.conf.ini
+- name: nextcloud-entrypoint
+  files:
+  - configs/entrypoint-install.sh
+  - configs/entrypoint-post-install.sh
+  - configs/entrypoint-apps.sh
+  - configs/entrypoint-run.sh
+
+secretGenerator:
+- name: mariadb
+  envs:
+  - env/mariadb.env
+- name: nextcloud
+  envs:
+  - env/nextcloud.env
+- name: redis
+  envs:
+  - env/redis.env
+
+replacements:
+- source:
+    kind: ConfigMap
+    name: ingress
+    fieldPath: data.public_domain
+  targets:
+  - select:
+      kind: Ingress
+      name: nextcloud
+    fieldPaths:
+    - spec.rules.0.host
+- source:
+    kind: ConfigMap
+    name: ingress
+    fieldPath: data.wildcard_secret_name
+  targets:
+  - select:
+      kind: Ingress
+      name: nextcloud
+    fieldPaths:
+    - spec.tls.0.secretName
+- source:
+    kind: ConfigMap
+    name: ingress
+    fieldPath: data.allowed_sources
+  targets:
+  - select:
+      kind: Ingress
+      name: nextcloud
+    fieldPaths:
+    - metadata.annotations.[nginx.ingress.kubernetes.io/whitelist-source-range]

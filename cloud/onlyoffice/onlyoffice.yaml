@@ -1,0 +1,127 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: onlyoffice
+spec:
+  replicas: 1
+  strategy:
+    # with rolling update this happens at startup:
+    #    [docId] [userId] nodeJS - start shutdown:%b true
+    #    [2214091974] [userId] nodeJS - error description: errorId = Server shutdow
+    # It seems like old and new deployments affect each other, maybe via rabbitmq
+    type: Recreate
+  selector:
+    matchLabels:
+      app: onlyoffice
+  template:
+    metadata:
+      labels:
+        app: onlyoffice
+    spec:
+      terminationGracePeriodSeconds: 3
+      securityContext:
+        # docker.io/onlyoffice/documentserver requires root to run
+        runAsUser: 0
+      containers:
+      - name: install
+        image: docker.io/onlyoffice/documentserver:7.3.3
+        ports:
+        - name: http
+          containerPort: 80
+        env:
+        - name: DB_TYPE
+          value: postgres
+        - name: DB_HOST
+          value: db
+        - name: DB_PORT
+          value: '5432'
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: postrgesql
+              key: db_root_name
+        - name: DB_PWD
+          valueFrom:
+            secretKeyRef:
+              name: postrgesql
+              key: db_root_password
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: postrgesql
+              key: db_name
+        - name: AMQP_URI
+          value: amqp://guest:guest@rabbitmq
+        - name: JWT_ENABLED
+          value: 'true'
+        - name: JWT_HEADER
+          valueFrom:
+            secretKeyRef:
+              name: onlyoffice-api
+              key: jwt_header
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: onlyoffice-api
+              key: jwt_secret
+        - name: JWT_IN_BODY
+          value: 'true'
+        - name: GENERATE_FONTS
+          value: 'true'
+        - name: WOPI_ENABLED
+          # This ENV was added here to remind me of its existence.
+          value: 'false'
+        volumeMounts:
+        - name: entrypoint
+          mountPath: /app/ds/run-document-server.sh
+          subPath: run-document-server.sh
+        # onlyoffice dockerfile declares a bunch of volumes that should be persistent when run in docker
+        # in k8s these volumes are not persistent
+        # also they pollute the list of mounted volumes
+        - name: delete
+          mountPath: /var/lib/postgresql
+          readOnly: true
+        - name: delete
+          mountPath: /var/lib/rabbitmq
+          readOnly: true
+        - name: delete
+          mountPath: /var/lib/redis
+        resources:
+          requests:
+            cpu: 0m
+            memory: 100Mi
+          limits:
+            cpu: 4
+            memory: 1Gi
+        startupProbe:
+          httpGet:
+            path: /index.html
+            port: http
+            scheme: HTTP
+          periodSeconds: 2
+          timeoutSeconds: 1
+          successThreshold: 1
+          # Onlyoffice startup is extremely slow
+          failureThreshold: 240
+      volumes:
+      - name: delete
+        emptyDir:
+          medium: Memory
+          sizeLimit: 1Ki
+      - name: entrypoint
+        configMap:
+          name: entrypoint
+          defaultMode: 0555
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: onlyoffice
+spec:
+  selector:
+    app: onlyoffice
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80

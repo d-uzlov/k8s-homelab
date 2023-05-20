@@ -1,0 +1,33 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ubuntu-nfs-bulk
+spec:
+  terminationGracePeriodSeconds: 0
+  containers:
+  - name: ubuntu
+    image: ubuntu:latest
+    # Just sleep forever
+    command: ["sleep"]
+    args: ["infinity"]
+    volumeMounts:
+      - mountPath: /mnt/test
+        name: data
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: test-nfs-bulk
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: test-nfs-bulk
+spec:
+  storageClassName: nfs-bulk
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+---

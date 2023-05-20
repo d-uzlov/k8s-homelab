@@ -1,0 +1,171 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qbittorrent
+spec:
+  # torrents likely won't work with more than one replica
+  replicas: 1
+  strategy:
+    # qbittorrent is incompatible with RollingUpdate.
+    # New instance shuts down along with the old one because of shared ipc-socket file,
+    # and I have no idea how many other bugs may occur.
+    type: Recreate
+  selector:
+    matchLabels:
+      app: qbittorrent
+  template:
+    metadata:
+      labels:
+        app-type: torrent
+        app: qbittorrent
+    spec:
+      securityContext:
+        runAsUser: 65534
+        runAsGroup: 65534
+      containers:
+      - name: qbittorrent
+        image: docker.io/qbittorrentofficial/qbittorrent-nox:4.5.2-2
+        ports:
+        - name: web-ui
+          containerPort: 8080
+        - name: data-tcp
+          containerPort: 6881
+          protocol: TCP
+        - name: data-udp
+          containerPort: 6881
+          protocol: UDP
+        env:
+        - name: WEBUI_PORT
+          value: '8080'
+        - name: DATA_PORT
+          value: '6881'
+        - name: DEFAULT_CONFIG_LOCATION
+          value: /mnt/default-config
+        - name: CONFIG_LOCATION
+          value: /config
+        - name: FORCE_OVERWRITE_CONFIG
+          value: 'true'
+        - name: RESET_PASSWORD
+          value: 'false'
+        - name: USERNAME
+          valueFrom:
+            configMapKeyRef:
+              name: settings
+              key: username
+        - name: PASSWORD_PBKDF2
+          valueFrom:
+            configMapKeyRef:
+              name: settings
+              key: password_encoded
+        - name: TRUSTED_PROXIES
+          valueFrom:
+            configMapKeyRef:
+              name: settings
+              key: trusted_proxies
+        - name: AUTH_WHITELIST
+          valueFrom:
+            configMapKeyRef:
+              name: settings
+              key: auth_whitelist
+        - name: WATCH_ROOT
+          value: /mnt/watch
+        - name: WATCH_INCOMPLETE
+          value: /mnt/data/watch_incomplete
+        - name: MANUAL_INCOMPLETE
+          value: /mnt/data/manual_incomplete
+        - name: FINISHED_FOLDER
+          value: /mnt/data/finished
+        - name: ADDED_HOOK_SCRIPT
+          value: /added-hook-script.sh
+        resources:
+          requests:
+            cpu: 1m
+            memory: 50Mi
+          limits:
+            cpu: 4000m
+            memory: 1000Mi
+        volumeMounts:
+        - name: entrypoint
+          mountPath: /entrypoint.sh
+          subPath: entrypoint.sh
+        - name: entrypoint
+          mountPath: /added-hook-script.sh
+          subPath: set-tag.sh
+        - name: default-config
+          mountPath: /mnt/default-config
+        - name: config
+          mountPath: /config
+        - name: watch
+          mountPath: /mnt/watch
+          readOnly: true
+        - name: data
+          mountPath: /mnt/data
+        startupProbe:
+          httpGet:
+            path: /api/v2/app/version
+            port: web-ui
+            scheme: HTTP
+          periodSeconds: 1
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 20
+        livenessProbe:
+          httpGet:
+            path: /api/v2/app/version
+            port: web-ui
+            scheme: HTTP
+          periodSeconds: 5
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 2
+      volumes:
+      - name: entrypoint
+        configMap:
+          name: entrypoint
+          defaultMode: 0555
+      - name: default-config
+        configMap:
+          name: default-config
+      - name: config
+        persistentVolumeClaim:
+          claimName: config
+      - name: watch
+        persistentVolumeClaim:
+          claimName: watch
+      - name: data
+        persistentVolumeClaim:
+          claimName: data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-ui
+spec:
+  selector:
+    app: qbittorrent
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: data
+spec:
+  selector:
+    app: qbittorrent
+  type: LoadBalancer
+  loadBalancerIP: 10.0.3.1
+  allocateLoadBalancerNodePorts: false
+  ports:
+  - name: tcp
+    protocol: TCP
+    port: 6881
+    targetPort: 6881
+  - name: udp
+    protocol: UDP
+    port: 6881
+    targetPort: 6881

@@ -1,0 +1,69 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: owncloud
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: docker.io/redis:6
+        args:
+        - --databases
+        - "1"
+        ports:
+        - containerPort: 6379
+        # resources:
+        #   requests:
+        #     cpu: 1m
+        #     memory: 50Mi
+        #   limits:
+        #     cpu: 4000m
+        #     memory: 500Mi
+        # volumeMounts:
+        # - mountPath: /data
+        #   name: redis-data
+        securityContext: {}
+          # runAsUser: 1000
+      volumes:
+      - name: redis-data
+        persistentVolumeClaim:
+          claimName: redis-data
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: redis-data
+  namespace: owncloud
+spec:
+  storageClassName: nfs-64k-cached
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: torrents
+spec:
+  selector:
+    app: redis
+  ports:
+  - name: redis
+    protocol: TCP
+    port: 6379
+    targetPort: 6379

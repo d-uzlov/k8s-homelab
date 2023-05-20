@@ -1,0 +1,137 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: torrent-rutorrent
+
+---
+
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: torrent-rutorrent-storage
+  namespace: torrent-rutorrent
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+
+---
+
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: torrent-rutorrent-persistent-volume
+  namespace: torrent-rutorrent
+spec:
+  storageClassName: torrent-rutorrent-storage
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: "/storage/hd0/torrent-rutorrent"
+
+---
+
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: torrent-rutorrent-persistent-volume-claim
+  namespace: torrent-rutorrent
+spec:
+  storageClassName: torrent-rutorrent-storage
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: torrent-rutorrent-service
+  namespace: torrent-rutorrent
+spec:
+  loadBalancerIP: 10.0.3.5
+  allocateLoadBalancerNodePorts: false
+  ports:
+   - name: web-ui
+     protocol: TCP
+     port: 80
+     targetPort: 8080
+   - name: dht-udp
+     protocol: UDP
+     port: 6881
+     targetPort: 6881
+   - name: xml-prc
+     protocol: TCP
+     port: 8000
+     targetPort: 8000
+   - name: webdav
+     protocol: TCP
+     port: 9000
+     targetPort: 9000
+   - name: incoming-listener-tcp
+     protocol: TCP
+     port: 50000
+     targetPort: 50000
+   - name: incoming-listener-udp
+     protocol: UDP
+     port: 50000
+     targetPort: 50000
+  selector:
+    app: torrent-rutorrent
+  type: LoadBalancer
+status:
+  loadBalancer: {}
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: torrent-rutorrent-deployment
+  namespace: torrent-rutorrent
+spec:
+  replicas: 1
+  selector:
+      matchLabels:
+        app: torrent-rutorrent
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: torrent-rutorrent
+    spec:
+      containers:
+      - name: torrent-rutorrent
+        image: docker.io/crazymax/rtorrent-rutorrent:4.0.1-0.9.8-0.13.8
+        ports:
+        - name: dht
+          containerPort: 6881
+        - name: xml-prc
+          containerPort: 8000
+        - name: web-ui
+          containerPort: 8080
+        - name: webdav
+          containerPort: 9000
+        - name: incoming
+          containerPort: 50000
+        resources: {}
+        volumeMounts:
+        - mountPath: /data
+          name: torrent-rutorrent-data
+          subPath: data
+        - mountPath: /downloads
+          name: torrent-rutorrent-data
+          subPath: downloads
+        - mountPath: /passwd
+          name: torrent-rutorrent-data
+          subPath: passwd
+      volumes:
+      - name: torrent-rutorrent-data
+        persistentVolumeClaim:
+          claimName: torrent-rutorrent-persistent-volume-claim
+status: {}

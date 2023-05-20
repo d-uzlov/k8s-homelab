@@ -1,0 +1,75 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: seafile
+  namespace: seafile
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: seafile
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: seafile
+    spec:
+      containers:
+      - name: seafile
+        image: docker.io/seafileltd/seafile-mc:10.0.0
+        ports:
+        - name: web-ui
+          containerPort: 80
+        # - name: web-ui-2
+        #   containerPort: 8000
+        # - name: web-ui-3
+        #   containerPort: 8082
+        env:
+        - name: DB_HOST
+          value: mariadb
+        - name: DB_ROOT_PASSWD
+          value: db_dev
+        - name: SEAFILE_ADMIN_EMAIL
+          value: me@example.com
+        - name: SEAFILE_ADMIN_PASSWORD
+          value: admin
+        - name: SEAFILE_SERVER_LETSENCRYPT
+          value: "false"
+        - name: SEAFILE_SERVER_HOSTNAME
+          value: seafile-local.example.duckdns.org
+        volumeMounts:
+        - name: data
+          mountPath: /shared
+        # securityContext:
+        #   runAsUser: 1000
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: seafile-data
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: seafile
+  namespace: seafile
+spec:
+  selector:
+    app: seafile
+  ports:
+  - name: web-ui
+    protocol: TCP
+    port: 80
+    targetPort: 80
+  # - name: web-ui-2
+  #   protocol: TCP
+  #   port: 8000
+  #   targetPort: 8000
+  # - name: web-ui-3
+  #   protocol: TCP
+  #   port: 8082
+  #   targetPort: 8082
+
+

@@ -1,0 +1,114 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: torrent-transmission
+
+---
+
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: torrent-transmission-storage
+  namespace: torrent-transmission
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+
+---
+
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: torrent-transmission-persistent-volume
+  namespace: torrent-transmission
+spec:
+  storageClassName: torrent-transmission-storage
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: "/storage/hd0/torrent-transmission"
+
+---
+
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: torrent-transmission-persistent-volume-claim
+  namespace: torrent-transmission
+spec:
+  storageClassName: torrent-transmission-storage
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: torrent-transmission-service
+  namespace: torrent-transmission
+spec:
+  loadBalancerIP: 10.0.3.1
+  allocateLoadBalancerNodePorts: false
+  ports:
+   - name: web-ui
+     protocol: TCP
+     port: 80
+     targetPort: 9091
+   - name: port-tcp
+     protocol: TCP
+     port: 51413
+     targetPort: 51413
+   - name: port-udp
+     protocol: UDP
+     port: 51413
+     targetPort: 51413
+  selector:
+    app: torrent-transmission
+  type: LoadBalancer
+status:
+  loadBalancer: {}
+  
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: torrent-transmission-deployment
+  namespace: torrent-transmission
+spec:
+  replicas: 1
+  selector:
+      matchLabels:
+        app: torrent-transmission
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: torrent-transmission
+    spec:
+      containers:
+      - image: docker.io/linuxserver/transmission:4.0.0
+        name: torrent-transmission
+        ports:
+        - containerPort: 9091
+        - containerPort: 51413
+        resources: {}
+        volumeMounts:
+        - mountPath: /config
+          name: torrent-transmission-data
+          subPath: config
+        - mountPath: /downloads
+          name: torrent-transmission-data
+          subPath: downloads
+      volumes:
+      - name: torrent-transmission-data
+        persistentVolumeClaim:
+          claimName: torrent-transmission-persistent-volume-claim
+status: {}
