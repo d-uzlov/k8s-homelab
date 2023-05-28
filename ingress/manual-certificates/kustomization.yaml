@@ -6,3 +6,60 @@ namespace: certificates
 
 resources:
 - main-wildcard.yaml
+
+configMapGenerator:
+- name: domain
+  envs:
+  - env/domain.env
+
+replacements:
+- source:
+    kind: ConfigMap
+    name: domain
+    fieldPath: data.domain
+  targets:
+  - select:
+      kind: Certificate
+      name: wild-example.duckdns.org
+    fieldPaths:
+    - spec.commonName
+- source:
+    kind: ConfigMap
+    name: domain
+    fieldPath: data.domain
+  targets:
+  - select:
+      kind: Certificate
+      name: wild-example.duckdns.org
+    fieldPaths:
+    - spec.dnsNames.0
+- source:
+    kind: ConfigMap
+    name: domain
+    fieldPath: data.domain_wildcard
+  targets:
+  - select:
+      kind: Certificate
+      name: wild-example.duckdns.org
+    fieldPaths:
+    - spec.dnsNames.1
+- source:
+    kind: ConfigMap
+    name: domain
+    fieldPath: data.secret_name
+  targets:
+  - select:
+      kind: Certificate
+      name: wild-example.duckdns.org
+    fieldPaths:
+    - spec.secretName
+- source:
+    kind: ConfigMap
+    name: domain
+    fieldPath: data.copy_label
+  targets:
+  - select:
+      kind: Certificate
+      name: wild-example.duckdns.org
+    fieldPaths:
+    - spec.secretTemplate.annotations.[replicator.v1.mittwald.de/replicate-to-matching]
