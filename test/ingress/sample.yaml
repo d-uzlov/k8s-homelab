@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: example1
+  labels:
+    app: example1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: example1
+  template:
+    metadata:
+      labels:
+        app: example1
+    spec:
+      containers:
+      - name: httpecho
+        image: hashicorp/http-echo
+        args:
+        - "-listen=:8080"
+        - "-text=hello world 1"
+        ports:
+        - containerPort: 8080
+        resources: {}
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: example1
+spec:
+  type: ClusterIP
+  selector:
+    app: example1
+  ports:
+  - name: http
+    protocol: TCP
+    port: 8080
+    targetPort: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: example
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - test-ingress.example.duckdns.org
+  rules:
+  - host: test-ingress.example.duckdns.org
+    http:
+      paths:
+      - path: /hello1
+        pathType: Prefix
+        backend:
+          service:
+            name: example1
+            port:
+              number: 8080
