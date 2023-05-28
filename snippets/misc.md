@@ -20,6 +20,10 @@ netstat -tuplen
 2. Press "Clear host cache".
 3. Then close and re-launch chrome.
 
+# Disable HSTS in chrome
+
+Type `thisisunsafe` when the "Certificate error" page is open.
+
 # Strange warning in pve console
 
 Message from syslogd@pve at Mar 28 00:48:39 ...
