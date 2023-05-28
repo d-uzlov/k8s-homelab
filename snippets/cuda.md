@@ -75,6 +75,8 @@ sudo nvidia-smi --id 0 --power-limit 125
 
 ```bash
 apt-get install -y lm-sensors fancontrol
+# https://www.binarytides.com/monitor-cpu-power-consumption-on-ubuntu/
+apt install linux-cpupower
 
 sensors-detect
 service kmod restart
@@ -84,6 +86,10 @@ pwmconfig
 systemctl restart fancontrol.service
 
 sensors
+
+# turbostat doesn't seem to work properly with modern systems
+turbostat --Summary --quiet --show Busy%,Avg_MHz,PkgTmp,PkgWatt --interval 1
+# s-tui supposedly works better, but I'm yet to check this
 ```
 
 nano /etc/fancontrol
