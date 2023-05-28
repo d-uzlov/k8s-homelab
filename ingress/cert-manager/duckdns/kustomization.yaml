@@ -4,7 +4,30 @@ kind: Kustomization
 
 resources:
 - duckdns.yaml
-- secret.yaml
+- issuers.yaml
+- secret
 
 patchesStrategicMerge:
 - domain-solver-patch.yaml
+
+replacements:
+- source:
+    kind: ConfigMap
+    name: letsencrypt
+    fieldPath: data.email
+  targets:
+  - select:
+      kind: ClusterIssuer
+      name: duckdns-letsencrypt-production
+    fieldPaths:
+    - spec.acme.email
+- source:
+    kind: ConfigMap
+    name: letsencrypt
+    fieldPath: data.email
+  targets:
+  - select:
+      kind: ClusterIssuer
+      name: duckdns-letsencrypt-staging
+    fieldPaths:
+    - spec.acme.email
