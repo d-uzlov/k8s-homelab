@@ -23,7 +23,7 @@ EOF
 cat <<EOF > ./cloud/nextcloud/env/redis.env
 redis_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 EOF
-# Init local settings
+# Init once
 cat <<EOF > ./cloud/nextcloud/env/nextcloud.env
 # Space-separated list of domaind. Wildcard is allowed in any place.
 # frontend.*.svc is required for onlyoffice integration
@@ -31,7 +31,7 @@ trusted_domains=*.example.duckdns.org frontend.*.svc
 # k8s pod CIDR
 trusted_proxies=10.201.0.0/16
 EOF
-# Init local settings
+# Init once
 cat <<EOF > ./cloud/nextcloud/env/ingress.env
 # host used in ingress
 public_domain=nextcloud.example.duckdns.org

@@ -20,12 +20,12 @@ cat <<EOF > ./cloud/nextcloud/env/api.env
 jwt_header=AuthorizationJwt
 jwt_secret=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 EOF
-# Init local settings
+# Init once
 cat <<EOF > ./cloud/nextcloud/env/public_domain.env
 # host used in ingress
 public_domain=onlyoffice.example.duckdns.org
 EOF
-# Init local settings
+# Init once
 cat <<EOF > ./cloud/nextcloud/env/settings.env
 # set to value specified in ingress/manual-certificates/<your-cert>
 wildcard_secret_name=wild--example.duckdns.org
