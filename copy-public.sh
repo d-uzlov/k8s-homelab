@@ -7,9 +7,6 @@ replace_cidr="$3"
 
 rm -rf "$target/*" || true
 mkdir -p "$target"
-# cp -f
-#     --target-directory "$target"
-#     $(git ls-files | grep env/ --invert)
 
 sed_args=
 for i in $replace_example; do
