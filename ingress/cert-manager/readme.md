@@ -1,18 +1,13 @@
 
-# Deploy cert-manager
+# Cert-manager
 
-kl apply -f ./ingress/cert-manager-1.11/cert-manager.yaml
-kl apply -f ./ingress/cert-manager-1.11/issuers/letsencrypt-staging.yaml
-kl apply -f ./ingress/cert-manager-1.11/issuers/letsencrypt-production.yaml
+This is an app to automatically create and update certificates
+by automatically issuing them from any ACME-compatible certificate provider.
 
-# Install
-
-download CRDs:
-```bash
-wget https://github.com/cert-manager/cert-manager/releases/download/v1.11.1/cert-manager.crds.yaml
-```
+# Deploy
 
 ```bash
+# Generate deployment
 helm repo add jetstack https://charts.jetstack.io
 helm repo update
 helm template \
@@ -21,84 +16,56 @@ helm template \
   --version v1.11.0 \
   --set installCRDs=false
   > ./ingress/cert-manager/cert-manager.yaml
+
+kl apply -k ./ingress/cert-manager
 ```
 
-# Ingress settings
+There are several ready-to-use issuers:
+- [DuckDNS (DNS-01 challenge with duckdns domains)](./duckdns/)
+- [LetsEncrypt (HTTP-01 challenge)](./letsencrypt/)
 
-Select a proper issuer.
-The `Issuer` is namespaced.
-Use `ClusterIssuer` for cluster-wide deployment.
+# Ingress with single-domain certificates
 
+Add an annotation to the ingress:
 ```yaml
-cert-manager.io/cluster-issuer: letsencrypt-staging
+# for namespaced issuers
+cert-manager.io/issuer: issuer-name
+# for cluster-wide issuers
+cert-manager.io/cluster-issuer: issuer-name
 ```
+
+Change issuer name accordingly.
+
+Certificate will be automaticelly issued and injected into the Ingress resource.
 
 # Wildcard certificate
 
-```bash
-kl apply -k ./ingress/cert-manager/duckdns
-kl apply -k ./ingress/replicator
+You need to deploy following resources:
+- [DuckDNS webhook](./duckdns/)
+- [Replicator](../replicator/)
+- [Manually create a certificate](../manual-certificates/)
 
-# edit certificate info and add more certificates
-kl create ns certificates
-kl apply -k ./ingress/manual-certificates
-```
-
-Then annotate namespaces that need to use this wildcard certificate.
-Use matching label in certificate secret template and in command.
-For example:
-
-```bash
-kl label ns nextcloud copy-wild-cert=example
-```
-
-Edit ingress resource:
-Remove issuer annotation.
-Set `spec.tls[].secretName` to match secret name from certificate spec.
+Manual certificate deployment also has instructions on how to use the certificate.
 
 # Error handling
 
-Ingress issues a new certificate if it currently doesn't exist.
-Certificate is kept in a k8s secret.
+Ingress creates a new certificate if requested certificate currently doesn't exist.
+Certificates are kept as a k8s secrets.
 
 If you create a certificate with incorrect settings,
+then change the settings, but keep the secret name the same,
 it will not be automatically reissued with new settings.
 You need to either change the secret name or delete the old secret.
 
 # Browser error handling
 
-If you have opened the web page with a wrong certificate, the certificate is cached.
+If you have opened the web page with a wrong certificate, the certificate may be cached.
 Even if you update the certificate on the server side, the client won't see it.
 
 You need to clear browser cache to pick up the new certificate.
 You may also need to restart the browser after clearing the cache.
 
-# Letsencrypt rate limits
-
-- Certificates per Registered Domain: 50 per week
-  Registered Domain is a `<subdomains>.<registered-name>.<register-domain>`.`
-  `<register-domain>` is a parent domain, like `com`, `net`, `co.uk`, etc.
-  Fourtunately, `duckdns.org` is in the list of register domains,
-  so things like `my-domain.duckdns.org` and `another-domain.duckdns.org`
-  are considered separate domains and don't share a rate limit.
-  However, `app.my-domain.duckdns.org` and `cloud.my-domain.duckdns.org` share the limit.
-
-  This is better explained here: https://publicsuffix.org
-  Also that website has a list of all `<register-domain>` possible values.
-- New Orders per account: 300 per 3 hours
-- Duplicate Certificate: 5 per week
-- Failed Validation limit: 5 failures per account, per hostname, per hour.
-  This limit is higher on our staging environment
-- Accounts per IP Address: 10 per 3 hours
-
-An account is registered by cert-manager when you create a new Issuer or a ClusterIssuer
-https://cert-manager.io/docs/configuration/acme/
-It's possible to reuse the old account if you have its key.
-
-You should use the staging issuer first to make sure that there are no issues.
-If there are any issues they won't affect the production issuer rate limits.
-
-# Alt AMCE providers
+# List of AMCE providers
 
 * LetsEncrypt
   * Rate limits described above
