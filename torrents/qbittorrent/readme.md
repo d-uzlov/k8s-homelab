@@ -44,16 +44,6 @@ Check service description to learn load balancer ip and port.
 
 Default username/password is admin/adminadmin
 
-# Replicas
-
-qbittorrent locks a file in the config folder on startup.
-If the file is already locked, it exits.
-Therefore, it's impossible to run 2 instances with the same config folder.
-
-One side effect of this is that RollingUpdate doesn't work.
-Also, if you delete a pod manually, it also holds the lock until it properly exits.
-Meanwhile, the new pod restarts in a cycle.
-
 # Alt web UI
 
 Posible web UIs:
@@ -61,6 +51,6 @@ https://github.com/erickok/transdroid (universal)
 https://github.com/CCExtractor/rutorrent-flutter (rutorrent)
 https://github.com/lgallard/qBittorrent-Controller (qbittorrent)
 
-# TODO
+# Add treckers
 
-https://github.com/usma0118/magnet2torrent
+https://github.com/ngosang/trackerslist

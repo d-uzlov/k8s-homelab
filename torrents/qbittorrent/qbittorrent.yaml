@@ -4,12 +4,13 @@ kind: Deployment
 metadata:
   name: qbittorrent
 spec:
-  # torrents likely won't work with more than one replica
+  # qbittorrent has a lockfile
+  # this prevents running several replicas
+  # this also prevents RollingUpdate
+  # Second instance will exit right after strating,
+  # when it can't lock the file.
   replicas: 1
   strategy:
-    # qbittorrent is incompatible with RollingUpdate.
-    # New instance shuts down along with the old one because of shared ipc-socket file,
-    # and I have no idea how many other bugs may occur.
     type: Recreate
   selector:
     matchLabels:
@@ -35,6 +36,8 @@ spec:
         - name: data-udp
           containerPort: 6881
           protocol: UDP
+        securityContext:
+          readOnlyRootFilesystem: true
         env:
         - name: WEBUI_PORT
           value: '8080'
@@ -98,7 +101,6 @@ spec:
           mountPath: /config
         - name: watch
           mountPath: /mnt/watch
-          readOnly: true
         - name: data
           mountPath: /mnt/data
         startupProbe:
@@ -133,6 +135,7 @@ spec:
       - name: watch
         persistentVolumeClaim:
           claimName: watch
+          readOnly: true
       - name: data
         persistentVolumeClaim:
           claimName: data
@@ -155,11 +158,12 @@ kind: Service
 metadata:
   name: data
 spec:
-  selector:
-    app: qbittorrent
   type: LoadBalancer
   loadBalancerIP: 10.0.3.1
   allocateLoadBalancerNodePorts: false
+  externalTrafficPolicy: Cluster
+  selector:
+    app: qbittorrent
   ports:
   - name: tcp
     protocol: TCP

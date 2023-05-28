@@ -61,7 +61,7 @@ fi
 profilePath="$CONFIG_LOCATION"
 configFile="$profilePath/qBittorrent/config/qBittorrent.conf"
 watchFile="$profilePath/qBittorrent/config/watched_folders.json"
-logLocation="/tmp"
+logLocation="$profilePath/log"
 
 if [ "$FORCE_OVERWRITE_CONFIG" = "true" ] || [ ! -f "$configFile" ]; then
     echo "copying/overwriting main config file..."
@@ -75,7 +75,7 @@ if [ "$FORCE_OVERWRITE_CONFIG" = "true" ] || [ ! -f "$watchFile" ]; then
     rm -rf "$watchFile"
     mkdir -p "$(dirname "$watchFile")"
     cp -f "$DEFAULT_CONFIG_LOCATION/watched_folders.json" "$watchFile"
-    sed -i "s|/mnt/watch|$WATCH_ROOT|" "$watchFile"
+    sed -i "s|/mnt/watch_root|$WATCH_ROOT|" "$watchFile"
     sed -i "s|/mnt/watch_incomplete|$WATCH_INCOMPLETE|" "$watchFile"
     sed -i "s|/mnt/watch_finished|$FINISHED_FOLDER|" "$watchFile"
 fi
@@ -115,6 +115,7 @@ fi
 # force bittorrent logs to stdout
 # https://github.com/qbittorrent/qBittorrent/issues/10077
 echo "redirecting log file to stdout..."
+mkdir -p "$logLocation"
 log_file="$logLocation/qbittorrent.log"
 rm -f "$log_file"
 mkfifo "$log_file"
