@@ -1,0 +1,52 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: radium
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: radium
+  template:
+    metadata:
+      labels:
+        app: radium
+    spec:
+      containers:
+      - name: radium
+        image: ghcr.io/zibbp/radium:next
+        ports:
+          - name: web
+            containerPort: 3000
+        env:
+        - name: BASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: radium
+              key: public_link
+        - name: INITIAL_SOURCE_TYPE
+          value: webrtc
+        - name: INITIAL_SOURCE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: radium
+              key: source_irl
+        resources:
+          requests:
+            cpu: 0m
+            memory: 100Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: radium
+spec:
+  selector:
+    app: radium
+  ports:
+  - name: web
+    port: 3000

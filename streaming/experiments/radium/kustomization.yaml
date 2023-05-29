@@ -1,0 +1,46 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: radium
+
+resources:
+- radium.yaml
+- ingress.yaml
+
+configMapGenerator:
+- name: radium
+  envs:
+  - env/radium.env
+
+replacements:
+- source:
+    kind: ConfigMap
+    name: radium
+    fieldPath: data.public_domain
+  targets:
+  - select:
+      kind: Ingress
+      name: radium
+    fieldPaths:
+    - spec.rules.0.host
+- source:
+    kind: ConfigMap
+    name: radium
+    fieldPath: data.wildcard_secret_name
+  targets:
+  - select:
+      kind: Ingress
+      name: radium
+    fieldPaths:
+    - spec.tls.0.secretName
+- source:
+    kind: ConfigMap
+    name: radium
+    fieldPath: data.allowed_sources
+  targets:
+  - select:
+      kind: Ingress
+      name: radium
+    fieldPaths:
+    - metadata.annotations.[nginx.ingress.kubernetes.io/whitelist-source-range]
