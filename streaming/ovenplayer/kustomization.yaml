@@ -2,22 +2,16 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: ome
+namespace: ome-player
 
 resources:
-- ovenmediaengine.yaml
+- ovenplayer.yaml
 - ingress.yaml
 
 configMapGenerator:
-- name: ome-config
-  files:
-  - ome-config.xml
 - name: ingress
   envs:
   - env/ingress.env
-- name: services
-  envs:
-  - env/services.env
 
 replacements:
 - source:
@@ -27,7 +21,7 @@ replacements:
   targets:
   - select:
       kind: Ingress
-      name: signaling
+      name: ovenplayerdemo
     fieldPaths:
     - spec.rules.0.host
 - source:
@@ -37,7 +31,7 @@ replacements:
   targets:
   - select:
       kind: Ingress
-      name: signaling
+      name: ovenplayerdemo
     fieldPaths:
     - spec.tls.0.secretName
 - source:
@@ -47,26 +41,6 @@ replacements:
   targets:
   - select:
       kind: Ingress
-      name: signaling
+      name: ovenplayerdemo
     fieldPaths:
     - metadata.annotations.[nginx.ingress.kubernetes.io/whitelist-source-range]
-- source:
-    kind: ConfigMap
-    name: services
-    fieldPath: data.provide_ip
-  targets:
-  - select:
-      kind: Service
-      name: provide
-    fieldPaths:
-    - spec.loadBalancerIP
-- source:
-    kind: ConfigMap
-    name: services
-    fieldPath: data.stream_ip
-  targets:
-  - select:
-      kind: Service
-      name: webrtc-ice
-    fieldPaths:
-    - spec.loadBalancerIP
