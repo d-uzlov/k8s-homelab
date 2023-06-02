@@ -3,9 +3,9 @@
 
 ```bash
 kl create ns nextcloud
-kl label ns nextcloud copy-wild-cert=example
-kl label ns nextcloud onlyoffice.replicator.io/api=
-kl label ns nextcloud onlyoffice.replicator.io/public-domain=
+kl label ns --overwrite nextcloud copy-wild-cert=example
+kl label ns --overwrite nextcloud onlyoffice.replicator.io/api=
+kl label ns --overwrite nextcloud onlyoffice.replicator.io/public-domain=
 
 # Init once
 cat <<EOF > ./cloud/nextcloud/env/mariadb.env

@@ -18,7 +18,7 @@ compared to description in master branch, and the project seems to be abandoned.
 
 ```bash
 kl create ns radium
-kl label ns radium copy-wild-cert=example
+kl label ns --overwrite radium copy-wild-cert=example
 
 # Init once
 cat <<EOF > ./torrents/qbittorrent/env/ingress.env

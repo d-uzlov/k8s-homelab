@@ -3,7 +3,7 @@
 
 ```bash
 kl create ns echo
-kl label ns echo copy-wild-cert=example
+kl label ns --overwrite echo copy-wild-cert=example
 
 kl apply -k ./test/echo
 

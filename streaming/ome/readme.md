@@ -11,7 +11,7 @@ This is a video streaming engine that supports low latency streams
 
 ```bash
 kl create ns ome
-kl label ns ome copy-wild-cert=example
+kl label ns --overwrite ome copy-wild-cert=example
 
 # Init once
 mkdir -p ./streaming/ome/env

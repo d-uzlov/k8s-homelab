@@ -30,7 +30,7 @@ kl create ns replicator-demo
 
 kl -n replicator-demo get secret
 
-kl label ns replicator-demo copy-wild.local/domainname=true
+kl label ns --overwrite replicator-demo copy-wild.local/domainname=true
 
 kl -n replicator-demo get secret
 ```
@@ -44,5 +44,5 @@ replicator.v1.mittwald.de/replicate-to-matching: some-unique-name=value
 
 Enable push for namespace:
 ```bash
-kl label ns namespace-name some-unique-name=value
+kl label ns --overwrite namespace-name some-unique-name=value
 ```

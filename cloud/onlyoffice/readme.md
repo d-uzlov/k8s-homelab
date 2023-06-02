@@ -7,7 +7,7 @@ https://github.com/ONLYOFFICE/docker-onlyoffice-nextcloud
 
 ```bash
 kl create ns onlyoffice
-kl label ns onlyoffice copy-wild-cert=example
+kl label ns --overwrite onlyoffice copy-wild-cert=example
 
 # Init once
 cat <<EOF > ./cloud/nextcloud/env/postrgesql.env

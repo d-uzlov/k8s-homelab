@@ -12,7 +12,7 @@ you can just use this demo as a main website.
 
 ```bash
 kl create ns ome-player
-kl label ns ome-player copy-wild-cert=example
+kl label ns --overwrite ome-player copy-wild-cert=example
 
 # Init once
 mkdir -p ./streaming/ovenplayer/env
