@@ -3,14 +3,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: fortio
-  namespace: fortio
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: fortio
-  strategy:
-    type: RollingUpdate
   template:
     metadata:
       labels:
@@ -25,9 +21,41 @@ spec:
         ports:
         - containerPort: 8080
         volumeMounts:
-        - mountPath: /var/lib/fortio
-          name: data
+        - name: data
+          mountPath: /var/lib/fortio
+        resources:
+          requests:
+            cpu: 0m
+            memory: 10Mi
+          limits:
+            cpu: 4000m
+            memory: 1000Mi
       volumes:
       - name: data
         persistentVolumeClaim:
-          claimName: fortio-data
+          claimName: data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fortio
+spec:
+  selector:
+    app: fortio
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: 8080
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: data
+spec:
+  storageClassName: ssd
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Mi

@@ -5,8 +5,42 @@ kind: Kustomization
 namespace: fortio
 
 resources:
-- namespace.yaml
 - deploy.yaml
 - ingress.yaml
-- service.yaml
-- pvc.yaml
+
+configMapGenerator:
+- name: ingress
+  envs:
+  - env/ingress.env
+
+replacements:
+- source:
+    kind: ConfigMap
+    name: ingress
+    fieldPath: data.public_domain
+  targets:
+  - select:
+      kind: Ingress
+      name: fortio
+    fieldPaths:
+    - spec.rules.0.host
+- source:
+    kind: ConfigMap
+    name: ingress
+    fieldPath: data.wildcard_secret_name
+  targets:
+  - select:
+      kind: Ingress
+      name: fortio
+    fieldPaths:
+    - spec.tls.0.secretName
+- source:
+    kind: ConfigMap
+    name: ingress
+    fieldPath: data.allowed_sources
+  targets:
+  - select:
+      kind: Ingress
+      name: fortio
+    fieldPaths:
+    - metadata.annotations.[nginx.ingress.kubernetes.io/whitelist-source-range]
