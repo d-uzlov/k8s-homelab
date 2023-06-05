@@ -1,34 +1,24 @@
 
-# в ubuntu-k8s:
+# When installing
 
+Don't forget to increase LVM partition size to 100%.
 при установке не забыть расширить партишн до максимума
 
-# Fix 'too many open files' issue
+# extend LVM
+
+If you forgot to increase LVM size during installation,
+you can do it manually afterwards:
 
 ```bash
-sudo sysctl fs.inotify.max_user_watches=524288
-sudo sysctl fs.inotify.max_user_instances=512
-
-# To make the changes persistent, edit the file /etc/sysctl.conf and add these lines:
-
-fs.inotify.max_user_watches = 524288
-fs.inotify.max_user_instances = 512
+sudo vgdisplay
+sudo lvextend -l +100%FREE /dev/mapper/ubuntu--vg-ubuntu--lv
+sudo resize2fs /dev/mapper/ubuntu--vg-ubuntu--lv
 ```
 
-fs.inotify.max_user_instances seems to be stuck at 128 after reboot.
-Manual sysctl call fixes it until the next reboot.
-At least this is what I see in the WSL 22.04.1 LTS 5.15.90.1-microsoft-standard-WSL2.
-
-# после установки свежей ебунты
+# Network manager
 
 ```bash
-sudo apt-get update
-sudo apt-get upgrade -y
-sudo apt-get -y install nfs-common
-
-sudo apt -y autoremove
-
-# for calico (if network manager is installed)
+# if you want to use it:
 sudo mkdir -p /etc/NetworkManager/conf.d/
 sudo tee /etc/NetworkManager/conf.d/calico.conf <<EOF
 [keyfile]
@@ -45,6 +35,16 @@ sudo systemctl disable NetworkManager.service
 sudo systemctl disable NetworkManager-wait-online.service
 sudo systemctl disable NetworkManager-dispatcher.service
 sudo systemctl disable network-manager.service
+```
+
+# после установки свежей ебунты
+
+```bash
+sudo apt-get update
+sudo apt-get upgrade -y
+sudo apt-get -y install nfs-common
+
+sudo apt -y autoremove
 
 sudo apt install cachefilesd
 sudo systemctl enable --now cachefilesd
@@ -54,7 +54,8 @@ sudo shutdown now
 sudo reboot now
 ```
 
-# конфигурациz статического ip в ебунте:
+# Static IP
+
 sudo nano etc/netplan/.......
 ```yaml
 network:
@@ -76,10 +77,18 @@ network:
   version: 2
 ```
 
-# extend LVM
+# Fix 'too many open files' issue
 
 ```bash
-sudo vgdisplay
-sudo lvextend -l +100%FREE /dev/mapper/ubuntu--vg-ubuntu--lv
-sudo resize2fs /dev/mapper/ubuntu--vg-ubuntu--lv
+sudo sysctl fs.inotify.max_user_watches=524288
+sudo sysctl fs.inotify.max_user_instances=512
+
+# To make the changes persistent, edit the file /etc/sysctl.conf and add these lines:
+
+fs.inotify.max_user_watches = 524288
+fs.inotify.max_user_instances = 512
 ```
+
+fs.inotify.max_user_instances seems to be stuck at 128 after reboot.
+Manual sysctl call fixes it until the next reboot.
+At least this is what I see in the WSL 22.04.1 LTS 5.15.90.1-microsoft-standard-WSL2.
