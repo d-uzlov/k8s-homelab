@@ -42,6 +42,24 @@ pcie_acs_override=downstream,multifunction
 # because of stupid corporations
 ```
 
+# Secure boot
+
+When using UEFI, secure boot is enabled by default.
+It will prevent you from using the VM for anything interesting.
+
+You can disable it in the BIOS screen, which opens if you press ESC during boot:
+
+# QEMU guest agent
+
+Enable in `<vm-settings>` -> `Options` -> `QEMU Guest Agent`.
+
+Install into VM:
+```bash
+# Debian / Ubuntu
+sudo apt-get -y install qemu-guest-agent
+sudo systemctl start qemu-guest-agent
+```
+
 # email notifications
 
 Taken from the guide here:

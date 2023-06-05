@@ -1,8 +1,6 @@
 
 # в ubuntu-k8s:
 
-при первом запуске нажать ESC во время загрузки BIOS/EFI
-Перейти в настройки secure boot и снять крестик. Сохраниться, перезагрузиться.
 при установке не забыть расширить партишн до максимума
 
 # Fix 'too many open files' issue
@@ -25,10 +23,7 @@ At least this is what I see in the WSL 22.04.1 LTS 5.15.90.1-microsoft-standard-
 
 ```bash
 sudo apt-get update
-sudo apt-get -y install qemu-guest-agent
-sudo systemctl start qemu-guest-agent
 sudo apt-get upgrade -y
-
 sudo apt-get -y install nfs-common
 
 sudo apt -y autoremove
