@@ -12,3 +12,68 @@ $include /etc/inputrc
 "\e[B":history-search-forward
 EOF
 ```
+
+# Useful promt
+
+Add to your `~/.bashrc`:
+```bash
+PROMPT_COMMAND=__prompt_command    # Function to generate PS1 after CMDs
+
+__prompt_command() {
+    local EXIT="$?"                # This needs to be first
+    PS1="${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]"
+
+    local RCol='\[\e[0m\]'
+
+    local Red='\[\e[0;31m\]'
+    local Gre='\[\e[0;32m\]'
+    local BYel='\[\e[1;33m\]'
+    local BBlu='\[\e[1;34m\]'
+    local Pur='\[\e[0;35m\]'
+
+    if [ $EXIT != 0 ]; then
+        code_color="${Red}"
+#        PS1+="${Red}\$${RCol}"        # Add red if exit code non 0
+        PS1+="$code_color"
+        PS1+=' \$? == '
+        PS1+="$EXIT"
+        PS1+="${RCol}"
+    else
+        code_color="${BYel}"
+#        PS1+="${BYel}\$${RCol}"
+    fi
+    PS1+="\n"
+    PS1+="$code_color"
+    PS1+="\$"
+    PS1+="${RCol}"
+    PS1+=" "
+
+#    PS1+="${RCol}@${BBlu}\h ${Pur}\W${BYel}$ ${RCol}"
+}
+```
+
+# Kubectl completion
+
+```bash
+source <(kind completion bash)
+source <(kubectl completion bash)
+alias k=kubectl
+complete -o default -F __start_kubectl k
+
+export KUBECONFIG1=/tmp/kind-configs/kubeconfig-kind
+export KUBECONFIG2=/tmp/kind-configs/kubeconfig-kind-2
+# export KUBECONFIG3=/tmp/kind-configs/kubeconfig-kind-3
+
+export KUBECONFIG=$KUBECONFIG1
+
+export CLUSTER1_CIDR=172.18.201.0/24
+export CLUSTER2_CIDR=172.18.202.0/24
+export CLUSTER3_CIDR=172.18.203.0/24
+
+alias k1"=kubectl --kubeconfig=$KUBECONFIG1"
+alias k2="kubectl --kubeconfig=$KUBECONFIG2"
+# alias k3="kubectl --kubeconfig=$KUBECONFIG3"
+complete -o default -F __start_kubectl k1
+complete -o default -F __start_kubectl k2
+# complete -o default -F __start_kubectl k3
+```
