@@ -1,17 +1,57 @@
 
-Set up cluster networking
-```bash
-# install operator
-kl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/tigera-operator.yaml
+# Install
 
-# install Calico
+```bash
+# Local init
+cat <<EOF > ./network/calico/cm/env/api.env
+KUBERNETES_SERVICE_HOST=kubeadm-master.danil
+KUBERNETES_SERVICE_PORT=6443
+EOF
+
+# Install CRDs
+kl apply -k ./network/calico/crds --server-side=true
+# Deploy Calico using an operator
+kl create ns tigera-operator
+kl apply -k ./network/calico/cm
 kl apply -f ./network/calico/installation.yaml
+kl apply -k ./network/calico/operator
 
 # maybe we could need this for BGP but I disabled it
 # kl set env daemonset/calico-node -n calico-system IP_AUTODETECTION_METHOD=interface=ens18
 
 kl wait -n calico-system --for=condition=ready pods --all
 kl wait -n calico-apiserver --for=condition=ready pods --all
+```
+
+# Cleanup
+
+Calico doesn't clean up anything after you uninstall it.
+Especially if you just do `kubeadm reset`,
+without removing calico before destroying the cluster.
+
+Here is a short script that attempts to remove everything related to Calico.
+
+Other CNI plugins will likely need something similar.
+
+```bash
+sudo ipvsadm --clear &&
+sudo rm -rf /etc/cni &&
+sudo rm -rf /var/lib/cni &&
+sudo rm -rf /var/lib/calico &&
+sudo rm -rf /etc/calico &&
+(sudo rm -rf /var/run/calico > /dev/null || true) &&
+(sudo rm -rf /run/calico > /dev/null || true) &&
+sudo rm -rf /opt/cni &&
+sudo ip route flush proto bird &&
+ip link list | grep cali | awk '{print $2}' | cut -c 1-15 | sudo xargs -I {} ip link delete {} &&
+sudo iptables-save | grep -i cali | sudo iptables -F &&
+sudo iptables-save | grep -i cali | sudo iptables -X &&
+sudo iptables -S
+
+# If you `kubeadm reset` and `kubeadm init` without reboot
+# K8s will not detect when you install a CNI
+# And all pods will be stuck at Pending state
+sudo reboot
 ```
 
 # eBPF
@@ -21,9 +61,7 @@ https://docs.tigera.io/calico/latest/operations/ebpf/install
 
 ```bash
 # modify kubeadm flags (before installation, not after)
-kubeadm init --skip-phases=addon/kube-proxy
-
-# modify address in api-server-cm.yaml
+sudo kubeadm init --skip-phases=addon/kube-proxy --config ./kubelet-config.yaml
 ```
 
 # Modify existing installation to use aBPF
@@ -31,8 +69,9 @@ kubeadm init --skip-phases=addon/kube-proxy
 https://docs.tigera.io/calico/latest/operations/ebpf/enabling-ebpf
 
 ```bash
+kl apply -k ./network/calico/cm
 kl apply -f ./network/calico/api-server-cm.yaml
-kl patch ds -n kube-system kube-proxy -p '{"spec":{"template":{"spec":{"nodeSelector":{"non-calico": "true"}}}}}'
+kl -n tigera-operator delete pod --all
 
 # check that config mapp successfully applied
 kl -n calico-system logs deployments/calico-typha | grep KUBERNETES_SERVICE_HOST
