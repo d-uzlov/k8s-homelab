@@ -79,16 +79,19 @@ network:
 
 # Fix 'too many open files' issue
 
+In Ubuntu default values are 8192 and 128 respectively.
+
 ```bash
+# change limits for current session
 sudo sysctl fs.inotify.max_user_watches=524288
 sudo sysctl fs.inotify.max_user_instances=512
 
-# To make the changes persistent, edit the file /etc/sysctl.conf and add these lines:
-
+# change permanently
+# add these lines to /etc/sysctl.conf
 fs.inotify.max_user_watches = 524288
 fs.inotify.max_user_instances = 512
 ```
 
+In `WSL 22.04.1 LTS 5.15.90.1-microsoft-standard-WSL2`
 fs.inotify.max_user_instances seems to be stuck at 128 after reboot.
 Manual sysctl call fixes it until the next reboot.
-At least this is what I see in the WSL 22.04.1 LTS 5.15.90.1-microsoft-standard-WSL2.
