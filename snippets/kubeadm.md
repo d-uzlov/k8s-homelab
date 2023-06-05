@@ -59,33 +59,21 @@ echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://a
 sudo apt-get update
 sudo apt-get install -y kubelet kubeadm kubectl
 sudo apt-mark hold kubelet kubeadm kubectl
+
+# if you need a specific version
+sudo apt-get install -y kubelet=1.23.0-00 kubeadm=1.23.0-00 kubectl=1.23.0-00 --allow-downgrades --allow-change-held-packages
+sudo apt-get install -y kubelet=1.27.0-00 kubeadm=1.27.0-00 kubectl=1.27.0-00 --allow-downgrades --allow-change-held-packages
 ```
 
 Old setup:
 
 ```bash
-wget https://github.com/containerd/containerd/releases/download/v1.6.17/containerd-1.6.17-linux-amd64.tar.gz
-sudo tar Czxvf /usr/local containerd-1.6.17-linux-amd64.tar.gz
-
-wget https://raw.githubusercontent.com/containerd/containerd/main/containerd.service
-sudo mv containerd.service /usr/lib/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now containerd
-
-sudo systemctl status containerd
-containerd --version
-
 sudo sysctl --system
 
 sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmour -o /etc/apt/trusted.gpg.d/docker.gpg
 sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 sudo apt update
 sudo apt install -y containerd.io
-
-containerd config default | sudo tee /etc/containerd/config.toml >/dev/null 2>&1
-sudo sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
-sudo systemctl restart containerd
-sudo systemctl enable containerd
 
 echo br_netfilter | sudo tee /etc/modules-load.d/br_netfilter.conf
 sudo systemctl restart systemd-modules-load.service
@@ -130,6 +118,17 @@ sudo cat /etc/kubernetes/admin.conf
 
 # show command for worker nodes to join
 kubeadm token create --print-join-command
+```
+
+# Destroy cluster
+
+```bash
+# on the basic level destroying cluster is simple
+yes | sudo kubeadm reset
+
+# however, this can leave some leftover configs.
+# For example, CNI configs are not cleared.
+# Consult the CNI docs to learn how to clear VM after removing the cluster.
 ```
 
 # Check if k8s uses systemctl inhibit feature
