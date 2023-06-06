@@ -39,8 +39,8 @@ sudo rm -rf /etc/cni &&
 sudo rm -rf /var/lib/cni &&
 sudo rm -rf /var/lib/calico &&
 sudo rm -rf /etc/calico &&
-(sudo rm -rf /var/run/calico > /dev/null || true) &&
-(sudo rm -rf /run/calico > /dev/null || true) &&
+(sudo rm -rf /var/run/calico 2> /dev/null || true) &&
+(sudo rm -rf /run/calico 2> /dev/null || true) &&
 sudo rm -rf /opt/cni &&
 sudo ip route flush proto bird &&
 ip link list | grep cali | awk '{print $2}' | cut -c 1-15 | sudo xargs -I {} ip link delete {} &&
@@ -52,6 +52,7 @@ sudo iptables -S
 # K8s will not detect when you install a CNI
 # And all pods will be stuck at Pending state
 sudo reboot
+
 ```
 
 # eBPF
