@@ -65,7 +65,7 @@ sudo apt-get install -y kubelet=1.23.0-00 kubeadm=1.23.0-00 kubectl=1.23.0-00 --
 sudo apt-get install -y kubelet=1.27.0-00 kubeadm=1.27.0-00 kubectl=1.27.0-00 --allow-downgrades --allow-change-held-packages
 ```
 
-Old setup:
+Part of the old setup that is most likely not needed anymore:
 
 ```bash
 sudo sysctl --system
@@ -148,10 +148,9 @@ https://kubernetes.io/docs/concepts/architecture/nodes/#graceful-node-shutdown
 It isn't.
 
 Official documentation doesn't say it explicitly,
-but itvaguely implies that you at least need to use `systemd` to run services.
-But it's not nearly enough for the feature to work.
+but it vaguely implies that you at least need to use `systemd` to run services.
 
-There are several issues:
+There are several unintuitive issues that can prevent graceful shutdown:
 
 **1. Kubelet may silently fail to register shutdown delay hook**
 
@@ -168,18 +167,18 @@ systemd-inhibit --list
 
 If `systemd-inhibit` output does not contain the kubelet entry, it's probably because someone overrides `InhibitDelayMaxSec`.
 
-In Ubuntu with default settings the limit is always 30 seconds:
-- `/usr/lib/systemd/logind.conf.d/unattended-upgrades-logind-maxdelay.conf`
-
-Uninstall `unattended-upgrades` to fix it.
-
-Also, any of the following configs can cause graceful shutdown to stop working:
+Any of the following configs can set the wrong limit:
 - `/etc/systemd/logind.conf`
 - `/etc/systemd/logind.conf.d/*.conf`
 - `/run/systemd/logind.conf.d/*.conf`
 - `/usr/lib/systemd/logind.conf.d/*.conf`
 
 Grep `InhibitDelayMaxSec` in files in these directories.
+
+In Ubuntu the limit is 30 seconds:
+- `/usr/lib/systemd/logind.conf.d/unattended-upgrades-logind-maxdelay.conf`
+
+Uninstall `unattended-upgrades` to fix it.
 
 References:
 - https://github.com/kubernetes/kubernetes/issues/107043
@@ -190,7 +189,7 @@ References:
 
 But `systemctl` does not respect systemd inhibitor locks when called as `shutdown`.
 
-You must use `systemctl poweroff` or a DBus shutdown command (but I didn't test it).
+You must use `systemctl poweroff`. This command works even when run as root.
 
 If you don't control how the node is shut down,
 replace `/usr/sbin/shutdown` with the following script:
@@ -205,6 +204,8 @@ shutdown -h +1
 ```
 
 Same goes for `reboot`.
+
+DBus shutdown is supposed to work fine but I don't have a way to test this.
 
 Shutdown events from power button are supposed to work fine.
 I don't have a physical machine to test it.
