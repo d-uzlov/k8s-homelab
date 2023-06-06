@@ -37,12 +37,13 @@ sudo systemctl disable NetworkManager-dispatcher.service
 sudo systemctl disable network-manager.service
 ```
 
-# после установки свежей ебунты
+# Ubuntu initial setup
 
 ```bash
 sudo apt-get update
 sudo apt-get upgrade -y
 sudo apt-get -y install nfs-common
+sudo apt-get -y remove unattended-upgrades
 
 sudo apt -y autoremove
 
@@ -56,7 +57,7 @@ sudo reboot now
 
 # Static IP
 
-sudo nano etc/netplan/.......
+sudo nano /etc/netplan/00-installer-config.yaml
 ```yaml
 network:
   ethernets:

@@ -131,12 +131,6 @@ yes | sudo kubeadm reset
 # Consult the CNI docs to learn how to clear VM after removing the cluster.
 ```
 
-# Check if k8s uses systemctl inhibit feature
-
-```bash
-systemd-inhibit --list
-```
-
 # Clear space on disk
 
 If you run many different images in k8s,
@@ -145,3 +139,95 @@ local storage will eventually become filled with garbage images.
 ```bash
 sudo crictl --runtime-endpoint unix:///run/containerd/containerd.sock rmi --prune
 ```
+
+# Graceful node shutdown
+
+According to documentation it should be as easy as enabling `shutdownGracePeriod` and `shutdownGracePeriodCriticalPods` in config:
+https://kubernetes.io/docs/concepts/architecture/nodes/#graceful-node-shutdown
+
+It isn't.
+
+Official documentation doesn't say it explicitly,
+but itvaguely implies that you at least need to use `systemd` to run services.
+But it's not nearly enough for the feature to work.
+
+There are several issues:
+
+**1. Kubelet may silently fail to register shutdown delay hook**
+
+First, check the list of systemd hooks to see if kubelet at least registered itself for graceful shutdown.
+
+```bash
+cat /etc/systemd/logind.conf.d/99-kubelet.conf
+# file should contain something like this: InhibitDelayMaxSec=30
+
+systemd-inhibit --list
+# output should contain something like this:
+# kubelet      0   root 1079   kubelet      shutdown Kubelet needs time to handle node shutdown delay
+```
+
+If `systemd-inhibit` output does not contain the kubelet entry, it's probably because someone overrides `InhibitDelayMaxSec`.
+
+In Ubuntu with default settings the limit is always 30 seconds:
+- `/usr/lib/systemd/logind.conf.d/unattended-upgrades-logind-maxdelay.conf`
+
+Uninstall `unattended-upgrades` to fix it.
+
+Also, any of the following configs can cause graceful shutdown to stop working:
+- `/etc/systemd/logind.conf`
+- `/etc/systemd/logind.conf.d/*.conf`
+- `/run/systemd/logind.conf.d/*.conf`
+- `/usr/lib/systemd/logind.conf.d/*.conf`
+
+Grep `InhibitDelayMaxSec` in files in these directories.
+
+References:
+- https://github.com/kubernetes/kubernetes/issues/107043
+
+**2. You must use systemd for shutting down your machine**
+
+`/usr/sbin/shutdown` is an alias to `/bin/systemctl`.
+
+But `systemctl` does not respect systemd inhibitor locks when called as `shutdown`.
+
+You must use `systemctl poweroff` or a DBus shutdown command (but I didn't test it).
+
+If you don't control how the node is shut down,
+replace `/usr/sbin/shutdown` with the following script:
+```bash
+#!/bin/bash
+exec systemctl poweroff
+```
+
+Alternatively, apprently scheduled shutdown also works:
+```bash
+shutdown -h +1
+```
+
+Same goes for `reboot`.
+
+Shutdown events from power button are supposed to work fine.
+I don't have a physical machine to test it.
+
+Shutting down a VM with `qemu-guest-agent` installed also seems to work fine.
+
+References:
+- https://github.com/kubernetes/website/pull/26963#issuecomment-794920869
+- https://github.com/systemd/systemd/issues/949
+
+**3. Systemd did not respect shutdown lock in older versions**
+
+Apparently, you need version `248` or newer.
+I didn't test to find out real minimum version.
+
+References:
+- https://github.com/systemd/systemd/issues/949
+- https://github.com/systemd/systemd/pull/18316
+- https://github.com/systemd/systemd/pull/9356
+- https://github.com/systemd/systemd/commit/8885fed4e3a52cf1bf105e42043203c485ed9d92
+
+# Non-graceful shutdown
+
+Apparently, it's possible to force-remove node and all it's pods from the clueter.
+
+https://kubernetes.io/blog/2022/05/20/kubernetes-1-24-non-graceful-node-shutdown-alpha/
