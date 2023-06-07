@@ -183,13 +183,13 @@ Uninstall `unattended-upgrades` to fix it.
 References:
 - https://github.com/kubernetes/kubernetes/issues/107043
 
-**2. You must use systemd for shutting down your machine**
+**2. You must use proper shutdown method**
 
-`/usr/sbin/shutdown` is an alias to `/bin/systemctl`.
+`/usr/sbin/shutdown` and `/usr/sbin/reboot` are aliases to `/bin/systemctl`.
 
-But `systemctl` does not respect systemd inhibitor locks when called as `shutdown`.
+But `systemctl` does not respect systemd inhibitor locks when called as `shutdown` or `reboot`.
 
-You must use `systemctl poweroff`. This command works even when run as root.
+You must use `systemctl poweroff` or `systemctl reboot` respectively.
 
 If you don't control how the node is shut down,
 replace `/usr/sbin/shutdown` with the following script:
@@ -202,8 +202,6 @@ Alternatively, apprently scheduled shutdown also works:
 ```bash
 shutdown -h +1
 ```
-
-Same goes for `reboot`.
 
 DBus shutdown is supposed to work fine but I don't have a way to test this.
 
@@ -221,6 +219,8 @@ References:
 Apparently, you need version `248` or newer.
 I didn't test to find out real minimum version.
 
+Results in this documentations were obtained using version `249.11` in `Ubuntu 22.04.1`.
+
 References:
 - https://github.com/systemd/systemd/issues/949
 - https://github.com/systemd/systemd/pull/18316
@@ -229,6 +229,6 @@ References:
 
 # Non-graceful shutdown
 
-Apparently, it's possible to force-remove node and all it's pods from the clueter.
+Apparently, it's possible to force-remove node and all it's pods from the cluster.
 
 https://kubernetes.io/blog/2022/05/20/kubernetes-1-24-non-graceful-node-shutdown-alpha/
