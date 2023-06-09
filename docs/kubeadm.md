@@ -35,6 +35,7 @@ sudo tee /etc/modules-load.d/containerd.conf <<EOF
 overlay
 br_netfilter
 EOF
+sudo systemctl restart systemd-modules-load.service
 
 sudo modprobe overlay
 sudo modprobe br_netfilter
@@ -56,6 +57,8 @@ sudo install -m 755 runc.amd64 /usr/local/sbin/runc
 sudo mkdir -p /etc/apt/keyrings
 curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg
 echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+# install latest version
 sudo apt-get update
 sudo apt-get install -y kubelet kubeadm kubectl
 sudo apt-mark hold kubelet kubeadm kubectl
@@ -65,66 +68,87 @@ sudo apt-get install -y kubelet=1.23.0-00 kubeadm=1.23.0-00 kubectl=1.23.0-00 --
 sudo apt-get install -y kubelet=1.27.0-00 kubeadm=1.27.0-00 kubectl=1.27.0-00 --allow-downgrades --allow-change-held-packages
 ```
 
-Part of the old setup that is most likely not needed anymore:
-
-```bash
-sudo sysctl --system
-
-sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmour -o /etc/apt/trusted.gpg.d/docker.gpg
-sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-sudo apt update
-sudo apt install -y containerd.io
-
-echo br_netfilter | sudo tee /etc/modules-load.d/br_netfilter.conf
-sudo systemctl restart systemd-modules-load.service
-```
-
 # Modify config
 
 [kubelet-config.yaml](./kubelet-config.yaml) file contains an example config for kubeadm.
 
 You can modify it to match your local environment.
 
-At the very least you need to change `controlPlaneEndpoint`.
-This is an IP or DNS address that should point to the cluster master node.
-The connection should exist even before you create the cluster,
-or kubeadm will not be able to connect to it to verify that the cluster is working.
+Make sure that `controlPlaneEndpoint` points to your master node.
+
+It can be: a static IP assigned to a master node;
+DNS name pointing to the master node;
+IP or DNS pointing to external load balancer that redirects connections to the master node;
+etc.
+
+`controlPlaneEndpoint` should be available before you create the cluster.
+First kubelet uses it to connect to itself, and will fail to start if it can't connect.
 
 ```bash
 # you can also get the whole default config
 kubeadm config print init-defaults --component-configs KubeletConfiguration,KubeProxyConfiguration
 
-# Few references for config values:
+# References for config values:
 #   https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/
 #   https://kubernetes.io/docs/reference/config-api/kubeadm-config.v1beta3/
 ```
 
 # Start kubelet
 
+Before using `kubeadm` create a `kubelet-config.yaml` file.
+An example of the config is available here: [kubelet-config.yaml](./kubelet-config.yaml).
+
+If you are using [kube-vip](../network/kube-vip/),
+refer to its documentation for list of things
+you need to do before and after using kubeadm.
+
 ```bash
-# Consult your CNI documentation to determine if you need kube-proxy.
-# Don't skip it when in doubt.
+# Generic installation
 sudo kubeadm init --config ./kubelet-config.yaml
+# Calico with eBPF (or probably any other CNI with eBPF)
 sudo kubeadm init --skip-phases=addon/kube-proxy --config ./kubelet-config.yaml
 
-# copy kubectl config on control plane machine
+# (optionally) copy kubectl config on a control plane machine, for local access
 rm -r $HOME/.kube
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
-# print and copy from control plane into your local machine
+# print and copy from a control plane into your local machine
 sudo cat /etc/kubernetes/admin.conf
 
-# show command for worker nodes to join
+# show command to join worker nodes
 kubeadm token create --print-join-command
+
+# show command to join additional control plane nodes
+echo $(kubeadm token create --print-join-command) --control-plane --certificate-key $(kubeadm init phase upload-certs --upload-certs | grep -vw -e certificate -e Namespace)
+# Be careful, control plane nodes require additional setup
+# to be turned off, disabled, or be removed from cluster in some other way.
+# If you make 2 control plane nodes and one goes down, the second one will fail
+# because etcd requires at least (n/2)+1 nodes to be available to work.
+# Example how to remove control plane node:
+#   https://paranoiaque.fr/en/2020/04/19/remove-master-node-from-ha-kubernetes/
+```
+
+# Kubelet logs
+
+```bash
+sudo systemctl status kubelet.service
+
+# show full logs
+journalctl -xu kubelet
+
+# it is advised to clear logs before kubelet restart, if you want to read them
+# WARNING: this will delete all logs, not only from kubelet
+sudo journalctl --rotate
+sudo journalctl -m --vacuum-time=1s
 ```
 
 # Destroy cluster
 
 ```bash
 # on the basic level destroying cluster is simple
-yes | sudo kubeadm reset
+sudo kubeadm reset --force
 
 # however, this can leave some leftover configs.
 # For example, CNI configs are not cleared.
@@ -226,6 +250,13 @@ References:
 - https://github.com/systemd/systemd/pull/18316
 - https://github.com/systemd/systemd/pull/9356
 - https://github.com/systemd/systemd/commit/8885fed4e3a52cf1bf105e42043203c485ed9d92
+
+# Graceful node shutdown doesn't delete pods
+
+https://github.com/kubernetes/kubernetes/pull/108941
+https://github.com/kubernetes/kubernetes/issues/113278
+https://github.com/kubernetes/kubernetes/issues/113278#issuecomment-1406294874
+https://stackoverflow.com/a/75761843
 
 # Non-graceful shutdown
 

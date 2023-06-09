@@ -15,6 +15,33 @@ sudo lvextend -l +100%FREE /dev/mapper/ubuntu--vg-ubuntu--lv
 sudo resize2fs /dev/mapper/ubuntu--vg-ubuntu--lv
 ```
 
+# Ubuntu initial setup
+
+```bash
+sudo apt-get update
+sudo apt-get upgrade -y
+sudo apt-get -y install nfs-common
+sudo apt-get -y remove unattended-upgrades
+
+sudo apt -y autoremove
+
+sudo apt install cachefilesd
+sudo systemctl enable --now cachefilesd
+
+sudo tee /usr/sbin/shutdown <<EOF
+#!/bin/bash
+exec systemctl poweroff
+EOF
+sudo tee /usr/sbin/reboot <<EOF
+#!/bin/bash
+exec systemctl reboot
+EOF
+
+# choose one:
+sudo shutdown now
+sudo reboot now
+```
+
 # Network manager
 
 ```bash
@@ -37,22 +64,12 @@ sudo systemctl disable NetworkManager-dispatcher.service
 sudo systemctl disable network-manager.service
 ```
 
-# Ubuntu initial setup
+# Change hostname
 
 ```bash
-sudo apt-get update
-sudo apt-get upgrade -y
-sudo apt-get -y install nfs-common
-sudo apt-get -y remove unattended-upgrades
-
-sudo apt -y autoremove
-
-sudo apt install cachefilesd
-sudo systemctl enable --now cachefilesd
-
-# choose one:
-sudo shutdown now
-sudo reboot now
+sudo hostnamectl set-hostname km1
+# optionally you can also update hosts
+sudo nano /etc/hosts
 ```
 
 # Static IP
@@ -88,11 +105,27 @@ sudo sysctl fs.inotify.max_user_watches=524288
 sudo sysctl fs.inotify.max_user_instances=512
 
 # change permanently
-# add these lines to /etc/sysctl.conf
+# make sure that /etc/sysctl.conf
+# or other files in /etc/sysctl.d/
+# don't override these values
+sudo tee /etc/sysctl.d/inotify.conf <<EOF
 fs.inotify.max_user_watches = 524288
 fs.inotify.max_user_instances = 512
+EOF
 ```
 
 In `WSL 22.04.1 LTS 5.15.90.1-microsoft-standard-WSL2`
-fs.inotify.max_user_instances seems to be stuck at 128 after reboot.
-Manual sysctl call fixes it until the next reboot.
+`fs.inotify.max_user_instances` seems to be stuck at 128 after reboot.
+Manual `sysctl` call fixes it until the next reboot.
+
+# TRIM
+
+```bash
+sudo fstrim -v /
+```
+
+# Print full system config
+
+```bash
+sudo sysctl --system
+```

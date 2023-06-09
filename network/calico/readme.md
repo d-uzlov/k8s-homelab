@@ -4,7 +4,7 @@
 ```bash
 # Local init
 cat <<EOF > ./network/calico/cm/env/api.env
-KUBERNETES_SERVICE_HOST=kubeadm-master.danil
+KUBERNETES_SERVICE_HOST=kcp.lan
 KUBERNETES_SERVICE_PORT=6443
 EOF
 
@@ -48,10 +48,10 @@ sudo iptables-save | grep -i cali | sudo iptables -F &&
 sudo iptables-save | grep -i cali | sudo iptables -X &&
 sudo iptables -S
 
-# If you `kubeadm reset` and `kubeadm init` without reboot
-# K8s will not detect when you install a CNI
-# And all pods will be stuck at Pending state
-sudo reboot
+# If you `kubeadm reset` and then `kubeadm init` without reboot
+# new k8s installation will never detect CNI,
+# and all pods will be stuck in Pending state
+sudo systemctl reboot
 
 ```
 
