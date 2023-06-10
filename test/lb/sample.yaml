@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lb-example
+  labels:
+    app: lb-example
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lb-example
+  template:
+    metadata:
+      labels:
+        app: lb-example
+    spec:
+      containers:
+      - name: httpecho
+        image: hashicorp/http-echo
+        args:
+        - "-listen=:8080"
+        - "-text=hello world 1"
+        ports:
+        - containerPort: 8080
+        resources: {}
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: lb-example
+spec:
+  type: LoadBalancer
+  # loadBalancerIP: 10.0.0.12
+  selector:
+    app: lb-example
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: 8080
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: lb-example2
+spec:
+  type: LoadBalancer
+  selector:
+    app: lb-example
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: 8080
+---
