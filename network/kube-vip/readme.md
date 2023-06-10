@@ -87,3 +87,13 @@ It seems like settings from k8s works fine.
 Referenses:
 - https://github.com/kube-vip/kube-vip/issues/282
 - https://github.com/kubernetes/client-go/blob/v0.27.2/tools/leaderelection/leaderelection.go#L111
+
+# DHCP and UPnP
+
+Kube-vip supports allocating IPs for LoadBalancer services from DHCP server.
+
+It can also manage port-forwarding via UPnP.
+
+References:
+- https://kube-vip.io/docs/usage/kubernetes-services/#using-dhcp-for-load-balancers-experimental-kube-vip-v021
+- https://kube-vip.io/docs/usage/kubernetes-services/#using-upnp-to-expose-a-service-to-the-outside-world

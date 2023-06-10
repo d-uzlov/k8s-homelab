@@ -253,10 +253,14 @@ References:
 
 # Graceful node shutdown doesn't delete pods
 
-https://github.com/kubernetes/kubernetes/pull/108941
-https://github.com/kubernetes/kubernetes/issues/113278
-https://github.com/kubernetes/kubernetes/issues/113278#issuecomment-1406294874
-https://stackoverflow.com/a/75761843
+References:
+- https://github.com/kubernetes/kubernetes/pull/108941
+- https://github.com/kubernetes/kubernetes/issues/113278
+- https://github.com/kubernetes/kubernetes/issues/113278#issuecomment-1406294874
+- https://stackoverflow.com/a/75761843
+- https://stackoverflow.com/questions/40296056/kubernetes-delete-all-the-pods-from-the-node-before-reboot-or-shutdown-using-k
+- https://kubernetes.io/docs/concepts/architecture/garbage-collection/
+- https://longhorn.io/docs/archives/0.8.0/users-guide/node-failure/
 
 # Non-graceful shutdown
 

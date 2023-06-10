@@ -21,6 +21,9 @@ kl apply -k ./network/calico/operator
 
 kl wait -n calico-system --for=condition=ready pods --all
 kl wait -n calico-apiserver --for=condition=ready pods --all
+
+# enable Direct Server Return
+kl patch felixconfiguration default --type=merge --patch='{"spec": {"bpfExternalServiceMode": "DSR"}}'
 ```
 
 # Cleanup
@@ -53,16 +56,6 @@ sudo iptables -S
 # and all pods will be stuck in Pending state
 sudo systemctl reboot
 
-```
-
-# eBPF
-
-From scratch:
-https://docs.tigera.io/calico/latest/operations/ebpf/install
-
-```bash
-# modify kubeadm flags (before installation, not after)
-sudo kubeadm init --skip-phases=addon/kube-proxy --config ./kubelet-config.yaml
 ```
 
 # Modify existing installation to use aBPF
