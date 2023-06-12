@@ -8,12 +8,19 @@ function set_value() {
     name="$2"
     value="$3"
 
-    name="${name//\\/\\\\}"
-    name="${name//\//\\\/}"
-    value="${value//\\/\\\\}"
-    value="${value//\//\\\/}"
+    # escape \
+    name="${name//'\'/'\\'}"
+    value="${value//'\'/'\\'}"
+    # escape /
+    name="${name//'/'/'\/'}"
+    value="${value//'/'/'\/'}"
+    # escape ~
+    name="${name//'~'/'\~'}"
+    value="${value//'~'/'\~'}"
 
-    sed -i "s/^\($name\s*=\s*\).*\$/\1$value/" "$config"
+    echo "set $name to $value"
+
+    sed -i "s~^\($name\s*=\s*\).*\$~\1$value~" "$config"
 }
 
 function checkEnv() {
@@ -87,7 +94,6 @@ sleep 0.5
 
 echo "changing important settings..."
 set_value "$configFile" 'Accepted' "true"
-set_value "$configFile" 'OnTorrentAdded\Program' "$ADDED_HOOK_SCRIPT "'\"%D\" \"%I\"'
 set_value "$configFile" 'Session\Port' "$DATA_PORT"
 set_value "$configFile" 'Session\DefaultSavePath' "$FINISHED_FOLDER"
 set_value "$configFile" 'Session\TempPath' "$MANUAL_INCOMPLETE"
@@ -101,6 +107,12 @@ set_value "$configFile" 'WebUI\TrustedReverseProxiesList' "$TRUSTED_PROXIES"
 set_value "$configFile" 'WebUI\AuthSubnetWhitelistEnabled' "$useAuthWhitelist"
 set_value "$configFile" 'WebUI\AuthSubnetWhitelist' "$AUTH_WHITELIST"
 set_value "$configFile" 'WebUI\UseUPnP' "false"
+
+if [ ! -z "$ADDED_HOOK_SCRIPT" ]; then
+    set_value "$configFile" 'OnTorrentAdded\Program' "$ADDED_HOOK_SCRIPT "'\"%I\" \"%D\"'
+else
+    set_value "$configFile" 'OnTorrentAdded\Program' ''
+fi
 
 if [ "$RESET_PASSWORD" = "true" ]; then
     echo "resetting password..."

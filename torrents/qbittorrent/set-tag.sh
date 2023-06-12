@@ -2,9 +2,18 @@
 
 set -eu
 
-savepath="$1"
-hash="$2"
-host="http://localhost:8080"
+hash="$1"
+savepath="$2"
+
+function run_curl() {
+    api="$1"
+    check_result="$2"
+    error_prefix="$3"
+    data="$4"
+    retcode=0
+    result=$(curl --silent --fail-with-body --noproxy localhost --request POST "http://localhost:${WEBUI_PORT}$api" --data "$data") || retcode=$?
+    [ "$check_result" = "false" ] || ([ -z "$result" ] && [ $retcode = 0 ]) || echo "$error_prefix: \$?=$retcode: $result"
+}
 
 [[ "$savepath" == "$FINISHED_FOLDER"* ]] || exit
 
@@ -21,15 +30,6 @@ if [ ! -z "$relativePath" ]; then
     fi
 fi
 
-function run_curl() {
-    api="$1"
-    check_result="$2"
-    data="$3"
-    result=$(curl --silent --fail-with-body --noproxy localhost --request POST 'localhost:8080'"$api" --data "$data")
-    retcode=$?
-    [ "$check_result" = "false" ] || [ -z "$result" ] || echo "$hash: $savepath: $retcode: $result"
-}
-
 ## auth is not required because we enable auth bypass for localhost
 # curl --silent --fail --show-error \
 #     --cookie-jar /tmp/webapi-cookie.txt \
@@ -37,6 +37,7 @@ function run_curl() {
 #     --request POST \
 #     "http://localhost:8080/api/v2/auth/login"
 
-[ -z "$category" ] || run_curl '/api/v2/torrents/createCategory' false "category=$category&savePath=$FINISHED_FOLDER/$category"
-[ -z "$category" ] || run_curl '/api/v2/torrents/setCategory'    true  "hashes=$hash&category=$category"
-[ -z "$tags" ]     || run_curl '/api/v2/torrents/addTags'        true  "hashes=$hash&tags=$tags"
+error_prefix="$hash: $savepath"
+[ -z "$category" ] || run_curl '/api/v2/torrents/createCategory' false "$error_prefix" "category=$category&savePath=$FINISHED_FOLDER/$category"
+[ -z "$category" ] || run_curl '/api/v2/torrents/setCategory'    true  "$error_prefix" "hashes=$hash&category=$category"
+[ -z "$tags" ]     || run_curl '/api/v2/torrents/addTags'        true  "$error_prefix" "hashes=$hash&tags=$tags"
