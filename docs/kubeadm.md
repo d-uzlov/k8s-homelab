@@ -267,3 +267,9 @@ References:
 Apparently, it's possible to force-remove node and all it's pods from the cluster.
 
 https://kubernetes.io/blog/2022/05/20/kubernetes-1-24-non-graceful-node-shutdown-alpha/
+
+# Certificates
+
+References:
+- https://particule.io/en/blog/kubeadm-metrics-server/
+- https://www.zeng.dev/post/2023-kubeadm-enable-kubelet-serving-certs/
