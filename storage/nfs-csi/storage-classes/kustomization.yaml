@@ -2,9 +2,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-# If needed, namespace should be updated in mount-options
-# and in all storage class anotations:
-# csi.storage.k8s.io/provisioner-secret-namespace
+# namespace should be set in env/nfs.env
 
 resources:
 - mount-options.yaml
@@ -12,3 +10,18 @@ resources:
 - ssd.yaml
 - media.yaml
 - media-root.yaml
+
+configMapGenerator:
+- name: nfs
+  namespace: REPLACE_ME
+  envs:
+  - env/nfs.env
+  options:
+    disableNameSuffixHash: true
+
+replacements:
+- path: replacements/replace-server.yaml
+- path: replacements/replace-bulk.yaml
+- path: replacements/replace-fast.yaml
+- path: replacements/replace-media.yaml
+- path: replacements/replace-namespace.yaml
