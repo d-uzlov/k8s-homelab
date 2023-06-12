@@ -18,8 +18,12 @@ spec:
         app: csi-nfs-node
     spec:
       hostNetwork: true  # original nfs connection would be broken without hostNetwork setting
-      dnsPolicy: Default  # available values: Default, ClusterFirstWithHostNet, ClusterFirst
+      dnsPolicy: ClusterFirstWithHostNet  # available values: Default, ClusterFirstWithHostNet, ClusterFirst
       serviceAccountName: csi-nfs-node-sa
+      priorityClassName: system-node-critical
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       nodeSelector:
         kubernetes.io/os: linux
       tolerations:
@@ -79,7 +83,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: gcr.io/k8s-staging-sig-storage/nfsplugin:canary
+          image: registry.k8s.io/sig-storage/nfsplugin:v4.4.0
           args:
             - "-v=5"
             - "--nodeid=$(NODE_ID)"
