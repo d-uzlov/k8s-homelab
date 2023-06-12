@@ -29,6 +29,10 @@ Type `thisisunsafe` when the "Certificate error" page is open.
 
 Beware that this completely disables checks for the whole domain.
 
+Alternatively, delete site from HSTS list in [Chrome settings](chrome://net-internals/#hsts).
+
+Not that this won't work if the site is in the preloaded HSTS list.
+
 # Strange warning in pve console
 
 Message from syslogd@pve at Mar 28 00:48:39 ...
