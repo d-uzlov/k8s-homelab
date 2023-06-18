@@ -29,3 +29,17 @@ kl apply -k ./metrics/kubelet-csr-approver
 # check CSRs to make sure they are aproved
 kl get csr
 ```
+
+# More docs
+
+- https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/#kubelet-serving-certs
+- https://github.com/kubernetes-sigs/metrics-server/blob/master/FAQ.md#how-to-run-metrics-server-securely
+- https://github.com/kubernetes-sigs/metrics-server#requirements
+- https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/
+- https://github.com/kubernetes-sigs/metrics-server/issues/196
+
+# Check CSR content
+
+- https://www.base64decode.org
+- https://www.sslshopper.com/csr-decoder.html
+- https://certlogik.com/decoder/
