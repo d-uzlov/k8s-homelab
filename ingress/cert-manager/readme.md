@@ -14,9 +14,11 @@ helm template \
   cert-manager jetstack/cert-manager \
   --set 'extraArgs={--dns01-recursive-nameservers=8.8.8.8:53\,1.1.1.1:53}' \
   --version v1.11.0 \
-  --set installCRDs=false
+  --namespace cert-manager \
+  --set installCRDs=false \
   > ./ingress/cert-manager/cert-manager.yaml
 
+kl create ns cert-manager
 kl apply -k ./ingress/cert-manager
 ```
 

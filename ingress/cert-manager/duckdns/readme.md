@@ -34,9 +34,8 @@ EOF
 
 kl create ns cm-duckdns
 
+kl apply -k ./ingress/cert-manager/duckdns/secret/
 kl apply -k ./ingress/cert-manager/duckdns/
-
-kl apply -f ./ingress/cert-manager/duckdns/certificate.yaml
 ```
 
 If you want to change namespace, change it in the helm template command.
