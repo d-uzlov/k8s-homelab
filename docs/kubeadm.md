@@ -84,6 +84,9 @@ etc.
 `controlPlaneEndpoint` should be available before you create the cluster.
 First kubelet uses it to connect to itself, and will fail to start if it can't connect.
 
+Consider if you want to use `serverTLSBootstrap`. It disables default certificate generation.
+Look here for more details how to use it: [kubelet-csr-approver](../metrics/kubelet-csr-approver/).
+
 ```bash
 # you can also get the whole default config
 kubeadm config print init-defaults --component-configs KubeletConfiguration,KubeProxyConfiguration
