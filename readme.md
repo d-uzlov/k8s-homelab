@@ -2,6 +2,9 @@
 This repo contains several homalab k8s deployments,
 and a few readme files with instructions.
 
-Surf the folders to find details.
+Most of the general docs and in the [docs](./docs/) folder.
 
-Many deployments will require you to fill in additional .env file to deploy.
+Documentation related to certain apps is located in the app folder, near deployment configs.
+
+You can also check out the [bootstrap file](./docs/bootstrap.md).
+This file describes in which order you need to read the documentation.
