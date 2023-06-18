@@ -3,10 +3,10 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: iscsi-democratic-csi-controller-sa
-  namespace: default
+  name: dcsi-controller-sa
+  namespace: pv-dcsi
   labels:
-    app.kubernetes.io/name: democratic-csi
+    app.kubernetes.io/name: dcsi
     helm.sh/chart: democratic-csi-0.13.7
     app.kubernetes.io/instance: iscsi
     app.kubernetes.io/managed-by: Helm
@@ -15,10 +15,10 @@ metadata:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: iscsi-democratic-csi-node-sa
-  namespace: default
+  name: dcsi-node-sa
+  namespace: pv-dcsi
   labels:
-    app.kubernetes.io/name: democratic-csi
+    app.kubernetes.io/name: dcsi
     helm.sh/chart: democratic-csi-0.13.7
     app.kubernetes.io/instance: iscsi
     app.kubernetes.io/managed-by: Helm
@@ -27,10 +27,10 @@ metadata:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: iscsi-democratic-csi
-  namespace: default
+  name: dcsi
+  namespace: pv-dcsi
   labels:
-    app.kubernetes.io/name: democratic-csi
+    app.kubernetes.io/name: dcsi
     helm.sh/chart: democratic-csi-0.13.7
     app.kubernetes.io/instance: iscsi
     app.kubernetes.io/managed-by: Helm
@@ -41,9 +41,9 @@ data:
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: iscsi-democratic-csi-controller-cr
+  name: dcsi-controller-cr
   labels:
-    app.kubernetes.io/name: democratic-csi
+    app.kubernetes.io/name: dcsi
     helm.sh/chart: democratic-csi-0.13.7
     app.kubernetes.io/instance: iscsi
     app.kubernetes.io/managed-by: Helm
@@ -124,9 +124,9 @@ rules:
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: iscsi-democratic-csi-node-cr
+  name: dcsi-node-cr
   labels:
-    app.kubernetes.io/name: democratic-csi
+    app.kubernetes.io/name: dcsi
     helm.sh/chart: democratic-csi-0.13.7
     app.kubernetes.io/instance: iscsi
     app.kubernetes.io/managed-by: Helm
@@ -149,48 +149,48 @@ rules:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: iscsi-democratic-csi-controller-rb
+  name: dcsi-controller-rb
   labels:
-    app.kubernetes.io/name: democratic-csi
+    app.kubernetes.io/name: dcsi
     helm.sh/chart: democratic-csi-0.13.7
     app.kubernetes.io/instance: iscsi
     app.kubernetes.io/managed-by: Helm
 roleRef:
   kind: ClusterRole
   apiGroup: rbac.authorization.k8s.io
-  name: iscsi-democratic-csi-controller-cr
+  name: dcsi-controller-cr
 subjects:
 - kind: ServiceAccount
-  name: iscsi-democratic-csi-controller-sa
-  namespace: default
+  name: dcsi-controller-sa
+  namespace: pv-dcsi
 ---
 # Source: democratic-csi/templates/node-rbac.yaml
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: iscsi-democratic-csi-node-rb
+  name: dcsi-node-rb
   labels:
-    app.kubernetes.io/name: democratic-csi
+    app.kubernetes.io/name: dcsi
     helm.sh/chart: democratic-csi-0.13.7
     app.kubernetes.io/instance: iscsi
     app.kubernetes.io/managed-by: Helm
 roleRef:
   kind: ClusterRole
   apiGroup: rbac.authorization.k8s.io
-  name: iscsi-democratic-csi-node-cr
+  name: dcsi-node-cr
 subjects:
 - kind: ServiceAccount
-  name: iscsi-democratic-csi-node-sa
-  namespace: default
+  name: dcsi-node-sa
+  namespace: pv-dcsi
 ---
 # Source: democratic-csi/templates/node.yaml
 kind: DaemonSet
 apiVersion: apps/v1
 metadata:
-  name: iscsi-democratic-csi-node
-  namespace: default
+  name: dcsi-node
+  namespace: pv-dcsi
   labels:
-    app.kubernetes.io/name: democratic-csi
+    app.kubernetes.io/name: dcsi
     helm.sh/chart: democratic-csi-0.13.7
     app.kubernetes.io/instance: iscsi
     app.kubernetes.io/managed-by: Helm
@@ -199,7 +199,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: democratic-csi
+      app.kubernetes.io/name: dcsi
       app.kubernetes.io/instance: iscsi
       app.kubernetes.io/managed-by: Helm
       app.kubernetes.io/csi-role: "node"
@@ -207,15 +207,15 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/configmap: 9e7fa353c26ce3490d1af972d03d81d3ab7045750cf11cd185b94cc05285b29e
+        checksum/configmap: a9a7330a55f81db977db1265c1f5a7d43ea153c31cb3448b9f93f84d83e05290
       labels:
-        app.kubernetes.io/name: democratic-csi
+        app.kubernetes.io/name: dcsi
         app.kubernetes.io/instance: iscsi
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/csi-role: "node"
         app.kubernetes.io/component: "node-linux"
     spec:
-      serviceAccount: iscsi-democratic-csi-node-sa
+      serviceAccount: dcsi-node-sa
       # Required by iSCSI
       hostNetwork: true
       hostAliases: []
@@ -360,6 +360,7 @@ spec:
           - "-c"
           - "--"
         args: [ "while true; do sleep 2; done;" ]
+
         lifecycle:
           # note this runs *before* other containers are terminated
           preStop:
@@ -422,21 +423,24 @@ spec:
           secretName: driver-config
       - name: extra-ca-certs
         configMap:
-          name: iscsi-democratic-csi
+          name: dcsi
           items:
           - key: extra-ca-certs
             path: extra-ca-certs.crt
       nodeSelector:
         kubernetes.io/os: linux
+      tolerations:
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/control-plane
 ---
 # Source: democratic-csi/templates/controller.yaml
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: iscsi-democratic-csi-controller
-  namespace: default
+  name: dcsi-controller
+  namespace: pv-dcsi
   labels:
-    app.kubernetes.io/name: democratic-csi
+    app.kubernetes.io/name: dcsi
     helm.sh/chart: democratic-csi-0.13.7
     app.kubernetes.io/instance: iscsi
     app.kubernetes.io/managed-by: Helm
@@ -446,7 +450,7 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: democratic-csi
+      app.kubernetes.io/name: dcsi
       app.kubernetes.io/instance: iscsi
       app.kubernetes.io/managed-by: Helm
       app.kubernetes.io/csi-role: "controller"
@@ -454,15 +458,15 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/configmap: 9e7fa353c26ce3490d1af972d03d81d3ab7045750cf11cd185b94cc05285b29e
+        checksum/configmap: a9a7330a55f81db977db1265c1f5a7d43ea153c31cb3448b9f93f84d83e05290
       labels:
-        app.kubernetes.io/name: democratic-csi
+        app.kubernetes.io/name: dcsi
         app.kubernetes.io/instance: iscsi
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/csi-role: "controller"
         app.kubernetes.io/component: "controller-linux"
     spec:
-      serviceAccount: iscsi-democratic-csi-controller-sa
+      serviceAccount: dcsi-controller-sa
       hostNetwork: false
       hostAliases: []
       hostIPC: false
@@ -473,7 +477,7 @@ spec:
         args:
         - --v=5
         - --leader-election
-        - --leader-election-namespace=default
+        - --leader-election-namespace=pv-dcsi
         - --timeout=90s
         - --worker-threads=10
         - --extra-create-metadata
@@ -510,7 +514,7 @@ spec:
         args:
         - --v=5
         - --leader-election
-        - --leader-election-namespace=default
+        - --leader-election-namespace=pv-dcsi
         - --timeout=90s
         - --workers=10
         - --csi-address=/csi-data/csi.sock
@@ -549,7 +553,7 @@ spec:
         args:
         - --v=5
         - --leader-election
-        - --leader-election-namespace=default
+        - --leader-election-namespace=pv-dcsi
         - --timeout=90s
         - --worker-threads=10
         - --csi-address=/csi-data/csi.sock
@@ -643,7 +647,7 @@ spec:
           secretName: driver-config
       - name: extra-ca-certs
         configMap:
-          name: iscsi-democratic-csi
+          name: dcsi
           items:
           - key: extra-ca-certs
             path: extra-ca-certs.crt
@@ -667,7 +671,7 @@ kind: CSIDriver
 metadata:
   name: org.democratic-csi.iscsi
   labels:
-    app.kubernetes.io/name: democratic-csi
+    app.kubernetes.io/name: dcsi
     helm.sh/chart: democratic-csi-0.13.7
     app.kubernetes.io/instance: iscsi
     app.kubernetes.io/managed-by: Helm

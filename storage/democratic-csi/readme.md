@@ -13,43 +13,59 @@ helm search repo democratic-csi/
 ```
 
 ```bash
+# re-generate deployment config if needed
+helm template \
+  iscsi democratic-csi/democratic-csi \
+  --values ./storage/democratic-csi/iscsi.yaml \
+  --set nameOverride=dcsi \
+  --set fullnameOverride=dcsi \
+  --namespace pv-dcsi \
+  > ./storage/democratic-csi/iscsi-deployment.gen.yaml
+
 # Init local settings
-cat <<EOF > ./storage/democratic-csi/passwords.env
-host=truenas.example
+cat <<EOF > ./storage/democratic-csi/env/passwords.env
+host=truenas.lan
 username=democratic-csi
 password=password
 EOF
-
-helm template \
-    --values ./storage/democratic-csi/iscsi.yaml \
-    iscsi democratic-csi/democratic-csi \
-    > ./storage/democratic-csi/iscsi-deployment.gen.yaml
+cat <<EOF > ./storage/democratic-csi/env/iscsi.env
+main_dataset=ssd/k8s/block
+snapshot_dataset=ssd/k8s/block-snap
+EOF
 
 (. ./storage/democratic-csi/env/passwords.env &&
+. ./storage/democratic-csi/env/iscsi.env &&
 sed \
-    -e "s|REPLACE_ME_HOST|$host|g" \
-    -e "s|REPLACE_ME_USERNAME|$username|g" \
-    -e "s|REPLACE_ME_PASSWORD|$password|g" \
-    ./storage/democratic-csi/iscsi-config.template.yaml
+  -e "s|REPLACE_ME_HOST|$host|g" \
+  -e "s|REPLACE_ME_USERNAME|$username|g" \
+  -e "s|REPLACE_ME_PASSWORD|$password|g" \
+  -e "s|REPLACE_ME_MAIN_DATASET|$main_dataset|g" \
+  -e "s|REPLACE_ME_SNAP_DATASET|$snapshot_dataset|g" \
+  ./storage/democratic-csi/iscsi-config.template.yaml
 ) > ./storage/democratic-csi/env/iscsi-config.yaml
 
-kl create ns pv-democratic-csi
+kl create ns pv-dcsi
 kl apply -k ./storage/democratic-csi/
 ```
 
-На truenas:
-Создать аккаунт
-Задать пароль (по идее можно без него, но у меня не получилось)
-Выставить `Allow all sudo commands with no password`
-Снять `Allow all sudo commands`
-Вход через webui работает, если выставить следующие группы:
-`builtin_administrators,builtin_users,admin,root,wheel`
-Вероятно, часть групп можно убрать.
+# Truenas setup
 
-# Переиспользование PV
+- Create account
+- Set password for the account
+- - I didn't manage to make it work with an ssh key, without a password.
+- - This is likely because it needs to be able to access web UI.
+- Set `Allow all sudo commands with no password`
+- Clear `Allow all sudo commands`
+- Set up account groups to allow web ui login
+- - `builtin_administrators,builtin_users,admin,root,wheel`
+- - Maybe only some of the groups are needed
 
-Поставить storage class Retain
+# Reuse PVs
 
-После удаление PVC удалить claimRef.uid e PV
+Set storage class `reclaimPolicy` to `Retain`.
 
+After you delete PVC edit the PV and clear `claimRef.uid`.
+For example:
+```bash
 kubectl patch pv <pv name> -p '{"spec":{"claimRef":{"uid": null}}}'
+```
