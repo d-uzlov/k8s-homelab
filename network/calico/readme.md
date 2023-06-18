@@ -1,4 +1,32 @@
 
+# Versions
+
+Calico v1.25.0 and v1.25.1 are know to work fine.
+
+v1.26.0 doesn't work in my setup.
+For some reason cascaded resource deletion doesn't work
+
+Use this command to test:
+```bash
+kl create ns echo
+kl apply -k ./test/echo/ && sleep 5 && kl -n echo get pod && kl delete -k ./test/echo/ && sleep 1 && kl -n echo get all
+```
+
+Good output example:
+```bash
+NAME                             READY   STATUS        RESTARTS   AGE
+pod/echoserver-96ffcc7c8-7k4xn   1/1     Terminating   0          8s
+```
+
+Bad output example:
+```bash
+NAME                             READY   STATUS        RESTARTS   AGE
+pod/echoserver-96ffcc7c8-7k4xn   1/1     Running   0          8s
+
+NAME                                   DESIRED   CURRENT   READY   AGE
+replicaset.apps/echoserver-96ffcc7c8   1         1         1       8s
+```
+
 # Install
 
 ```bash
