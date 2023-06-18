@@ -15,24 +15,6 @@ zfs set relatime=off boot-pool
 mount | grep boot
 ```
 
-# ZFS tuning
-
-увеличить zfs arc max size
-```
-sudo nano /etc/modprobe.d/zfs.conf
-options zfs zfs_arc_max=<memory_size_in_bytes>
-sudo update-initramfs -u
-reboot
-```
-
-# ZFS checksums
-
-https://openzfs.github.io/openzfs-docs/Basic%20Concepts/Checksums.html
-
-# ZFS capacity
-
-https://jro.io/capacity/
-
 # Set up email notifications
 
 https://www.truenas.com/docs/scale/scaletutorials/toptoolbar/settingupsystememail/
@@ -45,20 +27,6 @@ alert icon in top right → gear → email → gmail oauth
 
 https://www.smartmontools.org/wiki/Powermode
 set smart power management to standby
-
-# Statistics
-
-```bash
-zpool list -v
-zfs get compressratio
-zfs list -t filesystem -r -o space,compressratio main-pool
-zpool iostat -v 5
-iostat -mx 5
-```
-
-# ZFS benchmark
-
-https://github.com/openzfs/zfs/pull/9735#issuecomment-570082078
 
 # Share several pools via SMB
 

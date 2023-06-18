@@ -21,6 +21,7 @@ sudo resize2fs /dev/mapper/ubuntu--vg-ubuntu--lv
 sudo apt-get update
 sudo apt-get upgrade -y
 sudo apt-get -y install nfs-common
+sudo apt-get -y install fio
 sudo apt-get -y remove unattended-upgrades
 
 sudo apt -y autoremove
@@ -128,4 +129,10 @@ sudo fstrim -v /
 
 ```bash
 sudo sysctl --system
+```
+
+# benchmark disk writes
+
+```bash
+fio --rw=write --ioengine=sync --fdatasync=1 --directory=test-data --size=22m --bs=2300 --name=mytest
 ```
