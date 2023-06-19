@@ -23,10 +23,10 @@ Then change it back to use a properly-signed certificate.
 # Init once
 mkdir -p ./ingress/manual-certificates/env
 cat <<EOF > ./ingress/manual-certificates/env/domain.env
-# your domain name registered on the duckdns website
-domain=example.duckdns.org
-# same domain name, with a wildcard
-domain_wildcard=*.example.duckdns.org
+# your subdomain name registered at the duckdns website
+# if you domain is 'example.duckdns.org',
+# then place 'example' here
+subdomain=meoe
 # secret name that ingress resources will be using
 secret_name=main-wildcard-at-duckdns
 # label for the certificate secret
