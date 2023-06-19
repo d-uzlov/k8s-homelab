@@ -7,6 +7,7 @@ namespace: ome
 resources:
 - ovenmediaengine.yaml
 - ingress.yaml
+- ../../ingress/manual-certificates/domain-info
 
 configMapGenerator:
 - name: ome-config
@@ -22,18 +23,21 @@ configMapGenerator:
 replacements:
 - source:
     kind: ConfigMap
-    name: ingress
-    fieldPath: data.public_domain
+    name: main-domain
+    fieldPath: data.subdomain
   targets:
   - select:
       kind: Ingress
       name: signaling
+    options:
+      delimiter: .
+      index: 1
     fieldPaths:
     - spec.rules.0.host
 - source:
     kind: ConfigMap
-    name: ingress
-    fieldPath: data.wildcard_secret_name
+    name: main-domain
+    fieldPath: data.secret_name
   targets:
   - select:
       kind: Ingress

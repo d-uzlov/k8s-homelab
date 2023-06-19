@@ -5,7 +5,20 @@ https://github.com/AirenSoft/OvenMediaEngine
 
 https://airensoft.gitbook.io/ovenmediaengine/getting-started/getting-started-with-docker
 
-This is a video streaming engine that supports low latency streams
+This is a video streaming engine that supports low latency streams.
+
+# Init local settings
+
+```bash
+mkdir -p ./video/ome/env
+cat <<EOF > ./video/ome/env/ingress.env
+allowed_sources=10.0.0.0/16,1.2.3.4
+EOF
+cat <<EOF > ./video/ome/env/services.env
+provide_ip=10.0.3.16
+stream_ip=10.0.3.17
+EOF
+```
 
 # Deploy
 
@@ -13,21 +26,7 @@ This is a video streaming engine that supports low latency streams
 kl create ns ome
 kl label ns --overwrite ome copy-wild-cert=main
 
-# Init once
-mkdir -p ./streaming/ome/env
-cat <<EOF > ./streaming/ome/env/ingress.env
-public_domain=ome-signal.example.duckdns.org
-
-wildcard_secret_name=main-wildcard-at-duckdns
-
-allowed_sources=10.0.0.0/16,1.2.3.4
-EOF
-cat <<EOF > ./streaming/ome/env/services.env
-provide_ip=10.0.3.16
-stream_ip=10.0.3.17
-EOF
-
-kl apply -k ./streaming/ome/
+kl apply -k ./video/ome/
 ```
 
 # How to stream
@@ -40,8 +39,13 @@ From quickstart: https://airensoft.gitbook.io/ovenmediaengine/quick-start
 
 ```s
 Settings -> Stream
-Server: rtmp://<provide_ip or DNS>:1935/app
+Server: rtmp://<provide_ip or DNS>:1935/<app>
 Stream key: stream
+```
+
+`provide_ip` is service external IP if you are streaming in LAN:
+```bash
+kl -n ome get svc provide
 ```
 
 `/<app>` can be configured in the `ome-config.xml`
@@ -55,6 +59,9 @@ Stream key may be an arbitrary string.
 Streaming with WebRTC requires open ports.
 
 This deployment creates a LoadBalancer service with IP `stream_ip`.
+```bash
+kl -n ome get svc webrtc-ice
+```
 You need to set up port forwarding from matching external port to specified address.
 You need to forward both ports from the `webrtc-ice` service.
 
