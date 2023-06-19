@@ -1,16 +1,12 @@
 
 https://github.com/qbittorrent/docker-qbittorrent-nox/
 
-# Deploy
+# Init local settings
 
-Init local settings:
 ```bash
 mkdir -p ./torrents/qbittorrent/env/
 cat <<EOF > ./torrents/qbittorrent/env/ingress.env
-public_domain=qbittorrent.example.duckdns.org
-
-wildcard_secret_name=main-wildcard-at-duckdns
-
+# web-ui will only be available from this list of IPs
 allowed_sources=10.0.0.0/16,1.2.3.4
 EOF
 cat <<EOF > ./torrents/qbittorrent/env/settings.env
@@ -43,18 +39,22 @@ auth_whitelist=
 EOF
 ```
 
-Deploy:
+# Deploy
+
 ```bash
 kl create ns bt-qbittorrent
 kl label ns --overwrite bt-qbittorrent copy-wild-cert=main
 
-kl apply -k ./torrents/qbittorrent/pvc
+kl apply -k ./torrents/qbittorrent/pvc/
 
 kl apply -k ./torrents/qbittorrent/
 ```
 
-Set up port forwarding for torrent data.
-Check service description to learn load balancer IP and port.
+Print service info to get external IP for port-forwarding:
+
+```bash
+kl -n bt-qbittorrent get svc data
+```
 
 Make sure that local port and external port match.
 Peers will try to connect to the port that qbittorrent is using locally.
