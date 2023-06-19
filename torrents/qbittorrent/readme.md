@@ -3,21 +3,16 @@ https://github.com/qbittorrent/docker-qbittorrent-nox/
 
 # Deploy
 
+Init local settings:
 ```bash
-kl create ns bt-qbittorrent
-kl label ns --overwrite bt-qbittorrent copy-wild-cert=main
-
-kl apply -k ./torrents/qbittorrent/pvc
-
-# Init local settings
+mkdir -p ./torrents/qbittorrent/env/
 cat <<EOF > ./torrents/qbittorrent/env/ingress.env
 public_domain=qbittorrent.example.duckdns.org
 
-wildcard_secret_name=wild--example.duckdns.org
+wildcard_secret_name=main-wildcard-at-duckdns
 
 allowed_sources=10.0.0.0/16,1.2.3.4
 EOF
-# Init local settings
 cat <<EOF > ./torrents/qbittorrent/env/settings.env
 force_overwrite_config=true
 
@@ -31,10 +26,8 @@ username=admin
 password_encoded=@ByteArray(mF/Yn6wBmEW81W2xuMnlbw==:Z0N2dnsPfcgKP/57vZTFPyKr7nYRaxj2jON+4wrWH/ClVp7J3Xd6tz9Sje/oCqu/Y4+i/MmWrvqg/zVfZ6cQuA==)
 
 # comma-separated CIDR list or empty
-# For example: 10.201.0.0/16
-#
 # When using with ingress, set to pod CIDR from your CNI settings.
-trusted_proxies=
+trusted_proxies=10.201.0.0/16
 
 # comma-separated CIDR list of source addresses
 # that can open the web-ui without password.
@@ -48,12 +41,23 @@ trusted_proxies=
 # Set to your public IP for passwordless access via NAT loopback.
 auth_whitelist=
 EOF
+```
+
+Deploy:
+```bash
+kl create ns bt-qbittorrent
+kl label ns --overwrite bt-qbittorrent copy-wild-cert=main
+
+kl apply -k ./torrents/qbittorrent/pvc
 
 kl apply -k ./torrents/qbittorrent/
 ```
 
 Set up port forwarding for torrent data.
 Check service description to learn load balancer IP and port.
+
+Make sure that local port and external port match.
+Peers will try to connect to the port that qbittorrent is using locally.
 
 # Alt web UI
 
