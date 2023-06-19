@@ -12,12 +12,13 @@ This app can automatically copy secrets and config maps between namespaces based
 helm repo add mittwald https://helm.mittwald.de
 helm repo update
 helm template kubernetes-replicator \
+    mittwald/kubernetes-replicator \
     --version 2.8.0 \
     --values ./ingress/replicator/helm-values.yaml \
-    mittwald/kubernetes-replicator \
+    --namespace replicator \
     > ./ingress/replicator/replicator.yaml
 
-kl create ns k8s-replicator
+kl create ns replicator
 kl apply -k ./ingress/replicator/
 ```
 
