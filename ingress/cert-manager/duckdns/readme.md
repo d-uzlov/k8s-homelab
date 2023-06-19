@@ -37,7 +37,6 @@ EOF
 
 kl create ns cm-duckdns
 
-kl apply -k ./ingress/cert-manager/duckdns/secret/
 kl apply -k ./ingress/cert-manager/duckdns/
 ```
 
