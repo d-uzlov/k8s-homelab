@@ -96,7 +96,6 @@ echo "changing important settings..."
 set_value "$configFile" 'Accepted' "true"
 set_value "$configFile" 'Session\Port' "$DATA_PORT"
 set_value "$configFile" 'Session\DefaultSavePath' "$FINISHED_FOLDER"
-set_value "$configFile" 'Session\TempPath' "$MANUAL_INCOMPLETE"
 set_value "$configFile" 'FileLogger\Enabled' "true"
 set_value "$configFile" 'FileLogger\DeleteOld' "false"
 set_value "$configFile" 'FileLogger\Path' "$logLocation"
@@ -107,6 +106,13 @@ set_value "$configFile" 'WebUI\TrustedReverseProxiesList' "$TRUSTED_PROXIES"
 set_value "$configFile" 'WebUI\AuthSubnetWhitelistEnabled' "$useAuthWhitelist"
 set_value "$configFile" 'WebUI\AuthSubnetWhitelist' "$AUTH_WHITELIST"
 set_value "$configFile" 'WebUI\UseUPnP' "false"
+
+if [ ! -z "$MANUAL_INCOMPLETE" ]; then
+    set_value "$configFile" 'Session\TempPathEnabled' "true"
+else
+    set_value "$configFile" 'Session\TempPathEnabled' "false"
+fi
+set_value "$configFile" 'Session\TempPath' "$MANUAL_INCOMPLETE"
 
 if [ ! -z "$ADDED_HOOK_SCRIPT" ]; then
     set_value "$configFile" 'OnTorrentAdded\Program' "$ADDED_HOOK_SCRIPT "'\"%I\" \"%D\"'
