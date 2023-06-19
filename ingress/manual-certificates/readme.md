@@ -52,7 +52,7 @@ kl -n cm-manual describe certificaterequests.cert-manager.io
 kl -n cm-manual describe orders.acme.cert-manager.io
 
 # after you verified that your setup works
-# reissue a proper production certificate
+# re-issue a proper production certificate
 kl -n cm-manual delete certificate main-wildcard-at-duckdns
 kl apply -k ./ingress/manual-certificates/production
 ```
