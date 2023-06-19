@@ -3,7 +3,7 @@
 
 ```bash
 kl create ns fortio
-kl label ns --overwrite fortio copy-wild-cert=example
+kl label ns --overwrite fortio copy-wild-cert=main
 
 # Init local settings
 mkdir -p ./test/fortio/env

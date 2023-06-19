@@ -5,7 +5,7 @@ https://github.com/openspeedtest/Docker-Image
 
 ```bash
 kl create ns openspeedtest
-kl label ns --overwrite openspeedtest copy-wild-cert=example
+kl label ns --overwrite openspeedtest copy-wild-cert=main
 
 # Init local settings
 mkdir -p ./test/openspeedtest/env

@@ -5,7 +5,7 @@ https://github.com/qbittorrent/docker-qbittorrent-nox/
 
 ```bash
 kl create ns bt-qbittorrent
-kl label ns --overwrite bt-qbittorrent copy-wild-cert=example
+kl label ns --overwrite bt-qbittorrent copy-wild-cert=main
 
 kl apply -k ./torrents/qbittorrent/pvc
 

@@ -3,7 +3,7 @@
 
 ```bash
 kl create ns nextcloud
-kl label ns --overwrite nextcloud copy-wild-cert=example
+kl label ns --overwrite nextcloud copy-wild-cert=main
 kl label ns --overwrite nextcloud onlyoffice.replicator.io/api=
 kl label ns --overwrite nextcloud onlyoffice.replicator.io/public-domain=
 

@@ -5,7 +5,7 @@ https://github.com/e7d/speedtest
 
 ```bash
 kl create ns speedtest
-kl label ns --overwrite speedtest copy-wild-cert=example
+kl label ns --overwrite speedtest copy-wild-cert=main
 
 # Init local settings
 mkdir -p ./test/speedtest/env

@@ -3,7 +3,7 @@
 
 ```bash
 kl create ns librespeed
-kl label ns --overwrite librespeed copy-wild-cert=example
+kl label ns --overwrite librespeed copy-wild-cert=main
 
 # Init local settings
 mkdir -p ./test/librespeed/env
