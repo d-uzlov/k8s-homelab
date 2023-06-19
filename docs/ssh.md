@@ -1,7 +1,9 @@
 
 # Disable password login
 
+```bash
 sudo nano /etc/ssh/sshd_config.d/disable_root_login.conf
+```
 ```bash
 PermitRootLogin no
 
@@ -21,7 +23,7 @@ AuthenticationMethods publickey
 # Generate keys
 
 ssh-keygen
-cat publick-key-file >> .ssh/authorized_keys
+cat public-key-file >> .ssh/authorized_keys
 
 # Use key automatically
 

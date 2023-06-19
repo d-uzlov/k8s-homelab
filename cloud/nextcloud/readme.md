@@ -145,7 +145,7 @@ Mobile app should register itself when connecting to server.
 If you sign out and login again then it seems like it doesn't.
 This can be fixed by clearing mobile app data.
 
-# List available occ commands
+# List available `occ` commands
 
 ```bash
 # list all commands

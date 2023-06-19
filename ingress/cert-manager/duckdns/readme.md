@@ -3,7 +3,7 @@ https://github.com/joshuakraitberg/cert-manager-webhook-duckdns
 
 # DuckDNS
 
-This is aplugin for cert-manager that can add DNS-01 challenge support for DuckDNS.
+This is a plugin for cert-manager that can add DNS-01 challenge support for DuckDNS.
 The primary use of this is to get wildcard certificated from letsencrypt.
 
 # Deploy
@@ -43,7 +43,7 @@ Kustomize doesn't change namespace of ClusterRoleBinding and in cert-manager.io/
 
 # Check duckdns TXT manually
 
-Don't forget to update token in the url in the command below.
+Don't forget to update token in the URL in the command below.
 
 ```bash
 # update TXT record

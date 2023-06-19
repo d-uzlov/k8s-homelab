@@ -25,7 +25,7 @@ iface enxf8e43bd6ac4c inet manual
 # Don't forget to set network device MTU to 1 in VM hardware settings
 ```
 
-# PCIe passthrough
+# PCI-e passthrough
 
 ```bash
 # Edit kernel args

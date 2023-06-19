@@ -5,7 +5,7 @@
 
 https://kubernetes.io/docs/tutorials/services/source-ip/
 
-# Comparison: MetalLb vs PureLB vs OpenALB
+# Comparison: MetalLB vs PureLB vs OpenALB
 
 Useful overview:
 
@@ -27,7 +27,7 @@ List of existing software L4 load balancers:
 - Kube-vip
     Started as a solution for Kubernetes control plane high availability
     and got extended to function as a LoadBalancer controller.
-    Supports both L2 and GoBGP-based L3 modes. Can be configured via flags, env vars and ConfigMaps.
+    Supports both L2 and GoBGP-based L3 modes. Can be configured via flags, environment variables and ConfigMaps.
 - PureLB
     Fork of metalLB with reworked ARP and BGP implementations. Uses BIRD for BGP and can be configured via CRDs.
 - Klipper
@@ -82,7 +82,7 @@ https://purelb.gitlab.io/docs/cni/calico/
 
 https://openelb.io
 
-Seems to be a chineese software.
+Seems to be a Chinese software.
 
 Documentation doesn't say anything about externalTrafficPolicy.
 
@@ -105,13 +105,13 @@ https://kube-vip.io/docs/usage/kubernetes-services/#using-upnp-to-expose-a-servi
 
 ## Cilium
 
-Cilium apparently supports source IP presevration using a feature called Direct Server Return:
+Cilium apparently supports source IP preservation using a feature called Direct Server Return:
 - https://cilium.io/blog/2020/02/18/cilium-17/#kubeproxy-removal
 - https://docs.cilium.io/en/stable/network/kubernetes/kubeproxy-free/#direct-server-return-dsr
 
 It can disable SNAT even for `externalTrafficPolicy: Cluster`.
 
-However, it requres special network setup:
+However, it requires special network setup:
 > DSR currently requires Cilium to be deployed in Native-Routing,
 > i.e. it will not work in either tunneling mode.
 

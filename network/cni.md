@@ -46,4 +46,4 @@ and Direct Service Return.
 
 # Antrea
 
-Main gommick is the ability to set egress IP based on namespace or labels.
+Main gimmick is the ability to set egress IP based on namespace or labels.

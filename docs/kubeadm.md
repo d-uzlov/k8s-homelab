@@ -181,7 +181,7 @@ There are several unintuitive issues that can prevent graceful shutdown:
 
 **1. Kubelet may silently fail to register shutdown delay hook**
 
-First, check the list of systemd hooks to see if kubelet at least registered itself for graceful shutdown.
+First, check the list of `systemd` hooks to see if kubelet at least registered itself for graceful shutdown.
 
 ```bash
 cat /etc/systemd/logind.conf.d/99-kubelet.conf
@@ -214,7 +214,7 @@ References:
 
 `/usr/sbin/shutdown` and `/usr/sbin/reboot` are aliases to `/bin/systemctl`.
 
-But `systemctl` does not respect systemd inhibitor locks when called as `shutdown` or `reboot`.
+But `systemctl` does not respect `systemd` inhibitor locks when called as `shutdown` or `reboot`.
 
 You must use `systemctl poweroff` or `systemctl reboot` respectively.
 
@@ -225,7 +225,7 @@ replace `/usr/sbin/shutdown` with the following script:
 exec systemctl poweroff
 ```
 
-Alternatively, apprently scheduled shutdown also works:
+Alternatively, apparently scheduled shutdown also works:
 ```bash
 shutdown -h +1
 ```

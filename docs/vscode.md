@@ -14,7 +14,7 @@ In settings search for:
 
 Install: Kubernetes YAML Formatter
 
-Add to settings.json to first level (doesn't work at language level):
+Add to `settings.json` to first level (doesn't work at language level):
 ```json
     "kubernetes-yaml-formatter.includeDocumentStart": true,
     "kubernetes-yaml-formatter.compactSequenceIndent": true,

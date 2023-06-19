@@ -3,7 +3,7 @@
 
 https://github.com/postfinance/kubelet-csr-approver
 
-This app can automatically verify and approce SertificateSigningReuqests inside cluster.
+This app can automatically verify and approve CertificateSigningRequests inside cluster.
 
 This is required to run `metrics-server`.
 

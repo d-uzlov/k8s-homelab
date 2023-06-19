@@ -53,11 +53,11 @@ kl apply -k ./torrents/qbittorrent/
 ```
 
 Set up port forwarding for torrent data.
-Check service description to learn load balancer ip and port.
+Check service description to learn load balancer IP and port.
 
 # Alt web UI
 
-Posible web UIs:
+Possible web UIs:
 https://github.com/erickok/transdroid (universal)
 https://github.com/CCExtractor/rutorrent-flutter (rutorrent)
 https://github.com/lgallard/qBittorrent-Controller (qbittorrent)

@@ -5,7 +5,7 @@ https://github.com/kubernetes-sigs/metrics-server
 
 # Requirements
 
-You either need to disable tls verification or add certificates.
+You either need to disable TLS verification or add certificates.
 
 Look here for instructions to add certificates: [kubelet-csr-approver](../kubelet-csr-approver/).
 

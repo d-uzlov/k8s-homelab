@@ -32,7 +32,7 @@ kl apply -k ./streaming/ome/
 
 # How to stream
 
-1. [optional] Set up local dns to point to `provide_ip` from `services.env`
+1. [optional] Set up local DNS to point to `provide_ip` from `services.env`
 
 2. Set up OBS
 
@@ -54,7 +54,7 @@ Stream key may be an arbitrary string.
 
 Streaming with WebRTC requires open ports.
 
-This deployment creates a LoadBalancer service with ip `stream_ip`.
+This deployment creates a LoadBalancer service with IP `stream_ip`.
 You need to set up port forwarding from matching external port to specified address.
 You need to forward both ports from the `webrtc-ice` service.
 
@@ -101,7 +101,7 @@ kl -n ome exec deployments/ovenmediaengine -it -- cat /opt/ovenmediaengine/bin/e
 
 # Using WebSocket with untrusted TLS termination
 
-Websocket connection doesn't have a promt for untrusted certificate.
+WebSocket connection doesn't have a prompt for untrusted certificate.
 If you are using a staging certificate, the connection will fail because of untrusted certificate.
 
 A workaround is to open the page from the WSS address as an HTTP page and accept the certificate.

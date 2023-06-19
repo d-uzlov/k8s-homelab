@@ -11,6 +11,6 @@ https://www.reddit.com/r/selfhosted/comments/xichad/looking_for_self_hosted_scre
 
 # stunner
 
-K8s app that allowes proper webrtc routing and scaling via Gateway API.
+K8s app that allows proper WebRTC routing and scaling via Gateway API.
 
 https://github.com/l7mp/stunner

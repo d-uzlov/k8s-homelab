@@ -50,12 +50,12 @@ References:
 
 # DNS
 
-Register ar [DuckDNS](../ingress/cert-manager/duckdns/readme.md).
+Register at [DuckDNS](../ingress/cert-manager/duckdns/readme.md).
 
-DuckDNS is a free Dynnamic DNS service,
+DuckDNS is a free Dynamic DNS service,
 so you can use it even if you don't have a static IP.
 
-If your IP is static you can simply skip seting up an IP updater.
+If your IP is static you can simply skip setting up an IP updater.
 
 # k8s setup
 
@@ -64,7 +64,7 @@ If your IP is static you can simply skip seting up an IP updater.
 - - It is recommended to setup one separate master node and join at least one worker node
 - Install CNI
 - - [network](../network/)
-- - Recommened: `calico`.
+- - Recommended: `calico`.
 - [optional] Enable metrics
 - - Make sure you enable k8s certificates generation during k8s installation
 - - Install [kubelet-csr-approver](../metrics/kubelet-csr-approver/readme.md)

@@ -1,19 +1,19 @@
 
 # Debian initial setup
 
-Use `su` to intall `sudo`:
+Use `su` to install `sudo`:
 ```bash
 apt update && apt upgrade && apt install -y sudo
 # Adjust user name to match your user
 sudo adduser your-user-name sudo
 ```
 
-Create a new ssh session and check that sudo is working:
+Create a new ssh session and check that `sudo` is working:
 ```bash
 sudo apt moo
 ```
 
-Add `/usr/local/sbin` to `$PATH` for sudoers:
+Add `/usr/local/sbin` to `$PATH` for `sudoers`:
 ```shell
 sudo visudo
 ```

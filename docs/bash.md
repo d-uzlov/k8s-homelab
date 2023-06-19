@@ -13,7 +13,7 @@ $include /etc/inputrc
 EOF
 ```
 
-# Useful promt
+# Useful prompt
 
 Add to your `~/.bashrc`:
 ```bash

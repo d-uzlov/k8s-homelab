@@ -14,7 +14,7 @@ This deployment uses letsencrypt-production issuer.
 If anything goes wrong, you may exhaust letsencrypt limits
 and lock yourself out of its certificates for a week.
 
-When deploying first time manualy change it to staging issuer and check that it works.
+When deploying first time manually change it to staging issuer and check that it works.
 Then change it back to use a properly-signed certificate.
 
 # Deploy

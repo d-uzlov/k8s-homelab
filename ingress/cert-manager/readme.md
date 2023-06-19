@@ -38,7 +38,7 @@ cert-manager.io/cluster-issuer: issuer-name
 
 Change issuer name accordingly.
 
-Certificate will be automaticelly issued and injected into the Ingress resource.
+Certificate will be automatically issued and injected into the Ingress resource.
 
 # Wildcard certificate
 
@@ -75,7 +75,7 @@ You may also need to restart the browser after clearing the cache.
 * ZeroSSL
   * Website: https://zerossl.com
   * Doesn't declare any rate limits,
-    but recently they have been added, and are apprently very severe.
+    but recently they have been added, and are apparently very severe.
     There is no official documentation at the moment of writing this.
     https://github.com/cert-manager/cert-manager/issues/5867
   * Doesn't work with `.ru` zone

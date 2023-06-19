@@ -56,7 +56,7 @@ kl apply -k ./storage/democratic-csi/
 - - This is likely because it needs to be able to access web UI.
 - Set `Allow all sudo commands with no password`
 - Clear `Allow all sudo commands`
-- Set up account groups to allow web ui login
+- Set up account groups to allow web-ui login
 - - `builtin_administrators,builtin_users,admin,root,wheel`
 - - Maybe only some of the groups are needed
 

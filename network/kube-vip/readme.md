@@ -5,7 +5,7 @@ This is a load balancer for both control plane and services in the cluster.
 
 Version `v0.6.0` seems to be broken.
 It has some issues with k8s API,
-which causes it to release all virtual IPs and never re-aquire them.
+which causes it to release all virtual IPs and never re-acquire them.
 
 # Deploy daemon set for LoadBalancer services
 
@@ -84,7 +84,7 @@ Kube-vip can restart due to improper lease settings.
 
 It seems like settings from k8s works fine.
 
-Referenses:
+References:
 - https://github.com/kube-vip/kube-vip/issues/282
 - https://github.com/kubernetes/client-go/blob/v0.27.2/tools/leaderelection/leaderelection.go#L111
 
