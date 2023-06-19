@@ -11,7 +11,6 @@ you can just use this demo as a main website.
 # Init local settings
 
 ```bash
-# Init once
 mkdir -p ./video/ovenplayer/env
 cat <<EOF > ./video/ovenplayer/env/ingress.env
 allowed_sources=10.0.0.0/16,1.2.3.4
