@@ -28,7 +28,7 @@ EOF
 # Init once
 cat <<EOF > ./cloud/nextcloud/env/settings.env
 # set to value specified in ingress/manual-certificates/<your-cert>
-wildcard_secret_name=wild--example.duckdns.org
+wildcard_secret_name=main-wildcard-at-duckdns
 
 # Limit access from web, or leave empty
 # Comma-separated list of CIDRs

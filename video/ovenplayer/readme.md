@@ -19,7 +19,7 @@ mkdir -p ./streaming/ovenplayer/env
 cat <<EOF > ./streaming/ovenplayer/env/ingress.env
 public_domain=ome-player.example.duckdns.org
 
-wildcard_secret_name=wild--example.duckdns.org
+wildcard_secret_name=main-wildcard-at-duckdns
 
 allowed_sources=10.0.0.0/16,1.2.3.4
 EOF

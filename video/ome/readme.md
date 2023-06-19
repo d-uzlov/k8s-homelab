@@ -18,7 +18,7 @@ mkdir -p ./streaming/ome/env
 cat <<EOF > ./streaming/ome/env/ingress.env
 public_domain=ome-signal.example.duckdns.org
 
-wildcard_secret_name=wild--example.duckdns.org
+wildcard_secret_name=main-wildcard-at-duckdns
 
 allowed_sources=10.0.0.0/16,1.2.3.4
 EOF
