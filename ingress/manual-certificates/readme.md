@@ -7,26 +7,16 @@ When using LetsEncrypt there are generally 2 ways of assigning a certificate for
 
 This folder contains an example how you can create a wildcard certificate for the second approach.
 
-# !!! Warning !!!
-
-This deployment uses letsencrypt-production issuer.
-
-If anything goes wrong, you may exhaust letsencrypt limits
-and lock yourself out of its certificates for a week.
-
-When deploying first time manually change it to staging issuer and check that it works.
-Then change it back to use a properly-signed certificate.
-
 # Deploy
 
 ```bash
 # Init once
-mkdir -p ./ingress/manual-certificates/env
-cat <<EOF > ./ingress/manual-certificates/env/domain.env
+mkdir -p ./ingress/manual-certificates/domain-info/env/
+cat <<EOF > ./ingress/manual-certificates/domain-info/env/domain.env
 # your subdomain name registered at the duckdns website
 # if you domain is 'example.duckdns.org',
 # then place 'example' here
-subdomain=meoe
+subdomain=example
 # secret name that ingress resources will be using
 secret_name=main-wildcard-at-duckdns
 # label for the certificate secret
@@ -35,6 +25,10 @@ copy_label=copy-wild-cert=main
 EOF
 
 kl create ns cm-manual
+
+# first deploy a staging certificate to test if everything works
+# staging certificates have generous limits,
+# so you won't lock yourself out of letsencrypt limits on accident
 kl apply -k ./ingress/manual-certificates/staging
 
 # you can check the following resources to see if everything goes as expected
