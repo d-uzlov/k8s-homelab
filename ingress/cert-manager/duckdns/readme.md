@@ -12,11 +12,14 @@ The primary use of this is to get wildcard certificated from letsencrypt.
 git clone https://github.com/joshuakraitberg/cert-manager-webhook-duckdns.git
 
 # build deployment config
-helm template cert-manager-webhook-duckdns \
+helm template duckdns-webhook \
   --values ./ingress/cert-manager/duckdns/helm-values.yaml \
   --namespace cm-duckdns \
   ./cert-manager-webhook-duckdns/charts/cert-manager-webhook-duckdns \
+  | sed -e '/helm.sh\/chart/d' -e '/# Source:/d' \
   > ./ingress/cert-manager/duckdns/duckdns.yaml
+
+# helm.sh/chart
 
 # Init once
 mkdir -p ./ingress/cert-manager/duckdns/secret/env
