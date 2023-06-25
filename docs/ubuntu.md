@@ -2,7 +2,7 @@
 # When installing
 
 Don't forget to increase LVM partition size to 100%.
-при установке не забыть расширить партишн до максимума
+By default Ubuntu only uses 50% of the volume.
 
 # extend LVM
 
@@ -75,7 +75,9 @@ sudo nano /etc/hosts
 
 # Static IP
 
+```bash
 sudo nano /etc/netplan/00-installer-config.yaml
+```
 ```yaml
 network:
   ethernets:
@@ -129,10 +131,4 @@ sudo fstrim -v /
 
 ```bash
 sudo sysctl --system
-```
-
-# benchmark disk writes
-
-```bash
-fio --rw=write --ioengine=sync --fdatasync=1 --directory=test-data --size=22m --bs=2300 --name=mytest
 ```

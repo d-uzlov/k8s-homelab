@@ -19,9 +19,10 @@ mount | grep boot
 
 https://www.truenas.com/docs/scale/scaletutorials/toptoolbar/settingupsystememail/
 
-поставить email нужно и для рута, и для админа
 
-alert icon in top right → gear → email → gmail oauth
+You need to set up email both for root and admin accounts.
+
+`alert icon in top right` → `gear` → `email` → `gmail oauth`
 
 # SMART tuning
 
@@ -40,3 +41,22 @@ sudo mount --rbind /mnt/ssd/k8s /mnt/system-mount/shared-links/ssd
 `--rbind` is recursive. Useful if you want to mount whole ZFS dataset tree.
 
 To make changes persistent, create startup script.
+
+# Enable apt
+
+```bash
+sudo chmod +x /bin/apt /bin/apt-*
+```
+
+But it seems like you can't install anything because by default truenas
+doesn't have any repositories, except truenas ones.
+
+# Force destroy filesystem
+
+Don't forget to change `/dev/device-name` to your device.
+
+```bash
+dd if=/dev/zero of=/dev/device-name bs=1M count=1
+```
+
+Warning! This will immediately destroy all data without any user prompts.
