@@ -10,6 +10,47 @@ fio --rw=write --ioengine=sync --fdatasync=1 --size=22m --bs=4k --name=mytest --
 fio --rw=write --ioengine=sync --fdatasync=1 --size=22m --bs=4k --name=mytest --filename=/dev/nvme0n1
 ```
 
+# Main RAID array
+
+ZFS, 6x HDD RAID Z2 vdev, 3x SATA SSD mirror special, 1x NVMe Optane SLOG
+
+```log
+mytest: (g=0): rw=write, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, ioengine=sync, iodepth=1
+fio-3.25
+Starting 1 process
+Jobs: 1 (f=1)
+mytest: (groupid=0, jobs=1): err= 0: pid=379504: Mon Jul  3 22:30:33 2023
+  write: IOPS=4801, BW=18.8MiB/s (19.7MB/s)(22.0MiB/1173msec); 0 zone resets
+    clat (nsec): min=10519, max=57976, avg=13462.14, stdev=2609.65
+     lat (nsec): min=10769, max=58476, avg=13731.86, stdev=2657.41
+    clat percentiles (nsec):
+     |  1.00th=[11584],  5.00th=[11712], 10.00th=[11840], 20.00th=[12096],
+     | 30.00th=[12352], 40.00th=[12480], 50.00th=[12608], 60.00th=[12992],
+     | 70.00th=[13632], 80.00th=[13888], 90.00th=[15424], 95.00th=[18560],
+     | 99.00th=[23168], 99.50th=[27264], 99.90th=[38656], 99.95th=[43264],
+     | 99.99th=[58112]
+   bw (  KiB/s): min=18952, max=19424, per=99.91%, avg=19188.00, stdev=333.75, samples=2
+   iops        : min= 4738, max= 4856, avg=4797.00, stdev=83.44, samples=2
+  lat (usec)   : 20=96.89%, 50=3.09%, 100=0.02%
+  fsync/fdatasync/sync_file_range:
+    sync (usec): min=161, max=345, avg=192.48, stdev=20.09
+    sync percentiles (usec):
+     |  1.00th=[  167],  5.00th=[  172], 10.00th=[  174], 20.00th=[  178],
+     | 30.00th=[  182], 40.00th=[  184], 50.00th=[  186], 60.00th=[  192],
+     | 70.00th=[  196], 80.00th=[  206], 90.00th=[  221], 95.00th=[  235],
+     | 99.00th=[  260], 99.50th=[  273], 99.90th=[  302], 99.95th=[  310],
+     | 99.99th=[  347]
+  cpu          : usr=2.99%, sys=21.84%, ctx=11253, majf=0, minf=11
+  IO depths    : 1=200.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,5632,0,0 short=5631,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=18.8MiB/s (19.7MB/s), 18.8MiB/s-18.8MiB/s (19.7MB/s-19.7MB/s), io=22.0MiB (23.1MB), run=1173-1173msec
+```
+
 # NVME T-FORCE TM8FPL500G 500GB TPBF2210060060400308
 
 Raw device, block 4k:
