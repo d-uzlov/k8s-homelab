@@ -24,6 +24,11 @@ NVMe Intel Optane M10 16GB MEMPEK1J016GAL
 IOPS=18.6k
 Optane is too fast to measure statistics with min/max/average with my test.
 
+NVMe Intel Optane M10 16GB MEMPEK1J016GAL
+ZFS
+IOPS=5860
+ZFS seems to severely limit the performance.
+
 NVME T-FORCE TM8FPL500G 500GB TPBF2210060060400308
 iops: min=  112, max=  154, avg=144.15
 
@@ -32,6 +37,12 @@ iops: min=  950, max= 1019, avg=981.45
 
 SATA Plextor PX-0128M5S
 iops: min=  414, max=  420, avg=417.15
+
+Slow vdev + Optane Special
+iops: min=   74, max=  154, avg=140.96
+
+Slow vdev + Optane SLOG
+IOPS=5812
 ```
 
 Likely lying:

@@ -5,7 +5,7 @@ https://www.ibm.com/cloud/blog/using-fio-to-tell-whether-your-storage-is-fast-en
 
 ```bash
 # test on a filesystem
-fio --rw=write --ioengine=sync --fdatasync=1 --size=22m --bs=4k --name=mytest --directory=test-data
+fio --rw=write --ioengine=sync --fdatasync=1 --size=22m --bs=4k --name=mytest --filename=test-data
 # test raw device
 fio --rw=write --ioengine=sync --fdatasync=1 --size=22m --bs=4k --name=mytest --filename=/dev/nvme0n1
 ```
@@ -52,6 +52,46 @@ Run status group 0 (all jobs):
 ```
 
 # NVMe Intel Optane M10 16GB MEMPEK1J016GAL
+
+ZFS, block 4k:
+
+```log
+root@truenas[/mnt/test-optane]# fio --rw=write --ioengine=sync --fdatasync=1 --size=22m --bs=4k --name=mytest --filename=test-data
+mytest: (g=0): rw=write, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, ioengine=sync, iodepth=1
+fio-3.25
+Starting 1 process
+ Jobs: 1 (f=1)
+mytest: (groupid=0, jobs=1): err= 0: pid=1829456: Tue Jul  4 03:51:41 2023
+  write: IOPS=5860, BW=22.9MiB/s (24.0MB/s)(22.0MiB/961msec); 0 zone resets
+    clat (nsec): min=10800, max=64846, avg=13360.01, stdev=2629.41
+     lat (nsec): min=10980, max=65416, avg=13593.85, stdev=2678.85
+    clat percentiles (nsec):
+     |  1.00th=[11200],  5.00th=[11456], 10.00th=[11584], 20.00th=[11840],
+     | 30.00th=[12096], 40.00th=[12224], 50.00th=[12480], 60.00th=[12992],
+     | 70.00th=[13376], 80.00th=[13760], 90.00th=[16768], 95.00th=[18816],
+     | 99.00th=[23168], 99.50th=[26240], 99.90th=[34048], 99.95th=[42752],
+     | 99.99th=[64768]
+   bw (  KiB/s): min=23776, max=23776, per=100.00%, avg=23776.00, stdev= 0.00, samples=1
+   iops        : min= 5944, max= 5944, avg=5944.00, stdev= 0.00, samples=1
+  lat (usec)   : 20=97.19%, 50=2.79%, 100=0.02%
+  fsync/fdatasync/sync_file_range:
+    sync (usec): min=127, max=343, avg=154.88, stdev=14.67
+    sync percentiles (usec):
+     |  1.00th=[  135],  5.00th=[  139], 10.00th=[  141], 20.00th=[  145],
+     | 30.00th=[  147], 40.00th=[  149], 50.00th=[  153], 60.00th=[  155],
+     | 70.00th=[  159], 80.00th=[  165], 90.00th=[  174], 95.00th=[  184],
+     | 99.00th=[  206], 99.50th=[  215], 99.90th=[  239], 99.95th=[  255],
+     | 99.99th=[  343]
+  cpu          : usr=2.19%, sys=29.38%, ctx=9374, majf=0, minf=10
+  IO depths    : 1=200.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,5632,0,0 short=5631,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=22.9MiB/s (24.0MB/s), 22.9MiB/s-22.9MiB/s (24.0MB/s-24.0MB/s), io=22.0MiB (23.1MB), run=961-961msec
+```
 
 Raw device, block 4k:
 
@@ -448,4 +488,128 @@ Run status group 0 (all jobs):
 
 Disk stats (read/write):
   sde: ios=72/11223, merge=0/0, ticks=12/4360, in_queue=8463, util=98.31%
+```
+
+# Slow vdev + Optane Special
+
+Default:
+
+```log
+root@truenas[/mnt/test-optane]# fio --rw=write --ioengine=sync --fdatasync=1 --size=22m --bs=4k --name=mytest --filename=test-data
+mytest: (g=0): rw=write, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, ioengine=sync, iodepth=1
+fio-3.25
+Starting 1 process
+mytest: Laying out IO file (1 file / 22MiB)
+Jobs: 1 (f=1): [W(1)][100.0%][w=516KiB/s][w=129 IOPS][eta 00m:00s]
+mytest: (groupid=0, jobs=1): err= 0: pid=1764993: Tue Jul  4 03:41:37 2023
+  write: IOPS=140, BW=563KiB/s (577kB/s)(22.0MiB/39980msec); 0 zone resets
+    clat (usec): min=14, max=137, avg=25.86, stdev= 9.61
+     lat (usec): min=14, max=138, avg=26.39, stdev= 9.75
+    clat percentiles (usec):
+     |  1.00th=[   17],  5.00th=[   18], 10.00th=[   18], 20.00th=[   21],
+     | 30.00th=[   21], 40.00th=[   21], 50.00th=[   22], 60.00th=[   23],
+     | 70.00th=[   27], 80.00th=[   33], 90.00th=[   40], 95.00th=[   45],
+     | 99.00th=[   61], 99.50th=[   70], 99.90th=[   80], 99.95th=[   87],
+     | 99.99th=[  139]
+   bw (  KiB/s): min=  296, max=  616, per=99.91%, avg=563.85, stdev=65.07, samples=79
+   iops        : min=   74, max=  154, avg=140.96, stdev=16.27, samples=79
+  lat (usec)   : 20=17.47%, 50=79.21%, 100=3.30%, 250=0.02%
+  fsync/fdatasync/sync_file_range:
+    sync (usec): min=5323, max=82512, avg=7069.57, stdev=1944.89
+    sync percentiles (usec):
+     |  1.00th=[ 5735],  5.00th=[ 5932], 10.00th=[ 6063], 20.00th=[ 6259],
+     | 30.00th=[ 6390], 40.00th=[ 6587], 50.00th=[ 6718], 60.00th=[ 6849],
+     | 70.00th=[ 7046], 80.00th=[ 7242], 90.00th=[ 7767], 95.00th=[10159],
+     | 99.00th=[15008], 99.50th=[16909], 99.90th=[23462], 99.95th=[26084],
+     | 99.99th=[82314]
+  cpu          : usr=0.10%, sys=1.18%, ctx=11271, majf=0, minf=11
+  IO depths    : 1=200.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,5632,0,0 short=5631,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=563KiB/s (577kB/s), 563KiB/s-563KiB/s (577kB/s-577kB/s), io=22.0MiB (23.1MB), run=39980-39980msec
+```
+
+Special block size 1M:
+
+```log
+root@truenas[/mnt/test-optane]# fio --rw=write --ioengine=sync --fdatasync=1 --size=22m --bs=4k --name=mytest --filename=test-data
+mytest: (g=0): rw=write, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, ioengine=sync, iodepth=1
+fio-3.25
+Starting 1 process
+mytest: Laying out IO file (1 file / 22MiB)
+Jobs: 1 (f=1): [W(1)][100.0%][w=648KiB/s][w=162 IOPS][eta 00m:00s]
+mytest: (groupid=0, jobs=1): err= 0: pid=1768851: Tue Jul  4 03:43:25 2023
+  write: IOPS=178, BW=712KiB/s (729kB/s)(22.0MiB/31628msec); 0 zone resets
+    clat (usec): min=13, max=117, avg=25.17, stdev= 9.40
+     lat (usec): min=14, max=118, avg=25.69, stdev= 9.53
+    clat percentiles (usec):
+     |  1.00th=[   17],  5.00th=[   17], 10.00th=[   18], 20.00th=[   21],
+     | 30.00th=[   21], 40.00th=[   21], 50.00th=[   22], 60.00th=[   23],
+     | 70.00th=[   26], 80.00th=[   31], 90.00th=[   39], 95.00th=[   45],
+     | 99.00th=[   61], 99.50th=[   68], 99.90th=[   80], 99.95th=[   96],
+     | 99.99th=[  118]
+   bw (  KiB/s): min=  480, max=  760, per=99.96%, avg=712.76, stdev=56.11, samples=63
+   iops        : min=  120, max=  190, avg=178.19, stdev=14.03, samples=63
+  lat (usec)   : 20=19.02%, 50=77.50%, 100=3.46%, 250=0.02%
+  fsync/fdatasync/sync_file_range:
+    sync (usec): min=4336, max=53849, avg=5587.31, stdev=1183.52
+    sync percentiles (usec):
+     |  1.00th=[ 4817],  5.00th=[ 4883], 10.00th=[ 5014], 20.00th=[ 5145],
+     | 30.00th=[ 5276], 40.00th=[ 5342], 50.00th=[ 5407], 60.00th=[ 5407],
+     | 70.00th=[ 5538], 80.00th=[ 5735], 90.00th=[ 6259], 95.00th=[ 6915],
+     | 99.00th=[ 9503], 99.50th=[11207], 99.90th=[14877], 99.95th=[16319],
+     | 99.99th=[53740]
+  cpu          : usr=0.15%, sys=1.45%, ctx=11264, majf=0, minf=11
+  IO depths    : 1=200.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,5632,0,0 short=5631,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=712KiB/s (729kB/s), 712KiB/s-712KiB/s (729kB/s-729kB/s), io=22.0MiB (23.1MB), run=31628-31628msec
+```
+
+# Slow vdev + Optane SLOG
+
+```log
+root@truenas[/mnt/test-optane]# fio --rw=write --ioengine=sync --fdatasync=1 --size=22m --bs=4k --name=mytest --filename=test-data
+mytest: (g=0): rw=write, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, ioengine=sync, iodepth=1
+fio-3.25
+Starting 1 process
+Jobs: 1 (f=1)
+mytest: (groupid=0, jobs=1): err= 0: pid=1823302: Tue Jul  4 03:49:20 2023
+  write: IOPS=5812, BW=22.7MiB/s (23.8MB/s)(22.0MiB/969msec); 0 zone resets
+    clat (nsec): min=11139, max=42696, avg=13062.14, stdev=2243.41
+     lat (nsec): min=11379, max=43527, avg=13317.93, stdev=2287.99
+    clat percentiles (nsec):
+     |  1.00th=[11456],  5.00th=[11712], 10.00th=[11840], 20.00th=[12096],
+     | 30.00th=[12224], 40.00th=[12224], 50.00th=[12352], 60.00th=[12480],
+     | 70.00th=[12736], 80.00th=[13120], 90.00th=[15296], 95.00th=[17280],
+     | 99.00th=[22400], 99.50th=[26240], 99.90th=[33536], 99.95th=[36096],
+     | 99.99th=[42752]
+   bw (  KiB/s): min=23632, max=23632, per=100.00%, avg=23632.00, stdev= 0.00, samples=1
+   iops        : min= 5908, max= 5908, avg=5908.00, stdev= 0.00, samples=1
+  lat (usec)   : 20=97.87%, 50=2.13%
+  fsync/fdatasync/sync_file_range:
+    sync (usec): min=127, max=675, avg=156.47, stdev=15.73
+    sync percentiles (usec):
+     |  1.00th=[  133],  5.00th=[  139], 10.00th=[  143], 20.00th=[  147],
+     | 30.00th=[  149], 40.00th=[  153], 50.00th=[  155], 60.00th=[  157],
+     | 70.00th=[  161], 80.00th=[  165], 90.00th=[  174], 95.00th=[  182],
+     | 99.00th=[  206], 99.50th=[  212], 99.90th=[  237], 99.95th=[  255],
+     | 99.99th=[  676]
+  cpu          : usr=3.51%, sys=27.17%, ctx=9381, majf=0, minf=12
+  IO depths    : 1=200.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,5632,0,0 short=5631,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=22.7MiB/s (23.8MB/s), 22.7MiB/s-22.7MiB/s (23.8MB/s-23.8MB/s), io=22.0MiB (23.1MB), run=969-969msec
 ```
