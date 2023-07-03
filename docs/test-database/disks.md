@@ -386,6 +386,76 @@ ps    4 : mp:0.0050W non-operational enlat:10000 exlat:45000 rrt:4 rrl:4
 ```
 
 ```log
+root@truenas[/home/admin]# nvme id-ns -H /dev/nvme0n1
+NVME Identify Namespace 1:
+nsze    : 0x3a386030
+ncap    : 0x3a386030
+nuse    : 0x3a386030
+nsfeat  : 0
+  [4:4] : 0     NPWG, NPWA, NPDG, NPDA, and NOWS are Not Supported
+  [2:2] : 0     Deallocated or Unwritten Logical Block error Not Supported
+  [1:1] : 0     Namespace uses AWUN, AWUPF, and ACWU
+  [0:0] : 0     Thin Provisioning Not Supported
+
+nlbaf   : 1
+flbas   : 0
+  [4:4] : 0     Metadata Transferred in Separate Contiguous Buffer
+  [3:0] : 0     Current LBA Format Selected
+
+mc      : 0
+  [1:1] : 0     Metadata Pointer Not Supported
+  [0:0] : 0     Metadata as Part of Extended Data LBA Not Supported
+
+dpc     : 0
+  [4:4] : 0     Protection Information Transferred as Last 8 Bytes of Metadata Not Supported
+  [3:3] : 0     Protection Information Transferred as First 8 Bytes of Metadata Not Supported
+  [2:2] : 0     Protection Information Type 3 Not Supported
+  [1:1] : 0     Protection Information Type 2 Not Supported
+  [0:0] : 0     Protection Information Type 1 Not Supported
+
+dps     : 0
+  [3:3] : 0     Protection Information is Transferred as Last 8 Bytes of Metadata
+  [2:0] : 0     Protection Information Disabled
+
+nmic    : 0
+  [0:0] : 0     Namespace Multipath Not Capable
+
+rescap  : 0
+  [6:6] : 0     Exclusive Access - All Registrants Not Supported
+  [5:5] : 0     Write Exclusive - All Registrants Not Supported
+  [4:4] : 0     Exclusive Access - Registrants Only Not Supported
+  [3:3] : 0     Write Exclusive - Registrants Only Not Supported
+  [2:2] : 0     Exclusive Access Not Supported
+  [1:1] : 0     Write Exclusive Not Supported
+  [0:0] : 0     Persist Through Power Loss Not Supported
+
+fpi     : 0
+  [7:7] : 0     Format Progress Indicator Not Supported
+
+dlfeat  : 9
+  [4:4] : 0     Guard Field of Deallocated Logical Blocks is set to 0xFFFF
+  [3:3] : 0x1   Deallocate Bit in the Write Zeroes Command is Supported
+  [2:0] : 0x1   Bytes Read From a Deallocated Logical Block and its Metadata are 0x00
+
+nawun   : 0
+nawupf  : 0
+nacwu   : 0
+nabsn   : 0
+nabo    : 0
+nabspf  : 0
+noiob   : 0
+nvmcap  : 500107862016
+nsattr  : 0
+nvmsetid: 0
+anagrpid: 0
+endgid  : 0
+nguid   : 00000000000000000000000000000000
+eui64   : 6479a76d8ad002ed
+LBA Format  0 : Metadata Size: 0   bytes - Data Size: 512 bytes - Relative Performance: 0x1 Better (in use)
+LBA Format  1 : Metadata Size: 0   bytes - Data Size: 4096 bytes - Relative Performance: 0 Best
+```
+
+```log
 root@truenas[/mnt/test-2]# smartctl -x /dev/nvme0n1
 smartctl 7.2 2020-12-30 r5155 [x86_64-linux-5.15.79+truenas] (local build)
 Copyright (C) 2002-20, Bruce Allen, Christian Franke, www.smartmontools.org

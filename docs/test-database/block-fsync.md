@@ -1,51 +1,64 @@
 
 # Run test
 
+https://www.ibm.com/cloud/blog/using-fio-to-tell-whether-your-storage-is-fast-enough-for-etcd
+
 ```bash
-fio --rw=write --ioengine=sync --fdatasync=1 --directory=test-data --size=22m --bs=2300 --name=mytest
+# test on a filesystem
+fio --rw=write --ioengine=sync --fdatasync=1 --size=22m --bs=4k --name=mytest --directory=test-data
+# test raw device
+fio --rw=write --ioengine=sync --fdatasync=1 --size=22m --bs=4k --name=mytest --filename=/dev/nvme0n1
 ```
 
-# TESLA 2TB 2022092T0075
+# NVME T-FORCE TM8FPL500G 500GB TPBF2210060060400308
+
+Raw device, block 4k:
 
 ```log
-root@truenas[/mnt/test-2]# fio --rw=write --ioengine=sync --fdatasync=1 --directory=test-data --size=22m --bs=2300 --name=mytest
-mytest: (g=0): rw=write, bs=(R) 2300B-2300B, (W) 2300B-2300B, (T) 2300B-2300B, ioengine=sync, iodepth=1
+root@truenas[/home/admin]# fio --rw=write --ioengine=sync --fdatasync=1 --size=22m --bs=4k --name=mytest --filename=/dev/nvme0n1
+mytest: (g=0): rw=write, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, ioengine=sync, iodepth=1
 fio-3.25
 Starting 1 process
-mytest: Laying out IO file (1 file / 22MiB)
-Jobs: 1 (f=1): [W(1)][100.0%][w=5371KiB/s][w=2391 IOPS][eta 00m:00s]
-mytest: (groupid=0, jobs=1): err= 0: pid=2146840: Sun Jun 25 15:26:05 2023
-  write: IOPS=2324, BW=5222KiB/s (5347kB/s)(21.0MiB/4314msec); 0 zone resets
-    clat (usec): min=9, max=262, avg=13.43, stdev= 9.64
-     lat (usec): min=9, max=262, avg=13.67, stdev= 9.65
+Jobs: 1 (f=1): [W(1)][100.0%][w=588KiB/s][w=147 IOPS][eta 00m:00s]
+mytest: (groupid=0, jobs=1): err= 0: pid=669986: Wed Jun 28 00:10:39 2023
+  write: IOPS=144, BW=576KiB/s (590kB/s)(22.0MiB/39092msec); 0 zone resets
+    clat (usec): min=5, max=300, avg=11.74, stdev= 9.12
+     lat (usec): min=6, max=301, avg=12.27, stdev= 9.22
     clat percentiles (usec):
-     |  1.00th=[   11],  5.00th=[   12], 10.00th=[   12], 20.00th=[   12],
-     | 30.00th=[   12], 40.00th=[   12], 50.00th=[   13], 60.00th=[   13],
-     | 70.00th=[   13], 80.00th=[   14], 90.00th=[   14], 95.00th=[   15],
-     | 99.00th=[   40], 99.50th=[   42], 99.90th=[  221], 99.95th=[  227],
-     | 99.99th=[  243]
-   bw (  KiB/s): min= 5067, max= 5377, per=99.99%, avg=5221.88, stdev=113.82, samples=8
-   iops        : min= 2256, max= 2394, avg=2325.00, stdev=50.68, samples=8
-  lat (usec)   : 10=0.38%, 20=96.73%, 50=2.66%, 100=0.06%, 250=0.16%
-  lat (usec)   : 500=0.01%
+     |  1.00th=[    7],  5.00th=[    8], 10.00th=[    8], 20.00th=[    9],
+     | 30.00th=[    9], 40.00th=[    9], 50.00th=[   10], 60.00th=[   11],
+     | 70.00th=[   13], 80.00th=[   16], 90.00th=[   19], 95.00th=[   21],
+     | 99.00th=[   25], 99.50th=[   32], 99.90th=[  169], 99.95th=[  180],
+     | 99.99th=[  302]
+   bw (  KiB/s): min=  448, max=  616, per=99.95%, avg=576.62, stdev=28.91, samples=78
+   iops        : min=  112, max=  154, avg=144.15, stdev= 7.23, samples=78
+  lat (usec)   : 10=58.31%, 20=36.67%, 50=4.69%, 100=0.11%, 250=0.21%
+  lat (usec)   : 500=0.02%
   fsync/fdatasync/sync_file_range:
-    sync (usec): min=379, max=4126, avg=414.31, stdev=60.77
+    sync (usec): min=5415, max=23256, avg=6926.11, stdev=970.04
     sync percentiles (usec):
-     |  1.00th=[  388],  5.00th=[  392], 10.00th=[  396], 20.00th=[  400],
-     | 30.00th=[  404], 40.00th=[  408], 50.00th=[  412], 60.00th=[  416],
-     | 70.00th=[  416], 80.00th=[  420], 90.00th=[  429], 95.00th=[  437],
-     | 99.00th=[  457], 99.50th=[  478], 99.90th=[ 1221], 99.95th=[ 1369],
-     | 99.99th=[ 3130]
-  cpu          : usr=0.39%, sys=11.66%, ctx=20079, majf=8, minf=14
-  IO depths    : 1=200.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
-     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
-     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
-     issued rwts: total=0,10029,0,0 short=10029,0,0,0 dropped=0,0,0,0
+     |  1.00th=[ 5800],  5.00th=[ 6063], 10.00th=[ 6194], 20.00th=[ 6390],
+     | 30.00th=[ 6521], 40.00th=[ 6652], 50.00th=[ 6783], 60.00th=[ 6915],
+     | 70.00th=[ 7046], 80.00th=[ 7242], 90.00th=[ 7504], 95.00th=[ 7832],
+     | 99.00th=[11731], 99.50th=[12387], 99.90th=[16188], 99.95th=[16909],
+     | 99.99th=[23200]
+  cpu          : usr=0.16%, sys=0.58%, ctx=16812, majf=0, minf=15
+  IO depths    : 1=200.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%        
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%       
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%       
+     issued rwts: total=0,5632,0,0 short=5631,0,0,0 dropped=0,0,0,0
      latency   : target=0, window=0, percentile=100.00%, depth=1
 
 Run status group 0 (all jobs):
-  WRITE: bw=5222KiB/s (5347kB/s), 5222KiB/s-5222KiB/s (5347kB/s-5347kB/s), io=21.0MiB (23.1MB), run=4314-4314msec
+  WRITE: bw=576KiB/s (590kB/s), 576KiB/s-576KiB/s (590kB/s-590kB/s), io=22.0MiB (23.1MB), run=39092-39092msec
+
+Disk stats (read/write):
+  nvme0n1: ios=51/11205, merge=0/0, ticks=69/38658, in_queue=77209, util=99.97%
 ```
+
+# SATA TESLA 2TB 2022092T0075
+
+ZFS, block 2300:
 
 ```log
 root@truenas[/mnt/test-2]# fio --rw=write --ioengine=sync --fdatasync=1 --directory=test-data --size=22m --bs=2300 --name=mytest
@@ -85,7 +98,52 @@ Run status group 0 (all jobs):
   WRITE: bw=5205KiB/s (5330kB/s), 5205KiB/s-5205KiB/s (5330kB/s-5330kB/s), io=21.0MiB (23.1MB), run=4328-4328msec
 ```
 
-# TEAM T253X2512G 500GB TPBF2206080010103840
+Raw device, block 4k:
+
+```log
+root@truenas[/home/admin]# fio --rw=write --ioengine=sync --fdatasync=1 --size=22m --bs=4k --name=mytest --filename=/dev/sdl
+mytest: (g=0): rw=write, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, ioengine=sync, iodepth=1
+fio-3.25
+Starting 1 process
+Jobs: 1 (f=1)
+mytest: (groupid=0, jobs=1): err= 0: pid=672300: Wed Jun 28 00:11:19 2023
+  write: IOPS=2820, BW=11.0MiB/s (11.6MB/s)(22.0MiB/1997msec); 0 zone resets
+    clat (usec): min=4, max=112, avg= 5.92, stdev= 4.56
+     lat (usec): min=4, max=113, avg= 6.13, stdev= 4.57
+    clat percentiles (usec):
+     |  1.00th=[    5],  5.00th=[    5], 10.00th=[    5], 20.00th=[    5],
+     | 30.00th=[    6], 40.00th=[    6], 50.00th=[    6], 60.00th=[    6],
+     | 70.00th=[    6], 80.00th=[    7], 90.00th=[    8], 95.00th=[    9],
+     | 99.00th=[   13], 99.50th=[   17], 99.90th=[   95], 99.95th=[  103],
+     | 99.99th=[  114]
+   bw (  KiB/s): min=10352, max=11664, per=99.02%, avg=11170.67, stdev=713.94, samples=3
+   iops        : min= 2588, max= 2916, avg=2792.67, stdev=178.49, samples=3
+  lat (usec)   : 10=97.55%, 20=2.08%, 50=0.12%, 100=0.18%, 250=0.07%
+  fsync/fdatasync/sync_file_range:
+    sync (usec): min=310, max=51488, avg=346.60, stdev=682.52
+    sync percentiles (usec):
+     |  1.00th=[  318],  5.00th=[  322], 10.00th=[  326], 20.00th=[  326],
+     | 30.00th=[  330], 40.00th=[  334], 50.00th=[  334], 60.00th=[  338],
+     | 70.00th=[  338], 80.00th=[  343], 90.00th=[  351], 95.00th=[  359],
+     | 99.00th=[  371], 99.50th=[  383], 99.90th=[ 1106], 99.95th=[ 1254],
+     | 99.99th=[51643]
+  cpu          : usr=2.81%, sys=5.46%, ctx=16887, majf=0, minf=15
+  IO depths    : 1=200.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,5632,0,0 short=5631,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=11.0MiB/s (11.6MB/s), 11.0MiB/s-11.0MiB/s (11.6MB/s-11.6MB/s), io=22.0MiB (23.1MB), run=1997-1997msec
+
+Disk stats (read/write):
+  sdl: ios=51/10649, merge=0/0, ticks=15/1722, in_queue=3262, util=95.98%
+```
+
+# SATA TEAM T253X2512G 500GB TPBF2206080010103840
+
+ZFS, block 2300:
 
 ```log
 root@truenas[/mnt/test-3]# fio --rw=write --ioengine=sync --fdatasync=1 --directory=test-data --size=22m --bs=2300 --name=mytest
@@ -126,44 +184,132 @@ Run status group 0 (all jobs):
   WRITE: bw=2202KiB/s (2255kB/s), 2202KiB/s-2202KiB/s (2255kB/s-2255kB/s), io=21.0MiB (23.1MB), run=10230-10230msec
 ```
 
-# Samsung 970 EVO 1TB
+Raw device, block 4k:
 
 ```log
-C:\Users\danil\Documents\k8s-public-copy>fio --rw=write --ioengine=sync --fdatasync=1 --directory=test-data --size=22m --bs=2300 --name=mytest
+root@truenas[/home/admin]# fio --rw=write --ioengine=sync --fdatasync=1 --size=22m --bs=4k --name=mytest --filename=/dev/sdm
+mytest: (g=0): rw=write, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, ioengine=sync, iodepth=1
+fio-3.25
+Starting 1 process
+Jobs: 1 (f=1): [W(1)][80.0%][w=4664KiB/s][w=1166 IOPS][eta 00m:01s]
+mytest: (groupid=0, jobs=1): err= 0: pid=677741: Wed Jun 28 00:14:26 2023
+  write: IOPS=1151, BW=4606KiB/s (4717kB/s)(22.0MiB/4891msec); 0 zone resets
+    clat (usec): min=4, max=191, avg= 7.99, stdev= 6.33
+     lat (usec): min=4, max=191, avg= 8.32, stdev= 6.36
+    clat percentiles (usec):
+     |  1.00th=[    5],  5.00th=[    6], 10.00th=[    6], 20.00th=[    6],
+     | 30.00th=[    7], 40.00th=[    7], 50.00th=[    8], 60.00th=[    9],
+     | 70.00th=[    9], 80.00th=[    9], 90.00th=[   10], 95.00th=[   12],
+     | 99.00th=[   18], 99.50th=[   23], 99.90th=[  123], 99.95th=[  141],
+     | 99.99th=[  192]
+   bw (  KiB/s): min= 4456, max= 4688, per=99.93%, avg=4603.56, stdev=86.91, samples=9
+   iops        : min= 1114, max= 1172, avg=1150.89, stdev=21.73, samples=9
+  lat (usec)   : 10=91.41%, 20=7.90%, 50=0.41%, 100=0.09%, 250=0.20%
+  fsync/fdatasync/sync_file_range:
+    sync (usec): min=293, max=1898, avg=857.65, stdev=527.71
+    sync percentiles (usec):
+     |  1.00th=[  306],  5.00th=[  314], 10.00th=[  318], 20.00th=[  322],
+     | 30.00th=[  330], 40.00th=[  338], 50.00th=[ 1319], 60.00th=[ 1336],
+     | 70.00th=[ 1352], 80.00th=[ 1369], 90.00th=[ 1385], 95.00th=[ 1483],
+     | 99.00th=[ 1598], 99.50th=[ 1631], 99.90th=[ 1663], 99.95th=[ 1680],
+     | 99.99th=[ 1893]
+  cpu          : usr=0.94%, sys=3.78%, ctx=16878, majf=0, minf=14
+  IO depths    : 1=200.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,5632,0,0 short=5631,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=4606KiB/s (4717kB/s), 4606KiB/s-4606KiB/s (4717kB/s-4717kB/s), io=22.0MiB (23.1MB), run=4891-4891msec
+
+Disk stats (read/write):
+  sdm: ios=51/10693, merge=0/0, ticks=18/4401, in_queue=8415, util=98.31%
+```
+
+# NVME Samsung 970 EVO 1TB
+
+NTFS, block 4k:
+
+```log
+C:\Users\danil\Documents\k8s-public-copy>fio --rw=write --ioengine=sync --fdatasync=1 --directory=test-data --size=22m --bs=4k --name=mytest
 fio: this platform does not support process shared mutexes, forcing use of threads. Use the 'thread' option to get rid of this warning.
-mytest: (g=0): rw=write, bs=(R) 2300B-2300B, (W) 2300B-2300B, (T) 2300B-2300B, ioengine=sync, iodepth=1
+mytest: (g=0): rw=write, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, ioengine=sync, iodepth=1
 fio-3.35
 Starting 1 thread
 mytest: Laying out IO file (1 file / 22MiB)
-Jobs: 1 (f=1): [W(1)][100.0%][w=2037KiB/s][w=907 IOPS][eta 00m:00s]
-mytest: (groupid=0, jobs=1): err= 0: pid=39580: Sun Jun 25 21:43:33 2023
-  write: IOPS=895, BW=2011KiB/s (2060kB/s)(22.0MiB/11200msec); 0 zone resets
-    clat (usec): min=4, max=173, avg=11.44, stdev=12.47
-     lat (usec): min=4, max=173, avg=11.62, stdev=12.47
+Jobs: 1 (f=1): [W(1)][100.0%][w=3927KiB/s][w=981 IOPS][eta 00m:00s]
+mytest: (groupid=0, jobs=1): err= 0: pid=41484: Wed Jun 28 02:40:07 2023   
+  write: IOPS=981, BW=3927KiB/s (4021kB/s)(22.0MiB/5737msec); 0 zone resets
+    clat (usec): min=5, max=112, avg=11.15, stdev=10.34
+     lat (usec): min=5, max=112, avg=11.32, stdev=10.34
     clat percentiles (usec):
-     |  1.00th=[    6],  5.00th=[    7], 10.00th=[    7], 20.00th=[    7],
-     | 30.00th=[    8], 40.00th=[    8], 50.00th=[    8], 60.00th=[    9],
-     | 70.00th=[    9], 80.00th=[   10], 90.00th=[   13], 95.00th=[   42],
-     | 99.00th=[   67], 99.50th=[   78], 99.90th=[  106], 99.95th=[  118],
-     | 99.99th=[  137]
-   bw (  KiB/s): min= 1393, max= 2156, per=100.00%, avg=2013.27, stdev=156.70, samples=22
-   iops        : min=  620, max=  960, avg=896.36, stdev=69.87, samples=22
-  lat (usec)   : 10=83.14%, 20=7.93%, 50=5.68%, 100=3.13%, 250=0.12%
+     |  1.00th=[    6],  5.00th=[    6], 10.00th=[    6], 20.00th=[    7], 
+     | 30.00th=[    7], 40.00th=[    8], 50.00th=[    8], 60.00th=[    8], 
+     | 70.00th=[    9], 80.00th=[   10], 90.00th=[   30], 95.00th=[   38], 
+     | 99.00th=[   49], 99.50th=[   56], 99.90th=[   75], 99.95th=[   77], 
+     | 99.99th=[  113]
+   bw (  KiB/s): min= 3800, max= 4079, per=99.98%, avg=3926.91, stdev=115.44, samples=11
+   iops        : min=  950, max= 1019, avg=981.45, stdev=28.55, samples=11
+  lat (usec)   : 10=82.07%, 20=5.95%, 50=11.10%, 100=0.87%, 250=0.02%
   fsync/fdatasync/sync_file_range:
-    sync (usec): min=882, max=61702, avg=1103.42, stdev=886.12
+    sync (usec): min=813, max=7611, avg=1005.76, stdev=321.16
     sync percentiles (usec):
-     |  1.00th=[  955],  5.00th=[  979], 10.00th=[  988], 20.00th=[ 1004],
-     | 30.00th=[ 1020], 40.00th=[ 1029], 50.00th=[ 1045], 60.00th=[ 1057],
-     | 70.00th=[ 1074], 80.00th=[ 1090], 90.00th=[ 1123], 95.00th=[ 1156],
-     | 99.00th=[ 3916], 99.50th=[ 3982], 99.90th=[ 4178], 99.95th=[ 4293],
-     | 99.99th=[38011]
+     |  1.00th=[  873],  5.00th=[  898], 10.00th=[  906], 20.00th=[  922],
+     | 30.00th=[  930], 40.00th=[  947], 50.00th=[  963], 60.00th=[  979],
+     | 70.00th=[  996], 80.00th=[ 1004], 90.00th=[ 1037], 95.00th=[ 1074],
+     | 99.00th=[ 1975], 99.50th=[ 3851], 99.90th=[ 4113], 99.95th=[ 4146],
+     | 99.99th=[ 7635]
   cpu          : usr=0.00%, sys=0.00%, ctx=0, majf=0, minf=0
   IO depths    : 1=200.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
      submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
      complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
-     issued rwts: total=0,10029,0,0 short=10029,0,0,0 dropped=0,0,0,0
+     issued rwts: total=0,5632,0,0 short=5631,0,0,0 dropped=0,0,0,0
      latency   : target=0, window=0, percentile=100.00%, depth=1
 
 Run status group 0 (all jobs):
-  WRITE: bw=2011KiB/s (2060kB/s), 2011KiB/s-2011KiB/s (2060kB/s-2060kB/s), io=22.0MiB (23.1MB), run=11200-11200msec
+  WRITE: bw=3927KiB/s (4021kB/s), 3927KiB/s-3927KiB/s (4021kB/s-4021kB/s), io=22.0MiB (23.1MB), run=5737-5737msec
+```
+
+# SATA Plextor PX-0128M5S
+
+NTFS, block 4k:
+
+```log
+D:\>fio --rw=write --ioengine=sync --fdatasync=1 --size=22m --bs=4k --name=mytest --directory=test-data
+fio: this platform does not support process shared mutexes, forcing use of threads. Use the 'thread' option to get rid of this warning.
+mytest: (g=0): rw=write, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, ioengine=sync, iodepth=1
+fio-3.35
+Starting 1 thread
+Jobs: 1 (f=1): [W(1)][100.0%][w=1673KiB/s][w=418 IOPS][eta 00m:00s]
+mytest: (groupid=0, jobs=1): err= 0: pid=1976: Thu Jun 29 03:01:27 2023
+  write: IOPS=416, BW=1668KiB/s (1708kB/s)(22.0MiB/13510msec); 0 zone resets
+    clat (usec): min=4, max=170, avg= 7.66, stdev= 5.50
+     lat (usec): min=5, max=170, avg= 7.84, stdev= 5.51
+    clat percentiles (usec):
+     |  1.00th=[    6],  5.00th=[    6], 10.00th=[    7], 20.00th=[    7],
+     | 30.00th=[    7], 40.00th=[    7], 50.00th=[    8], 60.00th=[    8],
+     | 70.00th=[    8], 80.00th=[    9], 90.00th=[    9], 95.00th=[   10],
+     | 99.00th=[   14], 99.50th=[   44], 99.90th=[  116], 99.95th=[  133],
+     | 99.99th=[  172]
+   bw (  KiB/s): min= 1656, max= 1680, per=100.00%, avg=1669.04, stdev= 7.22, samples=26
+   iops        : min=  414, max=  420, avg=417.15, stdev= 1.78, samples=26
+  lat (usec)   : 10=96.38%, 20=2.89%, 50=0.37%, 100=0.25%, 250=0.11%
+  fsync/fdatasync/sync_file_range:
+    sync (usec): min=2278, max=4918, avg=2389.36, stdev=98.98
+    sync percentiles (usec):
+     |  1.00th=[ 2278],  5.00th=[ 2311], 10.00th=[ 2311], 20.00th=[ 2311],
+     | 30.00th=[ 2343], 40.00th=[ 2343], 50.00th=[ 2376], 60.00th=[ 2409],
+     | 70.00th=[ 2442], 80.00th=[ 2442], 90.00th=[ 2474], 95.00th=[ 2507],
+     | 99.00th=[ 2606], 99.50th=[ 2737], 99.90th=[ 3752], 99.95th=[ 4686],
+     | 99.99th=[ 4948]
+  cpu          : usr=0.00%, sys=0.00%, ctx=0, majf=0, minf=0
+  IO depths    : 1=200.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,5632,0,0 short=5631,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=1668KiB/s (1708kB/s), 1668KiB/s-1668KiB/s (1708kB/s-1708kB/s), io=22.0MiB (23.1MB), run=13510-13510msec
 ```
