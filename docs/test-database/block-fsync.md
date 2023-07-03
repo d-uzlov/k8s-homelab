@@ -51,6 +51,50 @@ Run status group 0 (all jobs):
   WRITE: bw=18.8MiB/s (19.7MB/s), 18.8MiB/s-18.8MiB/s (19.7MB/s-19.7MB/s), io=22.0MiB (23.1MB), run=1173-1173msec
 ```
 
+# NVMe Intel Optane M10 16GB MEMPEK1J016GAL
+
+Raw device, block 4k:
+
+```log
+root@truenas[/home/admin]# fio --rw=write --ioengine=sync --fdatasync=1 --size=22m --bs=4k --name=mytest --filename=/dev/nvme1n1
+mytest: (g=0): rw=write, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, ioengine=sync, iodepth=1
+fio-3.25
+Starting 1 process
+
+mytest: (groupid=0, jobs=1): err= 0: pid=1683564: Tue Jul  4 02:56:33 2023
+  write: IOPS=18.6k, BW=72.8MiB/s (76.4MB/s)(22.0MiB/302msec); 0 zone resets
+    clat (usec): min=2, max=139, avg= 4.34, stdev= 3.43
+     lat (usec): min=3, max=139, avg= 4.53, stdev= 3.44
+    clat percentiles (usec):
+     |  1.00th=[    4],  5.00th=[    4], 10.00th=[    4], 20.00th=[    4],
+     | 30.00th=[    4], 40.00th=[    4], 50.00th=[    4], 60.00th=[    4],
+     | 70.00th=[    4], 80.00th=[    5], 90.00th=[    6], 95.00th=[    7],
+     | 99.00th=[   12], 99.50th=[   18], 99.90th=[   49], 99.95th=[   69],
+     | 99.99th=[  139]
+  lat (usec)   : 4=70.95%, 10=27.36%, 20=1.23%, 50=0.39%, 100=0.04%
+  lat (usec)   : 250=0.04%
+  fsync/fdatasync/sync_file_range:
+    sync (usec): min=41, max=109, avg=47.60, stdev= 4.93
+    sync percentiles (usec):
+     |  1.00th=[   43],  5.00th=[   43], 10.00th=[   44], 20.00th=[   45],
+     | 30.00th=[   46], 40.00th=[   47], 50.00th=[   47], 60.00th=[   48],
+     | 70.00th=[   48], 80.00th=[   49], 90.00th=[   52], 95.00th=[   57],
+     | 99.00th=[   68], 99.50th=[   75], 99.90th=[   94], 99.95th=[  101],
+     | 99.99th=[  110]
+  cpu          : usr=15.95%, sys=12.62%, ctx=5631, majf=0, minf=14
+  IO depths    : 1=200.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,5632,0,0 short=5631,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=72.8MiB/s (76.4MB/s), 72.8MiB/s-72.8MiB/s (76.4MB/s-76.4MB/s), io=22.0MiB (23.1MB), run=302-302msec
+
+Disk stats (read/write):
+  nvme1n1: ios=0/2568, merge=0/0, ticks=0/103, in_queue=103, util=57.63%
+```
+
 # NVME T-FORCE TM8FPL500G 500GB TPBF2210060060400308
 
 Raw device, block 4k:

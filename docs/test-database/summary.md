@@ -20,6 +20,10 @@ Some disks lie about writing data to buffer.
 Main RAID array
 iops: min= 4738, max= 4856, avg=4797.00
 
+NVMe Intel Optane M10 16GB MEMPEK1J016GAL
+IOPS=18.6k
+Optane is too fast to measure statistics with min/max/average with my test.
+
 NVME T-FORCE TM8FPL500G 500GB TPBF2210060060400308
 iops: min=  112, max=  154, avg=144.15
 
@@ -28,7 +32,6 @@ iops: min=  950, max= 1019, avg=981.45
 
 SATA Plextor PX-0128M5S
 iops: min=  414, max=  420, avg=417.15
-
 ```
 
 Likely lying:
@@ -46,5 +49,5 @@ SATA Apacer AS340 480GB E09507281ACE00417122
 iops: min= 1080, max= 1112, avg=1100.80
 
 SATA TEAM T253480GB 480GB TPBF2209020010803378
-iops        : min= 1116, max= 1236, avg=1209.78
+iops: min= 1116, max= 1236, avg=1209.78
 ```

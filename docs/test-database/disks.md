@@ -1,5 +1,327 @@
 
-# TESLA 2TB 2022092T0075
+# NVMe Intel Optane M10 16GB MEMPEK1J016GAL
+
+```log
+root@truenas[/home/admin]# nvme id-ctrl /dev/nvme1n1 -H
+NVME Identify Controller:
+vid       : 0x8086
+ssvid     : 0x8086
+sn        : BTBT849220ZH016N
+mn        : INTEL MEMPEK1J016GAL
+fr        : K4110420
+rab       : 0
+ieee      : 5cd2e4
+cmic      : 0
+  [3:3] : 0     ANA not supported
+  [2:2] : 0     PCI
+  [1:1] : 0     Single Controller
+  [0:0] : 0     Single Port
+
+mdts      : 5
+cntlid    : 0
+ver       : 0
+rtd3r     : 0
+rtd3e     : 0
+oaes      : 0
+[14:14] : 0     Endurance Group Event Aggregate Log Page Change Notice Not Supported
+[13:13] : 0     LBA Status Information Notices Not Supported
+[12:12] : 0     Predictable Latency Event Aggregate Log Change Notices Not Supported
+[11:11] : 0     Asymmetric Namespace Access Change Notices Not Supported
+  [9:9] : 0     Firmware Activation Notices Not Supported
+  [8:8] : 0     Namespace Attribute Changed Event Not Supported
+
+ctratt    : 0
+  [9:9] : 0     UUID List Not Supported
+  [7:7] : 0     Namespace Granularity Not Supported
+  [5:5] : 0     Predictable Latency Mode Not Supported
+  [4:4] : 0     Endurance Groups Not Supported
+  [3:3] : 0     Read Recovery Levels Not Supported
+  [2:2] : 0     NVM Sets Not Supported
+  [1:1] : 0     Non-Operational Power State Permissive Not Supported
+  [0:0] : 0     128-bit Host Identifier Not Supported
+
+rrls      : 0
+cntrltype : 0
+  [7:2] : 0     Reserved
+  [1:0] : 0     Controller type not reported
+fguid     :
+crdt1     : 0
+crdt2     : 0
+crdt3     : 0
+oacs      : 0x7
+  [9:9] : 0     Get LBA Status Capability Not Supported
+  [8:8] : 0     Doorbell Buffer Config Not Supported
+  [7:7] : 0     Virtualization Management Not Supported
+  [6:6] : 0     NVMe-MI Send and Receive Not Supported
+  [5:5] : 0     Directives Not Supported
+  [4:4] : 0     Device Self-test Not Supported
+  [3:3] : 0     NS Management and Attachment Not Supported
+  [2:2] : 0x1   FW Commit and Download Supported
+  [1:1] : 0x1   Format NVM Supported
+  [0:0] : 0x1   Security Send and Receive Supported
+
+acl       : 3
+aerl      : 3
+frmw      : 0x2
+  [4:4] : 0     Firmware Activate Without Reset Not Supported
+  [3:1] : 0x1   Number of Firmware Slots
+  [0:0] : 0     Firmware Slot 1 Read/Write
+
+lpa       : 0x2
+  [4:4] : 0     Persistent Event log Not Supported
+  [3:3] : 0     Telemetry host/controller initiated log page Not Supported
+  [2:2] : 0     Extended data for Get Log Page Not Supported
+  [1:1] : 0x1   Command Effects Log Page Supported
+  [0:0] : 0     SMART/Health Log Page per NS Not Supported
+
+elpe      : 63
+npss      : 3
+avscc     : 0
+  [0:0] : 0     Admin Vendor Specific Commands uses Vendor Specific Format
+
+apsta     : 0x1
+  [0:0] : 0x1   Autonomous Power State Transitions Supported
+
+wctemp    : 0
+cctemp    : 0
+mtfa      : 0
+hmpre     : 0
+hmmin     : 0
+tnvmcap   : 0
+unvmcap   : 0
+rpmbs     : 0
+ [31:24]: 0     Access Size
+ [23:16]: 0     Total Size
+  [5:3] : 0     Authentication Method
+  [2:0] : 0     Number of RPMB Units
+
+edstt     : 0
+dsto      : 0
+fwug      : 0
+kas       : 0
+hctma     : 0
+  [0:0] : 0     Host Controlled Thermal Management Not Supported
+
+mntmt     : 0
+mxtmt     : 0
+sanicap   : 0
+  [31:30] : 0   Additional media modification after sanitize operation completes successfully is not defined
+  [29:29] : 0   No-Deallocate After Sanitize bit in Sanitize command Supported
+    [2:2] : 0   Overwrite Sanitize Operation Not Supported
+    [1:1] : 0   Block Erase Sanitize Operation Not Supported
+    [0:0] : 0   Crypto Erase Sanitize Operation Not Supported
+
+hmminds   : 0
+hmmaxd    : 0
+nsetidmax : 0
+endgidmax : 0
+anatt     : 0
+anacap    : 0
+  [7:7] : 0     Non-zero group ID Not Supported
+  [6:6] : 0     Group ID does not change
+  [4:4] : 0     ANA Change state Not Supported
+  [3:3] : 0     ANA Persistent Loss state Not Supported
+  [2:2] : 0     ANA Inaccessible state Not Supported
+  [1:1] : 0     ANA Non-optimized state Not Supported
+  [0:0] : 0     ANA Optimized state Not Supported
+
+anagrpmax : 0
+nanagrpid : 0
+pels      : 0
+sqes      : 0x66
+  [7:4] : 0x6   Max SQ Entry Size (64)
+  [3:0] : 0x6   Min SQ Entry Size (64)
+
+cqes      : 0x44
+  [7:4] : 0x4   Max CQ Entry Size (16)
+  [3:0] : 0x4   Min CQ Entry Size (16)
+
+maxcmd    : 0
+nn        : 1
+oncs      : 0x46
+  [7:7] : 0     Verify Not Supported
+  [6:6] : 0x1   Timestamp Supported
+  [5:5] : 0     Reservations Not Supported
+  [4:4] : 0     Save and Select Not Supported
+  [3:3] : 0     Write Zeroes Not Supported
+  [2:2] : 0x1   Data Set Management Supported
+  [1:1] : 0x1   Write Uncorrectable Supported
+  [0:0] : 0     Compare Not Supported
+
+fuses     : 0
+  [0:0] : 0     Fused Compare and Write Not Supported
+
+fna       : 0x3
+  [2:2] : 0     Crypto Erase Not Supported as part of Secure Erase
+  [1:1] : 0x1   Crypto Erase Applies to All Namespace(s)
+  [0:0] : 0x1   Format Applies to All Namespace(s)
+
+vwc       : 0
+  [2:1] : 0     Support for the NSID field set to FFFFFFFFh is not indicated
+  [0:0] : 0     Volatile Write Cache Not Present
+
+awun      : 0
+awupf     : 0
+nvscc     : 0
+  [0:0] : 0     NVM Vendor Specific Commands uses Vendor Specific Format
+
+nwpc      : 0
+  [2:2] : 0     Permanent Write Protect Not Supported
+  [1:1] : 0     Write Protect Until Power Supply Not Supported
+  [0:0] : 0     No Write Protect and Write Protect Namespace Not Supported
+
+acwu      : 0
+sgls      : 0
+ [1:0]  : 0     Scatter-Gather Lists Not Supported
+
+mnan      : 0
+subnqn    :
+ioccsz    : 0
+iorcsz    : 0
+icdoff    : 0
+ctrattr   : 0
+  [0:0] : 0     Dynamic Controller Model
+
+msdbd     : 0
+ps    0 : mp:2.80W operational enlat:1000000 exlat:30000 rrt:0 rrl:0
+          rwt:0 rwl:0 idle_power:- active_power:-
+ps    1 : mp:2.20W operational enlat:1000000 exlat:30000 rrt:1 rrl:0
+          rwt:1 rwl:0 idle_power:- active_power:-
+ps    2 : mp:1.80W operational enlat:1000000 exlat:30000 rrt:2 rrl:0
+          rwt:2 rwl:0 idle_power:- active_power:-
+ps    3 : mp:0.0080W non-operational enlat:1150000 exlat:30000 rrt:0 rrl:0
+          rwt:0 rwl:0 idle_power:- active_power:-
+```
+
+```log
+root@truenas[/home/admin]# nvme id-ns /dev/nvme1n1 -H
+NVME Identify Namespace 1:
+nsze    : 0x1ad4000
+ncap    : 0x1ad4000
+nuse    : 0x1ad4000
+nsfeat  : 0
+  [4:4] : 0     NPWG, NPWA, NPDG, NPDA, and NOWS are Not Supported
+  [2:2] : 0     Deallocated or Unwritten Logical Block error Not Supported
+  [1:1] : 0     Namespace uses AWUN, AWUPF, and ACWU
+  [0:0] : 0     Thin Provisioning Not Supported
+
+nlbaf   : 0
+flbas   : 0
+  [4:4] : 0     Metadata Transferred in Separate Contiguous Buffer
+  [3:0] : 0     Current LBA Format Selected
+
+mc      : 0
+  [1:1] : 0     Metadata Pointer Not Supported
+  [0:0] : 0     Metadata as Part of Extended Data LBA Not Supported
+
+dpc     : 0
+  [4:4] : 0     Protection Information Transferred as Last 8 Bytes of Metadata Not Supported
+  [3:3] : 0     Protection Information Transferred as First 8 Bytes of Metadata Not Supported
+  [2:2] : 0     Protection Information Type 3 Not Supported
+  [1:1] : 0     Protection Information Type 2 Not Supported
+  [0:0] : 0     Protection Information Type 1 Not Supported
+
+dps     : 0
+  [3:3] : 0     Protection Information is Transferred as Last 8 Bytes of Metadata
+  [2:0] : 0     Protection Information Disabled
+
+nmic    : 0
+  [0:0] : 0     Namespace Multipath Not Capable
+
+rescap  : 0
+  [6:6] : 0     Exclusive Access - All Registrants Not Supported
+  [5:5] : 0     Write Exclusive - All Registrants Not Supported
+  [4:4] : 0     Exclusive Access - Registrants Only Not Supported
+  [3:3] : 0     Write Exclusive - Registrants Only Not Supported
+  [2:2] : 0     Exclusive Access Not Supported
+  [1:1] : 0     Write Exclusive Not Supported
+  [0:0] : 0     Persist Through Power Loss Not Supported
+
+fpi     : 0
+  [7:7] : 0     Format Progress Indicator Not Supported
+
+dlfeat  : 0
+  [4:4] : 0     Guard Field of Deallocated Logical Blocks is set to 0xFFFF
+  [3:3] : 0     Deallocate Bit in the Write Zeroes Command is Not Supported
+  [2:0] : 0     Bytes Read From a Deallocated Logical Block and its Metadata are Not Reported
+
+nawun   : 0
+nawupf  : 0
+nacwu   : 0
+nabsn   : 0
+nabo    : 0
+nabspf  : 0
+noiob   : 0
+nvmcap  : 0
+nsattr  : 0
+nvmsetid: 0
+anagrpid: 0
+endgid  : 0
+nguid   : 00000000000000000000000000000000
+eui64   : 5cd2e4f160260100
+LBA Format  0 : Metadata Size: 0   bytes - Data Size: 512 bytes - Relative Performance: 0x2 Good (in use)
+```
+
+```log
+root@truenas[/home/admin]# smartctl -x /dev/nvme1n1
+smartctl 7.2 2020-12-30 r5155 [x86_64-linux-5.15.79+truenas] (local build)
+Copyright (C) 2002-20, Bruce Allen, Christian Franke, www.smartmontools.org
+
+=== START OF INFORMATION SECTION ===
+Model Number:                       INTEL MEMPEK1J016GAL
+Serial Number:                      BTBT849220ZH016N
+Firmware Version:                   K4110420
+PCI Vendor/Subsystem ID:            0x8086
+IEEE OUI Identifier:                0x5cd2e4
+Controller ID:                      0
+NVMe Version:                       <1.2
+Number of Namespaces:               1
+Namespace 1 Size/Capacity:          14,403,239,936 [14.4 GB]
+Namespace 1 Formatted LBA Size:     512
+Namespace 1 IEEE EUI-64:            5cd2e4 f160260100
+Local Time is:                      Tue Jul  4 02:55:44 2023 +07
+Firmware Updates (0x02):            1 Slot
+Optional Admin Commands (0x0007):   Security Format Frmw_DL
+Optional NVM Commands (0x0046):     Wr_Unc DS_Mngmt Timestmp
+Log Page Attributes (0x02):         Cmd_Eff_Lg
+Maximum Data Transfer Size:         32 Pages
+
+Supported Power States
+St Op     Max   Active     Idle   RL RT WL WT  Ent_Lat  Ex_Lat
+ 0 +     2.80W       -        -    0  0  0  0  1000000   30000
+ 1 +     2.20W       -        -    0  1  0  1  1000000   30000
+ 2 +     1.80W       -        -    0  2  0  2  1000000   30000
+ 3 -   0.0080W       -        -    0  0  0  0  1150000   30000
+
+Supported LBA Sizes (NSID 0x1)
+Id Fmt  Data  Metadt  Rel_Perf
+ 0 +     512       0         2
+
+=== START OF SMART DATA SECTION ===
+SMART overall-health self-assessment test result: PASSED
+
+SMART/Health Information (NVMe Log 0x02)
+Critical Warning:                   0x00
+Temperature:                        55 Celsius
+Available Spare:                    100%
+Available Spare Threshold:          0%
+Percentage Used:                    0%
+Data Units Read:                    2,906 [1.48 GB]
+Data Units Written:                 1,722,688 [882 GB]
+Host Read Commands:                 21,228
+Host Write Commands:                8,095,379
+Controller Busy Time:               0
+Power Cycles:                       25
+Power On Hours:                     3,530
+Unsafe Shutdowns:                   14
+Media and Data Integrity Errors:    0
+Error Information Log Entries:      0
+
+Error Information (NVMe Log 0x01, 16 of 64 entries)
+No Errors Logged
+```
+
+# SATA TESLA 2TB 2022092T0075
 
 ```log
 root@truenas[/mnt/test-2]# hdparm -I /dev/sdl
@@ -94,7 +416,7 @@ Security:
 Checksum: correct
 ```
 
-# A400 2TB 2022082T0057
+# SATA A400 2TB 2022082T0057
 
 ```log
 root@truenas[/mnt/test-2]# hdparm -I /dev/sdc
@@ -189,7 +511,7 @@ Security:
 Checksum: correct
 ```
 
-# T-FORCE TM8FPL500G 500GB TPBF2210060060400308
+# NVMe T-FORCE TM8FPL500G 500GB TPBF2210060060400308
 
 ```log
 root@truenas[/mnt/test-2]# nvme id-ctrl /dev/nvme0n1 -H
@@ -524,7 +846,7 @@ Num   ErrCount  SQId   CmdId  Status  PELoc          LBA  NSID    VS
   0        172     0  0x6016  0x4005  0x028            0     0     -
 ```
 
-# TEAM T253X2512G 500GB TPBF2206080010103840
+# SATA TEAM T253X2512G 500GB TPBF2206080010103840
 
 ```log
 root@truenas[/mnt/test-2]# smartctl -x /dev/sdm                                                                                                                             
