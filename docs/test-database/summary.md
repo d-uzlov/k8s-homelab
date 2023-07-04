@@ -20,14 +20,20 @@ Some disks lie about writing data to buffer.
 Main RAID array
 iops: min= 4738, max= 4856, avg=4797.00
 
-NVMe Intel Optane M10 16GB MEMPEK1J016GAL
-IOPS=18.6k
-Optane is too fast to measure statistics with min/max/average with my test.
+Main RAID array, without SLOG
+Truenas Scale
+iops: min=    2, max=  120, avg=95.44
+Truenas Core
+iops: min=   15, max=  120, avg=94.13
 
 NVMe Intel Optane M10 16GB MEMPEK1J016GAL
-ZFS
-IOPS=5860
-ZFS seems to severely limit the performance.
+Device
+IOPS=18.6k
+Optane is too fast to measure statistics with min/max/average with my test.
+ZFS, Truenas Scale
+iops: min= 5944, max= 5944, avg=5944.00
+ZFS, Truenas Core
+iops: min= 9317, max= 9317, avg=9317.00
 
 NVME T-FORCE TM8FPL500G 500GB TPBF2210060060400308
 iops: min=  112, max=  154, avg=144.15
@@ -63,4 +69,32 @@ SATA TEAM T253480GB 480GB TPBF2209020010803378
 iops: min= 1116, max= 1236, avg=1209.78
 ```
 
-TODO check out truenas core
+# Disk random write test: Results
+
+```log
+Main RAID array, without SLOG
+Truenas Scale
+iops: min= 1544, max= 4958, avg=2331.24
+Truenas Core
+iops: min=  148, max= 3830, avg=799.47
+
+NVMe Intel Optane M10 16GB MEMPEK1J016GAL
+Truenas Scale
+iops: min=  292, max=25142, avg=18454.12
+Truenas Core
+iops: min=  229, max=71613, avg=28432.77
+```
+
+# Disk sequential write test: Results
+
+```log
+Main RAID array, without SLOG
+Truenas Scale
+WRITE: bw=111MiB/s
+Truenas Core
+WRITE: bw=557MiB/s
+
+NVMe Intel Optane M10 16GB MEMPEK1J016GAL
+Truenas Scale
+WRITE: bw=151MiB/s
+```

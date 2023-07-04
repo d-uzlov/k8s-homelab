@@ -49,6 +49,43 @@ Run status group 0 (all jobs):
   WRITE: bw=9290KiB/s (9513kB/s), 9290KiB/s-9290KiB/s (9513kB/s-9513kB/s), io=545MiB (572MB), run=60119-60119msec
 ```
 
+Truenas Core:
+
+```log
+root@truenas[/mnt/main/data/torrent-data/test]# fio --ioengine=posixaio --rw=randwrite --bs=4k --numjobs=1 --iodepth=1 --runtime=60 --time_based --end_fsync=1 --name=random-write --size=4g  
+random-write: (g=0): rw=randwrite, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, ioengine=posixaio, iodepth=1
+fio-3.28
+Starting 1 process
+random-write: Laying out IO file (1 file / 4096MiB)
+Jobs: 1 (f=1): [F(1)][100.0%][w=212KiB/s][w=53 IOPS][eta 00m:00s]  
+random-write: (groupid=0, jobs=1): err= 0: pid=3081: Tue Jul  4 11:00:16 2023
+  write: IOPS=775, BW=3103KiB/s (3178kB/s)(187MiB/61757msec); 0 zone resets
+    slat (nsec): min=1020, max=1654.1k, avg=6760.61, stdev=19778.02
+    clat (nsec): min=710, max=12114k, avg=1242305.78, stdev=672595.43
+     lat (usec): min=8, max=12121, avg=1249.07, stdev=671.82
+    clat percentiles (usec):
+     |  1.00th=[  116],  5.00th=[  824], 10.00th=[  865], 20.00th=[  930],
+     | 30.00th=[  988], 40.00th=[ 1057], 50.00th=[ 1123], 60.00th=[ 1188],
+     | 70.00th=[ 1287], 80.00th=[ 1418], 90.00th=[ 1713], 95.00th=[ 2212],
+     | 99.00th=[ 3752], 99.50th=[ 4817], 99.90th=[ 8848], 99.95th=[11469],
+     | 99.99th=[11600]
+   bw (  KiB/s): min=  594, max=15321, per=100.00%, avg=3199.19, stdev=1386.84, samples=118
+   iops        : min=  148, max= 3830, avg=799.47, stdev=346.72, samples=118
+  lat (nsec)   : 750=0.01%, 1000=0.30%
+  lat (usec)   : 2=0.14%, 4=0.01%, 10=0.01%, 20=0.04%, 50=0.11%
+  lat (usec)   : 100=0.02%, 250=2.06%, 500=0.69%, 750=0.70%, 1000=27.66%
+  lat (msec)   : 2=61.78%, 4=5.68%, 10=0.72%, 20=0.09%
+  cpu          : usr=0.34%, sys=0.91%, ctx=48578, majf=0, minf=1
+  IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,47911,0,0 short=0,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=3103KiB/s (3178kB/s), 3103KiB/s-3103KiB/s (3178kB/s-3178kB/s), io=187MiB (196MB), run=61757-61757msec
+```
+
 # NVMe Intel Optane M10 16GB MEMPEK1J016GAL
 
 ```log
@@ -85,4 +122,42 @@ random-write: (groupid=0, jobs=1): err= 0: pid=1249265: Tue Jul  4 15:54:13 2023
 
 Run status group 0 (all jobs):
   WRITE: bw=61.2MiB/s (64.2MB/s), 61.2MiB/s-61.2MiB/s (64.2MB/s-64.2MB/s), io=3716MiB (3897MB), run=60690-60690msec
+```
+
+Truenas Core:
+
+```log
+root@truenas[/mnt/test-optane/1]# fio --ioengine=posixaio --rw=randwrite --bs=4k --numjobs=1 --iodepth=1 --runtime=60 --time_based --end_fsync=1 --name=random-write --size=4g
+random-write: (g=0): rw=randwrite, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, ioengine=posixaio, iodepth=1
+fio-3.28
+Starting 1 process
+random-write: Laying out IO file (1 file / 4096MiB)
+Jobs: 1 (f=1): [F(1)][100.0%][w=3KiB/s][w=0 IOPS][eta 00m:00s]       
+random-write: (groupid=0, jobs=1): err= 0: pid=2055: Tue Jul  4 08:44:38 2023
+  write: IOPS=22.0k, BW=86.0MiB/s (90.2MB/s)(5249MiB/61015msec); 0 zone resets
+    slat (nsec): min=820, max=2236.0k, avg=2805.72, stdev=6111.21
+    clat (nsec): min=500, max=1172.3M, avg=41078.37, stdev=4706686.20
+     lat (usec): min=6, max=1172.3k, avg=43.88, stdev=4706.68
+    clat percentiles (nsec):
+     |  1.00th=[   740],  5.00th=[   804], 10.00th=[  7264], 20.00th=[  8384],
+     | 30.00th=[  8640], 40.00th=[  9024], 50.00th=[  9920], 60.00th=[ 10304],
+     | 70.00th=[ 10560], 80.00th=[ 11072], 90.00th=[ 13504], 95.00th=[ 18304],
+     | 99.00th=[ 43776], 99.50th=[ 60160], 99.90th=[109056], 99.95th=[214016],
+     | 99.99th=[468992]
+   bw (  KiB/s): min=  917, max=286452, per=100.00%, avg=113732.68, stdev=67586.59, samples=93
+   iops        : min=  229, max=71613, avg=28432.77, stdev=16896.69, samples=93
+  lat (nsec)   : 750=1.55%, 1000=5.44%
+  lat (usec)   : 2=1.96%, 4=0.35%, 10=43.48%, 20=43.12%, 50=3.30%
+  lat (usec)   : 100=0.68%, 250=0.07%, 500=0.03%, 750=0.01%, 1000=0.01%
+  lat (msec)   : 2=0.01%, 4=0.01%, 250=0.01%, 500=0.01%, 750=0.01%
+  lat (msec)   : 1000=0.01%, 2000=0.01%
+  cpu          : usr=5.58%, sys=6.58%, ctx=1389571, majf=0, minf=1
+  IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,1343860,0,0 short=0,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=86.0MiB/s (90.2MB/s), 86.0MiB/s-86.0MiB/s (90.2MB/s-90.2MB/s), io=5249MiB (5504MB), run=61015-61015msec
 ```

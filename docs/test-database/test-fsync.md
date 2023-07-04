@@ -92,6 +92,47 @@ Run status group 0 (all jobs):
   WRITE: bw=382KiB/s (391kB/s), 382KiB/s-382KiB/s (391kB/s-391kB/s), io=22.0MiB (23.1MB), run=59030-59030msec
 ```
 
+ZFS, Truenas Core:
+
+```log
+root@truenas[/mnt/main/data/torrent-data/test]# fio --rw=write --ioengine=sync --fdatasync=1 --size=22m --bs=4k --name=mytest --filename=test-data
+mytest: (g=0): rw=write, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, ioengine=sync, iodepth=1
+fio-3.28
+Starting 1 process
+mytest: Laying out IO file (1 file / 22MiB)
+Jobs: 1 (f=1): [W(1)][100.0%][w=339KiB/s][w=84 IOPS][eta 00m:00s]
+mytest: (groupid=0, jobs=1): err= 0: pid=1965: Tue Jul  4 09:22:17 2023
+  write: IOPS=94, BW=377KiB/s (386kB/s)(22.0MiB/59724msec); 0 zone resets
+    clat (usec): min=11, max=185, avg=21.66, stdev=16.15
+     lat (usec): min=12, max=186, avg=22.06, stdev=16.20
+    clat percentiles (usec):
+     |  1.00th=[   13],  5.00th=[   13], 10.00th=[   14], 20.00th=[   16],
+     | 30.00th=[   16], 40.00th=[   16], 50.00th=[   17], 60.00th=[   17],
+     | 70.00th=[   19], 80.00th=[   25], 90.00th=[   34], 95.00th=[   40],
+     | 99.00th=[  110], 99.50th=[  124], 99.90th=[  153], 99.95th=[  176],
+     | 99.99th=[  186]
+   bw (  KiB/s): min=   63, max=  483, per=100.00%, avg=378.12, stdev=72.44, samples=116
+   iops        : min=   15, max=  120, avg=94.13, stdev=18.12, samples=116
+  lat (usec)   : 20=73.21%, 50=22.96%, 100=2.52%, 250=1.31%
+  fsync/fdatasync/sync_file_range:
+    sync (msec): min=5, max=136, avg=10.58, stdev= 9.01
+    sync percentiles (msec):
+     |  1.00th=[    8],  5.00th=[    9], 10.00th=[    9], 20.00th=[    9],
+     | 30.00th=[    9], 40.00th=[    9], 50.00th=[    9], 60.00th=[    9],
+     | 70.00th=[    9], 80.00th=[    9], 90.00th=[   11], 95.00th=[   31],
+     | 99.00th=[   59], 99.50th=[   65], 99.90th=[   91], 99.95th=[  111],
+     | 99.99th=[  138]
+  cpu          : usr=0.13%, sys=0.45%, ctx=11262, majf=0, minf=0
+  IO depths    : 1=200.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,5632,0,0 short=5631,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=377KiB/s (386kB/s), 377KiB/s-377KiB/s (386kB/s-386kB/s), io=22.0MiB (23.1MB), run=59724-59724msec
+```
+
 # NVMe Intel Optane M10 16GB MEMPEK1J016GAL
 
 ZFS, block 4k:
@@ -132,6 +173,46 @@ mytest: (groupid=0, jobs=1): err= 0: pid=1829456: Tue Jul  4 03:51:41 2023
 
 Run status group 0 (all jobs):
   WRITE: bw=22.9MiB/s (24.0MB/s), 22.9MiB/s-22.9MiB/s (24.0MB/s-24.0MB/s), io=22.0MiB (23.1MB), run=961-961msec
+```
+
+ZFS, Truenas Core:
+
+```log
+root@truenas[/mnt/test-optane/1]# fio --rw=write --ioengine=sync --fdatasync=1 --size=22m --bs=4k --name=mytest --filename=test-data
+mytest: (g=0): rw=write, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, ioengine=sync, iodepth=1
+fio-3.28
+Starting 1 process
+
+mytest: (groupid=0, jobs=1): err= 0: pid=1966: Tue Jul  4 08:33:29 2023
+  write: IOPS=9324, BW=36.4MiB/s (38.2MB/s)(22.0MiB/604msec); 0 zone resets
+    clat (nsec): min=5361, max=41321, avg=8061.94, stdev=1802.17
+     lat (nsec): min=5611, max=41921, avg=8366.42, stdev=1858.53
+    clat percentiles (nsec):
+     |  1.00th=[ 5856],  5.00th=[ 6304], 10.00th=[ 6496], 20.00th=[ 6752],
+     | 30.00th=[ 7136], 40.00th=[ 7328], 50.00th=[ 7584], 60.00th=[ 7968],
+     | 70.00th=[ 8640], 80.00th=[ 9024], 90.00th=[ 9536], 95.00th=[11328],
+     | 99.00th=[14912], 99.50th=[16192], 99.90th=[22400], 99.95th=[27264],
+     | 99.99th=[41216]
+   bw (  KiB/s): min=37269, max=37269, per=99.92%, avg=37269.00, stdev= 0.00, samples=1
+   iops        : min= 9317, max= 9317, avg=9317.00, stdev= 0.00, samples=1
+  lat (usec)   : 10=91.99%, 20=7.88%, 50=0.12%
+  fsync/fdatasync/sync_file_range:
+    sync (usec): min=73, max=249, avg=96.53, stdev= 8.90
+    sync percentiles (usec):
+     |  1.00th=[   88],  5.00th=[   90], 10.00th=[   92], 20.00th=[   92],
+     | 30.00th=[   93], 40.00th=[   93], 50.00th=[   94], 60.00th=[   95],
+     | 70.00th=[   97], 80.00th=[  101], 90.00th=[  105], 95.00th=[  110],
+     | 99.00th=[  139], 99.50th=[  149], 99.90th=[  174], 99.95th=[  184],
+     | 99.99th=[  249]
+  cpu          : usr=2.32%, sys=20.73%, ctx=5640, majf=0, minf=0
+  IO depths    : 1=200.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,5632,0,0 short=5631,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=36.4MiB/s (38.2MB/s), 36.4MiB/s-36.4MiB/s (38.2MB/s-38.2MB/s), io=22.0MiB (23.1MB), run=604-604msec
 ```
 
 Raw device, block 4k:

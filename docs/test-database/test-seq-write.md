@@ -5,7 +5,10 @@ https://arstechnica.com/gadgets/2020/02/how-fast-are-your-disks-find-out-the-ope
 
 ```bash
 # test on a filesystem
-fio --ioengine=posixaio --rw=write --bs=32m --numjobs=4 --iodepth=1 --runtime=60 --time_based --end_fsync=1 --size=1g --name=seq-write
+fio --ioengine=posixaio --rw=write --bs=32m --numjobs=4 --iodepth=1 --runtime=60 --time_based --end_fsync=1 --size=1g --group_reporting --name=seq-write
+
+# alt command
+dd if=/dev/zero of=test-dd bs=32000k count=100 oflag=dsync
 ```
 
 # Main RAID array without SLOG
@@ -110,6 +113,46 @@ seq-write: (groupid=0, jobs=1): err= 0: pid=1430629: Tue Jul  4 16:19:12 2023
 
 Run status group 0 (all jobs):
   WRITE: bw=111MiB/s (116MB/s), 27.3MiB/s-28.0MiB/s (28.6MB/s-29.4MB/s), io=9376MiB (9831MB), run=84546-84578msec
+```
+
+ZFS, Truenas Core:
+
+```LOG
+root@truenas[/mnt/main/data/torrent-data/test]# fio --ioengine=posixaio --rw=write --bs=32m --numjobs=4 --iodepth=1 --runtime=60 --time_based --end_fsync=1 --size=1g --group_reporting --name=seq-write
+seq-write: (g=0): rw=write, bs=(R) 32.0MiB-32.0MiB, (W) 32.0MiB-32.0MiB, (T) 32.0MiB-32.0MiB, ioengine=posixaio, iodepth=1
+...
+fio-3.28
+Starting 4 processes
+seq-write: Laying out IO file (1 file / 1024MiB)
+seq-write: Laying out IO file (1 file / 1024MiB)
+seq-write: Laying out IO file (1 file / 1024MiB)
+seq-write: Laying out IO file (1 file / 1024MiB)
+Jobs: 3 (f=3): [F(3),_(1)][100.0%][eta 00m:00s]                  
+seq-write: (groupid=0, jobs=4): err= 0: pid=3583: Tue Jul  4 11:45:42 2023
+  write: IOPS=17, BW=557MiB/s (584MB/s)(35.4GiB/65193msec); 0 zone resets
+    slat (usec): min=446, max=84476, avg=1169.15, stdev=2696.94
+    clat (usec): min=4, max=884532, avg=210574.32, stdev=109324.97
+     lat (msec): min=8, max=884, avg=211.74, stdev=108.91
+    clat percentiles (msec):
+     |  1.00th=[   12],  5.00th=[  153], 10.00th=[  163], 20.00th=[  169],
+     | 30.00th=[  174], 40.00th=[  180], 50.00th=[  186], 60.00th=[  190],
+     | 70.00th=[  199], 80.00th=[  213], 90.00th=[  288], 95.00th=[  468],
+     | 99.00th=[  642], 99.50th=[  743], 99.90th=[  877], 99.95th=[  885],
+     | 99.99th=[  885]
+   bw (  KiB/s): min=253524, max=3241918, per=100.00%, avg=637554.11, stdev=80974.22, samples=458
+   iops        : min=    4, max=   96, avg=15.91, stdev= 2.52, samples=458
+  lat (usec)   : 10=0.97%
+  lat (msec)   : 20=1.06%, 50=1.85%, 100=0.44%, 250=83.60%, 500=7.67%
+  lat (msec)   : 750=4.06%, 1000=0.35%
+  cpu          : usr=0.43%, sys=0.01%, ctx=1315, majf=0, minf=4
+  IO depths    : 1=100.4%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,1134,0,0 short=0,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=557MiB/s (584MB/s), 557MiB/s-557MiB/s (584MB/s-584MB/s), io=35.4GiB (38.1GB), run=65193-65193msec
 ```
 
 # NVMe Intel Optane M10 16GB MEMPEK1J016GAL
