@@ -51,6 +51,47 @@ Run status group 0 (all jobs):
   WRITE: bw=18.8MiB/s (19.7MB/s), 18.8MiB/s-18.8MiB/s (19.7MB/s-19.7MB/s), io=22.0MiB (23.1MB), run=1173-1173msec
 ```
 
+# Main RAID array without SLOG
+
+```log
+root@truenas[/mnt/main/data/torrent-data]# fio --rw=write --ioengine=sync --fdatasync=1 --size=22m --bs=4k --name=mytest --filename=test-data
+mytest: (g=0): rw=write, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, ioengine=sync, iodepth=1
+fio-3.25
+Starting 1 process
+mytest: Laying out IO file (1 file / 22MiB)
+Jobs: 1 (f=1): [W(1)][100.0%][w=436KiB/s][w=109 IOPS][eta 00m:00s]
+mytest: (groupid=0, jobs=1): err= 0: pid=2083842: Tue Jul  4 17:04:59 2023
+  write: IOPS=95, BW=382KiB/s (391kB/s)(22.0MiB/59030msec); 0 zone resets
+    clat (usec): min=14, max=480, avg=28.03, stdev=14.64
+     lat (usec): min=15, max=481, avg=28.55, stdev=14.74
+    clat percentiles (usec):
+     |  1.00th=[   17],  5.00th=[   18], 10.00th=[   19], 20.00th=[   21],
+     | 30.00th=[   22], 40.00th=[   23], 50.00th=[   24], 60.00th=[   28],
+     | 70.00th=[   32], 80.00th=[   36], 90.00th=[   40], 95.00th=[   43],
+     | 99.00th=[   56], 99.50th=[  145], 99.90th=[  184], 99.95th=[  217],
+     | 99.99th=[  482]
+   bw (  KiB/s): min=    8, max=  480, per=99.83%, avg=381.76, stdev=113.66, samples=118
+   iops        : min=    2, max=  120, avg=95.44, stdev=28.41, samples=118
+  lat (usec)   : 20=14.28%, 50=84.13%, 100=0.99%, 250=0.59%, 500=0.02%
+  fsync/fdatasync/sync_file_range:
+    sync (msec): min=6, max=821, avg=10.45, stdev=18.42
+    sync percentiles (msec):
+     |  1.00th=[    9],  5.00th=[    9], 10.00th=[    9], 20.00th=[    9],
+     | 30.00th=[    9], 40.00th=[    9], 50.00th=[    9], 60.00th=[    9],
+     | 70.00th=[    9], 80.00th=[    9], 90.00th=[    9], 95.00th=[   13],
+     | 99.00th=[   62], 99.50th=[   70], 99.90th=[  209], 99.95th=[  472],
+     | 99.99th=[  818]
+  cpu          : usr=0.10%, sys=0.82%, ctx=11272, majf=0, minf=11
+  IO depths    : 1=200.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,5632,0,0 short=5631,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=382KiB/s (391kB/s), 382KiB/s-382KiB/s (391kB/s-391kB/s), io=22.0MiB (23.1MB), run=59030-59030msec
+```
+
 # NVMe Intel Optane M10 16GB MEMPEK1J016GAL
 
 ZFS, block 4k:

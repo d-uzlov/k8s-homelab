@@ -62,3 +62,5 @@ iops: min= 1080, max= 1112, avg=1100.80
 SATA TEAM T253480GB 480GB TPBF2209020010803378
 iops: min= 1116, max= 1236, avg=1209.78
 ```
+
+TODO check out truenas core
