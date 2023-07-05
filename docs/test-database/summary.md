@@ -101,3 +101,14 @@ NVMe Intel Optane M10 16GB MEMPEK1J016GAL
 Truenas Scale
 WRITE: bw=151MiB/s
 ```
+
+# How to read raw results
+
+- `write: IOPS=value` is average iops
+- `iops        :` is iops distribution
+- `WRITE: bw=value` is average bandwidth
+- `sync percentiles (usec):` is latency distribution
+- - look at the `99.00th` percentile
+- `slat` is submission latency that indicates how much time it took to submit I/O to the kernel.
+- `clat` is completion latency that indicates how much time passed between submission to the kernel and completing the I/O (excluding submission latency).
+- `lat` is the sum of `slat` and `clat`.
