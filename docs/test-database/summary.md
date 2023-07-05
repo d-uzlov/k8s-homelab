@@ -54,7 +54,10 @@ IOPS=5812
 Likely lying:
 ```log
 SATA TESLA 2TB 2022092T0075
+Truenas Scale
 iops: min= 2588, max= 2916, avg=2792.67
+Truenas Core
+iops: min= 2304, max= 2410, avg=2368.50
 ```
 
 Maybe lying:

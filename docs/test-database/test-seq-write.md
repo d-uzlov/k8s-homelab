@@ -11,6 +11,47 @@ fio --ioengine=posixaio --rw=write --bs=32m --numjobs=4 --iodepth=1 --runtime=60
 dd if=/dev/zero of=test-dd bs=32000k count=100 oflag=dsync
 ```
 
+# Main RAID array
+
+Truenas Core:
+
+```log
+root@truenas[/mnt/main/data/torrent-data/test]# fio --ioengine=posixaio --rw=write --bs=32m --numjobs=4 --iodepth=1 --runtime=60 --time_based --end_fsync=1 --size=1g --group_reporting --name=seq-write
+seq-write: (g=0): rw=write, bs=(R) 32.0MiB-32.0MiB, (W) 32.0MiB-32.0MiB, (T) 32.0MiB-32.0MiB, ioengine=posixaio, iodepth=1
+...
+fio-3.28
+Starting 4 processes
+seq-write: Laying out IO file (1 file / 1024MiB)
+seq-write: Laying out IO file (1 file / 1024MiB)
+seq-write: Laying out IO file (1 file / 1024MiB)
+seq-write: Laying out IO file (1 file / 1024MiB)
+Jobs: 4 (f=4): [F(4)][100.0%][eta 00m:00s]                       
+seq-write: (groupid=0, jobs=4): err= 0: pid=16433: Wed Jul  5 06:32:44 2023
+  write: IOPS=15, BW=508MiB/s (533MB/s)(35.6GiB/71763msec); 0 zone resets
+    slat (usec): min=444, max=3599, avg=1005.29, stdev=399.38
+    clat (msec): min=8, max=633, avg=209.80, stdev=90.55
+     lat (msec): min=10, max=633, avg=210.80, stdev=90.40
+    clat percentiles (msec):
+     |  1.00th=[   10],  5.00th=[  153], 10.00th=[  163], 20.00th=[  171],
+     | 30.00th=[  176], 40.00th=[  182], 50.00th=[  186], 60.00th=[  192],
+     | 70.00th=[  203], 80.00th=[  226], 90.00th=[  321], 95.00th=[  414],
+     | 99.00th=[  575], 99.50th=[  600], 99.90th=[  625], 99.95th=[  634],
+     | 99.99th=[  634]
+   bw (  KiB/s): min=249660, max=3056831, per=100.00%, avg=624106.73, stdev=74202.92, samples=471
+   iops        : min=    4, max=   91, avg=15.93, stdev= 2.33, samples=471
+  lat (msec)   : 10=1.75%, 20=0.96%, 50=0.70%, 100=0.35%, 250=80.44%
+  lat (msec)   : 500=13.68%, 750=2.11%
+  cpu          : usr=0.39%, sys=0.02%, ctx=1298, majf=0, minf=4
+  IO depths    : 1=100.4%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,1140,0,0 short=0,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=508MiB/s (533MB/s), 508MiB/s-508MiB/s (533MB/s-533MB/s), io=35.6GiB (38.3GB), run=71763-71763msec
+```
+
 # Main RAID array without SLOG
 
 ZFS, 6x HDD RAID Z2 vdev, 3x SATA SSD mirror special

@@ -10,6 +10,47 @@ fio --ioengine=posixaio --rw=randwrite --bs=4k --numjobs=1 --iodepth=1 --runtime
 fio --ioengine=posixaio --rw=randwrite --bs=4k --numjobs=1 --iodepth=1 --runtime=60 --time_based --end_fsync=1 --name=random-write --filename=/dev/nvme0n1
 ```
 
+# Main RAID array
+
+ZFS, 6x HDD RAID Z2 vdev, 3x SATA SSD mirror special, 1x NVMe Optane SLOG
+
+Truenas Core:
+
+```log
+root@truenas[/mnt/main/data/torrent-data/test]# fio --ioengine=posixaio --rw=randwrite --bs=4k --numjobs=1 --iodepth=1 --runtime=60 --time_based --end_fsync=1 --name=random-write --size=4g
+random-write: (g=0): rw=randwrite, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, ioengine=posixaio, iodepth=1
+fio-3.28
+Starting 1 process
+random-write: Laying out IO file (1 file / 4096MiB)
+Jobs: 1 (f=1): [F(1)][100.0%][w=2462KiB/s][w=615 IOPS][eta 00m:00s]
+random-write: (groupid=0, jobs=1): err= 0: pid=16413: Wed Jul  5 06:30:48 2023
+  write: IOPS=786, BW=3147KiB/s (3222kB/s)(188MiB/61029msec); 0 zone resets
+    slat (nsec): min=1120, max=358438, avg=5976.22, stdev=4334.80
+    clat (nsec): min=719, max=13528k, avg=1240309.01, stdev=658102.61
+     lat (usec): min=10, max=13539, avg=1246.29, stdev=658.30
+    clat percentiles (usec):
+     |  1.00th=[  127],  5.00th=[  840], 10.00th=[  873], 20.00th=[  930],
+     | 30.00th=[  988], 40.00th=[ 1045], 50.00th=[ 1106], 60.00th=[ 1172],
+     | 70.00th=[ 1287], 80.00th=[ 1418], 90.00th=[ 1762], 95.00th=[ 2180],
+     | 99.00th=[ 3589], 99.50th=[ 4359], 99.90th=[10945], 99.95th=[11600],
+     | 99.99th=[11994]
+   bw (  KiB/s): min=  678, max=14661, per=100.00%, avg=3211.05, stdev=1334.38, samples=117
+   iops        : min=  169, max= 3665, avg=802.43, stdev=333.58, samples=117
+  lat (nsec)   : 750=0.01%, 1000=0.01%
+  lat (usec)   : 2=0.01%, 10=0.01%, 20=0.01%, 50=0.26%, 100=0.19%
+  lat (usec)   : 250=2.19%, 500=0.69%, 750=0.46%, 1000=28.66%
+  lat (msec)   : 2=61.01%, 4=5.84%, 10=0.54%, 20=0.12%
+  cpu          : usr=0.50%, sys=0.81%, ctx=48449, majf=0, minf=1
+  IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,48012,0,0 short=0,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=3147KiB/s (3222kB/s), 3147KiB/s-3147KiB/s (3222kB/s-3222kB/s), io=188MiB (197MB), run=61029-61029msec
+```
+
 # Main RAID array without SLOG
 
 ZFS, 6x HDD RAID Z2 vdev, 3x SATA SSD mirror special

@@ -51,6 +51,47 @@ Run status group 0 (all jobs):
   WRITE: bw=18.8MiB/s (19.7MB/s), 18.8MiB/s-18.8MiB/s (19.7MB/s-19.7MB/s), io=22.0MiB (23.1MB), run=1173-1173msec
 ```
 
+Truenas Core:
+
+```log
+root@truenas[/mnt/main/data/torrent-data/test]# fio --rw=write --ioengine=sync --fdatasync=1 --size=22m --bs=4k --name=mytest --filename=test-data
+mytest: (g=0): rw=write, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, ioengine=sync, iodepth=1
+fio-3.28
+Starting 1 process
+mytest: Laying out IO file (1 file / 22MiB)
+Jobs: 1 (f=1)
+mytest: (groupid=0, jobs=1): err= 0: pid=6263: Tue Jul  4 14:45:36 2023
+  write: IOPS=6055, BW=23.7MiB/s (24.8MB/s)(22.0MiB/930msec); 0 zone resets
+    clat (usec): min=4, max=180, avg=10.07, stdev=12.20
+     lat (usec): min=4, max=180, avg=10.29, stdev=12.21
+    clat percentiles (usec):
+     |  1.00th=[    6],  5.00th=[    6], 10.00th=[    6], 20.00th=[    7],
+     | 30.00th=[    8], 40.00th=[    8], 50.00th=[    8], 60.00th=[    8],
+     | 70.00th=[    9], 80.00th=[    9], 90.00th=[   11], 95.00th=[   18],
+     | 99.00th=[   78], 99.50th=[   90], 99.90th=[  121], 99.95th=[  133],
+     | 99.99th=[  182]
+   bw (  KiB/s): min=23603, max=23603, per=97.44%, avg=23603.00, stdev= 0.00, samples=1
+   iops        : min= 5900, max= 5900, avg=5900.00, stdev= 0.00, samples=1
+  lat (usec)   : 10=88.58%, 20=7.05%, 50=1.78%, 100=2.15%, 250=0.44%
+  fsync/fdatasync/sync_file_range:
+    sync (usec): min=107, max=462, avg=153.11, stdev=22.20
+    sync percentiles (usec):
+     |  1.00th=[  110],  5.00th=[  111], 10.00th=[  126], 20.00th=[  130],
+     | 30.00th=[  147], 40.00th=[  149], 50.00th=[  151], 60.00th=[  157],
+     | 70.00th=[  167], 80.00th=[  174], 90.00th=[  180], 95.00th=[  186],
+     | 99.00th=[  202], 99.50th=[  210], 99.90th=[  227], 99.95th=[  231],
+     | 99.99th=[  461]
+  cpu          : usr=3.33%, sys=16.02%, ctx=10857, majf=0, minf=0
+  IO depths    : 1=200.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,5632,0,0 short=5631,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=23.7MiB/s (24.8MB/s), 23.7MiB/s-23.7MiB/s (24.8MB/s-24.8MB/s), io=22.0MiB (23.1MB), run=930-930msec
+```
+
 # Main RAID array without SLOG
 
 ```log
@@ -388,6 +429,47 @@ Disk stats (read/write):
   sdl: ios=51/10649, merge=0/0, ticks=15/1722, in_queue=3262, util=95.98%
 ```
 
+Truenas Core:
+
+```log
+root@truenas[/mnt/test tesla]# fio --rw=write --ioengine=sync --fdatasync=1 --size=22m --bs=4k --name=mytest --filename=test-data
+mytest: (g=0): rw=write, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, ioengine=sync, iodepth=1
+fio-3.28
+Starting 1 process
+mytest: Laying out IO file (1 file / 22MiB)
+Jobs: 1 (f=1): [W(1)][-.-%][w=9519KiB/s][w=2379 IOPS][eta 00m:00s]
+mytest: (groupid=0, jobs=1): err= 0: pid=5433: Tue Jul  4 13:57:32 2023
+  write: IOPS=2352, BW=9410KiB/s (9636kB/s)(22.0MiB/2394msec); 0 zone resets
+    clat (nsec): min=6190, max=48977, avg=9088.43, stdev=3426.75
+     lat (nsec): min=6370, max=49447, avg=9315.23, stdev=3438.67
+    clat percentiles (nsec):
+     |  1.00th=[ 6688],  5.00th=[ 7392], 10.00th=[ 7712], 20.00th=[ 7968],
+     | 30.00th=[ 8160], 40.00th=[ 8256], 50.00th=[ 8384], 60.00th=[ 8512],
+     | 70.00th=[ 8640], 80.00th=[ 8768], 90.00th=[ 9152], 95.00th=[13504],
+     | 99.00th=[26496], 99.50th=[28800], 99.90th=[34560], 99.95th=[36608],
+     | 99.99th=[48896]
+   bw (  KiB/s): min= 9219, max= 9640, per=100.00%, avg=9475.25, stdev=201.36, samples=4
+   iops        : min= 2304, max= 2410, avg=2368.50, stdev=50.71, samples=4
+  lat (usec)   : 10=93.06%, 20=3.53%, 50=3.41%
+  fsync/fdatasync/sync_file_range:
+    sync (usec): min=366, max=4709, avg=413.80, stdev=93.10
+    sync percentiles (usec):
+     |  1.00th=[  375],  5.00th=[  396], 10.00th=[  396], 20.00th=[  400],
+     | 30.00th=[  404], 40.00th=[  404], 50.00th=[  404], 60.00th=[  408],
+     | 70.00th=[  412], 80.00th=[  420], 90.00th=[  433], 95.00th=[  441],
+     | 99.00th=[  465], 99.50th=[  506], 99.90th=[ 1876], 99.95th=[ 2180],
+     | 99.99th=[ 4686]
+  cpu          : usr=0.71%, sys=6.94%, ctx=11260, majf=0, minf=0
+  IO depths    : 1=200.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,5632,0,0 short=5631,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=9410KiB/s (9636kB/s), 9410KiB/s-9410KiB/s (9636kB/s-9636kB/s), io=22.0MiB (23.1MB), run=2394-2394msec
+```
+
 # NVME Samsung 970 EVO 1TB
 
 NTFS, block 4k:
@@ -518,6 +600,47 @@ Run status group 0 (all jobs):
 
 Disk stats (read/write):
   sdm: ios=51/10693, merge=0/0, ticks=18/4401, in_queue=8415, util=98.31%
+```
+
+Truenas Core:
+
+```log
+root@truenas[/mnt/test-500]# fio --rw=write --ioengine=sync --fdatasync=1 --size=22m --bs=4k --name=mytest --filename=test-data
+mytest: (g=0): rw=write, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, ioengine=sync, iodepth=1
+fio-3.28
+Starting 1 process
+mytest: Laying out IO file (1 file / 22MiB)
+Jobs: 1 (f=1): [W(1)][100.0%][w=3335KiB/s][w=833 IOPS][eta 00m:00s]
+mytest: (groupid=0, jobs=1): err= 0: pid=5676: Tue Jul  4 14:02:53 2023
+  write: IOPS=914, BW=3658KiB/s (3746kB/s)(22.0MiB/6159msec); 0 zone resets
+    clat (nsec): min=7390, max=46387, avg=12337.13, stdev=4307.19
+     lat (nsec): min=7660, max=46887, avg=12656.81, stdev=4349.90
+    clat percentiles (nsec):
+     |  1.00th=[ 7904],  5.00th=[ 8160], 10.00th=[ 8256], 20.00th=[ 8512],
+     | 30.00th=[ 8768], 40.00th=[ 9152], 50.00th=[12736], 60.00th=[14272],
+     | 70.00th=[15040], 80.00th=[15296], 90.00th=[15424], 95.00th=[15936],
+     | 99.00th=[26240], 99.50th=[31104], 99.90th=[44288], 99.95th=[45312],
+     | 99.99th=[46336]
+   bw (  KiB/s): min= 2944, max= 3937, per=100.00%, avg=3663.17, stdev=256.76, samples=12
+   iops        : min=  736, max=  984, avg=915.50, stdev=64.15, samples=12
+  lat (usec)   : 10=45.21%, 20=50.98%, 50=3.82%
+  fsync/fdatasync/sync_file_range:
+    sync (usec): min=414, max=9854, avg=1078.45, stdev=583.56
+    sync percentiles (usec):
+     |  1.00th=[  461],  5.00th=[  469], 10.00th=[  474], 20.00th=[  490],
+     | 30.00th=[  519], 40.00th=[  611], 50.00th=[ 1467], 60.00th=[ 1500],
+     | 70.00th=[ 1516], 80.00th=[ 1532], 90.00th=[ 1647], 95.00th=[ 1729],
+     | 99.00th=[ 3163], 99.50th=[ 3228], 99.90th=[ 3392], 99.95th=[ 3458],
+     | 99.99th=[ 9896]
+  cpu          : usr=0.63%, sys=3.22%, ctx=11262, majf=0, minf=0
+  IO depths    : 1=200.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,5632,0,0 short=5631,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=3658KiB/s (3746kB/s), 3658KiB/s-3658KiB/s (3746kB/s-3746kB/s), io=22.0MiB (23.1MB), run=6159-6159msec
 ```
 
 # SATA Apacer AS340 480GB E09507281ACE00417122
