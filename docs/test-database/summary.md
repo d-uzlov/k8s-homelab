@@ -112,3 +112,40 @@ WRITE: bw=151MiB/s
 - `slat` is submission latency that indicates how much time it took to submit I/O to the kernel.
 - `clat` is completion latency that indicates how much time passed between submission to the kernel and completing the I/O (excluding submission latency).
 - `lat` is the sum of `slat` and `clat`.
+
+# Flush performance
+
+Supposedly, these drives have very good flush performance:
+- Crucial P5 Plus
+- WD Red SN700
+
+Reference:
+- https://news.ycombinator.com/item?id=30436301
+
+> Crucial P5 Plus 1TB CT1000P5PSSD8, FW P7CR402: Pass
+> 
+> Crucial P2 250GB CT250P2SSD8, FW P2CR046: Pass
+> 
+> Kingston SNVS/250G, 012.A005: Pass
+> 
+> Seagate Firecuda 530 PCIe Gen 4 1TB ZP1000GM30013, FW SU6SM001: Pass
+> 
+> Intel 670p 1TB, SSDPEKNU010TZ, FW 002C: Pass
+> 
+> Samsung 970 Evo Plus: MZ-V7S2T0, 2021.10: Pass
+> 
+> Samsung 980 250GB MZ-V8V250, 2021/11/07: Pass
+> 
+> WD Red: WDS100T1R0C-68BDK0, 04Sept2021: Pass
+> 
+> WD Black SN750 1TB WDS100T1B0E, 09Jan2022: Pass
+> 
+> WD Green SN350 240GB WDS240G20C, 02Aug2021: Pass
+> 
+> Flush performance varies by 6x and is not necessarily correlated with overall perf or price. If you are doing lots of database writes or other workloads where durability matters don't just look at the random/sustained read/write > performance!
+> 
+> High flush perf: Crucial P5 Plus (fastest) and WD Red
+> 
+> Despite being a relatively high end consumer drive the Seagate had really low flush performance. And despite being a budget drive the WD Green was really fast, almost as good as the WD Red in my test.
+> 
+> The SK Hynix drive had fast flush perf at times, then at other times it would slow down. But it sometimes lost flushed data so it doesn't matter much.
