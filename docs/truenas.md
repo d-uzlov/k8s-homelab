@@ -3,17 +3,35 @@
 
 Increase to 360 hours (1296000 seconds):
 ```bash
+# Truenas Scale
 sed -i 's/auth.generate_token",\[300/auth.generate_token",\[1296000/g'  /usr/share/truenas/webui/*.js
+
+# Truenas Core
+sed -ie 's/auth.generate_token",\[300/auth.generate_token",\[1296000/g' /usr/local/www/webui/*.js
+```
+
+References:
+- https://tomschlick.com/blog/2022/06/28/extend-truenas-web-ui-session-timeout/
+- https://www.reddit.com/r/truenas/comments/vn1tu7/extend_truenas_web_ui_session_timeout/
+
+# Disable atime for boot pool
+
+```bash
+zfs set atime=off boot-pool
+zfs set relatime=off boot-pool
+mount | grep boot
 ```
 
 # Disable swap
 
 ```bash
 midclt call system.advanced.update '{"swapondrive": 0}'
-zfs set atime=off boot-pool
-zfs set relatime=off boot-pool
-mount | grep boot
 ```
+
+In Truenas Core you can also change this in web-ui:
+`system` → `advanced` → `storage` → `swap size in GB`.
+
+There is no option for this in the Truenas Scale web-ui.
 
 # Set up email notifications
 
