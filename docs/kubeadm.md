@@ -276,3 +276,25 @@ https://kubernetes.io/blog/2022/05/20/kubernetes-1-24-non-graceful-node-shutdown
 References:
 - https://particule.io/en/blog/kubeadm-metrics-server/
 - https://www.zeng.dev/post/2023-kubeadm-enable-kubelet-serving-certs/
+
+# Upgrade cluster
+
+References:
+- Https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/
+
+# Delete failed pods
+
+During graceful shutdown k8s likes to create a myriad of pods in a `Failed` state,
+that couldn't run because the node was shutting down. Duh.
+
+These pods remain in the list even after cluster has rebooted and all working pods are scheduled.
+
+```bash
+# show pods
+kl get pods --field-selector status.phase=Failed --all-namespaces
+kl get pods --field-selector status.phase=Succeeded --all-namespaces
+
+# delete pods
+kl delete pods --field-selector status.phase=Failed --all-namespaces
+kl delete pods --field-selector status.phase=Succeeded --all-namespaces
+```
