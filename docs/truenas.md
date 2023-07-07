@@ -42,10 +42,74 @@ You need to set up email both for root and admin accounts.
 
 `alert icon in top right` → `gear` → `email` → `gmail oauth`
 
-# SMART tuning
+# Disable power saving
 
-https://www.smartmontools.org/wiki/Powermode
-set smart power management to standby
+Go to `System Settings` → `Services` → `SMART`.
+
+Set `Power mode` to `Standby`.
+
+References:
+- https://www.smartmontools.org/wiki/Powermode
+
+# Set up TLER
+
+You can set TLER temporarily:
+
+```bash
+# check current TLER timeout
+sudo smartctl -l scterc /dev/sdh
+# set new timeout
+# format is: scterc,<read-timeout-in-deciseconds>,<write-timeout-in-deciseconds>
+# it seems like the minimum value is 7 seconds
+sudo smartctl -l scterc,70,70 /dev/sdh
+```
+
+Or set up a startup script.
+
+Place the script into `/data` to make sure it survives reboots and upgrades.
+
+Go to `System Settings` → `Advanced` → `Init/Shutdown Scripts` and add this script to the list.
+Don't forget to run the script with `sudo`.
+
+```bash
+#!/bin/sh
+
+# https://github.com/Spearfoot/FreeNAS-scripts/blob/master/set_hdd_erc.sh
+# https://www.smartmontools.org/wiki/FAQ#WhatiserrorrecoverycontrolERCandwhyitisimportanttoenableitfortheSATAdisksinRAID
+
+readsetting=70
+writesetting=70
+
+get_smart_drives()
+{
+  gs_drives=$(smartctl --scan | grep "dev" | awk '{print $1}' | sed -e 's/\/dev\///' | tr '\n' ' ')
+
+  gs_smartdrives=""
+
+  for gs_drive in $gs_drives; do
+    gs_smart_flag=$(smartctl -i /dev/"$gs_drive" | grep "SMART support is: Enabled" | awk '{print $4}')
+    if [ "$gs_smart_flag" = "Enabled" ]; then
+      gs_smartdrives=$gs_smartdrives" "${gs_drive}
+    fi
+  done
+
+  eval "$1=\$gs_smartdrives"
+}
+
+drives=""
+get_smart_drives drives
+
+set_erc()
+{
+  echo "Drive: /dev/$1"
+  smartctl -q silent -l scterc,"${readsetting}","${writesetting}" /dev/"$1"
+  smartctl -l scterc /dev/"$1" | grep "SCT\|Write\|Read"
+}
+
+for drive in $drives; do
+  set_erc "$drive"
+done
+```
 
 # Share several pools via SMB
 
@@ -77,4 +141,4 @@ Don't forget to change `/dev/device-name` to your device.
 dd if=/dev/zero of=/dev/device-name bs=1M count=1
 ```
 
-Warning! This will immediately destroy all data without any user prompts.
+- ! Warning ! This will immediately destroy all data without any user prompts.
