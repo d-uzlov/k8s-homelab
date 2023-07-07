@@ -4,11 +4,13 @@
 Increase to 360 hours (1296000 seconds):
 ```bash
 # Truenas Scale
-sed -i 's/auth.generate_token",\[300/auth.generate_token",\[1296000/g'  /usr/share/truenas/webui/*.js
+sudo sed -i 's/auth.generate_token",\[300/auth.generate_token",\[1296000/g' /usr/share/truenas/webui/*.js
 
 # Truenas Core
-sed -ie 's/auth.generate_token",\[300/auth.generate_token",\[1296000/g' /usr/local/www/webui/*.js
+sudo sed -i 's/auth.generate_token",\[300/auth.generate_token",\[1296000/g' /usr/local/www/webui/*.js
 ```
+
+You can add this as startup script in `System Settings` → `Advanced` → `Init/Shutdown Scripts`.
 
 References:
 - https://tomschlick.com/blog/2022/06/28/extend-truenas-web-ui-session-timeout/
