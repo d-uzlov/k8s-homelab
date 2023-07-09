@@ -1,5 +1,5 @@
 
-# fsync runner
+# fsync validate
 
 The purpose of this program is to check whether `fsync` actually works:
 - Plug the disk you want to test into your PC
@@ -15,8 +15,8 @@ It's OK if the last `written line` is missing from the drive.
 # Run
 
 ```bash
-go run ./docs/test-database/fsync-runner/main.go path/to/test/file
+go run ./docs/disk-test/fsync-validate/main.go path/to/test/file
 
 # for example:
-go run ./docs/test-database/fsync-runner/main.go g:/test-file
+go run ./docs/disk-test/fsync-validate/main.go g:/test-file
 ```
