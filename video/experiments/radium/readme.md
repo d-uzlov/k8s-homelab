@@ -5,11 +5,11 @@ https://github.com/zibbp/radium/tree/next
 
 This is supposed to be a somewhat functional online player for OME streams.
 
-This deployment uses `next` branch from the repo, because master branch doesn't suport OME.
+This deployment uses `next` branch from the repo, because master branch doesn't support OME.
 
-The app requres you to pin the stream URL before deploying it.
+The app requires you to pin the stream URL before deploying it.
 There is a chat on the page. It isn't very functional:
-history is not availabla, security is not available, emotes seem to be partially broken.
+history is not available, security is not available, emotes seem to be partially broken.
 
 However, the `next` branch seems to lack features
 compared to description in master branch, and the project seems to be abandoned.
