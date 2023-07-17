@@ -91,6 +91,18 @@ iops: min=  229, max=71613, avg=28432.77
 # Disk sequential write test: Results
 
 ```log
+Main RAID array
+Truenas Scale, SZTD-3, 6 cores
+WRITE: bw=100MiB/s
+Truenas Scale, SZTD-1, 6 cores
+WRITE: bw=161MiB/s
+Truenas Scale, SZTD-3, 10 cores
+WRITE: bw=141MiB/s
+Truenas Scale, ZSTD-1, 10 cores
+WRITE: bw=234MiB/s
+Truenas Core
+WRITE: bw=508MiB/s
+
 Main RAID array, without SLOG
 Truenas Scale
 WRITE: bw=111MiB/s

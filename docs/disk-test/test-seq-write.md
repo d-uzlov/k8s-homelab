@@ -13,6 +13,162 @@ dd if=/dev/zero of=test-dd bs=32000k count=100 oflag=dsync
 
 # Main RAID array
 
+Truenas Scale, SZTD-3, 6 cores:
+
+```log
+root@truenas[/mnt/main/data/torrent-data]# fio --ioengine=posixaio --rw=write --bs=32m --numjobs=4 --iodepth=1 --runtime=60 --time_based --end_fsync=1 --size=1g --group_reporting --name=seq-write
+seq-write: (g=0): rw=write, bs=(R) 32.0MiB-32.0MiB, (W) 32.0MiB-32.0MiB, (T) 32.0MiB-32.0MiB, ioengine=posixaio, iodepth=1
+...
+fio-3.25
+Starting 4 processes
+seq-write: Laying out IO file (1 file / 1024MiB)
+seq-write: Laying out IO file (1 file / 1024MiB)
+seq-write: Laying out IO file (1 file / 1024MiB)
+seq-write: Laying out IO file (1 file / 1024MiB)
+Jobs: 2 (f=2): [F(1),_(2),F(1)][100.0%][eta 00m:00s]
+seq-write: (groupid=0, jobs=4): err= 0: pid=220578: Mon Jul 17 03:30:08 2023
+  write: IOPS=3, BW=100MiB/s (105MB/s)(7648MiB/76350msec); 0 zone resets
+    slat (usec): min=547, max=55561, avg=1218.39, stdev=3616.11
+    clat (msec): min=17, max=1980, avg=1011.58, stdev=473.85
+     lat (msec): min=18, max=1981, avg=1012.80, stdev=473.34
+    clat percentiles (msec):
+     |  1.00th=[   19],  5.00th=[   25], 10.00th=[   35], 20.00th=[  810],
+     | 30.00th=[ 1099], 40.00th=[ 1116], 50.00th=[ 1133], 60.00th=[ 1150],
+     | 70.00th=[ 1167], 80.00th=[ 1183], 90.00th=[ 1385], 95.00th=[ 1804],
+     | 99.00th=[ 1955], 99.50th=[ 1989], 99.90th=[ 1989], 99.95th=[ 1989],
+     | 99.99th=[ 1989]
+   bw (  KiB/s): min=248560, max=2229537, per=100.00%, avg=302423.33, stdev=69559.51, samples=203
+   iops        : min=    4, max=   68, avg= 8.55, stdev= 2.18, samples=203
+  lat (msec)   : 20=1.26%, 50=10.46%, 100=1.67%, 250=1.67%, 500=1.67%
+  lat (msec)   : 750=0.84%, 1000=5.86%, 2000=76.57%
+  cpu          : usr=0.07%, sys=0.00%, ctx=604, majf=22, minf=227
+  IO depths    : 1=101.7%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,239,0,0 short=0,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=100MiB/s (105MB/s), 100MiB/s-100MiB/s (105MB/s-105MB/s), io=7648MiB (8020MB), run=76350-76350msec
+```
+
+Truenas Scale, SZTD-1, 6 cores:
+
+```log
+root@truenas[/mnt/main/data/torrent-data]# fio --ioengine=posixaio --rw=write --bs=32m --numjobs=4 --iodepth=1 --runtime=60 --time_based --end_fsync=1 --size=1g --group_reporting --name=seq-write
+seq-write: (g=0): rw=write, bs=(R) 32.0MiB-32.0MiB, (W) 32.0MiB-32.0MiB, (T) 32.0MiB-32.0MiB, ioengine=posixaio, iodepth=1
+...
+fio-3.25
+Starting 4 processes
+seq-write: Laying out IO file (1 file / 1024MiB)
+seq-write: Laying out IO file (1 file / 1024MiB)
+seq-write: Laying out IO file (1 file / 1024MiB)
+seq-write: Laying out IO file (1 file / 1024MiB)
+Jobs: 2 (f=2): [_(1),F(2),_(1)][100.0%][eta 00m:00s]
+seq-write: (groupid=0, jobs=4): err= 0: pid=227648: Mon Jul 17 03:33:15 2023
+  write: IOPS=5, BW=161MiB/s (169MB/s)(11.5GiB/72790msec); 0 zone resets
+    slat (usec): min=500, max=7093, avg=926.85, stdev=431.53
+    clat (msec): min=6, max=1575, avg=655.69, stdev=264.54
+     lat (msec): min=7, max=1576, avg=656.61, stdev=264.44
+    clat percentiles (msec):
+     |  1.00th=[    9],  5.00th=[   29], 10.00th=[  317], 20.00th=[  667],
+     | 30.00th=[  676], 40.00th=[  676], 50.00th=[  676], 60.00th=[  684],
+     | 70.00th=[  684], 80.00th=[  693], 90.00th=[  768], 95.00th=[ 1045],
+     | 99.00th=[ 1519], 99.50th=[ 1569], 99.90th=[ 1569], 99.95th=[ 1569],
+     | 99.99th=[ 1569]
+   bw (  KiB/s): min=260580, max=2293760, per=100.00%, avg=286551.95, stdev=55815.13, samples=332
+   iops        : min=    4, max=   70, avg= 8.39, stdev= 1.74, samples=332
+  lat (msec)   : 10=1.91%, 20=0.82%, 50=5.72%, 250=1.09%, 500=1.63%
+  lat (msec)   : 750=78.20%, 1000=4.63%, 2000=5.99%
+  cpu          : usr=0.12%, sys=0.00%, ctx=1030, majf=23, minf=227
+  IO depths    : 1=101.1%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,367,0,0 short=0,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=161MiB/s (169MB/s), 161MiB/s-161MiB/s (169MB/s-169MB/s), io=11.5GiB (12.3GB), run=72790-72790msec
+```
+
+Truenas Scale, SZTD-3, 10 cores:
+
+```log
+root@truenas[/mnt/main/data/torrent-data]# fio --ioengine=posixaio --rw=write --bs=32m --numjobs=4 --iodepth=1 --runtime=60 --time_based --end_fsync=1 --size=1g --group_reporting --name=seq-write
+seq-write: (g=0): rw=write, bs=(R) 32.0MiB-32.0MiB, (W) 32.0MiB-32.0MiB, (T) 32.0MiB-32.0MiB, ioengine=posixaio, iodepth=1
+...
+fio-3.25
+Starting 4 processes
+seq-write: Laying out IO file (1 file / 1024MiB)
+seq-write: Laying out IO file (1 file / 1024MiB)
+seq-write: Laying out IO file (1 file / 1024MiB)
+seq-write: Laying out IO file (1 file / 1024MiB)
+Jobs: 4 (f=4): [F(4)][100.0%][eta 00m:00s]
+seq-write: (groupid=0, jobs=4): err= 0: pid=19327: Mon Jul 17 03:41:25 2023
+  write: IOPS=4, BW=141MiB/s (148MB/s)(10.3GiB/74478msec); 0 zone resets
+    slat (usec): min=500, max=11042, avg=1048.03, stdev=612.19
+    clat (msec): min=8, max=1740, avg=732.44, stdev=296.07
+     lat (msec): min=10, max=1741, avg=733.49, stdev=295.88
+    clat percentiles (msec):
+     |  1.00th=[   12],  5.00th=[   20], 10.00th=[  106], 20.00th=[  726],
+     | 30.00th=[  743], 40.00th=[  751], 50.00th=[  760], 60.00th=[  768],
+     | 70.00th=[  785], 80.00th=[  810], 90.00th=[  995], 95.00th=[ 1250],
+     | 99.00th=[ 1603], 99.50th=[ 1720], 99.90th=[ 1737], 99.95th=[ 1737],
+     | 99.99th=[ 1737]
+   bw (  KiB/s): min=256878, max=2294942, per=100.00%, avg=289647.41, stdev=59558.79, samples=294
+   iops        : min=    4, max=   70, avg= 8.63, stdev= 1.84, samples=294
+  lat (msec)   : 10=0.30%, 20=4.86%, 50=3.04%, 100=1.52%, 250=1.22%
+  lat (msec)   : 500=0.61%, 750=27.96%, 1000=51.06%, 2000=9.42%
+  cpu          : usr=0.11%, sys=0.00%, ctx=755, majf=22, minf=251
+  IO depths    : 1=101.2%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,329,0,0 short=0,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=141MiB/s (148MB/s), 141MiB/s-141MiB/s (148MB/s-148MB/s), io=10.3GiB (11.0GB), run=74478-74478msec
+```
+
+Truenas Scale, ZSTD-1, 10 cores:
+
+```log
+root@truenas[/mnt/main/data/torrent-data]# fio --ioengine=posixaio --rw=write --bs=32m --numjobs=4 --iodepth=1 --runtime=60 --time_based --end_fsync=1 --size=1g --group_reporting --name=seq-write
+seq-write: (g=0): rw=write, bs=(R) 32.0MiB-32.0MiB, (W) 32.0MiB-32.0MiB, (T) 32.0MiB-32.0MiB, ioengine=posixaio, iodepth=1
+...
+fio-3.25
+Starting 4 processes
+seq-write: Laying out IO file (1 file / 1024MiB)
+seq-write: Laying out IO file (1 file / 1024MiB)
+seq-write: Laying out IO file (1 file / 1024MiB)
+seq-write: Laying out IO file (1 file / 1024MiB)
+Jobs: 1 (f=1): [F(1),_(3)][100.0%][eta 00m:00s]                  
+seq-write: (groupid=0, jobs=4): err= 0: pid=208382: Mon Jul 17 03:26:22 2023
+  write: IOPS=7, BW=234MiB/s (245MB/s)(16.0GiB/70047msec); 0 zone resets
+    slat (usec): min=487, max=4566, avg=1020.23, stdev=384.79
+    clat (msec): min=9, max=1411, avg=469.49, stdev=188.08
+     lat (msec): min=11, max=1412, avg=470.51, stdev=187.92
+    clat percentiles (msec):
+     |  1.00th=[   11],  5.00th=[   31], 10.00th=[  418], 20.00th=[  430],
+     | 30.00th=[  439], 40.00th=[  443], 50.00th=[  451], 60.00th=[  464],
+     | 70.00th=[  472], 80.00th=[  481], 90.00th=[  634], 95.00th=[  869],
+     | 99.00th=[ 1070], 99.50th=[ 1368], 99.90th=[ 1418], 99.95th=[ 1418],
+     | 99.99th=[ 1418]
+   bw (  KiB/s): min=260060, max=2362841, per=100.00%, avg=304763.00, stdev=53100.93, samples=437
+   iops        : min=    4, max=   72, avg= 9.15, stdev= 1.63, samples=437
+  lat (msec)   : 10=0.78%, 20=3.52%, 50=1.37%, 100=0.59%, 250=0.78%
+  lat (msec)   : 500=77.54%, 750=7.03%, 1000=7.03%, 2000=1.37%
+  cpu          : usr=0.19%, sys=0.00%, ctx=1315, majf=14, minf=206
+  IO depths    : 1=100.8%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,512,0,0 short=0,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=234MiB/s (245MB/s), 234MiB/s-234MiB/s (245MB/s-245MB/s), io=16.0GiB (17.2GB), run=70047-70047msec
+```
+
 Truenas Core:
 
 ```log
