@@ -858,3 +858,93 @@ mytest: (groupid=0, jobs=1): err= 0: pid=1823302: Tue Jul  4 03:49:20 2023
 Run status group 0 (all jobs):
   WRITE: bw=22.7MiB/s (23.8MB/s), 22.7MiB/s-22.7MiB/s (23.8MB/s-23.8MB/s), io=22.0MiB (23.1MB), run=969-969msec
 ```
+
+# NVME ADATA LEGEND 960 2TB
+
+NTFS:
+
+```log
+D:\>fio --rw=write --ioengine=sync --fdatasync=1 --size=22m --bs=4k --name=mytest
+fio: this platform does not support process shared mutexes, forcing use of threads. Use the 'thread' option to get rid of this warning.
+mytest: (g=0): rw=write, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, ioengine=sync, iodepth=1
+fio-3.35
+Starting 1 thread
+mytest: Laying out IO file (1 file / 22MiB)
+Jobs: 1 (f=1): [W(1)][100.0%][w=1809KiB/s][w=452 IOPS][eta 00m:00s]
+mytest: (groupid=0, jobs=1): err= 0: pid=4960: Wed Jul 19 05:35:43 2023
+  write: IOPS=421, BW=1688KiB/s (1728kB/s)(22.0MiB/13349msec); 0 zone resets
+    clat (nsec): min=4400, max=78400, avg=8460.60, stdev=5091.38
+     lat (nsec): min=4500, max=78800, avg=8647.51, stdev=5098.82
+    clat percentiles (nsec):
+     |  1.00th=[ 5280],  5.00th=[ 5984], 10.00th=[ 6176], 20.00th=[ 6432],
+     | 30.00th=[ 6688], 40.00th=[ 6880], 50.00th=[ 7200], 60.00th=[ 7520],
+     | 70.00th=[ 7776], 80.00th=[ 8256], 90.00th=[ 9024], 95.00th=[22912],
+     | 99.00th=[29824], 99.50th=[34048], 99.90th=[45312], 99.95th=[50944],
+     | 99.99th=[78336]
+   bw (  KiB/s): min= 1357, max= 2812, per=97.89%, avg=1652.38, stdev=260.46, samples=26
+   iops        : min=  339, max=  703, avg=412.96, stdev=65.17, samples=26
+  lat (usec)   : 10=92.21%, 20=1.60%, 50=6.13%, 100=0.07%
+  fsync/fdatasync/sync_file_range:
+    sync (usec): min=748, max=16687, avg=2360.04, stdev=483.35
+    sync percentiles (usec):
+     |  1.00th=[ 1074],  5.00th=[ 1188], 10.00th=[ 2245], 20.00th=[ 2311],
+     | 30.00th=[ 2343], 40.00th=[ 2343], 50.00th=[ 2376], 60.00th=[ 2507],
+     | 70.00th=[ 2540], 80.00th=[ 2573], 90.00th=[ 2769], 95.00th=[ 2900],
+     | 99.00th=[ 2999], 99.50th=[ 2999], 99.90th=[ 4424], 99.95th=[ 5080],
+     | 99.99th=[16712]
+  cpu          : usr=0.00%, sys=0.00%, ctx=0, majf=0, minf=0
+  IO depths    : 1=200.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,5632,0,0 short=5631,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=1688KiB/s (1728kB/s), 1688KiB/s-1688KiB/s (1728kB/s-1728kB/s), io=22.0MiB (23.1MB), run=13349-13349msec
+```
+
+# XPG GAMMIX S70 BLADE 2TB
+
+NTFS:
+
+```log
+E:\>fio --rw=write --ioengine=sync --fdatasync=1 --size=22m --bs=4k --name=mytest
+fio: this platform does not support process shared mutexes, forcing use of threads. Use the 'thread' option to get rid of this warning.
+mytest: (g=0): rw=write, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, ioengine=sync, iodepth=1
+fio-3.35
+Starting 1 thread
+mytest: Laying out IO file (1 file / 22MiB)
+Jobs: 1 (f=1)
+mytest: (groupid=0, jobs=1): err= 0: pid=8880: Wed Jul 19 05:37:40 2023
+  write: IOPS=3666, BW=14.3MiB/s (15.0MB/s)(22.0MiB/1536msec); 0 zone resets
+    clat (nsec): min=4200, max=83900, avg=6105.18, stdev=3870.80
+     lat (nsec): min=4300, max=84400, avg=6239.44, stdev=3881.06
+    clat percentiles (nsec):
+     |  1.00th=[ 4384],  5.00th=[ 4512], 10.00th=[ 4512], 20.00th=[ 4576],
+     | 30.00th=[ 4576], 40.00th=[ 4704], 50.00th=[ 4832], 60.00th=[ 5024],
+     | 70.00th=[ 5408], 80.00th=[ 6112], 90.00th=[ 7584], 95.00th=[17024],
+     | 99.00th=[21376], 99.50th=[24704], 99.90th=[33024], 99.95th=[43776],
+     | 99.99th=[83456]
+   bw (  KiB/s): min=14642, max=14698, per=100.00%, avg=14676.00, stdev=29.87, samples=3
+   iops        : min= 3660, max= 3674, avg=3668.67, stdev= 7.57, samples=3
+  lat (usec)   : 10=93.08%, 20=5.47%, 50=1.42%, 100=0.04%
+  fsync/fdatasync/sync_file_range:
+    sync (usec): min=253, max=828, avg=265.24, stdev=15.61
+    sync percentiles (usec):
+     |  1.00th=[  255],  5.00th=[  255], 10.00th=[  258], 20.00th=[  258],
+     | 30.00th=[  260], 40.00th=[  260], 50.00th=[  262], 60.00th=[  262],
+     | 70.00th=[  265], 80.00th=[  269], 90.00th=[  281], 95.00th=[  293],
+     | 99.00th=[  318], 99.50th=[  326], 99.90th=[  388], 99.95th=[  416],
+     | 99.99th=[  832]
+  cpu          : usr=0.00%, sys=0.00%, ctx=0, majf=0, minf=0
+  IO depths    : 1=200.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,5632,0,0 short=5631,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=14.3MiB/s (15.0MB/s), 14.3MiB/s-14.3MiB/s (15.0MB/s-15.0MB/s), io=22.0MiB (23.1MB), run=1536-1536msec
+```
+
+# To be continued...

@@ -41,6 +41,12 @@ iops: min=  112, max=  154, avg=144.15
 NVME Samsung 970 EVO 1TB
 iops: min=  950, max= 1019, avg=981.45
 
+NVME ADATA LEGEND 960 2TB
+iops: min=  339, max=  703, avg=412.96
+
+XPG GAMMIX S70 BLADE 2TB
+iops: min= 3660, max= 3674, avg=3668.67
+
 SATA Plextor PX-0128M5S
 iops: min=  414, max=  420, avg=417.15
 
