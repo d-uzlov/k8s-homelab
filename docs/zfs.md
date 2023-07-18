@@ -20,6 +20,20 @@ References:
 - - > - SHA-512/256: 50% higher performance than SHA-256 on 64-bit hardware with minimum code changes.
     > - Skein: 80% higher performance than SHA-256 with new and highly secure algorithm. Includes a KCF SW provider interface.
     > - Edon-R: >350% higher performance than SHA-256. Lower security margin than Skein, but much higher throughput.
+- https://github.com/openzfs/zfs/pull/12918
+- - There are a lot of benchmark references
+- - For example:
+    > implementation   digest    1k        2k        4k        8k        16k       32k       64k       128k      256k      512k      1m
+    > fletcher-4       4         3932      7112      11824     18053     24549     28667     32892     35115     36338     36156     36562
+    > edonr-generic    256       1775      2017      2206      2317      2376      2379      2398      2429      2424      2418      2398
+    > skein-generic    256       786       837       856       878       885       883       887       886       889       886       885
+    > sha256-generic   256       368       384       387       399       398       397       400       401       400       400       401
+    > sha512-generic   512       532       579       601       624       605       627       631       632       631       632       629
+    > blake3-generic   256       271       277       283       279       281       283       283       283       283       283       283
+    > blake3-sse2      256       314       1138      1660      1806      1872      1927      1897      1956      1954      1938      1935
+    > blake3-sse41     256       324       1249      1830      1991      2116      2185      2168      2209      2220      2211      2214
+    > blake3-avx2      256       327       1388      2231      3331      3782      4067      4290      4386      4406      4382      4386
+- - All values are in MB/s
 
 # Capacity calculation
 

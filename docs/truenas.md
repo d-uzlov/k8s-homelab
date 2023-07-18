@@ -129,11 +129,11 @@ To make changes persistent, create startup script.
 # Enable apt
 
 ```bash
-sudo chmod +x /bin/apt /bin/apt-*
+sudo chmod +x /bin/apt* /bin/dpkg
 ```
 
-But it seems like you can't install anything because by default truenas
-doesn't have any repositories, except truenas ones.
+But it seems like there is not much you can install
+because by default truenas uses its custom repositories.
 
 # Force destroy filesystem
 
