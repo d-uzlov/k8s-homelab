@@ -164,3 +164,43 @@ As noted in the [`nopwrite`](#nopwrite) section, encryption breaks nopwrite.
     > - - Snapshot Names
     > - - Free Space
     > - - Used Space
+
+# ZFS-on-Windows
+
+References:
+- https://github.com/openzfsonwindows/openzfs
+- https://github.com/openzfsonwindows/openzfs/tree/windows/module/os/windows
+
+ZFS on Windows requires you to use elevated terminal window.
+If you try to use some of ZFS commands (`zfs`, `zdb`, `zpool`) in a non-elevated terminal,
+it will spawn UAC prompt, open a new CMD window and immediately close it.
+You will not be able to inspect the output.
+
+Create from file:
+
+```powershell
+fsutil.exe file createnew C:\poolfile.bin 200000000
+zpool.exe create tank \\?\C:\poolfile.bin
+```
+
+Create from drive:
+
+```powershell
+# Find paths to available drives
+wmic.exe diskdrive list brief
+
+zpool.exe create `
+    -o ashift=12 `
+    -O casesensitivity=insensitive `
+    -O compression=lz4 `
+    -O atime=off `
+    -O encryption=off `
+    -O dedup=off `
+    -O recordsize=128k `
+    -O checksum=edonr `
+    -O xattr=sa `
+    -O driveletter=T `
+    tank `
+    mirror PHYSICALDRIVE0 PHYSICALDRIVE1
+zfs.exe mount tank
+```
