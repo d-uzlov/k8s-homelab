@@ -225,4 +225,22 @@ zfs.exe create -V 2g tank/test-zvol
 zfs.exe create -s -V 2g tank/test-zvol
 ```
 
+Limit max ARC size:
+
+- Open regedit
+- Go to `Computer\HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\OpenZFS\zfs_arc`
+- Set `zfs_arc_max` in bytes
+- - For example
+- - 4294967296 is 4 GB
+
 ZVOLs will appear in the disk management utility.
+
+Mount on startup:
+
+- Search `scheduler` in Start menu
+- Open Task Scheduler
+- Run Actions -> Create New Basic Task
+- Specify command `zpool.exe`, options `import tank`
+- Set trigger "At system Startup"
+- Set account SYSTEM
+- Set Run with highest privileges
