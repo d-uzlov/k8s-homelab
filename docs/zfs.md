@@ -189,6 +189,7 @@ Create from drive:
 # Find paths to available drives
 wmic.exe diskdrive list brief
 
+# create a root dataset which will not be mounted
 zpool.exe create `
     -o ashift=12 `
     -O casesensitivity=insensitive `
@@ -199,8 +200,29 @@ zpool.exe create `
     -O recordsize=128k `
     -O checksum=edonr `
     -O xattr=sa `
-    -O driveletter=T `
+    -O driveletter=- `
+    -O mountpoint=none `
     tank `
     mirror PHYSICALDRIVE0 PHYSICALDRIVE1
-zfs.exe mount tank
+
+# created visible datasets
+zfs.exe create -o driveletter=L -o mountpoint=/zfs/tank/local tank/local
+zfs.exe create -o driveletter=M -o mountpoint=/zfs/tank/media tank/media
+zfs.exe create -o driveletter=G -o mountpoint=/zfs/tank/games tank/games
+
+# if something doesn't mount
+zfs.exe unmount -a
+zfs.exe mount -a
+# also don't forget to refresh the list of drives
 ```
+
+You can also create virtual block devices (zvols):
+
+```powershell
+# thick volume
+zfs.exe create -V 2g tank/test-zvol
+# sparse volume
+zfs.exe create -s -V 2g tank/test-zvol
+```
+
+ZVOLs will appear in the disk management utility.
