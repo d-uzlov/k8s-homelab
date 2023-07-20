@@ -44,7 +44,7 @@ https://jro.io/capacity/
 ```bash
 zpool list -v
 zfs get compressratio
-zfs list -t filesystem -r -o space,compressratio main-pool
+zfs list -t filesystem -r -o space,compressratio
 zpool iostat -v 5
 iostat -mx 5
 ```
@@ -68,7 +68,7 @@ Summary:
 - zstd-fast is bad (though, maybe it's speed would make up for it on a system with slow CPU)
 - - zstd-fast-1: compression ratio is around 1.0
 - - zstd-fast-N: compression ratio is significantly worse than zstd-1
-- - zstd-fast-N is comparable to zl4
+- - zstd-fast-N is comparable to lz4
 - - All variants are slower than lz4
 - Even zstd-3 is very CPU-intensive
 - Hight levels of zstd require a lot of memory

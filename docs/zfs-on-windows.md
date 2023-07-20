@@ -53,14 +53,23 @@ zfs.exe mount -a
 # ZVOLs
 
 ```powershell
+zfs.exe create tank/vols
+
 # thick volume
 zfs.exe create -V 2g tank/test-zvol
 # sparse volume
-zfs.exe create -s -V 2g tank/test-zvol
+zfs.exe create `
+    -o volblocksize=16k `
+    -s `
+    -V 200g `
+    tank/vols/docker
 ```
 
 ZVOLs will appear in the disk management utility
 as an empty drive of specified capacity.
+
+References:
+- https://openzfs.github.io/openzfs-docs/man/8/zfs-create.8.html
 
 # Limit max ARC size
 

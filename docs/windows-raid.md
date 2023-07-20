@@ -5,6 +5,15 @@ This file describes the state of RAID and similar technologies on Windows in 202
 
 This file focuses on mirrors, or RAID 1.
 
+# BIOS RAID
+
+Apparently, RAID in modern BIOS firmware
+doesn't comply with the standard SATA protocol, or anything else.
+
+You have to install special drivers when using it.
+
+These drivers are OS-dependent, and must be downloaded manually from somewhere.
+
 # Storage spaces
 
 Doesn't have direct support for mirrors but has something similar.
