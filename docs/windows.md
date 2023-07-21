@@ -21,7 +21,7 @@ Set-WinUserLanguageList -Force -LanguageList $LanguageList
 wsl.exe --export Ubuntu c:\ubuntu.tar
 wsl.exe --import UbuntuNewName d:\wsl\Ubuntu c:\ubuntu.tar
 # if you don't need the old installation anymore
-wsl.exe --unregister <OriginalDistributionName>
+wsl.exe --unregister Ubuntu
 wsl --set-default UbuntuNewName
 
 wsl -d UbuntuNewName
