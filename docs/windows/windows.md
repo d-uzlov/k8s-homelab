@@ -36,3 +36,13 @@ EOF
 
 References:
 - https://stackoverflow.com/questions/38779801/move-wsl-bash-on-windows-root-filesystem-to-another-hard-drive
+
+# Move WSL installation (manually)
+
+- Move WSL folder
+- Open registry at `HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Lxss`
+- Find UUID of your WLS instance
+- Change `BasePath` value
+
+References:
+- https://github.com/microsoft/WSL/issues/4591
