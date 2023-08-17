@@ -22,7 +22,7 @@ Change ENVs:
 echo $env:GOPATH
 [Environment]::GetEnvironmentVariable('GOPATH', 'User')
 # Set env
-[Environment]::SetEnvironmentVariable('GOPATH', "J:\go", "User")
+[Environment]::SetEnvironmentVariable('GOPATH', "D:\go", "User")
 ```
 
 References:
