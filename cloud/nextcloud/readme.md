@@ -41,7 +41,7 @@ wildcard_secret_name=main-wildcard-at-duckdns
 
 # Limit access from web, or leave empty
 # Comma-separated list of CIDRs
-ingress_allowed_sources=10.0.0.0/16,1.2.3.4,1.2.3.4
+allowed_sources=10.0.0.0/16,1.2.3.4,1.2.3.4
 EOF
 
 kl apply -k ./cloud/nextcloud/pvc/
