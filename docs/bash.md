@@ -23,7 +23,7 @@ __prompt_command() {
     local EXIT="$?"                # This needs to be first
     PS1="${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]"
 
-    local RCol='\[\e[0m\]'
+    local reset_color='\[\e[0m\]'
 
     local Red='\[\e[0;31m\]'
     local Gre='\[\e[0;32m\]'
@@ -33,22 +33,18 @@ __prompt_command() {
 
     if [ $EXIT != 0 ]; then
         code_color="${Red}"
-#        PS1+="${Red}\$${RCol}"        # Add red if exit code non 0
         PS1+="$code_color"
-        PS1+=' \$? == '
+        PS1+=' \\$? == '
         PS1+="$EXIT"
-        PS1+="${RCol}"
+        PS1+="${reset_color}"
     else
         code_color="${BYel}"
-#        PS1+="${BYel}\$${RCol}"
     fi
     PS1+="\n"
     PS1+="$code_color"
     PS1+="\$"
-    PS1+="${RCol}"
+    PS1+="${reset_color}"
     PS1+=" "
-
-#    PS1+="${RCol}@${BBlu}\h ${Pur}\W${BYel}$ ${RCol}"
 }
 ```
 
