@@ -136,7 +136,7 @@ postconf -e "inet_protocols = ipv4"
 Inside Linux VM:
 
 ```bash
-sudo tee /lib/udev/rules.d/80-hotplug-cpu.rules <<EOF
+sudo tee /lib/udev/rules.d/80-hotplug-cpu.rules << EOF
 SUBSYSTEM=="cpu", ACTION=="add", TEST=="online", ATTR{online}=="0", ATTR{online}="1"
 EOF
 
@@ -146,11 +146,11 @@ sudo udevadm control --reload-rules && sudo udevadm trigger
 ```
 
 References:
-- [Proxmox documentation in Hot-Plug](https://pve.proxmox.com/wiki/Hotplug_(qemu_disk,nic,cpu,memory)#CPU_and_Memory_Hotplug)
+- [Proxmox documentation about Hot-Plug](https://pve.proxmox.com/wiki/Hotplug_(qemu_disk,nic,cpu,memory)#CPU_and_Memory_Hotplug)
 
 # Cluster
 
-- Make sure that your node name resolves to your node ip address
+- Make sure that your node name resolves to your node IP address
 - - `/etc/hosts`
 - - Reboot after editing
 - Go to `Datacenter -> Cluster -> Create cluster`
