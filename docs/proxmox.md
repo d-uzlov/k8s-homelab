@@ -193,10 +193,18 @@ systemctl restart corosync
 - Download a fresh cloud image
 - - Debian: https://cloud.debian.org/images/cloud/
 - - For example:
-    ```bash
-    wget https://cloud.debian.org/images/cloud/bookworm/20230802-1460/debian-12-generic-amd64-20230802-1460.tar.xz
-    tar -xvf debian-12-generic-amd64-20230802-1460.tar.xz
-    ```
+```bash
+wget https://cloud.debian.org/images/cloud/bookworm/20230802-1460/debian-12-generic-amd64-20230802-1460.tar.xz
+tar -xvf debian-12-generic-amd64-20230802-1460.tar.xz
+```
+- Install `virt-customize`: `apt install -y libguestfs-tools`
+- Pre-install required tools into VM image
+```bash
+virt-customize -a disk.raw \
+    --update \
+    --install qemu-guest-agent,ncat,net-tools,bash-completion,iperf3,nfs-common,fio,ca-certificates,curl,apt-transport-https,gnupg \
+    --truncate /etc/machine-id
+```
 - Add disk to VM
 - - `qm disk import <vmid> <file> <storage-name>`
 - - For example: `qm disk import 200 disk.raw local-zfs`
@@ -206,6 +214,11 @@ systemctl restart corosync
 - - Add CloudInit Drive
 - Go to `VM Settings -> CloudInit` and configure CloudInit
 - Go to `VM Settings -> Options -> Boot Order` and enable boot for the drive you added
+
+References:
+- https://bugzilla.redhat.com/show_bug.cgi?id=1554546
+- https://technotim.live/posts/cloud-init-cloud-image/
+- https://www.reddit.com/r/Proxmox/comments/1058ko7/installing_tools_into_a_cloudinit_image/
 
 # TODO
 

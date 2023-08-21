@@ -46,3 +46,11 @@ Host 10.0.2.105
 sudo mkdir /mnt/bulk
 sudo mount -t nfs truenas.lan:/mnt/main/prox/nn /mnt/bulk
 ```
+
+# SSHD doesn't start
+
+Try this:
+
+```bash
+ssh-keygen -A
+```
