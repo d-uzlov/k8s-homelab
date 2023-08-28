@@ -272,8 +272,18 @@ tar -xvf debian-12-generic-amd64-20230802-1460.tar.xz
 ```bash
 virt-customize -a disk.raw \
     --update \
-    --install qemu-guest-agent,ncat,net-tools,bash-completion,iperf3,nfs-common,fio,ca-certificates,curl,apt-transport-https,gnupg,htop,open-iscsi,cachefilesd,dnsutils,ipvsadm \
+    --install qemu-guest-agent \
+    --install bash-completion,ncat,net-tools,iperf3,fio,curl,htop,dnsutils \
+    --install ca-certificates,apt-transport-https,gnupg,ipvsadm,open-iscsi,nfs-common,cachefilesd \
     --uninstall unattended-upgrades \
+    --run-command 'sudo rm /usr/sbin/shutdown && sudo tee /usr/sbin/shutdown <<EOF && sudo chmod 755 /usr/sbin/shutdown
+#!/bin/bash
+exec systemctl poweroff
+EOF' \
+    --run-command 'sudo rm /usr/sbin/reboot && sudo tee /usr/sbin/reboot <<EOF && sudo chmod 755 /usr/sbin/reboot
+#!/bin/bash
+exec systemctl reboot
+EOF' \
     --truncate /etc/machine-id
 ```
 - Add disk to VM
@@ -282,9 +292,9 @@ virt-customize -a disk.raw \
 - Go to `VM Settings -> Hardware`
 - - `Unused Disk 0`: add this disk to VM
 - - - Resize added disk to size you need
-- - Add CloudInit Drive
-- Go to `VM Settings -> CloudInit` and configure CloudInit
 - Go to `VM Settings -> Options -> Boot Order` and enable boot for the drive you added
+- Add CloudInit Drive
+- Go to `VM Settings -> CloudInit` and configure CloudInit
 
 References:
 - https://bugzilla.redhat.com/show_bug.cgi?id=1554546

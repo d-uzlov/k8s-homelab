@@ -5,69 +5,104 @@
 sudo apt-get install -y qemu-guest-agent ncat net-tools bash-completion iperf3 nfs-common fio ca-certificates curl apt-transport-https gnupg htop open-iscsi cachefilesd dnsutils ipvsadm
 ```
 
-# Kubeadm dependencies for Debian-based distros
+# Install containerd
 
 ```bash
-# Disable SWAP
-sudo swapoff -a
-sudo systemctl mask swap.img.swap
-sudo sed -i '/ swap / s/^/#/' /etc/fstab
+# Check new versions here:
+# https://github.com/containerd/containerd/releases
+wget https://github.com/containerd/containerd/releases/download/v1.7.5/containerd-1.7.5-linux-amd64.tar.gz &&
+sudo tar Czxvf /usr/local containerd-1.7.5-linux-amd64.tar.gz &&
 
-# Containerd
-wget https://github.com/containerd/containerd/releases/download/v1.6.17/containerd-1.6.17-linux-amd64.tar.gz
-sudo tar Czxvf /usr/local containerd-1.6.17-linux-amd64.tar.gz
+wget https://raw.githubusercontent.com/containerd/containerd/main/containerd.service &&
+sudo mv containerd.service /usr/lib/systemd/system/ &&
+sudo systemctl daemon-reload &&
+sudo systemctl enable --now containerd &&
 
-wget https://raw.githubusercontent.com/containerd/containerd/main/containerd.service
-sudo mv containerd.service /usr/lib/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now containerd
+sudo systemctl status containerd --no-pager &&
+containerd --version &&
 
-sudo systemctl status containerd
+# Check new versions here:
+# https://github.com/opencontainers/runc/releases
+curl -fsSLo runc.amd64 https://github.com/opencontainers/runc/releases/download/v1.1.9/runc.amd64 &&
+sudo install -m 755 runc.amd64 /usr/local/sbin/runc &&
 
-containerd --version
-
-sudo mkdir -p /etc/containerd
-containerd config default | sudo tee /etc/containerd/config.toml >/dev/null 2>&1
-sudo sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
-sudo systemctl restart containerd
-sudo systemctl enable containerd
-
-sudo tee /etc/modules-load.d/containerd.conf <<EOF
+sudo tee /etc/modules-load.d/containerd.conf <<EOF &&
 overlay
 br_netfilter
 EOF
-sudo systemctl restart systemd-modules-load.service
+sudo systemctl restart systemd-modules-load.service &&
 
-sudo modprobe overlay
-sudo modprobe br_netfilter
-echo 1 | sudo tee /proc/sys/net/ipv4/ip_forward
+sudo mkdir -p /etc/containerd &&
+containerd config default | sed 's/SystemdCgroup \= false/SystemdCgroup \= true/g' | sudo tee /etc/containerd/config.toml >/dev/null 2>&1 &&
+sudo systemctl restart containerd
+```
 
-sudo tee /etc/sysctl.d/kubernetes.conf <<EOF
+References:
+- https://github.com/containerd/containerd/blob/main/docs/getting-started.md
+
+# Setup shutdown commands for k8s
+
+```bash
+sudo rm /usr/sbin/shutdown && sudo tee /usr/sbin/shutdown <<EOF && sudo chmod 755 /usr/sbin/shutdown
+#!/bin/bash
+exec systemctl poweroff
+EOF
+sudo rm /usr/sbin/reboot && sudo tee /usr/sbin/reboot <<EOF && sudo chmod 755 /usr/sbin/reboot
+#!/bin/bash
+exec systemctl reboot
+EOF
+```
+
+# Kubeadm dependencies for Debian-based distros
+
+```bash
+# check if swap is enabled
+[ -z "$(sudo swapon -s)" ] || {
+    # disable it
+    sudo swapoff -a
+    sudo systemctl mask swap.img.swap
+    sudo sed -i '/ swap / s/^/#/' /etc/fstab
+}
+
+sudo tee /etc/sysctl.d/kubernetes.conf <<EOF &&
 net.bridge.bridge-nf-call-ip6tables = 1
 net.bridge.bridge-nf-call-iptables = 1
 net.ipv4.ip_forward = 1
 EOF
-
+# reload rules from /etc/sysctl.d
 sudo sysctl --system
-
-# runc
-curl -fsSLo runc.amd64 https://github.com/opencontainers/runc/releases/download/v1.1.7/runc.amd64
-sudo install -m 755 runc.amd64 /usr/local/sbin/runc
-
-# kubeadm + kubelet
-sudo mkdir -p /etc/apt/keyrings
-curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg
-echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
-
-# install latest version
-sudo apt-get update
-sudo apt-get install -y kubelet kubeadm kubectl
-sudo apt-mark hold kubelet kubeadm kubectl
-
-# if you need a specific version
-sudo apt-get install -y kubelet=1.23.0-00 kubeadm=1.23.0-00 kubectl=1.23.0-00 --allow-downgrades --allow-change-held-packages
-sudo apt-get install -y kubelet=1.27.0-00 kubeadm=1.27.0-00 kubectl=1.27.0-00 --allow-downgrades --allow-change-held-packages
 ```
+
+# Install kubeadm
+
+List latest versions:
+
+```bash
+apt-cache policy kubeadm | head -n 15
+```
+
+```bash
+# install kubeadm repo key
+sudo mkdir -p /etc/apt/keyrings &&
+curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg &&
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list &&
+
+# install kubeadm+kubelet version
+sudo apt-get update &&
+sudo apt-get install -y kubelet=1.28.1-00 kubeadm=1.28.1-00 --allow-downgrades --allow-change-held-packages &&
+sudo apt-mark hold kubelet kubeadm
+```
+
+# Install kubectl locally
+
+Run this on your local PC, you don't need kubectl on the server.
+
+```bash
+sudo apt-get install -y kubectl=1.28.1-00 --allow-downgrades --allow-change-held-packages
+sudo apt-mark hold kubectl
+```
+
+It would be better if kubectl version match kubelet version.
 
 # Modify config
 
@@ -75,26 +110,31 @@ sudo apt-get install -y kubelet=1.27.0-00 kubeadm=1.27.0-00 kubectl=1.27.0-00 --
 
 You can modify it to match your local environment.
 
-Make sure that `controlPlaneEndpoint` points to your master node.
+1. Make sure that `controlPlaneEndpoint` points to your master node.
 
-It can be: a static IP assigned to a master node;
-DNS name pointing to the master node;
-IP or DNS pointing to external load balancer that redirects connections to the master node;
-etc.
+It can be:
+- a static IP assigned to a master node;
+- DNS name pointing to the master node;
+- IP or DNS pointing to external load balancer that redirects connections to the master node;
+- etc.
 
 `controlPlaneEndpoint` should be available before you create the cluster.
 First kubelet uses it to connect to itself, and will fail to start if it can't connect.
 
-Consider if you want to use `serverTLSBootstrap`. It disables default certificate generation.
-Look here for more details how to use it: [kubelet-csr-approver](../metrics/kubelet-csr-approver/).
+2. Consider if you want to use `serverTLSBootstrap`. It disables default certificate generation.
+You will need to generate certificates yourself.
+Look here for more details on how to use it: [kubelet-csr-approver](../metrics/kubelet-csr-approver/).
+
+3. You can also print the whole default config:
 
 ```bash
-# you can also get the whole default config
 kubeadm config print init-defaults --component-configs KubeletConfiguration,KubeProxyConfiguration
+```
 
-# References for config values:
-#   https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/
-#   https://kubernetes.io/docs/reference/config-api/kubeadm-config.v1beta3/
+4. Validate config before using it:
+
+```bash
+kubeadm config validate --config ./kubelet-config.yaml
 ```
 
 # Start kubelet
@@ -112,14 +152,9 @@ sudo kubeadm init --config ./kubelet-config.yaml
 # Calico with eBPF (or probably any other CNI with eBPF)
 sudo kubeadm init --skip-phases=addon/kube-proxy --config ./kubelet-config.yaml
 
-# (optionally) copy kubectl config on a control plane machine, for local access
-rm -r $HOME/.kube
-mkdir -p $HOME/.kube
-sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-sudo chown $(id -u):$(id -g) $HOME/.kube/config
-
-# print and copy from a control plane into your local machine
+# print kubectl config
 sudo cat /etc/kubernetes/admin.conf
+# set this config for your local kubectl
 
 # show command to join worker nodes
 kubeadm token create --print-join-command
