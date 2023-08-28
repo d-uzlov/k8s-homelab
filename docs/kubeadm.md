@@ -1,4 +1,10 @@
 
+# Install required or useful dependencies
+
+```bash
+sudo apt-get install -y qemu-guest-agent ncat net-tools bash-completion iperf3 nfs-common fio ca-certificates curl apt-transport-https gnupg htop open-iscsi cachefilesd dnsutils ipvsadm
+```
+
 # Kubeadm dependencies for Debian-based distros
 
 ```bash
@@ -6,11 +12,6 @@
 sudo swapoff -a
 sudo systemctl mask swap.img.swap
 sudo sed -i '/ swap / s/^/#/' /etc/fstab
-
-# dependencies for apt
-sudo apt-get install -y ca-certificates curl apt-transport-https gnupg
-sudo apt install net-tools
-sudo apt install ipvsadm
 
 # Containerd
 wget https://github.com/containerd/containerd/releases/download/v1.6.17/containerd-1.6.17-linux-amd64.tar.gz
@@ -202,7 +203,7 @@ Any of the following configs can set the wrong limit:
 
 Grep `InhibitDelayMaxSec` in files in these directories.
 
-In Ubuntu the limit is 30 seconds:
+In Ubuntu and Debian the limit is 30 seconds:
 - `/usr/lib/systemd/logind.conf.d/unattended-upgrades-logind-maxdelay.conf`
 
 Uninstall `unattended-upgrades` to fix it.

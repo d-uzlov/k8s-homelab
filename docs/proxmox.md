@@ -15,6 +15,17 @@ Set up updates:
 - - Reference: https://www.virtualizationhowto.com/2022/08/proxmox-update-no-subscription-repository-configuration/
 - - If you run `pve-nag-buster`, it will be added automatically
 
+# Useful tools
+
+```bash
+apt install -y iperf3 htop
+```
+
+# Config dir list
+
+References:
+- https://www.hungred.com/how-to/list-of-proxmox-important-configuration-files-directory/
+
 # Network
 
 ```bash
@@ -75,6 +86,12 @@ It will prevent you from using the VM for anything interesting.
 
 You can disable it in the BIOS screen, which opens if you press ESC during boot:
 
+# Check x86 capabilities
+
+```bash
+/lib64/ld-linux-x86-64.so.2 --help | grep x86
+```
+
 # QEMU guest agent
 
 Enable in `<vm-settings>` -> `Options` -> `QEMU Guest Agent`.
@@ -85,6 +102,17 @@ Install into VM:
 sudo apt-get -y install qemu-guest-agent
 sudo systemctl start qemu-guest-agent
 ```
+
+# Disk performance
+
+`virtio block` has better performance than `scsi` (aka `virtio scsi`)
+but apparently each `virtio block` device consumes a pcie address,
+which are apparently limited.
+
+SATA and IDE virtual drives should not be used unless you have compatibility concerns.
+
+References:
+- https://forum.proxmox.com/threads/virtio-vs-scsi.52893/
 
 # email notifications
 
@@ -148,6 +176,14 @@ sudo udevadm control --reload-rules && sudo udevadm trigger
 References:
 - [Proxmox documentation about Hot-Plug](https://pve.proxmox.com/wiki/Hotplug_(qemu_disk,nic,cpu,memory)#CPU_and_Memory_Hotplug)
 
+# Login issues
+
+```bash
+journalctl -b -u pveproxy
+systemctl status pveproxy.service
+systemctl restart pveproxy.service
+```
+
 # Cluster
 
 - Make sure that your node name resolves to your node IP address
@@ -181,7 +217,41 @@ nano /etc/pve/corosync.conf
 # you may need to restart corosync to apply config changes
 # you may need to do it on one affected node or on all nodes
 systemctl restart corosync
+systemctl status corosync
 ```
+
+# Destroy cluster
+
+- Shows cluster names/list: `pvecm nodes`
+- Remove node: `pvecm delnode <NODE_NAME>`
+
+or
+
+```bash
+systemctl stop pve-cluster corosync &&
+pmxcfs -l &&
+rm -rf /etc/corosync/* &&
+rm -rf /etc/pve/corosync.conf &&
+killall pmxcfs &&
+systemctl start pve-cluster
+
+# delete all ssh keys
+rm -f /root/.ssh/authorized_keys &&
+rm -f /etc/pve/priv/known_hosts &&
+rm -f /etc/ssh/ssh_known_hosts &&
+systemctl restart ssh.service &&
+systemctl restart sshd.service &&
+systemctl restart pve-cluster
+
+# delete cached data about other nodes
+rm -rf /etc/pve/nodes/node-name/
+
+# don't forget to reboot
+reboot now
+```
+
+References:
+- https://pve.proxmox.com/wiki/Cluster_Manager
 
 # Templates
 
@@ -202,7 +272,8 @@ tar -xvf debian-12-generic-amd64-20230802-1460.tar.xz
 ```bash
 virt-customize -a disk.raw \
     --update \
-    --install qemu-guest-agent,ncat,net-tools,bash-completion,iperf3,nfs-common,fio,ca-certificates,curl,apt-transport-https,gnupg \
+    --install qemu-guest-agent,ncat,net-tools,bash-completion,iperf3,nfs-common,fio,ca-certificates,curl,apt-transport-https,gnupg,htop,open-iscsi,cachefilesd,dnsutils,ipvsadm \
+    --uninstall unattended-upgrades \
     --truncate /etc/machine-id
 ```
 - Add disk to VM
