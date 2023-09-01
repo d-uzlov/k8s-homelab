@@ -36,7 +36,10 @@ kl -n cm-manual get certificate
 kl -n cm-manual get certificaterequests.cert-manager.io
 kl -n cm-manual get orders.acme.cert-manager.io
 
-kl -n cm-duckdns logs deployments/duckdns-webhook
+# check if duckdns webhook have any errors
+kl -n cm-duckdns logs deployments/duckdns-webhook --tail 20
+# check if cert-manager have any errors
+kl -n cert-manager logs deployments/cert-manager --tail 20
 # replace with your domain to check if the webhook
 # at least set up the TXT record for DNS-01 challenge
 nslookup -q=txt example.duckdns.org
@@ -44,6 +47,9 @@ nslookup -q=txt example.duckdns.org
 kl -n cm-manual describe certificate
 kl -n cm-manual describe certificaterequests.cert-manager.io
 kl -n cm-manual describe orders.acme.cert-manager.io
+
+# delete staging certificate
+kl delete -k ./ingress/manual-certificates/staging
 
 # after you verified that your setup works
 # re-issue a proper production certificate

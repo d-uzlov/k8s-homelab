@@ -12,7 +12,7 @@ helm repo add jetstack https://charts.jetstack.io
 helm repo update
 helm template \
   cert-manager jetstack/cert-manager \
-  --set 'extraArgs={--dns01-recursive-nameservers=8.8.8.8:53\,1.1.1.1:53}' \
+  --set 'extraArgs={--dns01-recursive-nameservers=8.8.8.8:53\,1.1.1.1:53,--dns01-recursive-nameservers-only}' \
   --version v1.11.0 \
   --namespace cert-manager \
   --set installCRDs=false \
@@ -25,6 +25,15 @@ kl apply -k ./ingress/cert-manager
 There are several ready-to-use issuers:
 - [DuckDNS (DNS-01 challenge with duckdns domains)](./duckdns/)
 - [LetsEncrypt (HTTP-01 challenge)](./letsencrypt/)
+
+# DNS resolving
+
+Without dns01-recursive-nameservers-only cert-manager
+tries to reach DNS servers directly.
+
+Cert-manager will choose a single DNS server for a domain.
+If only part of the servers work, cert manager will not try alternative servers,
+and therefore fail to request a certificate.
 
 # Ingress with single-domain certificates
 
