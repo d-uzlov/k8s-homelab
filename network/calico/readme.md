@@ -37,11 +37,11 @@ KUBERNETES_SERVICE_PORT=6443
 EOF
 
 # Install CRDs
-kl apply -k ./network/calico/crds --server-side=true
+kl apply -k ./network/calico/crds --server-side=true &&
 # Deploy Calico using an operator
-kl create ns tigera-operator
-kl apply -k ./network/calico/cm
-kl apply -f ./network/calico/installation.yaml
+kl create ns tigera-operator &&
+kl apply -k ./network/calico/cm &&
+kl apply -f ./network/calico/installation.yaml &&
 kl apply -k ./network/calico/operator
 
 # maybe we could need this for BGP but I disabled it
@@ -83,7 +83,6 @@ sudo iptables -S
 # new k8s installation will never detect CNI,
 # and all pods will be stuck in Pending state
 sudo systemctl reboot
-
 ```
 
 # Modify existing installation to use aBPF

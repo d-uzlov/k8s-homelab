@@ -7,6 +7,9 @@ Version `v0.6.0` seems to be broken.
 It has some issues with k8s API,
 which causes it to release all virtual IPs and never re-acquire them.
 
+References:
+- https://github.com/kube-vip/kube-vip
+
 # Deploy daemon set for LoadBalancer services
 
 In case you need to change any settings,
@@ -29,7 +32,7 @@ docker run \
 # Local init
 cat <<EOF > ./network/kube-vip/cm/env/ccm.env
 # Define CIDR or rande of IPs that LoadBalancer services are allowed to use
-cidr-global=10.0.3.0/24
+cidr-global=10.0.2.0/24
 # alternatively you can use range instead of cidr
 # range-global=
 EOF

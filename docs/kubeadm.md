@@ -23,7 +23,7 @@ containerd --version &&
 
 # Check new versions here:
 # https://github.com/opencontainers/runc/releases
-curl -fsSLo runc.amd64 https://github.com/opencontainers/runc/releases/download/v1.1.9/runc.amd64 &&
+wget https://github.com/opencontainers/runc/releases/download/v1.1.9/runc.amd64 &&
 sudo install -m 755 runc.amd64 /usr/local/sbin/runc &&
 
 sudo tee /etc/modules-load.d/containerd.conf <<EOF &&
@@ -73,24 +73,40 @@ EOF
 sudo sysctl --system
 ```
 
+sudo iptables -P INPUT ACCEPT &&
+sudo iptables -P FORWARD ACCEPT &&
+sudo iptables -P OUTPUT ACCEPT &&
+sudo iptables -F
+
 # Install kubeadm
+
+Install kubeadm repo key:
+
+```bash
+sudo mkdir -p /etc/apt/keyrings &&
+curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg &&
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+```
 
 List latest versions:
 
 ```bash
+sudo apt-get update &&
 apt-cache policy kubeadm | head -n 15
 ```
 
-```bash
-# install kubeadm repo key
-sudo mkdir -p /etc/apt/keyrings &&
-curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg &&
-echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list &&
+Install kubeadm+kubelet version:
 
-# install kubeadm+kubelet version
+```bash
 sudo apt-get update &&
 sudo apt-get install -y kubelet=1.28.1-00 kubeadm=1.28.1-00 --allow-downgrades --allow-change-held-packages &&
 sudo apt-mark hold kubelet kubeadm
+```
+
+Pull images so you don't have to wait for it when creating the cluster:
+
+```bash
+sudo kubeadm config images pull
 ```
 
 # Install kubectl locally
@@ -156,8 +172,11 @@ sudo kubeadm init --skip-phases=addon/kube-proxy --config ./kubelet-config.yaml
 sudo cat /etc/kubernetes/admin.conf
 # set this config for your local kubectl
 
+# or fetch the config using ssh
+ssh m1.k8s.lan sudo cat /etc/kubernetes/admin.conf > ./_env/kubeadm-master-config.yaml
+
 # show command to join worker nodes
-kubeadm token create --print-join-command
+sudo kubeadm token create --print-join-command
 
 # show command to join additional control plane nodes
 echo $(kubeadm token create --print-join-command) --control-plane --certificate-key $(kubeadm init phase upload-certs --upload-certs | grep -vw -e certificate -e Namespace)

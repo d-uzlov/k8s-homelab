@@ -27,3 +27,9 @@ Also add this folder to the user PATH:
 ```bash
 echo 'PATH="$PATH:/usr/local/sbin"' >> ~/.bashrc
 ```
+
+# Reset DHCP lease
+
+```bash
+sudo dhclient -r; sudo dhclient
+```
