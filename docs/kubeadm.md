@@ -167,7 +167,7 @@ kubeadm config validate --config ./kubelet-config.yaml
 Before using `kubeadm` create a `kubelet-config.yaml` file.
 An example of the config is available here: [kubelet-config.yaml](./kubelet-config.yaml).
 
-If you are using [kube-vip](../network/kube-vip/),
+If you are using [kube-vip](../network/kube-vip-control-plane/readme.md),
 refer to its documentation for list of things
 you need to do before and after using kubeadm.
 

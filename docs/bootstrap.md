@@ -81,7 +81,7 @@ If your IP is static you can simply skip setting up an IP updater.
 make sure that CNI config is correct, and then re-deploy it again with manual certificates.
 - - - Alternatively, you could approve CSRs manually.
 - Install load balancer controller. For example:
-- - [kube-vip](../network/kube-vip/readme.md) (recommended)
+- - [kube-vip](../network/kube-vip-load-balancer/readme.md) (recommended)
 - - [metallb](../network/metallb/readme.md)
 - Install ingress controller
 - - [nginx](../ingress/nginx/readme.md)

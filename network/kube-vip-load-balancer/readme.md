@@ -25,12 +25,12 @@ docker run \
     --arp \
     --servicesElection \
     --prometheusHTTPServer :2113 \
-    > ./network/kube-vip/daemonset.gen.yaml
+    > ./network/kube-vip-load-balancer/daemonset.gen.yaml
 ```
 
 ```bash
+cat <<EOF > ./network/kube-vip-load-balancer/cm/env/ccm.env
 # Local init
-cat <<EOF > ./network/kube-vip/cm/env/ccm.env
 # Define CIDR or rande of IPs that LoadBalancer services are allowed to use
 cidr-global=10.0.2.0/24
 # alternatively you can use range instead of cidr
@@ -38,48 +38,9 @@ cidr-global=10.0.2.0/24
 EOF
 
 kl create ns kube-vip
-kl apply -k ./network/kube-vip/cm
-kl apply -k ./network/kube-vip
+kl apply -k ./network/kube-vip-load-balancer/cm
+kl apply -k ./network/kube-vip-load-balancer
 ```
-
-# Deploy static pods
-
-Kube-vip allow you to create a virtual IP for HA control plane.
-
-It works when you have only one control plane node, but it isn't as useful in such setups.
-
-Static pods should not be deployed on worker nodes.
-
-Generate config:
-```bash
-# any free IP in lan, or DNS name
-VIP=10.0.0.11
-docker run \
-    --network host \
-    --rm ghcr.io/kube-vip/kube-vip:v0.5.12 \
-    manifest \
-    pod \
-    --address $VIP \
-    --controlplane \
-    --arp \
-    --leaderElection \
-    --leaseDuration 15 \
-    --leaseRenewDuration 10 \
-    --leaseRetry 2 \
-    --prometheusHTTPServer :2112 \
-    > ./network/kube-vip/static-pods.gen.yaml
-```
-
-Before deploying first control plane node
-copy [pod config](./static-pods.yaml) into manifests folder:
-```bash
-sudo mkdir -p /etc/kubernetes/manifests/
-
-sudo nano /etc/kubernetes/manifests/kube-vip.yaml
-```
-Kube-vip documentation says that on other control plane nodes
-static pods should be created after `kubeadm init`.
-I didn't check it.
 
 # Lease settings
 
