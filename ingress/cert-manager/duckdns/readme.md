@@ -6,7 +6,11 @@ https://github.com/joshuakraitberg/cert-manager-webhook-duckdns
 This is a plugin for cert-manager that can add DNS-01 challenge support for DuckDNS.
 The primary use of this is to get wildcard certificated from letsencrypt.
 
-# Deploy
+# Create config
+
+Required for major config changes or updates.
+
+You don't need to do it if you are just deploying it.
 
 ```bash
 git clone https://github.com/joshuakraitberg/cert-manager-webhook-duckdns.git
@@ -18,38 +22,49 @@ helm template duckdns-webhook \
   ./cert-manager-webhook-duckdns/charts/cert-manager-webhook-duckdns \
   | sed -e '/helm.sh\/chart/d' -e '/# Source:/d' \
   > ./ingress/cert-manager/duckdns/duckdns.yaml
+```
 
-# helm.sh/chart
+# Set up your local environment
 
-# Init once
-mkdir -p ./ingress/cert-manager/duckdns/secret/env
-echo <<EOF > ./ingress/cert-manager/duckdns/secret/env/duckdns.env
-# copy token from duckdns website
+```bash
+mkdir -p ./ingress/cert-manager/duckdns/env
+echo <<EOF > ./ingress/cert-manager/duckdns/env/duckdns.env
+# Authentication token that allows you to set up DNS entries.
+# You can find token on the DuckDNS website.
 token=<token>
 EOF
-# Init once
-echo <<EOF > ./ingress/cert-manager/duckdns/secret/env/letsencrypt.env
+echo <<EOF > ./ingress/cert-manager/duckdns/env/letsencrypt.env
 # Can be any valid email.
-# You will get a warning email from letsencrypt
-# if you forget to update you certificate.
+# Letsencrypt will send you a warning on this address
+# a few days before any of your certificates expire.
 email=example@example.com
 EOF
+```
 
+# Deploy
+
+```bash
 kl create ns cm-duckdns
-
 kl apply -k ./ingress/cert-manager/duckdns/
 ```
 
 If you want to change namespace, change it in the helm template command.
 Kustomize doesn't change namespace of ClusterRoleBinding and in cert-manager.io/inject-ca-from annotation.
 
+After deployment you can go here to test certificate creation:
+- [manual-wildcard](../../manual-wildcard/readme.md)
+
 # Check duckdns TXT manually
 
-Don't forget to update token in the URL in the command below.
+You can use these commands to check that you are using the correct DuckDNS token,
+and that the service is currently working as expected.
 
 ```bash
+# don't forget to update these values before running the command
+token="<token>"
+domain="example"
 # update TXT record
-curl 'https://www.duckdns.org/update?domains=example&token=<token>&txt=test-2-txt-value'
+curl "https://www.duckdns.org/update?domains=$domain&token=$token&txt=test-2-txt-value"
 
 # query TXT record
 nslookup -q=txt example.duckdns.org

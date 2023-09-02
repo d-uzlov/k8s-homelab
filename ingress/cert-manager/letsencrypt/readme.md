@@ -15,8 +15,8 @@ These issuers use HTTP-01 challenge:
 mkdir -p ./ingress/cert-manager/letsencrypt/env
 echo <<EOF > ./ingress/cert-manager/letsencrypt/env/letsencrypt.env
 # Can be any valid email.
-# You will get a warning email from letsencrypt
-# if you forget to update you certificate.
+# Letsencrypt will send you a warning on this address
+# a few days before any of your certificates expire.
 email=example@example.com
 EOF
 
@@ -31,12 +31,12 @@ Production issuer has the following limits:
 - Certificates per Registered Domain: 50 per week
   - Registered Domain is a `<subdomains>.<registered-name>.<register-domain>`.
   - `<register-domain>` is a parent domain, like `com`, `net`, `co.uk`, etc.
-  - Fourtunately, `duckdns.org` is in the list of register domains,
+  - Fortunately, `duckdns.org` is in the list of register domains,
   so things like `my-domain.duckdns.org` and `another-domain.duckdns.org`
   are considered separate domains and don't share a rate limit.
   - However, `app.my-domain.duckdns.org` and `cloud.my-domain.duckdns.org` share the limit.
   - This is better explained here: https://publicsuffix.org.
-  Also that website has a list of all `<register-domain>` possible values.
+  Also, that website has a list of all `<register-domain>` possible values.
 - New Orders per account: 300 per 3 hours
 - Duplicate Certificate: 5 per week
 - Failed Validation limit: 5 failures per account, per hostname, per hour.

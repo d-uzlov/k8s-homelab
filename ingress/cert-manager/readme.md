@@ -23,8 +23,8 @@ kl apply -k ./ingress/cert-manager
 ```
 
 There are several ready-to-use issuers:
-- [DuckDNS (DNS-01 challenge with duckdns domains)](./duckdns/)
-- [LetsEncrypt (HTTP-01 challenge)](./letsencrypt/)
+- [DuckDNS (DNS-01 challenge with duckdns domains)](./duckdns/readme.md)
+- [LetsEncrypt (HTTP-01 challenge)](./letsencrypt/readme.md)
 
 # DNS resolving
 
@@ -54,7 +54,7 @@ Certificate will be automatically issued and injected into the Ingress resource.
 You need to deploy following resources:
 - [DuckDNS webhook](./duckdns/)
 - [Replicator](../replicator/)
-- [Manually create a certificate](../manual-certificates/)
+- [Manually create a certificate](../manual-wildcard/)
 
 Manual certificate deployment also has instructions on how to use the certificate.
 
