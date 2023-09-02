@@ -1,10 +1,11 @@
 
-https://github.com/joshuakraitberg/cert-manager-webhook-duckdns
-
 # DuckDNS
 
 This is a plugin for cert-manager that can add DNS-01 challenge support for DuckDNS.
 The primary use of this is to get wildcard certificated from letsencrypt.
+
+References:
+- https://github.com/joshuakraitberg/cert-manager-webhook-duckdns
 
 # Create config
 

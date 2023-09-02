@@ -49,7 +49,6 @@ kl -n cm-manual get orders.acme.cert-manager.io
 kl delete -k ./ingress/manual-wildcard/staging
 ```
 
-
 If the certificate doesn't get approved for too long, you can check the following resources for debugging:
 
 ```bash
