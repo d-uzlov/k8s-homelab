@@ -11,12 +11,15 @@ Beware of changes between versions.
 
 # Generate deployment
 
-You can change settings if you want:
+Required for major config changes or updates.
+
+You don't need to do it if you are just deploying it.
+
 ```bash
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-helm search repo ingress-nginx --versions
+helm search repo ingress-nginx --versions | head
 helm template ingress-nginx ingress-nginx/ingress-nginx \
-  --version 4.7.0 \
+  --version 4.7.1 \
   --namespace ingress-nginx \
   --set nameOverride=nginx \
   --set fullnameOverride=nginx \
@@ -34,3 +37,8 @@ helm show values ingress-nginx/ingress-nginx --version 4.7.0 > ./ingress/nginx/d
 kl create ns ingress-nginx
 kl apply -k ./ingress/nginx
 ```
+
+# Test
+
+References:
+- [ingress example](../../test/ingress/readme.md)
