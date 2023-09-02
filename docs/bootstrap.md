@@ -39,8 +39,10 @@ so make sure that your host has at least 2 controllers.
 For example, you can pass through SATA controller
 while using NVMe for the host storage.
 
-For k8s nodes you can use whatever OS you want.
-Setup commands here are only tested on Ubuntu and Debian, but it shouldn't really matter.
+This repo assumes that you use Debian for k8s nodes.
+You will need to search for alternative kubeadm installation commands
+if you use a different distro,
+or even use an alternative k8s provider, like k3s, microk8s, kops, etc.
 
 References:
 - [proxmox](./proxmox.md)
@@ -59,19 +61,28 @@ If your IP is static you can simply skip setting up an IP updater.
 
 # k8s setup
 
+- [optional] Set up Debian template in Proxmox
+- - [Template setup](./proxmox.md#templates)
 - Install k8s
 - - This repo describes how to do it using [kubeadm](./kubeadm.md)
+- - If you use templates, you can install it once, convert VM to template, and clone it to create nodes
 - - It is recommended to setup one separate master node and join at least one worker node
-- Install CNI
-- - [network](../network/)
-- - Recommended: `calico`.
+- Install CNI. For example:
+- - [cilium](../network/cilium/readme.md) (recommended)
+- - [calico](../network/calico/readme.md)
 - [optional] Enable metrics
 - - Make sure you enable k8s certificates generation during k8s installation
 - - Install [kubelet-csr-approver](../metrics/kubelet-csr-approver/readme.md)
 - - Install [metrics-server](../metrics/metrics-server/readme.md)
-- Install load balancer controller
-- - [network](../network/)
-- - Recommended: `kube-vip`
+- - Note, that if you enable TLS certificate bootstrap,
+`kubectl logs` command will not work until kubelet CSRs are approved.
+- - - If there are any issues with CNI, you will have a hard time debugging it.
+- - - It would be easier to re-deploy the cluster with automatic certificates,
+make sure that CNI config is correct, and then re-deploy it again with manual certificates.
+- - - Alternatively, you could approve CSRs manually.
+- Install load balancer controller. For example:
+- - [kube-vip](../network/kube-vip/readme.md) (recommended)
+- - [metallb](../network/metallb/readme.md)
 - Install ingress controller
 - - [nginx](../ingress/nginx/readme.md)
 - - Test that ingress works: [example](../test/ingress/readme.md)

@@ -202,6 +202,19 @@ sudo journalctl --rotate
 sudo journalctl -m --vacuum-time=1s
 ```
 
+# Remove node from cluster
+
+```bash
+kl drain --ignore-daemonsets --delete-local-data nodename
+kl delete node nodename
+```
+
+Then ssh into the removed node and disable kubelet:
+
+```bash
+sudo kubeadm reset
+```
+
 # Destroy cluster
 
 ```bash
