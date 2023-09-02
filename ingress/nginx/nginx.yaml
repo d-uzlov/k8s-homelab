@@ -265,40 +265,6 @@ spec:
     app.kubernetes.io/instance: ingress-nginx
     app.kubernetes.io/component: controller
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  annotations:
-  labels:
-    app.kubernetes.io/name: nginx
-    app.kubernetes.io/instance: ingress-nginx
-    app.kubernetes.io/version: "1.8.1"
-    app.kubernetes.io/part-of: nginx
-    app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/component: controller
-  name: nginx-controller
-  namespace: ingress-nginx
-spec:
-  type: LoadBalancer
-  ipFamilyPolicy: SingleStack
-  ipFamilies: 
-    - IPv4
-  ports:
-    - name: http
-      port: 80
-      protocol: TCP
-      targetPort: http
-      appProtocol: http
-    - name: https
-      port: 443
-      protocol: TCP
-      targetPort: https
-      appProtocol: https
-  selector:
-    app.kubernetes.io/name: nginx
-    app.kubernetes.io/instance: ingress-nginx
-    app.kubernetes.io/component: controller
----
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -341,7 +307,6 @@ spec:
                 - /wait-shutdown
           args:
             - /nginx-ingress-controller
-            - --publish-service=$(POD_NAMESPACE)/nginx-controller
             - --election-id=nginx-leader
             - --controller-class=k8s.io/ingress-nginx
             - --ingress-class=nginx
@@ -349,6 +314,7 @@ spec:
             - --validating-webhook=:8443
             - --validating-webhook-certificate=/usr/local/certificates/cert
             - --validating-webhook-key=/usr/local/certificates/key
+            - --publish-service=$(POD_NAMESPACE)/nginx
           securityContext: 
             capabilities:
               drop:
