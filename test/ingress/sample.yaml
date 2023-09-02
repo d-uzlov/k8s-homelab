@@ -1,62 +1,40 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: example1
+  name: echo
   labels:
-    app: example1
+    app: echo
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: example1
+      app: echo
   template:
     metadata:
       labels:
-        app: example1
+        app: echo
     spec:
       containers:
-      - name: httpecho
-        image: hashicorp/http-echo
+      - name: echo
+        image: docker.io/hashicorp/http-echo:0.2.3
         args:
         - "-listen=:8080"
         - "-text=hello world 1"
         ports:
-        - containerPort: 8080
+        - name: http
+          containerPort: 8080
         resources: {}
 ---
 kind: Service
 apiVersion: v1
 metadata:
-  name: example1
+  name: echo
 spec:
   type: ClusterIP
   selector:
-    app: example1
+    app: echo
   ports:
   - name: http
     protocol: TCP
     port: 8080
-    targetPort: 8080
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: example
-  # annotations:
-  #   cert-manager.io/cluster-issuer: letsencrypt-staging
-spec:
-  ingressClassName: nginx
-  # tls:
-  # - hosts:
-  #   - REPLACE_ME
-  rules:
-  - host: REPLACE_ME
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: example1
-            port:
-              number: 8080
+    targetPort: http
