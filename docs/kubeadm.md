@@ -113,7 +113,16 @@ sudo kubeadm config images pull
 
 Run this on your local PC, you don't need kubectl on the server.
 
+Install kubeadm repo key:
+
 ```bash
+sudo mkdir -p /etc/apt/keyrings &&
+curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg &&
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+```
+
+```bash
+sudo apt-get update
 sudo apt-get install -y kubectl=1.28.1-00 --allow-downgrades --allow-change-held-packages
 sudo apt-mark hold kubectl
 ```
