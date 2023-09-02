@@ -36,7 +36,7 @@ cat <<EOF > ./cloud/nextcloud/env/ingress.env
 # host used in ingress
 public_domain=nextcloud.example.duckdns.org
 
-# set to value specified in ingress/manual-certificates/<your-cert>
+# set to value specified in ingress/manual-wildcard/<your-cert>
 wildcard_secret_name=main-wildcard-at-duckdns
 
 # Limit access from web, or leave empty

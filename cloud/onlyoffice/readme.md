@@ -27,7 +27,7 @@ public_domain=onlyoffice.example.duckdns.org
 EOF
 # Init once
 cat <<EOF > ./cloud/nextcloud/env/settings.env
-# set to value specified in ingress/manual-certificates/<your-cert>
+# set to value specified in ingress/manual-wildcard/<your-cert>
 wildcard_secret_name=main-wildcard-at-duckdns
 
 # Limit access from web, or leave empty
