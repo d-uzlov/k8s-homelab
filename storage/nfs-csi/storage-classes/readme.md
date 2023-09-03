@@ -3,6 +3,15 @@
 
 `shared` storage class is shared between namespaces.
 
+Init server:
+- Get static server address (either static IP or a DNS record)
+- - In this example: `truenas.lan`
+- Create folder for sharing
+- - In this example: `/mnt/main/k8s/media`
+- Create NFS share for chosen folder
+- Set `Mapall User` and `Mapall Group` to `nobody` and `nogroup` respectively
+- - This way different apps will all have access to shared data, regardless of their local user
+
 Init local settings:
 
 ```bash
@@ -37,6 +46,16 @@ kl delete -f ./storage/nfs-csi/storage-classes/shared/test.yaml
 
 `bulk` storage class provides non-shared data volumes,
 with optional persistence across re-deployments.
+
+Init server:
+- Get static server address (either static IP or a DNS record)
+- - In this example: `truenas.lan`
+- Create folder for sharing
+- - In this example: `/mnt/main/k8s/nfs`
+- Create NFS share for chosen folder
+- Set `Maproot User` and `Maproot Group` to `root`
+- - This is required to allow NFS CSI controller to set up folder permissions,
+and to delete application data that doesn't enable write access to world
 
 Init local settings:
 
