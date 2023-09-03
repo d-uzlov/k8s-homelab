@@ -1,0 +1,40 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-nfs-shared
+spec:
+  selector:
+    matchLabels:
+      app: test-nfs-shared
+  template:
+    metadata:
+      labels:
+        app: test-nfs-shared
+    spec:
+      containers:
+      - name: alpine
+        image: docker.io/alpine:3.17.3
+        command: ["/bin/sh", "-c", "trap : TERM INT; sleep infinity & wait"]
+        resources:
+          limits:
+            memory: "128Mi"
+        volumeMounts:
+        - mountPath: /mnt/data
+          name: data
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: test-nfs-shared
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: test-nfs-shared
+spec:
+  storageClassName: shared
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Mi

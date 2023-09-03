@@ -1,0 +1,40 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: pv-nfs
+
+resources:
+- shared.yaml
+
+configMapGenerator:
+- name: nfs-media
+  envs:
+  - env/nfs.env
+  options:
+    disableNameSuffixHash: true
+
+replacements:
+- source:
+    kind: ConfigMap
+    name: nfs-media
+    fieldPath: data.server
+  targets:
+  - select:
+      kind: StorageClass
+      name: shared
+    fieldPaths:
+    - parameters.server
+- source:
+    kind: ConfigMap
+    name: nfs-media
+    fieldPath: data.path
+  targets:
+  - select:
+      kind: StorageClass
+      name: shared
+    fieldPaths:
+    - parameters.share
+    options:
+      delimiter: '/'
+      index: 0

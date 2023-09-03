@@ -1,0 +1,53 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: pv-nfs
+
+resources:
+- bulk.yaml
+
+configMapGenerator:
+- name: nfs-bulk
+  envs:
+  - env/nfs.env
+  options:
+    disableNameSuffixHash: true
+
+replacements:
+- source:
+    kind: ConfigMap
+    name: nfs-bulk
+    fieldPath: data.server
+  targets:
+  - select:
+      kind: StorageClass
+      name: bulk-persist
+    fieldPaths:
+    - parameters.server
+  - select:
+      kind: StorageClass
+      name: bulk
+    fieldPaths:
+    - parameters.server
+- source:
+    kind: ConfigMap
+    name: nfs-bulk
+    fieldPath: data.path
+  targets:
+  - select:
+      kind: StorageClass
+      name: bulk-persist
+    fieldPaths:
+    - parameters.share
+    options:
+      delimiter: '/'
+      index: 0
+  - select:
+      kind: StorageClass
+      name: bulk
+    fieldPaths:
+    - parameters.share
+    options:
+      delimiter: '/'
+      index: 0

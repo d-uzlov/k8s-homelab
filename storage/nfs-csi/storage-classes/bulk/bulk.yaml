@@ -2,43 +2,43 @@
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: fast-persist
+  name: bulk-persist
 provisioner: nfs.csi.k8s.io
 reclaimPolicy: Delete
 volumeBindingMode: Immediate
 parameters:
   server: REPLACE_ME
-  share: REPLACE_ME/nfs
+  share: REPLACE_ME
   onDelete: retain
+  # different PVCs will always point to different data
   subDir: ${pvc.metadata.namespace}~${pvc.metadata.name}~persist
   mountPermissions: '777'
   csi.storage.k8s.io/provisioner-secret-name: mount-options
-  csi.storage.k8s.io/provisioner-secret-namespace: REPLACE_ME
+  csi.storage.k8s.io/provisioner-secret-namespace: pv-nfs
 mountOptions:
 - hard
 - nfsvers=4.2
 - rsize=262144
 - wsize=262144
-- fsc
 ---
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: fast
+  name: bulk
 provisioner: nfs.csi.k8s.io
 reclaimPolicy: Delete
 volumeBindingMode: Immediate
 parameters:
   server: REPLACE_ME
-  share: REPLACE_ME/nfs
+  share: REPLACE_ME
   onDelete: delete
+  # disposable volumes don't share data with truly persistent volumes
   subDir: ${pvc.metadata.namespace}~${pvc.metadata.name}~dispose
   mountPermissions: '777'
   csi.storage.k8s.io/provisioner-secret-name: mount-options
-  csi.storage.k8s.io/provisioner-secret-namespace: REPLACE_ME
+  csi.storage.k8s.io/provisioner-secret-namespace: pv-nfs
 mountOptions:
 - hard
 - nfsvers=4.2
 - rsize=262144
 - wsize=262144
-- fsc
