@@ -135,7 +135,7 @@ chmod 600 /etc/postfix/sasl_passwd
 postmap hash:/etc/postfix/sasl_passwd # generate /etc/postfix/sasl_passwd.db
 
 # edit email config
-cat <<EOF >> /etc/postfix/main.cf
+cat << EOF >> /etc/postfix/main.cf
 relayhost = smtp.gmail.com:587
 smtp_use_tls = yes
 smtp_sasl_auth_enable = yes
@@ -276,11 +276,11 @@ virt-customize -a disk.raw \
     --install bash-completion,ncat,net-tools,iperf3,fio,curl,htop,dnsutils \
     --install ca-certificates,apt-transport-https,gnupg,ipvsadm,open-iscsi,nfs-common,cachefilesd \
     --uninstall unattended-upgrades \
-    --run-command 'sudo rm /usr/sbin/shutdown && sudo tee /usr/sbin/shutdown <<EOF && sudo chmod 755 /usr/sbin/shutdown
+    --run-command 'sudo rm /usr/sbin/shutdown && sudo tee /usr/sbin/shutdown << EOF && sudo chmod 755 /usr/sbin/shutdown
 #!/bin/bash
 exec systemctl poweroff
 EOF' \
-    --run-command 'sudo rm /usr/sbin/reboot && sudo tee /usr/sbin/reboot <<EOF && sudo chmod 755 /usr/sbin/reboot
+    --run-command 'sudo rm /usr/sbin/reboot && sudo tee /usr/sbin/reboot << EOF && sudo chmod 755 /usr/sbin/reboot
 #!/bin/bash
 exec systemctl reboot
 EOF' \
@@ -300,6 +300,38 @@ References:
 - https://bugzilla.redhat.com/show_bug.cgi?id=1554546
 - https://technotim.live/posts/cloud-init-cloud-image/
 - https://www.reddit.com/r/Proxmox/comments/1058ko7/installing_tools_into_a_cloudinit_image/
+
+# Ryzen 1000, 2000, 3000 setup
+
+CPUs based on Zen, Zen+, Zen 2 architectures have a bug which makes them freeze when in the C6 state.
+
+Previously there was a setting in BIOS that could fix it by disabling package C6 state.
+But it seems like in later versions of the BIOS this setting was removed.
+
+For now the solution is to completely disable C6 core state:
+
+```bash
+# Install dependencies
+apt install -y git make g++
+```
+
+```bash
+git clone https://github.com/joakimkistowski/amd-disable-c6.git
+cd amd-disable-c6/
+make install
+
+# MSR kernel module is required
+# enable module until next reboot
+modprobe msr
+# auto-enable module at boot time
+sh -c "echo msr > /etc/modules-load.d/msr.conf"
+
+systemctl enable amd-disable-c6.service
+systemctl start amd-disable-c6.service
+```
+
+References:
+- https://github.com/joakimkistowski/amd-disable-c6
 
 # TODO
 
