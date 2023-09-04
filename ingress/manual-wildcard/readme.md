@@ -47,6 +47,9 @@ kl -n cm-manual get orders.acme.cert-manager.io
 
 # delete staging certificate after it is was successfully issued
 kl delete -k ./ingress/manual-wildcard/staging
+# if we don't delete secret, if we re-deploy the certificate,
+# cert-manager will see that secret already exists and skip re-issuing the certificate
+kl -n cm-manual delete secrets main-wildcard-at-duckdns
 ```
 
 If the certificate doesn't get approved for too long, you can check the following resources for debugging:
@@ -73,6 +76,8 @@ you can re-issue a proper production certificate:
 
 ```bash
 kl apply -k ./ingress/manual-wildcard/production
+
+kl -n cm-manual get certificate
 ```
 
 # Using in ingress resources
