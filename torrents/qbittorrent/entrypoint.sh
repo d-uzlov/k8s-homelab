@@ -82,9 +82,9 @@ if [ "$FORCE_OVERWRITE_CONFIG" = "true" ] || [ ! -f "$watchFile" ]; then
     rm -rf "$watchFile"
     mkdir -p "$(dirname "$watchFile")"
     cp -f "$DEFAULT_CONFIG_LOCATION/watched_folders.json" "$watchFile"
-    sed -i "s|REPLACE_ME_WATCH_ROOT|$WATCH_ROOT|" "$watchFile"
-    sed -i "s|REPLACE_ME_WATCH_INCOMPLETE|$WATCH_INCOMPLETE|" "$watchFile"
-    sed -i "s|REPLACE_ME_WATCH_FINISHED|$FINISHED_FOLDER|" "$watchFile"
+    sed -i "s|AUTOMATIC_REPLACE_WATCH_ROOT|$WATCH_ROOT|" "$watchFile"
+    sed -i "s|AUTOMATIC_REPLACE_WATCH_INCOMPLETE|$WATCH_INCOMPLETE|" "$watchFile"
+    sed -i "s|AUTOMATIC_REPLACE_WATCH_FINISHED|$FINISHED_FOLDER|" "$watchFile"
 fi
 
 # without this this script can fail because
