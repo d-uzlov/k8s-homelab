@@ -7,97 +7,73 @@ https://airensoft.gitbook.io/ovenmediaengine/getting-started/getting-started-wit
 
 This is a video streaming engine that supports low latency streams.
 
-# Init local settings
-
-```bash
-mkdir -p ./video/ome/env
-cat <<EOF > ./video/ome/env/ingress.env
-allowed_sources=10.0.0.0/16,1.2.3.4
-EOF
-cat <<EOF > ./video/ome/env/services.env
-provide_ip=10.0.3.16
-stream_ip=10.0.3.17
-EOF
-```
-
 # Deploy
 
 ```bash
 kl create ns ome
-kl label ns --overwrite ome copy-wild-cert=main
-
 kl apply -k ./video/ome/
+
+kl apply -k ./video/ome/loadbalancer/
+kl -n ome get svc
+
+kl label ns --overwrite ome copy-wild-cert=main
+kl apply -k ./video/ome/ingress-wildcard/
 ```
+
+# Load balancer services
+
+There are 2 load balancer services:
+- Provide: for streaming from source to server
+- WebRTC: for streaming from server to client
+
+You can get their external IPs:
+```bash
+kl -n ome get svc provide webrtc-ice
+```
+
+If you are behind NAT you need to set up port forwarding.
+
+You can skip Provide service if you don't want to stream from outside of LAN.
+
+You can skip WebRTC if you don't plan on using WebRTC for watching video.
+
+WebRTC forwarded ports must match ports of the service itself.
+
+WebRTC determines host IP automatically, and clients try to connect to it.
+If your service IP does not match the IP that the server can detect using "show my IP" external services,
+you need to set `OME_WEBRTC_CANDIDATE_IP` environment variable to point to correct IP.
 
 # How to stream
 
-1. [optional] Set up local DNS to point to `provide_ip` from `services.env`
+- [optional] Set up local DNS to point to `provide_ip`
+- Set up OBS
+- - This is info from quickstart: https://airensoft.gitbook.io/ovenmediaengine/quick-start
+- - Go to `Settings -> Stream`
+- - Set server: `rtmp://<provide_ip or DNS>:1935/app`
+- - Set stream key: an arbitrary string
+- - `/app` corresponds to `<Name>app</Name>` in `ome-config.xml`, and can be changed by editing the config.
 
-2. Set up OBS
+# Playback
 
-From quickstart: https://airensoft.gitbook.io/ovenmediaengine/quick-start
-
-```s
-Settings -> Stream
-Server: rtmp://<provide_ip or DNS>:1935/<app>
-Stream key: stream
-```
-
-`provide_ip` is service external IP if you are streaming in LAN:
-```bash
-kl -n ome get svc provide
-```
-
-`/<app>` can be configured in the `ome-config.xml`
-
-Stream key may be an arbitrary string.
+- Deploy [OvenPlayer](../ovenplayer/readme.md)
+- Create stream link that corresponds to your config and OBS settings
 
 # Playback with WebRTC (sub-second latency)
 
-1. Set up port forwarding
-
-Streaming with WebRTC requires open ports.
-
-This deployment creates a LoadBalancer service with IP `stream_ip`.
-```bash
-kl -n ome get svc webrtc-ice
-```
-You need to set up port forwarding from matching external port to specified address.
-You need to forward both ports from the `webrtc-ice` service.
-
-2. Deploy [OvenPlayer](../ovenplayer/)
-
-3. Create stream link
-
-```s
-# plain HTTP in local network
-ws://<stream_ip>:3333/app/<stream-key>
-ws://<local DNS>:3333/app/<stream-key>
-# HTTPS through ingress
-wss://<public_domain>/app/<stream-key>
-```
-
-WebSockets forbid mixed content.
-Meaning if you open OvenPlayer via Ingress with proper certificate,
-plain HTTP link will not work, and vice versa.
+- Streaming via HTTP: `ws://<ingress_ip or DNS>:3333/app/<stream-key>`
+- Streaming via HTTPS: `wss://<ingress_public_domain>/app/<stream-key>`
+- `/app` and `<stream-key>` must match OSB settings
+- WebSockets forbid mixed content.
+- - If you open OvenPlayer via HTTPS Ingress,
+    plain HTTP playback will not work, and vice versa.
+- Make sure to [setup port forwarding](#load-balancer-services)
 
 # LLHLS playback (latency 1-3 seconds)
 
-Unlike WebRTC, LLHLS doesn't need port forwarding.
+- Streaming via HTTP: `http://<ingress_ip or DNS>:3333/app/<stream-key>/llhls.m3u8`
+- Streaming via HTTPS: `https://<ingress_public_domain>/app/<stream-key>/llhls.m3u8`
 
-1. Deploy [OvenPlayer](../ovenplayer/)
-
-2. Create stream link
-
-```s
-# plain HTTP in local network
-http://<stream_ip>:3333/app/<stream-key>/llhls.m3u8
-http://<local DNS>:3333/app/<stream-key>/llhls.m3u8
-# HTTPS through ingress
-https://<public_domain>/app/<stream-key>/llhls.m3u8
-```
-
-# Extract config from docker image
+# Extract config from image
 
 Obviously, you need to disable config replacement in the deployment if you want to get the default config.
 
