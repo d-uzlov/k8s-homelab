@@ -16,36 +16,36 @@ helm search repo democratic-csi/
 # re-generate deployment config if needed
 helm template \
   iscsi democratic-csi/democratic-csi \
-  --values ./storage/democratic-csi/iscsi.yaml \
+  --values ./storage/democratic-csi/iscsi-truenas-scale/values.yaml \
   --set nameOverride=dcsi \
   --set fullnameOverride=dcsi \
   --namespace pv-dcsi \
-  > ./storage/democratic-csi/iscsi-deployment.gen.yaml
+  > ./storage/democratic-csi/iscsi-truenas-scale/deployment.gen.yaml
 
 # Init local settings
-cat <<EOF > ./storage/democratic-csi/env/passwords.env
+cat <<EOF > ./storage/democratic-csi/iscsi-truenas-scale/env/passwords.env
 host=truenas.lan
 username=democratic-csi
 password=password
 EOF
-cat <<EOF > ./storage/democratic-csi/env/iscsi.env
+cat <<EOF > ./storage/democratic-csi/iscsi-truenas-scale/env/iscsi.env
 main_dataset=ssd/k8s/block
 snapshot_dataset=ssd/k8s/block-snap
 EOF
 
-(. ./storage/democratic-csi/env/passwords.env &&
-. ./storage/democratic-csi/env/iscsi.env &&
+(. ./storage/democratic-csi/iscsi-truenas-scale/env/passwords.env &&
+. ./storage/democratic-csi/iscsi-truenas-scale/env/iscsi.env &&
 sed \
   -e "s|REPLACE_ME_HOST|$host|g" \
   -e "s|REPLACE_ME_USERNAME|$username|g" \
   -e "s|REPLACE_ME_PASSWORD|$password|g" \
   -e "s|REPLACE_ME_MAIN_DATASET|$main_dataset|g" \
   -e "s|REPLACE_ME_SNAP_DATASET|$snapshot_dataset|g" \
-  ./storage/democratic-csi/iscsi-config.template.yaml
-) > ./storage/democratic-csi/env/iscsi-config.yaml
+  ./storage/democratic-csi/config.template.yaml
+) > ./storage/democratic-csi/env/config.yaml
 
 kl create ns pv-dcsi
-kl apply -k ./storage/democratic-csi/
+kl apply -k ./storage/democratic-csi/iscsi-truenas-scale/
 ```
 
 # Truenas setup
@@ -67,5 +67,5 @@ Set storage class `reclaimPolicy` to `Retain`.
 After you delete PVC edit the PV and clear `claimRef.uid`.
 For example:
 ```bash
-kubectl patch pv <pv name> -p '{"spec":{"claimRef":{"uid": null}}}'
+kubectl patch pv pv_name -p '{"spec":{"claimRef":{"uid": null}}}'
 ```
