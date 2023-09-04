@@ -117,12 +117,14 @@ done
 
 Create bind mount:
 ```bash
-sudo mount --rbind /mnt/main/k8s /mnt/system-mount/shared-links/main
-sudo mount --rbind /mnt/ssd/k8s /mnt/system-mount/shared-links/ssd
+sudo mkdir -p /mnt/system/shared-links/main
+sudo mkdir -p /mnt/system/shared-links/ssd
+sudo mount --rbind /mnt/main/k8s /mnt/system/shared-links/main
+sudo mount --rbind /mnt/ssd/k8s /mnt/system/shared-links/ssd
 ```
 
-`--bind` creates a reference to one filesystem
-`--rbind` is recursive. Useful if you want to mount whole ZFS dataset tree.
+- `--bind` creates a reference to one filesystem
+- `--rbind` is recursive. Useful if you want to mount whole ZFS dataset tree.
 
 To make changes persistent, create startup script.
 
