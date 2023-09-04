@@ -7,7 +7,7 @@ metadata:
   namespace: pv-dcsi
   labels:
     app.kubernetes.io/name: dcsi
-    helm.sh/chart: democratic-csi-0.13.7
+    helm.sh/chart: democratic-csi-0.14.1
     app.kubernetes.io/instance: iscsi
     app.kubernetes.io/managed-by: Helm
 ---
@@ -19,7 +19,7 @@ metadata:
   namespace: pv-dcsi
   labels:
     app.kubernetes.io/name: dcsi
-    helm.sh/chart: democratic-csi-0.13.7
+    helm.sh/chart: democratic-csi-0.14.1
     app.kubernetes.io/instance: iscsi
     app.kubernetes.io/managed-by: Helm
 ---
@@ -31,7 +31,7 @@ metadata:
   namespace: pv-dcsi
   labels:
     app.kubernetes.io/name: dcsi
-    helm.sh/chart: democratic-csi-0.13.7
+    helm.sh/chart: democratic-csi-0.14.1
     app.kubernetes.io/instance: iscsi
     app.kubernetes.io/managed-by: Helm
 data:
@@ -44,7 +44,7 @@ metadata:
   name: dcsi-controller-cr
   labels:
     app.kubernetes.io/name: dcsi
-    helm.sh/chart: democratic-csi-0.13.7
+    helm.sh/chart: democratic-csi-0.14.1
     app.kubernetes.io/instance: iscsi
     app.kubernetes.io/managed-by: Helm
 rules:
@@ -127,7 +127,7 @@ metadata:
   name: dcsi-node-cr
   labels:
     app.kubernetes.io/name: dcsi
-    helm.sh/chart: democratic-csi-0.13.7
+    helm.sh/chart: democratic-csi-0.14.1
     app.kubernetes.io/instance: iscsi
     app.kubernetes.io/managed-by: Helm
 rules:
@@ -152,7 +152,7 @@ metadata:
   name: dcsi-controller-rb
   labels:
     app.kubernetes.io/name: dcsi
-    helm.sh/chart: democratic-csi-0.13.7
+    helm.sh/chart: democratic-csi-0.14.1
     app.kubernetes.io/instance: iscsi
     app.kubernetes.io/managed-by: Helm
 roleRef:
@@ -171,7 +171,7 @@ metadata:
   name: dcsi-node-rb
   labels:
     app.kubernetes.io/name: dcsi
-    helm.sh/chart: democratic-csi-0.13.7
+    helm.sh/chart: democratic-csi-0.14.1
     app.kubernetes.io/instance: iscsi
     app.kubernetes.io/managed-by: Helm
 roleRef:
@@ -191,7 +191,7 @@ metadata:
   namespace: pv-dcsi
   labels:
     app.kubernetes.io/name: dcsi
-    helm.sh/chart: democratic-csi-0.13.7
+    helm.sh/chart: democratic-csi-0.14.1
     app.kubernetes.io/instance: iscsi
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/csi-role: "node"
@@ -207,7 +207,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/configmap: a9a7330a55f81db977db1265c1f5a7d43ea153c31cb3448b9f93f84d83e05290
+        checksum/configmap: 12a38cdd6002376a00c195b214e68369c891f543e29e877267ebb658552f6a50
       labels:
         app.kubernetes.io/name: dcsi
         app.kubernetes.io/instance: iscsi
@@ -319,7 +319,7 @@ spec:
         - mountPath: /csi-data
           name: socket-dir
       - name: driver-registrar
-        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.5.1
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.8.0
         args:
         - --v=5
         - --csi-address=/csi-data/csi.sock
@@ -441,7 +441,7 @@ metadata:
   namespace: pv-dcsi
   labels:
     app.kubernetes.io/name: dcsi
-    helm.sh/chart: democratic-csi-0.13.7
+    helm.sh/chart: democratic-csi-0.14.1
     app.kubernetes.io/instance: iscsi
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/csi-role: "controller"
@@ -458,7 +458,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/configmap: a9a7330a55f81db977db1265c1f5a7d43ea153c31cb3448b9f93f84d83e05290
+        checksum/configmap: 12a38cdd6002376a00c195b214e68369c891f543e29e877267ebb658552f6a50
       labels:
         app.kubernetes.io/name: dcsi
         app.kubernetes.io/instance: iscsi
@@ -471,9 +471,22 @@ spec:
       hostAliases: []
       hostIPC: false
       containers:
+      # https://github.com/kubernetes-csi/external-attacher
+      - name: external-attacher
+        image: registry.k8s.io/sig-storage/csi-attacher:v4.3.0
+        args:
+        - --v=5
+        - --leader-election
+        - --leader-election-namespace=pv-dcsi
+        - --timeout=90s
+        - --worker-threads=10
+        - --csi-address=/csi-data/csi.sock
+        volumeMounts:
+        - mountPath: /csi-data
+          name: socket-dir
       # https://github.com/kubernetes-csi/external-provisioner
       - name: external-provisioner
-        image: registry.k8s.io/sig-storage/csi-provisioner:v3.1.0
+        image: registry.k8s.io/sig-storage/csi-provisioner:v3.5.0
         args:
         - --v=5
         - --leader-election
@@ -510,7 +523,7 @@ spec:
               fieldPath: metadata.name
       # https://github.com/kubernetes-csi/external-resizer
       - name: external-resizer
-        image: registry.k8s.io/sig-storage/csi-resizer:v1.4.0
+        image: registry.k8s.io/sig-storage/csi-resizer:v1.8.0
         args:
         - --v=5
         - --leader-election
@@ -549,7 +562,7 @@ spec:
       #  - https://github.com/rook/rook/issues/4178
       #  - https://github.com/kubernetes-csi/external-snapshotter/issues/147#issuecomment-513664310
       - name: external-snapshotter
-        image: registry.k8s.io/sig-storage/csi-snapshotter:v5.0.1
+        image: registry.k8s.io/sig-storage/csi-snapshotter:v6.2.2
         args:
         - --v=5
         - --leader-election
@@ -672,11 +685,11 @@ metadata:
   name: org.democratic-csi.iscsi
   labels:
     app.kubernetes.io/name: dcsi
-    helm.sh/chart: democratic-csi-0.13.7
+    helm.sh/chart: democratic-csi-0.14.1
     app.kubernetes.io/instance: iscsi
     app.kubernetes.io/managed-by: Helm
 spec:
-  attachRequired: false
+  attachRequired: true
   podInfoOnMount: true
   #  added in Kubernetes 1.16
   #  volumeLifecycleModes:

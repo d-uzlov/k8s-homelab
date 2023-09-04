@@ -9,13 +9,14 @@ https://github.com/fenio/k8s-truenas
 ```bash
 helm repo add democratic-csi https://democratic-csi.github.io/charts/
 helm repo update
-helm search repo democratic-csi/
+helm search repo democratic-csi/democratic-csi --versions | head
 ```
 
 ```bash
 # re-generate deployment config if needed
 helm template \
   iscsi democratic-csi/democratic-csi \
+  --version 0.14.1 \
   --values ./storage/democratic-csi/iscsi-truenas-scale/values.yaml \
   --set nameOverride=dcsi \
   --set fullnameOverride=dcsi \
