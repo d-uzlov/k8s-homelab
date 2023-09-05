@@ -1,0 +1,44 @@
+
+kubeProxyReplacement: strict
+k8sServicePort: 6443
+rollOutCiliumPods: true
+operator:
+  rollOutPods: true
+ipam:
+  mode: cluster-pool
+  operator:
+    clusterPoolIPv4PodCIDRList: 10.201.0.0/16
+encryption:
+  enabled: true
+  type: wireguard
+
+hubble:
+  tls:
+    auto:
+      enabled: true
+      # renew certificates automatically
+      # remove certificates from generate yaml files
+      method: cronJob
+
+# TODO: DRS does not work properly with tunneling:
+#   https://github.com/cilium/cilium/issues/26723#issuecomment-1628505224
+#   https://github.com/cilium/cilium/issues/27731
+#   https://github.com/cilium/cilium/issues/26407
+# if you enable loadBalancer, bpf, enableIPv4Masquerade, enableIPv6Masquerade entries,
+# load balancer services will start working as expected,
+# but connections from pods to outside world will be broken
+
+# loadBalancer:
+#     # mode=snat uses SNAT for services with `externalTrafficPolicy=Cluster`
+#     # mode=dsr disables SNAT (preserve client IP) but reduces MTU
+#     # mode=hybrid disables SNAT for TCP traffic without changing MTU but disables DSR for UDP
+#   mode: dsr
+#   dsrDispatch: geneve
+
+# required for DSR with tunneling
+tunnel: geneve
+
+# bpf:
+#   masquerade: true
+# enableIPv4Masquerade: false
+# enableIPv6Masquerade: false
