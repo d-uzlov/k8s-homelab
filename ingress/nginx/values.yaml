@@ -6,6 +6,17 @@ controller:
   terminationGracePeriodSeconds: 30
   kind: DaemonSet
   service:
+    # we define service manually
     enabled: false
   extraArgs:
+    # publish-service is added automatically when service is enabled in helm
+    # but we disabled it, so we need to add it manually
     publish-service: $(POD_NAMESPACE)/nginx
+  # run on master nodes
+  tolerations:
+  - key: node-role.kubernetes.io/master
+    effect: NoSchedule
+  - key: node-role.kubernetes.io/control-plane
+    effect: NoSchedule
+  - key: node.kubernetes.io/not-ready
+    effect: NoSchedule
