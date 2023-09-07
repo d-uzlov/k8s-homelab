@@ -12,9 +12,10 @@ you can just use this demo as a main website.
 
 ```bash
 kl create ns ome-player
-kl label ns --overwrite ome-player copy-wild-cert=main
-
 kl apply -k ./video/ovenplayer/
+
+kl label ns --overwrite ome-player copy-wild-cert=main
+kl apply -k ./video/ovenplayer/ingress-wildcard/
 ```
 
 # Stream links
