@@ -16,6 +16,14 @@ Required for major config changes or updates.
 
 You don't need to do it if you are just deploying it.
 
+Versions that are known to usually work:
+- v0.5.12
+- 0.6.2
+
+Versions that are known to be broken:
+- 0.6.0
+- 0.6.1
+
 ```bash
 docker run \
     --network host \
