@@ -1,52 +1,57 @@
 ---
-# Source: democratic-csi/templates/controller-rbac.yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: dcsi-controller-sa
-  namespace: pv-dcsi
+  name: discsi-controller-sa
+  namespace: pv-discsi
   labels:
-    app.kubernetes.io/name: dcsi
-    helm.sh/chart: democratic-csi-0.14.1
-    app.kubernetes.io/instance: iscsi
-    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: discsi
 ---
-# Source: democratic-csi/templates/node-rbac.yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: dcsi-node-sa
-  namespace: pv-dcsi
+  name: discsi-node-sa
+  namespace: pv-discsi
   labels:
-    app.kubernetes.io/name: dcsi
-    helm.sh/chart: democratic-csi-0.14.1
-    app.kubernetes.io/instance: iscsi
-    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: discsi
 ---
-# Source: democratic-csi/templates/configmap.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: dcsi
-  namespace: pv-dcsi
+  name: discsi
+  namespace: pv-discsi
   labels:
-    app.kubernetes.io/name: dcsi
-    helm.sh/chart: democratic-csi-0.14.1
-    app.kubernetes.io/instance: iscsi
-    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: discsi
 data:
   extra-ca-certs: ""
 ---
-# Source: democratic-csi/templates/controller-rbac.yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: block
+  annotations:
+  labels:
+    app.kubernetes.io/name: discsi
+provisioner: org.democratic-csi.iscsi.block
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+volumeBindingMode: Immediate
+
+parameters:
+  detachedVolumesFromSnapshots: "false"
+  fsType: "ext4"
+
+# this loop is deeply connected to the loop for Secret creation below
+
+
+# this loop is deeply connected to the loop for secret parameter settings above
+---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: dcsi-controller-cr
+  name: discsi-controller-cr
   labels:
-    app.kubernetes.io/name: dcsi
-    helm.sh/chart: democratic-csi-0.14.1
-    app.kubernetes.io/instance: iscsi
-    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: discsi
 rules:
   # Allow listing and creating CRDs
   - apiGroups: ['apiextensions.k8s.io']
@@ -120,16 +125,12 @@ rules:
     resources: ["daemonsets", "deployments", "replicasets", "statefulsets"]
     verbs: ["get"]
 ---
-# Source: democratic-csi/templates/node-rbac.yaml
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: dcsi-node-cr
+  name: discsi-node-cr
   labels:
-    app.kubernetes.io/name: dcsi
-    helm.sh/chart: democratic-csi-0.14.1
-    app.kubernetes.io/instance: iscsi
-    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: discsi
 rules:
   # Allow listing and creating CRDs
   - apiGroups: ['apiextensions.k8s.io']
@@ -145,77 +146,61 @@ rules:
     resources: ["volumeattachments"]
     verbs: ["get", "list", "watch", "update"]
 ---
-# Source: democratic-csi/templates/controller-rbac.yaml
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: dcsi-controller-rb
+  name: discsi-controller-rb
   labels:
-    app.kubernetes.io/name: dcsi
-    helm.sh/chart: democratic-csi-0.14.1
-    app.kubernetes.io/instance: iscsi
-    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: discsi
 roleRef:
   kind: ClusterRole
   apiGroup: rbac.authorization.k8s.io
-  name: dcsi-controller-cr
+  name: discsi-controller-cr
 subjects:
 - kind: ServiceAccount
-  name: dcsi-controller-sa
-  namespace: pv-dcsi
+  name: discsi-controller-sa
+  namespace: pv-discsi
 ---
-# Source: democratic-csi/templates/node-rbac.yaml
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: dcsi-node-rb
+  name: discsi-node-rb
   labels:
-    app.kubernetes.io/name: dcsi
-    helm.sh/chart: democratic-csi-0.14.1
-    app.kubernetes.io/instance: iscsi
-    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: discsi
 roleRef:
   kind: ClusterRole
   apiGroup: rbac.authorization.k8s.io
-  name: dcsi-node-cr
+  name: discsi-node-cr
 subjects:
 - kind: ServiceAccount
-  name: dcsi-node-sa
-  namespace: pv-dcsi
+  name: discsi-node-sa
+  namespace: pv-discsi
 ---
-# Source: democratic-csi/templates/node.yaml
 kind: DaemonSet
 apiVersion: apps/v1
 metadata:
-  name: dcsi-node
-  namespace: pv-dcsi
+  name: discsi-node
+  namespace: pv-discsi
   labels:
-    app.kubernetes.io/name: dcsi
-    helm.sh/chart: democratic-csi-0.14.1
-    app.kubernetes.io/instance: iscsi
-    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: discsi
     app.kubernetes.io/csi-role: "node"
     app.kubernetes.io/component: "node-linux"
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: dcsi
-      app.kubernetes.io/instance: iscsi
-      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: discsi
       app.kubernetes.io/csi-role: "node"
       app.kubernetes.io/component: "node-linux"
   template:
     metadata:
       annotations:
-        checksum/configmap: 12a38cdd6002376a00c195b214e68369c891f543e29e877267ebb658552f6a50
+        checksum/configmap: c364b678ccf502b38db560062197b7e0b9bfc1f3ffcc27ea6011b16e951592b3
       labels:
-        app.kubernetes.io/name: dcsi
-        app.kubernetes.io/instance: iscsi
-        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: discsi
         app.kubernetes.io/csi-role: "node"
         app.kubernetes.io/component: "node-linux"
     spec:
-      serviceAccount: dcsi-node-sa
+      serviceAccount: discsi-node-sa
       # Required by iSCSI
       hostNetwork: true
       hostAliases: []
@@ -228,7 +213,7 @@ spec:
         imagePullPolicy: IfNotPresent
         args:
         - --csi-version=1.5.0
-        - --csi-name=org.democratic-csi.iscsi
+        - --csi-name=org.democratic-csi.iscsi.block
         - --driver-config-file=/config/driver-config-file.yaml
         - --log-level=debug
         - --csi-mode=node
@@ -323,7 +308,7 @@ spec:
         args:
         - --v=5
         - --csi-address=/csi-data/csi.sock
-        - --kubelet-registration-path=/var/lib/kubelet/plugins/org.democratic-csi.iscsi/csi.sock
+        - --kubelet-registration-path=/var/lib/kubelet/plugins/org.democratic-csi.iscsi.block/csi.sock
         resources:
           limits:
             cpu: 200m
@@ -342,7 +327,7 @@ spec:
           exec:
             command:
             - /csi-node-driver-registrar
-            - --kubelet-registration-path=/var/lib/kubelet/plugins/org.democratic-csi.iscsi/csi.sock
+            - --kubelet-registration-path=/var/lib/kubelet/plugins/org.democratic-csi.iscsi.block/csi.sock
             - --mode=kubelet-registration-probe
 
         volumeMounts:
@@ -365,7 +350,7 @@ spec:
           # note this runs *before* other containers are terminated
           preStop:
             exec:
-              command: ["/bin/sh", "-c", "rm -rf /plugins/org.democratic-csi.iscsi /registration/org.democratic-csi.iscsi-reg.sock"]
+              command: ["/bin/sh", "-c", "rm -rf /plugins/org.democratic-csi.iscsi.block /registration/org.democratic-csi.iscsi.block-reg.sock"]
 
         volumeMounts:
         - name: plugins-dir
@@ -376,7 +361,7 @@ spec:
       volumes:
       - name: socket-dir
         hostPath:
-          path: /var/lib/kubelet/plugins/org.democratic-csi.iscsi
+          path: /var/lib/kubelet/plugins/org.democratic-csi.iscsi.block
           type: DirectoryOrCreate
       - name: plugins-dir
         hostPath:
@@ -420,10 +405,10 @@ spec:
           type: Directory
       - name: config
         secret:
-          secretName: driver-config
+          secretName: freenas-api-iscsi-conf
       - name: extra-ca-certs
         configMap:
-          name: dcsi
+          name: discsi
           items:
           - key: extra-ca-certs
             path: extra-ca-certs.crt
@@ -433,40 +418,32 @@ spec:
         - effect: NoSchedule
           key: node-role.kubernetes.io/control-plane
 ---
-# Source: democratic-csi/templates/controller.yaml
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: dcsi-controller
-  namespace: pv-dcsi
+  name: discsi-controller
+  namespace: pv-discsi
   labels:
-    app.kubernetes.io/name: dcsi
-    helm.sh/chart: democratic-csi-0.14.1
-    app.kubernetes.io/instance: iscsi
-    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: discsi
     app.kubernetes.io/csi-role: "controller"
     app.kubernetes.io/component: "controller-linux"
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: dcsi
-      app.kubernetes.io/instance: iscsi
-      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: discsi
       app.kubernetes.io/csi-role: "controller"
       app.kubernetes.io/component: "controller-linux"
   template:
     metadata:
       annotations:
-        checksum/configmap: 12a38cdd6002376a00c195b214e68369c891f543e29e877267ebb658552f6a50
+        checksum/configmap: c364b678ccf502b38db560062197b7e0b9bfc1f3ffcc27ea6011b16e951592b3
       labels:
-        app.kubernetes.io/name: dcsi
-        app.kubernetes.io/instance: iscsi
-        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: discsi
         app.kubernetes.io/csi-role: "controller"
         app.kubernetes.io/component: "controller-linux"
     spec:
-      serviceAccount: dcsi-controller-sa
+      serviceAccount: discsi-controller-sa
       hostNetwork: false
       hostAliases: []
       hostIPC: false
@@ -477,7 +454,7 @@ spec:
         args:
         - --v=5
         - --leader-election
-        - --leader-election-namespace=pv-dcsi
+        - --leader-election-namespace=pv-discsi
         - --timeout=90s
         - --worker-threads=10
         - --csi-address=/csi-data/csi.sock
@@ -490,7 +467,7 @@ spec:
         args:
         - --v=5
         - --leader-election
-        - --leader-election-namespace=pv-dcsi
+        - --leader-election-namespace=pv-discsi
         - --timeout=90s
         - --worker-threads=10
         - --extra-create-metadata
@@ -527,7 +504,7 @@ spec:
         args:
         - --v=5
         - --leader-election
-        - --leader-election-namespace=pv-dcsi
+        - --leader-election-namespace=pv-discsi
         - --timeout=90s
         - --workers=10
         - --csi-address=/csi-data/csi.sock
@@ -566,7 +543,7 @@ spec:
         args:
         - --v=5
         - --leader-election
-        - --leader-election-namespace=pv-dcsi
+        - --leader-election-namespace=pv-discsi
         - --timeout=90s
         - --worker-threads=10
         - --csi-address=/csi-data/csi.sock
@@ -601,7 +578,7 @@ spec:
         imagePullPolicy: IfNotPresent
         args:
         - --csi-version=1.5.0
-        - --csi-name=org.democratic-csi.iscsi
+        - --csi-name=org.democratic-csi.iscsi.block
         - --driver-config-file=/config/driver-config-file.yaml
         - --log-level=debug
         - --csi-mode=controller
@@ -657,37 +634,28 @@ spec:
         emptyDir: {}
       - name: config
         secret:
-          secretName: driver-config
+          secretName: freenas-api-iscsi-conf
       - name: extra-ca-certs
         configMap:
-          name: dcsi
+          name: discsi
           items:
           - key: extra-ca-certs
             path: extra-ca-certs.crt
       nodeSelector:
         kubernetes.io/os: linux
 ---
-# Source: democratic-csi/templates/required.yaml
-# 50b3feaab4d26390a393a323580b0e11cd2e3cb35c0afbd0f67bab6d5024b3e2
+# 583de3df62680fae4112e9d797e72f2b41353ec81f8d65f3345a42c8eee90655
 # 1f4dc096d58f7d21e3875671aee6f29b120ab84218fa47db2cb53bc9eb5b4dac
-# 6d73a6a82d125b6291373265fd908ce7081e47ee314444b878352302e6102683
+# 5d1148dced1e2711e7bf91935572ef02609c3d6fa7d407d8ddbbdbc4b518cc21
 ---
-# Source: democratic-csi/templates/snapshot-classes.yaml
 # this loop is deeply connected to the loop for secret parameter settings above
 ---
-# Source: democratic-csi/templates/storage-classes.yaml
-# this loop is deeply connected to the loop for secret parameter settings above
----
-# Source: democratic-csi/templates/driver.yaml
 apiVersion: storage.k8s.io/v1
 kind: CSIDriver
 metadata:
-  name: org.democratic-csi.iscsi
+  name: org.democratic-csi.iscsi.block
   labels:
-    app.kubernetes.io/name: dcsi
-    helm.sh/chart: democratic-csi-0.14.1
-    app.kubernetes.io/instance: iscsi
-    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: discsi
 spec:
   attachRequired: true
   podInfoOnMount: true

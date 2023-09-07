@@ -12,78 +12,78 @@ helm show values democratic-csi/democratic-csi > ./storage/democratic-csi/defaul
 
 ```bash
 helm template \
-  dnfsb \
+  discsi \
   democratic-csi/democratic-csi \
   --version 0.14.1 \
-  --values ./storage/democratic-csi/nfs/values.yaml \
-  --namespace pv-dnfsb \
-  --set nameOverride=dnfsb \
-  --set fullnameOverride=dnfsb \
-  --set csiDriver.name=org.democratic-csi.nfs.bulk \
-  --set driver.existingConfigSecret=freenas-api-nfs-bulk-conf \
-  --set storageClasses[0].name=bulk \
+  --values ./storage/democratic-csi/iscsi/values.yaml \
+  --namespace pv-discsi \
+  --set nameOverride=discsi \
+  --set fullnameOverride=discsi \
+  --set csiDriver.name=org.democratic-csi.iscsi.block \
+  --set driver.existingConfigSecret=freenas-api-iscsi-conf \
+  --set storageClasses[0].name=block \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' \
-  > ./storage/democratic-csi/nfs/bulk/deployment.gen.yaml
+  > ./storage/democratic-csi/iscsi/block/deployment.gen.yaml
 ```
 
 # Environment setup
 
 - Create Truenas Scale instance
-- Create dataset for NFS shares
-- - Make sure that you don't share this dataset or any of its parent datasets via nfs
-- - If there is an common share you will get an error like this:
-- - `<pvc dataset path> is a subtree of <parent NFS share path> and already exports this dataset for 'everybody'`
+- Create dataset for iSCSI shares
+- Enable iSCSI service
+- Create iSCSI portal (simple case: no auth, listen on 0.0.0.0)
+- Create initiator group (simple case: check "Allow all initiators")
 - Go to `Top Bar -> Settings -> API Keys` and create a new key
 - Setup local config:
 ```bash
-cat <<EOF > ./storage/democratic-csi/nfs/bulk/env/truenas.env
+cat <<EOF > ./storage/democratic-csi/iscsi/block/env/truenas.env
 host=truenas.lan
 # you get the api key when you create it in the truenas web ui
 api_key=1-qwertyuiiopasdfghjklzxcvbnm
 
-main_dataset=tank/k8s/nfs
+main_dataset=tank/k8s/iscsi
 # must be present in config
 # needs to be valid if you use volumeSnapshotClasses in values.yaml
 # can be whatever if you don't
 snapshot_dataset=nonexistent
 EOF
 
-(. ./storage/democratic-csi/nfs/bulk/env/truenas.env &&
+(. ./storage/democratic-csi/iscsi/block/env/truenas.env &&
 sed \
   -e "s|REPLACE_ME_HOST|$host|g" \
   -e "s|REPLACE_ME_API_KEY|$api_key|g" \
   -e "s|REPLACE_ME_MAIN_DATASET|$main_dataset|g" \
   -e "s|REPLACE_ME_SNAP_DATASET|$snapshot_dataset|g" \
-  ./storage/democratic-csi/nfs/config.template.yaml
-) > ./storage/democratic-csi/nfs/bulk/env/config.yaml
+  ./storage/democratic-csi/iscsi/config.template.yaml
+) > ./storage/democratic-csi/iscsi/block/env/config.yaml
 ```
 
 # Deploy
 
 ```bash
-kl create ns pv-dnfsb
-kl apply -k ./storage/democratic-csi/nfs/bulk/
+kl create ns pv-discsi
+kl apply -k ./storage/democratic-csi/iscsi/block/
 # make sure that all democratic-csi pods are running
 # there can be some restarts at first,
 # but eventually it should be running without restarts
-kl -n pv-dnfsb get pod
+kl -n pv-discsi get pod
 ```
 
 Test that deployment works:
 
 ```bash
-kl apply -f ./storage/democratic-csi/nfs/bulk/test.yaml
+kl apply -f ./storage/democratic-csi/iscsi/block/test.yaml
 # make sure that PVCs are provisioned
 kl get pvc
 # make sure that test pod is running
 kl get pod
 
 # if there are issues, you can try to check driver logs
-kl -n pv-dnfsb logs deployments/dnfsb-controller csi-driver --tail 20 > nfs-bulk.log
+kl -n pv-discsi logs deployments/discsi-controller csi-driver --tail 20 > iscsi.log
 
 # check contents of mounted folder, create a test file
-kl exec deployments/test-nfs-bulk -- touch /mnt/data/test-file
-kl exec deployments/test-nfs-bulk -- ls -laF /mnt/data
+kl exec deployments/test-iscsi-block -- touch /mnt/data/test-file
+kl exec deployments/test-iscsi-block -- ls -laF /mnt/data
 # cleanup resources
-kl delete -f ./storage/democratic-csi/nfs/bulk/test.yaml
+kl delete -f ./storage/democratic-csi/iscsi/block/test.yaml
 ```

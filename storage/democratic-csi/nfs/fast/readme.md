@@ -75,8 +75,12 @@ Test that deployment works:
 kl apply -f ./storage/democratic-csi/nfs/fast/test.yaml
 # make sure that PVCs are provisioned
 kl get pvc
-# make sure that test-nfs-shared pod is running
+# make sure that test pod is running
 kl get pod
+
+# if there are issues, you can try to check driver logs
+kl -n pv-dnfsf logs deployments/dnfsf-controller csi-driver --tail 20 > nfs-fast.log
+
 # check contents of mounted folder, create a test file
 kl exec deployments/test-nfs-fast -- touch /mnt/data/test-file
 kl exec deployments/test-nfs-fast -- ls -laF /mnt/data
