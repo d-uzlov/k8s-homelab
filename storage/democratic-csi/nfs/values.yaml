@@ -1,0 +1,111 @@
+
+nameOverride: dnfs
+fullnameOverride: dnfs
+
+csiDriver:
+  # should be globally unique for a given cluster
+  name: org.democratic-csi.ssd.nfs
+
+driver:
+  existingConfigSecret: freenas-api-nfs-conf
+  config:
+    driver: freenas-api-nfs
+
+storageClasses:
+- name: fast-nfs
+  defaultClass: false
+  reclaimPolicy: Delete
+  volumeBindingMode: Immediate
+  allowVolumeExpansion: true
+  parameters:
+    fsType: nfs
+    detachedVolumesFromSnapshots: false
+  mountOptions:
+  - noatime
+  - nfsvers=4.2
+  - rsize=262144
+  - wsize=262144
+  # secrets:
+  #   provisioner-secret:
+  #   controller-publish-secret:
+  #   node-stage-secret:
+  #   node-publish-secret:
+  #   controller-expand-secret:
+# volumeSnapshotClasses:
+# - name: nfs
+#   parameters:
+#     detachedSnapshots: true
+
+controller:
+  driver:
+    logLevel: debug
+    # image: docker.io/democraticcsi/democratic-csi:v1.8.1
+    # imagePullPolicy: IfNotPresent
+    # image: docker.io/democraticcsi/democratic-csi:next
+    # imagePullPolicy: Always
+    image: docker.io/democraticcsi/democratic-csi@sha256:945cf404d40f719edda62c1889d142bfe8b970c7bfd3e99054869e1dc8efe62a
+    imagePullPolicy: IfNotPresent
+    resources:
+      requests:
+        cpu: 0m
+        memory: 10Mi
+      limits:
+        cpu: 200m
+        memory: 100Mi
+  externalProvisioner:
+    resources:
+      requests:
+        cpu: 0m
+        memory: 10Mi
+      limits:
+        cpu: 200m
+        memory: 100Mi
+  externalResizer:
+    resources:
+      requests:
+        cpu: 0m
+        memory: 10Mi
+      limits:
+        cpu: 200m
+        memory: 100Mi
+  externalSnapshotter:
+    resources:
+      requests:
+        cpu: 0m
+        memory: 10Mi
+      limits:
+        cpu: 200m
+        memory: 100Mi
+
+node:
+  driver:
+    logLevel: debug
+    image: docker.io/democraticcsi/democratic-csi@sha256:945cf404d40f719edda62c1889d142bfe8b970c7bfd3e99054869e1dc8efe62a
+    imagePullPolicy: IfNotPresent
+    resources:
+      requests:
+        cpu: 0m
+        memory: 10Mi
+      limits:
+        cpu: 200m
+        memory: 100Mi
+  tolerations:
+  - effect: NoSchedule
+    key: node-role.kubernetes.io/control-plane
+  driverRegistrar:
+    resources:
+      requests:
+        cpu: 0m
+        memory: 10Mi
+      limits:
+        cpu: 200m
+        memory: 100Mi
+
+csiProxy:
+  resources:
+    requests:
+      cpu: 0m
+      memory: 10Mi
+    limits:
+      cpu: 200m
+      memory: 100Mi
