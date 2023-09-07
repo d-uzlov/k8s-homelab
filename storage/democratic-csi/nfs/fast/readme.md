@@ -57,12 +57,12 @@ sed \
 # Deploy
 
 ```bash
-kl create ns pv-dnfs
-kl apply -k ./storage/democratic-csi/nfs/
+kl create ns pv-dnfsf
+kl apply -k ./storage/democratic-csi/nfs/fast/
 # make sure that all democratic-csi pods are running
 # there can be some restarts at first,
 # but eventually it should be running without restarts
-kl -n pv-dnfs get pod
+kl -n pv-dnfsf get pod
 ```
 
 Test that deployment works:
