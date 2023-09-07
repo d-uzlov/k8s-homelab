@@ -2,37 +2,37 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: dnfs-controller-sa
-  namespace: pv-dnfs
+  name: dnfsf-controller-sa
+  namespace: pv-dnfsf
   labels:
-    app.kubernetes.io/name: dnfs
+    app.kubernetes.io/name: dnfsf
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: dnfs-node-sa
-  namespace: pv-dnfs
+  name: dnfsf-node-sa
+  namespace: pv-dnfsf
   labels:
-    app.kubernetes.io/name: dnfs
+    app.kubernetes.io/name: dnfsf
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: dnfs
-  namespace: pv-dnfs
+  name: dnfsf
+  namespace: pv-dnfsf
   labels:
-    app.kubernetes.io/name: dnfs
+    app.kubernetes.io/name: dnfsf
 data:
   extra-ca-certs: ""
 ---
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: fast-nfs
+  name: fast
   annotations:
   labels:
-    app.kubernetes.io/name: dnfs
-provisioner: org.democratic-csi.ssd.nfs
+    app.kubernetes.io/name: dnfsf
+provisioner: org.democratic-csi.nfs.fast
 reclaimPolicy: Delete
 allowVolumeExpansion: true
 volumeBindingMode: Immediate
@@ -44,7 +44,9 @@ parameters:
 # this loop is deeply connected to the loop for Secret creation below
 mountOptions:
 - noatime
-- nfsvers=4
+- nfsvers=4.2
+- rsize=262144
+- wsize=262144
 
 
 # this loop is deeply connected to the loop for secret parameter settings above
@@ -52,9 +54,9 @@ mountOptions:
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: dnfs-controller-cr
+  name: dnfsf-controller-cr
   labels:
-    app.kubernetes.io/name: dnfs
+    app.kubernetes.io/name: dnfsf
 rules:
   # Allow listing and creating CRDs
   - apiGroups: ['apiextensions.k8s.io']
@@ -131,9 +133,9 @@ rules:
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: dnfs-node-cr
+  name: dnfsf-node-cr
   labels:
-    app.kubernetes.io/name: dnfs
+    app.kubernetes.io/name: dnfsf
 rules:
   # Allow listing and creating CRDs
   - apiGroups: ['apiextensions.k8s.io']
@@ -152,58 +154,58 @@ rules:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: dnfs-controller-rb
+  name: dnfsf-controller-rb
   labels:
-    app.kubernetes.io/name: dnfs
+    app.kubernetes.io/name: dnfsf
 roleRef:
   kind: ClusterRole
   apiGroup: rbac.authorization.k8s.io
-  name: dnfs-controller-cr
+  name: dnfsf-controller-cr
 subjects:
 - kind: ServiceAccount
-  name: dnfs-controller-sa
-  namespace: pv-dnfs
+  name: dnfsf-controller-sa
+  namespace: pv-dnfsf
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: dnfs-node-rb
+  name: dnfsf-node-rb
   labels:
-    app.kubernetes.io/name: dnfs
+    app.kubernetes.io/name: dnfsf
 roleRef:
   kind: ClusterRole
   apiGroup: rbac.authorization.k8s.io
-  name: dnfs-node-cr
+  name: dnfsf-node-cr
 subjects:
 - kind: ServiceAccount
-  name: dnfs-node-sa
-  namespace: pv-dnfs
+  name: dnfsf-node-sa
+  namespace: pv-dnfsf
 ---
 kind: DaemonSet
 apiVersion: apps/v1
 metadata:
-  name: dnfs-node
-  namespace: pv-dnfs
+  name: dnfsf-node
+  namespace: pv-dnfsf
   labels:
-    app.kubernetes.io/name: dnfs
+    app.kubernetes.io/name: dnfsf
     app.kubernetes.io/csi-role: "node"
     app.kubernetes.io/component: "node-linux"
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: dnfs
+      app.kubernetes.io/name: dnfsf
       app.kubernetes.io/csi-role: "node"
       app.kubernetes.io/component: "node-linux"
   template:
     metadata:
       annotations:
-        checksum/configmap: 15af32a4b4994aeef8e5ef5f02bf096f87a60ac20d31e7bf10ba9d3761c3ae55
+        checksum/configmap: f9fda769a563b5e119663426b24dcd3d51e71965cd5bdcbfe56c7d1bac4c5133
       labels:
-        app.kubernetes.io/name: dnfs
+        app.kubernetes.io/name: dnfsf
         app.kubernetes.io/csi-role: "node"
         app.kubernetes.io/component: "node-linux"
     spec:
-      serviceAccount: dnfs-node-sa
+      serviceAccount: dnfsf-node-sa
       # Required by iSCSI
       hostNetwork: true
       hostAliases: []
@@ -216,7 +218,7 @@ spec:
         imagePullPolicy: IfNotPresent
         args:
         - --csi-version=1.5.0
-        - --csi-name=org.democratic-csi.ssd.nfs
+        - --csi-name=org.democratic-csi.nfs.fast
         - --driver-config-file=/config/driver-config-file.yaml
         - --log-level=debug
         - --csi-mode=node
@@ -305,7 +307,7 @@ spec:
         args:
         - --v=5
         - --csi-address=/csi-data/csi.sock
-        - --kubelet-registration-path=/var/lib/kubelet/plugins/org.democratic-csi.ssd.nfs/csi.sock
+        - --kubelet-registration-path=/var/lib/kubelet/plugins/org.democratic-csi.nfs.fast/csi.sock
         resources:
           limits:
             cpu: 200m
@@ -324,7 +326,7 @@ spec:
           exec:
             command:
             - /csi-node-driver-registrar
-            - --kubelet-registration-path=/var/lib/kubelet/plugins/org.democratic-csi.ssd.nfs/csi.sock
+            - --kubelet-registration-path=/var/lib/kubelet/plugins/org.democratic-csi.nfs.fast/csi.sock
             - --mode=kubelet-registration-probe
 
         volumeMounts:
@@ -347,7 +349,7 @@ spec:
           # note this runs *before* other containers are terminated
           preStop:
             exec:
-              command: ["/bin/sh", "-c", "rm -rf /plugins/org.democratic-csi.ssd.nfs /registration/org.democratic-csi.ssd.nfs-reg.sock"]
+              command: ["/bin/sh", "-c", "rm -rf /plugins/org.democratic-csi.nfs.fast /registration/org.democratic-csi.nfs.fast-reg.sock"]
 
         volumeMounts:
         - name: plugins-dir
@@ -358,7 +360,7 @@ spec:
       volumes:
       - name: socket-dir
         hostPath:
-          path: /var/lib/kubelet/plugins/org.democratic-csi.ssd.nfs
+          path: /var/lib/kubelet/plugins/org.democratic-csi.nfs.fast
           type: DirectoryOrCreate
       - name: plugins-dir
         hostPath:
@@ -398,7 +400,7 @@ spec:
           secretName: freenas-api-nfs-conf
       - name: extra-ca-certs
         configMap:
-          name: dnfs
+          name: dnfsf
           items:
           - key: extra-ca-certs
             path: extra-ca-certs.crt
@@ -411,29 +413,29 @@ spec:
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: dnfs-controller
-  namespace: pv-dnfs
+  name: dnfsf-controller
+  namespace: pv-dnfsf
   labels:
-    app.kubernetes.io/name: dnfs
+    app.kubernetes.io/name: dnfsf
     app.kubernetes.io/csi-role: "controller"
     app.kubernetes.io/component: "controller-linux"
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: dnfs
+      app.kubernetes.io/name: dnfsf
       app.kubernetes.io/csi-role: "controller"
       app.kubernetes.io/component: "controller-linux"
   template:
     metadata:
       annotations:
-        checksum/configmap: 15af32a4b4994aeef8e5ef5f02bf096f87a60ac20d31e7bf10ba9d3761c3ae55
+        checksum/configmap: f9fda769a563b5e119663426b24dcd3d51e71965cd5bdcbfe56c7d1bac4c5133
       labels:
-        app.kubernetes.io/name: dnfs
+        app.kubernetes.io/name: dnfsf
         app.kubernetes.io/csi-role: "controller"
         app.kubernetes.io/component: "controller-linux"
     spec:
-      serviceAccount: dnfs-controller-sa
+      serviceAccount: dnfsf-controller-sa
       hostNetwork: false
       hostAliases: []
       hostIPC: false
@@ -444,7 +446,7 @@ spec:
         args:
         - --v=5
         - --leader-election
-        - --leader-election-namespace=pv-dnfs
+        - --leader-election-namespace=pv-dnfsf
         - --timeout=90s
         - --worker-threads=10
         - --csi-address=/csi-data/csi.sock
@@ -457,7 +459,7 @@ spec:
         args:
         - --v=5
         - --leader-election
-        - --leader-election-namespace=pv-dnfs
+        - --leader-election-namespace=pv-dnfsf
         - --timeout=90s
         - --worker-threads=10
         - --extra-create-metadata
@@ -494,7 +496,7 @@ spec:
         args:
         - --v=5
         - --leader-election
-        - --leader-election-namespace=pv-dnfs
+        - --leader-election-namespace=pv-dnfsf
         - --timeout=90s
         - --workers=10
         - --csi-address=/csi-data/csi.sock
@@ -533,7 +535,7 @@ spec:
         args:
         - --v=5
         - --leader-election
-        - --leader-election-namespace=pv-dnfs
+        - --leader-election-namespace=pv-dnfsf
         - --timeout=90s
         - --worker-threads=10
         - --csi-address=/csi-data/csi.sock
@@ -568,7 +570,7 @@ spec:
         imagePullPolicy: IfNotPresent
         args:
         - --csi-version=1.5.0
-        - --csi-name=org.democratic-csi.ssd.nfs
+        - --csi-name=org.democratic-csi.nfs.fast
         - --driver-config-file=/config/driver-config-file.yaml
         - --log-level=debug
         - --csi-mode=controller
@@ -627,14 +629,14 @@ spec:
           secretName: freenas-api-nfs-conf
       - name: extra-ca-certs
         configMap:
-          name: dnfs
+          name: dnfsf
           items:
           - key: extra-ca-certs
             path: extra-ca-certs.crt
       nodeSelector:
         kubernetes.io/os: linux
 ---
-# ed4f60509efce9aed3be163ce4f9c12c4de938a2200e546091d69680b955e34c
+# d7bc42c8ac731fd6fe51f7b411517f0cfa51d5cb9fcd30b55e0eb8ebaea91223
 # 1f4dc096d58f7d21e3875671aee6f29b120ab84218fa47db2cb53bc9eb5b4dac
 # 18c5ae3b48144a84965ef80de4686a726541dbf733b9310700b5da96d415f694
 ---
@@ -643,9 +645,9 @@ spec:
 apiVersion: storage.k8s.io/v1
 kind: CSIDriver
 metadata:
-  name: org.democratic-csi.ssd.nfs
+  name: org.democratic-csi.nfs.fast
   labels:
-    app.kubernetes.io/name: dnfs
+    app.kubernetes.io/name: dnfsf
 spec:
   attachRequired: true
   podInfoOnMount: true
