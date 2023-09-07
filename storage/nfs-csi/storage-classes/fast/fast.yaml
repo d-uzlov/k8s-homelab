@@ -1,0 +1,22 @@
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast
+provisioner: nfs.csi.k8s.io
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+parameters:
+  server: AUTOMATIC_REPLACE
+  share: AUTOMATIC_REPLACE
+  onDelete: delete
+  # disposable volumes don't share data with truly persistent volumes
+  subDir: ${pvc.metadata.namespace}~${pvc.metadata.name}~dispose
+  mountPermissions: '777'
+  csi.storage.k8s.io/provisioner-secret-name: mount-options
+  csi.storage.k8s.io/provisioner-secret-namespace: pv-nfs
+mountOptions:
+- hard
+- nfsvers=4.2
+- rsize=262144
+- wsize=262144
