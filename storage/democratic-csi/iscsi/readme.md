@@ -51,6 +51,9 @@ kl apply -k ./storage/democratic-csi/iscsi-truenas-scale/
 
 # Truenas setup
 
+- Go to `Shares -> iSCSI -> Configure`
+- - Portals: 
+
 - Create account
 - Set password for the account
 - - I didn't manage to make it work with an ssh key, without a password.
