@@ -1,48 +1,26 @@
 
-# Login timeout
+# Post-install setup
 
-Increase to 360 hours (1296000 seconds):
-```bash
-# Truenas Scale
-sudo sed -i 's/auth.generate_token",\[300/auth.generate_token",\[1296000/g' /usr/share/truenas/webui/*.js
-
-# Truenas Core
-sudo sed -i 's/auth.generate_token",\[300/auth.generate_token",\[1296000/g' /usr/local/www/webui/*.js
-```
-
-You can add this as startup script in `System Settings` → `Advanced` → `Init/Shutdown Scripts`.
-
-References:
-- https://tomschlick.com/blog/2022/06/28/extend-truenas-web-ui-session-timeout/
-- https://www.reddit.com/r/truenas/comments/vn1tu7/extend_truenas_web_ui_session_timeout/
-
-# Disable atime for boot pool
-
-```bash
-zfs set atime=off boot-pool
-zfs set relatime=off boot-pool
-mount | grep boot
-```
-
-# Disable swap
-
-```bash
-midclt call system.advanced.update '{"swapondrive": 0}'
-```
-
-In Truenas Core you can also change this in web-ui:
-`system` → `advanced` → `storage` → `swap size in GB`.
-
-There is no option for this in the Truenas Scale web-ui.
+- Setup startup script
+- - Get script here: [truenas-startup.sh](./truenas-startup.sh)
+- - Copy script into `/data/truenas-startup.sh`
+- - Truenas Scale: `System Settings` → `Advanced` → `Init/Shutdown Scripts`.
+- - Truenas Core: `Tasks` → `Init/Shutdown Scripts`
+- - Add `sudo bash /data/truenas-startup.sh` at Post-init stage
+- Set up accounts
+- - Truenas Scale: `Credentials` → `Local Users`
+- - Truenas Core: `Accounts` → `Users`
+- - Allow `sudo` for root
+- - Set `bash` as shell for all users that you care about
 
 # Set up email notifications
-
-https://www.truenas.com/docs/scale/scaletutorials/toptoolbar/settingupsystememail/
-
 
 You need to set up email both for root and admin accounts.
 
 `alert icon in top right` → `gear` → `email` → `gmail oauth`
+
+References:
+- https://www.truenas.com/docs/scale/scaletutorials/toptoolbar/settingupsystememail/
 
 # Disable power saving
 
@@ -79,38 +57,21 @@ Don't forget to run the script with `sudo`.
 # https://github.com/Spearfoot/FreeNAS-scripts/blob/master/set_hdd_erc.sh
 # https://www.smartmontools.org/wiki/FAQ#WhatiserrorrecoverycontrolERCandwhyitisimportanttoenableitfortheSATAdisksinRAID
 
-readsetting=70
-writesetting=70
-
-get_smart_drives()
-{
-  gs_drives=$(smartctl --scan | grep "dev" | awk '{print $1}' | sed -e 's/\/dev\///' | tr '\n' ' ')
-
-  gs_smartdrives=""
-
-  for gs_drive in $gs_drives; do
-    gs_smart_flag=$(smartctl -i /dev/"$gs_drive" | grep "SMART support is: Enabled" | awk '{print $4}')
-    if [ "$gs_smart_flag" = "Enabled" ]; then
-      gs_smartdrives=$gs_smartdrives" "${gs_drive}
-    fi
+function list_smart_drives() (
+  for drive in $(smartctl --scan | grep "dev" | awk '{print $1}'); do
+    smartctl -i "$drive" | grep "SMART support is: Enabled" > /dev/null && echo "${drive}"
   done
+)
 
-  eval "$1=\$gs_smartdrives"
-}
+function set_erc() (
+  echo "Configuring drive: $1"
+  readsetting=70
+  writesetting=70
+  smartctl -q silent -l scterc,"${readsetting}","${writesetting}" "$1"
+  smartctl -l scterc "$1" | grep "SCT\|Write\|Read"
+)
 
-drives=""
-get_smart_drives drives
-
-set_erc()
-{
-  echo "Drive: /dev/$1"
-  smartctl -q silent -l scterc,"${readsetting}","${writesetting}" /dev/"$1"
-  smartctl -l scterc /dev/"$1" | grep "SCT\|Write\|Read"
-}
-
-for drive in $drives; do
-  set_erc "$drive"
-done
+( for drive in $(list_smart_drives); do; set_erc "$drive"; done; )
 ```
 
 # Share several pools via SMB
@@ -146,3 +107,9 @@ dd if=/dev/zero of=/dev/device-name bs=1M count=1
 ```
 
 - ! Warning ! This will immediately destroy all data without any user prompts.
+
+# Force user access to an SMB share
+
+```conf
+force user = 65534
+```
