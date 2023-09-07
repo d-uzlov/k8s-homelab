@@ -26,7 +26,7 @@ spec:
         runAsGroup: 65534
       containers:
       - name: qbittorrent
-        image: docker.io/qbittorrentofficial/qbittorrent-nox:4.5.3-1
+        image: docker.io/qbittorrentofficial/qbittorrent-nox:4.5.5-1
         ports:
         - name: web-ui
           containerPort: 8080
@@ -79,9 +79,7 @@ spec:
               key: auth_whitelist
         - name: WATCH_ROOT
           value: /mnt/watch
-        - name: WATCH_INCOMPLETE
-          value: /mnt/incomplete
-        - name: MANUAL_INCOMPLETE
+        - name: INCOMPLETE_FOLDER
           value: /mnt/incomplete
         - name: FINISHED_FOLDER
           value: /mnt/finished
@@ -146,41 +144,7 @@ spec:
           readOnly: true
       - name: finished
         persistentVolumeClaim:
-          claimName: finished
+          claimName: torrent
       - name: incomplete
         persistentVolumeClaim:
           claimName: incomplete
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: web-ui
-spec:
-  selector:
-    app: qbittorrent
-  ports:
-  - name: http
-    protocol: TCP
-    port: 80
-    targetPort: 8080
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: data
-spec:
-  type: LoadBalancer
-  loadBalancerIP: 10.0.3.1
-  allocateLoadBalancerNodePorts: false
-  externalTrafficPolicy: Cluster
-  selector:
-    app: qbittorrent
-  ports:
-  - name: tcp
-    protocol: TCP
-    port: 6881
-    targetPort: 6881
-  - name: udp
-    protocol: UDP
-    port: 6881
-    targetPort: 6881

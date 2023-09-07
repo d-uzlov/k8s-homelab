@@ -2,6 +2,7 @@
 set -eu
 
 umask 0
+trap : TERM INT
 
 function set_value() {
     config="$1"
@@ -48,9 +49,8 @@ checkEnv TRUSTED_PROXIES "comma-separated CIDR list, or empty"
 checkEnv AUTH_WHITELIST "comma-separated CIDR list, or empty"
 checkEnv WATCH_ROOT "path to the root of the watch folder"
 checkEnv ADDED_HOOK_SCRIPT "path to script file that runs when a new torrent is added, or empty"
-checkEnv WATCH_INCOMPLETE "path to the folder for incomplete torrents from watch folder"
-checkEnv MANUAL_INCOMPLETE "path to the folder for incomplete torrents added manually"
-checkEnv FINISHED_FOLDER "path to the folder for finished torrents from watch folder"
+checkEnv INCOMPLETE_FOLDER "path to the folder for incomplete torrents"
+checkEnv FINISHED_FOLDER "path to the folder for finished torrents"
 
 useAuthWhitelist=
 if [ ! -z "$AUTH_WHITELIST" ]; then
@@ -83,8 +83,8 @@ if [ "$FORCE_OVERWRITE_CONFIG" = "true" ] || [ ! -f "$watchFile" ]; then
     mkdir -p "$(dirname "$watchFile")"
     cp -f "$DEFAULT_CONFIG_LOCATION/watched_folders.json" "$watchFile"
     sed -i "s|AUTOMATIC_REPLACE_WATCH_ROOT|$WATCH_ROOT|" "$watchFile"
-    sed -i "s|AUTOMATIC_REPLACE_WATCH_INCOMPLETE|$WATCH_INCOMPLETE|" "$watchFile"
-    sed -i "s|AUTOMATIC_REPLACE_WATCH_FINISHED|$FINISHED_FOLDER|" "$watchFile"
+    sed -i "s|AUTOMATIC_REPLACE_INCOMPLETE_FOLDER|$INCOMPLETE_FOLDER|" "$watchFile"
+    sed -i "s|AUTOMATIC_REPLACE_FINISHED_FOLDER|$FINISHED_FOLDER|" "$watchFile"
 fi
 
 # without this this script can fail because
@@ -107,12 +107,12 @@ set_value "$configFile" 'WebUI\AuthSubnetWhitelistEnabled' "$useAuthWhitelist"
 set_value "$configFile" 'WebUI\AuthSubnetWhitelist' "$AUTH_WHITELIST"
 set_value "$configFile" 'WebUI\UseUPnP' "false"
 
-if [ ! -z "$MANUAL_INCOMPLETE" ]; then
+if [ ! -z "$INCOMPLETE_FOLDER" ] && [ ! "$INCOMPLETE_FOLDER" = "$FINISHED_FOLDER" ]; then
     set_value "$configFile" 'Session\TempPathEnabled' "true"
 else
     set_value "$configFile" 'Session\TempPathEnabled' "false"
 fi
-set_value "$configFile" 'Session\TempPath' "$MANUAL_INCOMPLETE"
+set_value "$configFile" 'Session\TempPath' "$INCOMPLETE_FOLDER"
 
 if [ ! -z "$ADDED_HOOK_SCRIPT" ]; then
     set_value "$configFile" 'OnTorrentAdded\Program' "$ADDED_HOOK_SCRIPT "'\"%I\" \"%D\"'

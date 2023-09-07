@@ -6,8 +6,7 @@ namespace: bt-qbittorrent
 
 resources:
 - qbittorrent.yaml
-- ingress.yaml
-- ../../ingress/manual-wildcard/domain-info
+- web-ui.yaml
 
 configMapGenerator:
 - name: entrypoint
@@ -21,43 +20,3 @@ configMapGenerator:
 - name: settings
   envs:
   - env/settings.env
-- name: ingress
-  envs:
-  - env/ingress.env
-  options:
-    disableNameSuffixHash: true
-
-replacements:
-- source:
-    kind: ConfigMap
-    name: main-domain
-    fieldPath: data.subdomain
-  targets:
-  - select:
-      kind: Ingress
-      name: qbittorrent
-    options:
-      delimiter: .
-      index: 1
-    fieldPaths:
-    - spec.rules.0.host
-- source:
-    kind: ConfigMap
-    name: main-domain
-    fieldPath: data.secret_name
-  targets:
-  - select:
-      kind: Ingress
-      name: qbittorrent
-    fieldPaths:
-    - spec.tls.0.secretName
-- source:
-    kind: ConfigMap
-    name: ingress
-    fieldPath: data.allowed_sources
-  targets:
-  - select:
-      kind: Ingress
-      name: qbittorrent
-    fieldPaths:
-    - metadata.annotations.[nginx.ingress.kubernetes.io/whitelist-source-range]

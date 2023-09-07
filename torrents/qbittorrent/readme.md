@@ -1,14 +1,34 @@
 
+# qBitTorrent
+
 https://github.com/qbittorrent/docker-qbittorrent-nox/
 
-# Init local settings
+# Storage setup
+
+Set storage classes for different data types:
+
+```bash
+# list storage classes
+kl get sc
+# set values in env file
+mkdir -p ./torrents/qbittorrent/pvc/env/
+cat <<EOF > ./torrents/qbittorrent/pvc/env/pvc.env
+# where qbittorrent internal configs should be located
+config=fast
+# .torrent files that user wants to download
+watch=shared
+
+# temporary folder for downloaded torrents
+incomplete=fast
+# folder where torrents are moved after they are finished downloading
+torrent=shared
+EOF
+```
+
+# Set up qBitTorrent config
 
 ```bash
 mkdir -p ./torrents/qbittorrent/env/
-cat <<EOF > ./torrents/qbittorrent/env/ingress.env
-# web-ui will only be available from this list of IPs
-allowed_sources=10.0.0.0/16,1.2.3.4
-EOF
 cat <<EOF > ./torrents/qbittorrent/env/settings.env
 force_overwrite_config=true
 
@@ -29,13 +49,12 @@ trusted_proxies=10.201.0.0/16
 # that can open the web-ui without password.
 # For example: 10.0.0.0/16,1.2.3.4/32
 #
-# At the very least it should contain main IP of the node
-# where qBittorrent will be running
-# or else k8s will not be able to perform liveness check and will constantly restart the app.
+# At the very least it should contain k8s pod network, to allow k8s to perform liveness check
+# or else k8s will constantly restart the app, and ingress will be unavailable.
 #
 # Set to your LAN CIDR for passwordless access in LAN.
 # Set to your public IP for passwordless access via NAT loopback.
-auth_whitelist=
+auth_whitelist=10.201.0.0/16
 EOF
 ```
 
@@ -43,21 +62,29 @@ EOF
 
 ```bash
 kl create ns bt-qbittorrent
-kl label ns --overwrite bt-qbittorrent copy-wild-cert=main
 
+# create loadbalancer service
+kl apply -k ./torrents/qbittorrent/loadbalancer/
+# get assigned IP to set up DNS or NAT port-forwarding
+kl -n bt-qbittorrent get svc
+# Make sure that local port and external port match.
+# Peers will try to connect to the port that qbittorrent is using locally.
+
+# set up storage, avoid deleting it
 kl apply -k ./torrents/qbittorrent/pvc/
+# make sure that PVCs are successfulyl allocated
+kl -n bt-qbittorrent get pvc
 
+# deploy main app
 kl apply -k ./torrents/qbittorrent/
+# make sure the pod is running
+kl -n bt-qbittorrent get pod
+
+# setup wildcard ingress
+kl label ns --overwrite bt-qbittorrent copy-wild-cert=main
+kl apply -k ./torrents/qbittorrent/ingress-wildcard/
+kl -n bt-qbittorrent get ingress
 ```
-
-Print service info to get external IP for port-forwarding:
-
-```bash
-kl -n bt-qbittorrent get svc data
-```
-
-Make sure that local port and external port match.
-Peers will try to connect to the port that qbittorrent is using locally.
 
 # Alt web UI
 

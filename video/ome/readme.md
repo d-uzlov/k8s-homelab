@@ -13,7 +13,9 @@ This is a video streaming engine that supports low latency streams.
 kl create ns ome
 kl apply -k ./video/ome/
 
+# create loadbalancer service
 kl apply -k ./video/ome/loadbalancer/
+# get assigned IP to set up DNS or NAT port-forwarding
 kl -n ome get svc
 
 kl label ns --overwrite ome copy-wild-cert=main

@@ -7,5 +7,54 @@ namespace: bt-qbittorrent
 resources:
 - config.yaml
 - watch.yaml
-- finished.yaml
+- torrent.yaml
 - incomplete.yaml
+
+configMapGenerator:
+- name: qbt-pvc
+  envs:
+  - env/pvc.env
+  options:
+    disableNameSuffixHash: true
+
+replacements:
+- source:
+    kind: ConfigMap
+    name: qbt-pvc
+    fieldPath: data.config
+  targets:
+  - select:
+      kind: PersistentVolumeClaim
+      name: config
+    fieldPaths:
+    - spec.storageClassName
+- source:
+    kind: ConfigMap
+    name: qbt-pvc
+    fieldPath: data.watch
+  targets:
+  - select:
+      kind: PersistentVolumeClaim
+      name: watch
+    fieldPaths:
+    - spec.storageClassName
+- source:
+    kind: ConfigMap
+    name: qbt-pvc
+    fieldPath: data.incomplete
+  targets:
+  - select:
+      kind: PersistentVolumeClaim
+      name: incomplete
+    fieldPaths:
+    - spec.storageClassName
+- source:
+    kind: ConfigMap
+    name: qbt-pvc
+    fieldPath: data.torrent
+  targets:
+  - select:
+      kind: PersistentVolumeClaim
+      name: torrent
+    fieldPaths:
+    - spec.storageClassName
