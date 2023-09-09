@@ -1,0 +1,31 @@
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast
+provisioner: smb.csi.k8s.io
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+parameters:
+  source: "//AUTOMATIC_REPLACE/AUTOMATIC_REPLACE"
+  # disposable volumes don't share data with truly persistent volumes
+  subDir: ${pvc.metadata.namespace}~${pvc.metadata.name}~dispose
+  csi.storage.k8s.io/provisioner-secret-name: credentials-fast
+  csi.storage.k8s.io/provisioner-secret-namespace: pv-smb
+  csi.storage.k8s.io/node-stage-secret-name: credentials-fast
+  csi.storage.k8s.io/node-stage-secret-namespace: pv-smb
+mountOptions:
+# default mode is 755, when using fsGroup it is effectively 775
+# - file_mode=0777
+# - dir_mode=0777
+# apparently, SMB does not support several users
+- uid=1000
+# gid is set automatically when using fsGroup
+# - gid=1000
+- soft
+# smb seems to always mount with relatime option
+# - noatime
+# without cifsacl permissions are fixed at file_mode/dir_mode, chmod always fails
+- cifsacl
+# unix option is not supportd by samba as of truenas scale 22.12
+# - unix
