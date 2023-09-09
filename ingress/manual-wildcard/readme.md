@@ -19,7 +19,7 @@ subdomain=example
 
 # secret name that ingress resources will be using
 # can be anything, just make sure that you don't use this name for other secrets
-secret_name=main-wildcard-at-duckdns
+secret_name=main-wildcard
 
 # label for the certificate secret
 # used by the 'replicator' deployment
@@ -47,9 +47,9 @@ kl -n cm-manual get orders.acme.cert-manager.io
 
 # delete staging certificate after it is was successfully issued
 kl delete -k ./ingress/manual-wildcard/staging
-# if we don't delete secret, if we re-deploy the certificate,
+# if we don't delete secret, then when we re-deploy the certificate,
 # cert-manager will see that secret already exists and skip re-issuing the certificate
-kl -n cm-manual delete secrets main-wildcard-at-duckdns
+kl -n cm-manual delete secrets main-wildcard
 ```
 
 If the certificate doesn't get approved for too long, you can check the following resources for debugging:
@@ -80,11 +80,25 @@ kl apply -k ./ingress/manual-wildcard/production
 kl -n cm-manual get certificate
 ```
 
+# Avoid re-creating production certificate when re-creating cluster
+
+You can save the certificate and deploy it in the new cluster,
+without requesting a new certificate from ACME provider.
+
+```bash
+# save
+mkdir -p ./ingress/manual-wildcard/env/
+kl -n cm-manual get secrets main-wildcard -o yaml > ./ingress/manual-wildcard/env/wildcard-secret.yaml
+
+# restore
+kl apply -f ./ingress/manual-wildcard/env/wildcard-secret.yaml
+```
+
 # Using in ingress resources
 
 Ingress resources need certificate in the same namespace.
 
-Easy way to copy certificate to each required namespace is to use [replicator](../replicator/).
+Easy way to copy certificate to each required namespace is to use [replicator](../replicator/readme.md).
 
 After deployment use `copy_label` from `domain.env`
 as a label for namespace where you need to use the certificate.

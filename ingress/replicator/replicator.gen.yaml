@@ -1,50 +1,38 @@
 ---
-# Source: kubernetes-replicator/templates/rbac.yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: replicator
   labels:
-    helm.sh/chart: kubernetes-replicator-2.8.0
     app.kubernetes.io/name: replicator
-    app.kubernetes.io/instance: kubernetes-replicator
-    app.kubernetes.io/version: "v2.8.0"
-    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/version: "v2.9.1"
 automountServiceAccountToken: true
 ---
-# Source: kubernetes-replicator/templates/rbac.yaml
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: replicator
   labels:
-    helm.sh/chart: kubernetes-replicator-2.8.0
     app.kubernetes.io/name: replicator
-    app.kubernetes.io/instance: kubernetes-replicator
-    app.kubernetes.io/version: "v2.8.0"
-    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/version: "v2.9.1"
 rules:
   - apiGroups: [ "" ]
     resources: [ "namespaces" ]
     verbs: [ "get", "watch", "list" ]
   - apiGroups: [""]
-    resources: ["secrets", "configmaps"]
+    resources: ["secrets", "configmaps", "serviceaccounts"]
     verbs: ["get", "watch", "list", "create", "update", "patch", "delete"]
   - apiGroups: ["rbac.authorization.k8s.io"]
     resources: ["roles", "rolebindings"]
     verbs: ["get", "watch", "list", "create", "update", "patch", "delete"]
 ---
-# Source: kubernetes-replicator/templates/rbac.yaml
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: replicator
   labels:
-    helm.sh/chart: kubernetes-replicator-2.8.0
     app.kubernetes.io/name: replicator
-    app.kubernetes.io/instance: kubernetes-replicator
-    app.kubernetes.io/version: "v2.8.0"
-    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/version: "v2.9.1"
 roleRef:
   kind: ClusterRole
   name: replicator
@@ -54,28 +42,22 @@ subjects:
     name: replicator
     namespace: "replicator"
 ---
-# Source: kubernetes-replicator/templates/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: replicator
   labels:
-    helm.sh/chart: kubernetes-replicator-2.8.0
     app.kubernetes.io/name: replicator
-    app.kubernetes.io/instance: kubernetes-replicator
-    app.kubernetes.io/version: "v2.8.0"
-    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/version: "v2.9.1"
 spec:
   replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: replicator
-      app.kubernetes.io/instance: kubernetes-replicator
   template:
     metadata:
       labels:
         app.kubernetes.io/name: replicator
-        app.kubernetes.io/instance: kubernetes-replicator
     spec:
       serviceAccountName: replicator
       automountServiceAccountToken: true
@@ -90,7 +72,7 @@ spec:
             readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 1000
-          image: "quay.io/mittwald/kubernetes-replicator:v2.8.0"
+          image: "quay.io/mittwald/kubernetes-replicator:v2.9.1"
           imagePullPolicy: IfNotPresent
           args:
             []

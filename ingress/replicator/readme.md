@@ -6,20 +6,25 @@ This app can automatically copy secrets and config maps between namespaces based
 References:
 - https://github.com/mittwald/kubernetes-replicator#push-based-replication
 
-# Generate deployment
+# Generate config
 
-Required for major config changes or updates.
-
-You don't need to do it if you are just deploying it.
+You only need to do this when updating the app.
 
 ```bash
 helm repo add mittwald https://helm.mittwald.de
-helm repo update
-helm template kubernetes-replicator \
+helm repo update mittwald
+helm search repo mittwald/kubernetes-replicator --versions --devel | head
+helm show values mittwald/kubernetes-replicator > ./ingress/replicator/default-values.yaml
+```
+
+```bash
+helm template \
+    kubernetes-replicator \
     mittwald/kubernetes-replicator \
-    --version 2.8.0 \
+    --version 2.9.1 \
     --values ./ingress/replicator/helm-values.yaml \
     --namespace replicator \
+  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' \
     > ./ingress/replicator/replicator.gen.yaml
 ```
 
@@ -28,6 +33,7 @@ helm template kubernetes-replicator \
 ```bash
 kl create ns replicator
 kl apply -k ./ingress/replicator/
+kl -n replicator get pod
 ```
 
 # Test that it works
