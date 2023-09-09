@@ -10,6 +10,7 @@ This is s CSI plugin that can connect pods to remote NFS server.
 ```bash
 kl create ns pv-nfs
 kl apply -k ./storage/nfs-csi
+kl -n pv-nfs get pod
 ```
 
 Don't forget to enable NFSv4 protocol on the server side.

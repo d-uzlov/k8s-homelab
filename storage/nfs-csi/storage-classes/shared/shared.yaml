@@ -6,6 +6,10 @@ metadata:
 provisioner: nfs.csi.k8s.io
 reclaimPolicy: Delete
 volumeBindingMode: Immediate
+# nfs does not have quota support
+# nfs-csi controller does not have expansion support
+# there will be no errors, but the volume will never be expanded
+# allowVolumeExpansion: true
 parameters:
   server: AUTOMATIC_REPLACE
   share: AUTOMATIC_REPLACE
@@ -14,10 +18,8 @@ parameters:
   # therefore you can access the same data from different namespaces
   subDir: ${pvc.metadata.name}
   mountPermissions: '777'
-  csi.storage.k8s.io/provisioner-secret-name: mount-options
-  csi.storage.k8s.io/provisioner-secret-namespace: pv-nfs
 mountOptions:
-- hard
-- nfsvers=4.2
+- soft
+- noatime
 - rsize=262144
 - wsize=262144

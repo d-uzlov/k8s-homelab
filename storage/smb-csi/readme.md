@@ -3,6 +3,9 @@
 
 This is s CSI plugin that can connect pods to a remote SMB server.
 
+References:
+- https://github.com/kubernetes-csi/csi-driver-smb/
+
 # Generate config
 
 You only need to do this when updating the app.
