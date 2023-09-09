@@ -47,6 +47,7 @@ EOF
 ```bash
 kl create ns cm-duckdns
 kl apply -k ./ingress/cert-manager/duckdns/
+kl -n cm-duckdns get pod
 ```
 
 If you want to change namespace, change it in the helm template command.

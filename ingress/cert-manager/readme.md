@@ -4,36 +4,43 @@
 This is an app to automatically create and update certificates
 by automatically issuing them from any ACME-compatible certificate provider.
 
+# Generate config
+
+You only need to do this when updating the app.
+
+```bash
+helm repo add jetstack https://charts.jetstack.io
+helm repo update jetstack
+helm search repo jetstack/cert-manager --versions --devel | head
+helm show values jetstack/cert-manager > ./ingress/cert-manager/default-values.yaml
+```
+
+```bash
+helm template \
+  cert-manager jetstack/cert-manager \
+  --values ./ingress/cert-manager/values.yaml \
+  --version v1.12.4 \
+  --namespace cert-manager \
+  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' \
+  > ./ingress/cert-manager/cert-manager.gen.yaml
+```
+
 # Deploy
 
 ```bash
-# Generate deployment
-helm repo add jetstack https://charts.jetstack.io
-helm repo update
-helm template \
-  cert-manager jetstack/cert-manager \
-  --set 'extraArgs={--dns01-recursive-nameservers=8.8.8.8:53\,1.1.1.1:53,--dns01-recursive-nameservers-only}' \
-  --version v1.11.0 \
-  --namespace cert-manager \
-  --set installCRDs=false \
-  > ./ingress/cert-manager/cert-manager.yaml
-
 kl create ns cert-manager
-kl apply -k ./ingress/cert-manager
+kl apply -k ./ingress/cert-manager/
+kl -n cert-manager get pod
 ```
 
-There are several ready-to-use issuers:
-- [DuckDNS (DNS-01 challenge with duckdns domains)](./duckdns/readme.md)
-- [LetsEncrypt (HTTP-01 challenge)](./letsencrypt/readme.md)
+# Deploy issuers
 
-# DNS resolving
+Choose what you need:
 
-Without dns01-recursive-nameservers-only cert-manager
-tries to reach DNS servers directly.
-
-Cert-manager will choose a single DNS server for a domain.
-If only part of the servers work, cert manager will not try alternative servers,
-and therefore fail to request a certificate.
+- HTTP-01 (universal, does not depend on DNS provider)
+- - [LetsEncrypt](./letsencrypt/readme.md)
+- DNS-01
+- - [DuckDNS](./duckdns/readme.md)
 
 # Ingress with single-domain certificates
 
@@ -51,10 +58,10 @@ Certificate will be automatically issued and injected into the Ingress resource.
 
 # Wildcard certificate
 
-You need to deploy following resources:
-- [DuckDNS webhook](./duckdns/)
-- [Replicator](../replicator/)
-- [Manually create a certificate](../manual-wildcard/)
+You need to deploy the following resources:
+- [DuckDNS webhook](./duckdns/readme.md)
+- [Replicator](../replicator/readme.md)
+- [Manually create a certificate](../manual-wildcard/readme.md)
 
 Manual certificate deployment also has instructions on how to use the certificate.
 
@@ -91,7 +98,7 @@ You may also need to restart the browser after clearing the cache.
     https://habr.com/ru/companies/itsumma/news/571368/#comment_24421522
   * Allegedly can issue wildcard certificates.
   * The official limit is 3 certs per free account, but it doesn't seem to apply to ACME.
-* Buypass Go SSL
+* Buypass-Go-SSL
   * Doesn't work from Russia
 * SSL.com
   * Website: SSL.com
