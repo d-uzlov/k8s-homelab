@@ -9,35 +9,44 @@ https://github.com/kubernetes/ingress-nginx/blob/controller-v1.6.4/docs/user-gui
 
 Beware of changes between versions.
 
-# Generate deployment
+# Generate config
 
-Required for major config changes or updates.
-
-You don't need to do it if you are just deploying it.
+You only need to do this when updating the app.
 
 ```bash
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-helm repo update
-helm search repo ingress-nginx --versions | head
-helm template ingress-nginx ingress-nginx/ingress-nginx \
-  --version 4.7.1 \
+helm repo update ingress-nginx
+helm search repo ingress-nginx/ingress-nginx --versions --devel | head
+helm show values ingress-nginx/ingress-nginx > ./ingress/nginx/default-values.yaml
+```
+
+```bash
+helm template \
+  ingress-nginx \
+  ingress-nginx/ingress-nginx \
+  --version 4.7.2 \
   --namespace ingress-nginx \
   --values ./ingress/nginx/values.yaml \
-  | sed -e '/helm.sh\/chart/d' -e '/# Source:/d' \
+  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/instance|d' -e '\|app.kubernetes.io/part-of|d' \
   > ./ingress/nginx/nginx.gen.yaml
-
-# if you want to learn about more about available options
-helm show values ingress-nginx/ingress-nginx --version 4.7.1 > ./ingress/nginx/default-values.yaml
 ```
 
 # Deploy
 
 ```bash
 kl create ns ingress-nginx
-kl apply -k ./ingress/nginx
+kl apply -k ./ingress/nginx/
+kl -n ingress-nginx get pod
 
-kl apply -f ./ingress/nginx/service.yaml
-kl -n ingress-nginx get svc nginx
+# get load balancer external ip for DNS or NAT port forwarding
+kl -n ingress-nginx get svc nginx-controller
+```
+
+# Cleanup
+
+```bash
+kl delete -k ./ingress/nginx/
+kl delete ns ingress-nginx
 ```
 
 # Test
