@@ -34,6 +34,8 @@ helm template \
 - - If there is an common share you will get an error like this:
 - - `<pvc dataset path> is a subtree of <parent NFS share path> and already exports this dataset for 'everybody'`
 - Go to `Top Bar -> Settings -> API Keys` and create a new key
+- Create at least one NFS share and enable NFS service
+- - It seems like it's not possible to enable the service if you don't have shares yet
 - Setup local config:
 ```bash
 cat <<EOF > ./storage/democratic-csi/nfs/fast/env/truenas.env
@@ -69,7 +71,14 @@ kl apply -k ./storage/democratic-csi/nfs/fast/
 kl -n pv-dnfsf get pod
 ```
 
-Test that deployment works:
+# Cleanup
+
+```bash
+kl delete -k ./storage/democratic-csi/nfs/fast/
+kl delete ns pv-dnfsf
+```
+
+# Test that deployment works
 
 ```bash
 kl apply -f ./storage/democratic-csi/nfs/fast/test.yaml
@@ -78,12 +87,14 @@ kl get pvc
 # make sure that test pod is running
 kl get pod
 
-# if there are issues, you can try to check driver logs
-kl -n pv-dnfsf logs deployments/dnfsf-controller csi-driver --tail 20 > nfs-fast.log
+# if there are issues, you can try to check logs
+kl describe pvc test-nfs-fast
+kl -n pv-dnfsf logs deployments/dnfsf-controller csi-driver --tail 20
 
 # check contents of mounted folder, create a test file
 kl exec deployments/test-nfs-fast -- touch /mnt/data/test-file
 kl exec deployments/test-nfs-fast -- ls -laF /mnt/data
+kl exec deployments/test-nfs-fast -- mount | grep /mnt/data
 # cleanup resources
 kl delete -f ./storage/democratic-csi/nfs/fast/test.yaml
 ```

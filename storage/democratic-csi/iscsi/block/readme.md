@@ -34,6 +34,8 @@ helm template \
 - Create iSCSI portal (simple case: no auth, listen on 0.0.0.0)
 - Create initiator group (simple case: check "Allow all initiators")
 - Go to `Top Bar -> Settings -> API Keys` and create a new key
+- Create dataset for iSCSI volumes
+- - In this example: `tank/k8s/iscsi`
 - Setup local config:
 ```bash
 cat <<EOF > ./storage/democratic-csi/iscsi/block/env/truenas.env
@@ -69,7 +71,14 @@ kl apply -k ./storage/democratic-csi/iscsi/block/
 kl -n pv-discsi get pod
 ```
 
-Test that deployment works:
+# Cleanup
+
+```bash
+kl delete -k ./storage/democratic-csi/iscsi/block/
+kl delete ns pv-discsi
+```
+
+# Test that deployment works
 
 ```bash
 kl apply -f ./storage/democratic-csi/iscsi/block/test.yaml
@@ -78,12 +87,14 @@ kl get pvc
 # make sure that test pod is running
 kl get pod
 
-# if there are issues, you can try to check driver logs
-kl -n pv-discsi logs deployments/discsi-controller csi-driver --tail 20 > iscsi.log
+# if there are issues, you can try to check logs
+kl describe pvc test-iscsi-block
+kl -n pv-discsi logs deployments/discsi-controller csi-driver --tail 20
 
 # check contents of mounted folder, create a test file
 kl exec deployments/test-iscsi-block -- touch /mnt/data/test-file
 kl exec deployments/test-iscsi-block -- ls -laF /mnt/data
+kl exec deployments/test-iscsi-block -- mount | grep /mnt/data
 # cleanup resources
 kl delete -f ./storage/democratic-csi/iscsi/block/test.yaml
 ```
