@@ -1,0 +1,171 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: csr-approver
+  namespace: csr-approver
+  labels:
+    app.kubernetes.io/name: csr-approver
+    app.kubernetes.io/version: "v1.0.4"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: csr-approver
+rules:
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - create
+  - get
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+- apiGroups:
+  - certificates.k8s.io
+  resources:
+  - certificatesigningrequests
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - certificates.k8s.io
+  resources:
+  - certificatesigningrequests/approval
+  verbs:
+  - update
+- apiGroups:
+  - certificates.k8s.io
+  resourceNames:
+  - kubernetes.io/kubelet-serving
+  resources:
+  - signers
+  verbs:
+  - approve
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: csr-approver
+  namespace: csr-approver
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: csr-approver
+subjects:
+- kind: ServiceAccount
+  name: csr-approver
+  namespace: csr-approver
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: csr-approver
+  namespace: csr-approver
+  labels:
+    app.kubernetes.io/name: csr-approver
+    app.kubernetes.io/version: "v1.0.4"
+  annotations:
+    prometheus.io/port: '8080'
+    prometheus.io/scrape: 'true'
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+  selector:
+    app.kubernetes.io/name: csr-approver
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: csr-approver
+  namespace: csr-approver
+  labels:
+    app.kubernetes.io/name: csr-approver
+    app.kubernetes.io/version: "v1.0.4"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: csr-approver
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: csr-approver
+    spec:
+      serviceAccountName: csr-approver
+      securityContext:
+        {}
+      containers:
+        - name: kubelet-csr-approver
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - all
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsGroup: 65532
+            runAsNonRoot: true
+            runAsUser: 65532
+            seccompProfile:
+              type: RuntimeDefault
+          image: "ghcr.io/postfinance/kubelet-csr-approver:v1.0.4"
+          imagePullPolicy: IfNotPresent
+          args:
+            - -metrics-bind-address
+            - ":8080"
+            - -health-probe-bind-address
+            - ":8081"
+            - -leader-election
+          env:
+            - name: ALLOWED_DNS_NAMES
+              value: "1"
+          ports:
+            - name: metrics
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+          resources:
+            limits:
+              memory: 128Mi
+            requests:
+              cpu: 10m
+              memory: 64Mi
+      tolerations:
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/control-plane
+          operator: Equal
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "csr-approver-test-connection"
+  labels:
+    app.kubernetes.io/name: csr-approver
+    app.kubernetes.io/version: "v1.0.4"
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command:
+        - /bin/sh
+        - -c
+        - |
+          sleep 10 ; wget -O- -S csr-approver:8080/metrics
+  restartPolicy: Never

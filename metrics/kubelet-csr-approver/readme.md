@@ -1,18 +1,38 @@
 
 # kubelet-csr-approver
 
-https://github.com/postfinance/kubelet-csr-approver
-
 This app can automatically verify and approve CertificateSigningRequests inside cluster.
 
 This is required to run `metrics-server`.
 
-# Deploy
+References:
+- https://github.com/postfinance/kubelet-csr-approver
 
-You need to make sure `serverTLSBootstrap` is enabled in kubelet config before deploying this.
+# Generate config
+
+You only need to do this if you change `values.yaml` file.
 
 ```bash
+helm repo add kubelet-csr-approver https://postfinance.github.io/kubelet-csr-approver
+helm repo update kubelet-csr-approver
+helm search repo kubelet-csr-approver/kubelet-csr-approver --versions --devel | head
+helm show values kubelet-csr-approver/kubelet-csr-approver > ./metrics/kubelet-csr-approver/default-values.yaml
+```
+
+```bash
+helm template \
+  csr-approver \
+  kubelet-csr-approver/kubelet-csr-approver \
+  --version 1.0.4 \
+  --values ./metrics/kubelet-csr-approver/values.yaml \
+  --namespace csr-approver \
+  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' \
+  > ./metrics/kubelet-csr-approver/deployment.gen.yaml
+```
+
 # Init local settings
+
+```bash
 mkdir -p ./metrics/kubelet-csr-approver/env
 cat <<EOF > ./metrics/kubelet-csr-approver/env/rules.env
 # limit allowed node names
@@ -22,9 +42,15 @@ PROVIDER_IP_PREFIXES=0.0.0.0/0,::/0
 # set to true if your node names don't resolve as valid DNS names
 BYPASS_DNS_RESOLUTION=true
 EOF
+```
 
+# Deploy
+
+You need to make sure `serverTLSBootstrap` is enabled in kubelet config before deploying this.
+
+```bash
 kl create ns csr-approver
-kl apply -k ./metrics/kubelet-csr-approver
+kl apply -k ./metrics/kubelet-csr-approver/
 kl -n csr-approver get pod
 
 # check CSRs to make sure they are aproved
