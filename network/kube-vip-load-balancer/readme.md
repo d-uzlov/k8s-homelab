@@ -56,6 +56,14 @@ EOF
 kl create ns kube-vip
 kl apply -k ./network/kube-vip-load-balancer/cm
 kl apply -k ./network/kube-vip-load-balancer
+kl -n kube-vip get pod
+```
+
+# Cleanup
+
+```bash
+kl delete -k ./network/kube-vip-load-balancer
+kl delete ns kube-vip
 ```
 
 # Lease settings

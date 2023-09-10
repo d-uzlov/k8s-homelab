@@ -24,6 +24,8 @@ helm template cilium cilium/cilium \
 ```bash
 kl create ns cilium
 kl apply -f ./network/cilium/deploy.gen.yaml --server-side=true
+# check that pods are running
+kl -n cilium get pod
 ```
 
 # Cilium CLI

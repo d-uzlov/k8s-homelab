@@ -1,7 +1,7 @@
 
 # Versions
 
-Calico v1.25.0 and v1.25.1 are know to work fine.
+Calico v1.25.0 and v1.25.1 are known to work fine.
 
 v1.26.0 doesn't work in my setup.
 For some reason cascaded resource deletion doesn't work
@@ -27,7 +27,7 @@ NAME                                   DESIRED   CURRENT   READY   AGE
 replicaset.apps/echoserver-96ffcc7c8   1         1         1       8s
 ```
 
-# Install
+# Install operator
 
 ```bash
 # Local init
@@ -41,17 +41,35 @@ kl apply -k ./network/calico/crds --server-side=true &&
 # Deploy Calico using an operator
 kl create ns tigera-operator &&
 kl apply -k ./network/calico/cm &&
-kl apply -f ./network/calico/installation.yaml &&
 kl apply -k ./network/calico/operator
+```
 
-# maybe we could need this for BGP but I disabled it
-# kl set env daemonset/calico-node -n calico-system IP_AUTODETECTION_METHOD=interface=ens18
+# Install standard version
 
-kl wait -n calico-system --for=condition=ready pods --all
-kl wait -n calico-apiserver --for=condition=ready pods --all
+```bash
+kl apply -f ./network/calico/installation-default.yaml
+
+# wait for all pods to be ready
+kl wait -n calico-system get pod
+kl wait -n calico-apiserver get pod
+```
+
+# Install eBPF version
+
+```bash
+kl apply -f ./network/calico/installation-ebpf.yaml
+
+# wait for all pods to be ready
+kl wait -n calico-system get pod
+kl wait -n calico-apiserver get pod
 
 # enable Direct Server Return
 kl patch felixconfiguration default --type=merge --patch='{"spec": {"bpfExternalServiceMode": "DSR"}}'
+
+# disable kube-proxy
+kl -n kube-system patch ds kube-proxy -p '{"spec":{"template":{"spec":{"nodeSelector":{"non-calico": "true"}}}}}'
+# revert rebu-proxy if something goes wrong
+kl -n kube-system patch ds kube-proxy --type=json -p='[{"op": "remove", "path": "/spec/template/spec/nodeSelector/non-calico"}]'
 ```
 
 # Cleanup
@@ -94,7 +112,7 @@ kl apply -k ./network/calico/cm
 kl apply -f ./network/calico/api-server-cm.yaml
 kl -n tigera-operator delete pod --all
 
-# check that config mapp successfully applied
+# check that config map successfully applied
 kl -n calico-system logs deployments/calico-typha | grep KUBERNETES_SERVICE_HOST
 
 # patch calico
@@ -105,4 +123,6 @@ kl patch felixconfiguration default --patch='{"spec": {"bpfExternalServiceMode":
 
 # disable kube-proxy
 kl -n kube-system patch ds kube-proxy -p '{"spec":{"template":{"spec":{"nodeSelector":{"non-calico": "true"}}}}}'
+# revert
+kl -n kube-system patch ds kube-proxy --type=json -p='[{"op": "remove", "path": "/spec/template/spec/nodeSelector/non-calico"}]'
 ```

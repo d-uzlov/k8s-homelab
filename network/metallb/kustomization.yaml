@@ -1,0 +1,26 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: metallb-system
+
+resources:
+- metallb-ippool.yaml
+
+configMapGenerator:
+- name: ip-pool
+  envs:
+  - env/ip-pool.env
+
+
+replacements:
+- source:
+    kind: ConfigMap
+    name: ip-pool
+    fieldPath: data.pool
+  targets:
+  - select:
+      kind: IPAddressPool
+      name: pool
+    fieldPaths:
+    - spec.addresses.0

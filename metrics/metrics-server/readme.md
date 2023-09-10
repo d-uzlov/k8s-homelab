@@ -14,4 +14,12 @@ Look here for instructions to add certificates: [kubelet-csr-approver](../kubele
 ```bash
 kl create ns metrics
 kl apply -k ./metrics/metrics-server/
+kl -n metrics get pod
+```
+
+# Cleanup
+
+```bash
+kl Delete -k ./metrics/metrics-server/
+kl delete ns metrics
 ```
