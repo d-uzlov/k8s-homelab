@@ -1,7 +1,9 @@
 
 # qBitTorrent
 
-https://github.com/qbittorrent/docker-qbittorrent-nox/
+References:
+- https://github.com/qbittorrent/docker-qbittorrent-nox/
+- https://github.com/qbittorrent/qBittorrent/wiki/WebUI-API-(qBittorrent-4.1)
 
 # Storage setup
 
@@ -14,26 +16,41 @@ kl get sc
 mkdir -p ./torrents/qbittorrent/pvc/env/
 cat <<EOF > ./torrents/qbittorrent/pvc/env/pvc.env
 # where qbittorrent internal configs should be located
-config=fast
+config=bulk
+config_size=1Gi
 # .torrent files that user wants to download
 watch=shared
+watch_size=1Gi
 
 # temporary folder for downloaded torrents
-incomplete=fast
+incomplete=bulk
+incomplete_size=1Ti
 # folder where torrents are moved after they are finished downloading
 torrent=shared
+torrent_size=10Ti
 EOF
 ```
 
 # Set up qBitTorrent config
 
+qBitTorrent has a lot of settings.
+
+Some settings are forced, like disabling UPnP (it wouldn't work in k8s either way),
+some settings are configurable via this .env file,
+some settings aren't important for running the app in the k8s
+can only be changed via web-UI.
+
 ```bash
 mkdir -p ./torrents/qbittorrent/env/
 cat <<EOF > ./torrents/qbittorrent/env/settings.env
-force_overwrite_config=true
+# set to true if you want to discard all changes in settings when the app is restarted
+force_overwrite_config=false
 
-# set to 'true' to use username and password from this settings file
-reset_password=true
+# set to false if you want to download torrents in-place
+enable_tmp_folder=true
+
+# set to true to use username and password from this settings file
+reset_password=false
 username=admin
 # default password is 'adminadmin'
 # if you want to change it, go to web UI, change it in settings,
@@ -72,7 +89,7 @@ kl -n bt-qbittorrent get svc
 
 # set up storage, avoid deleting it
 kl apply -k ./torrents/qbittorrent/pvc/
-# make sure that PVCs are successfulyl allocated
+# make sure that PVCs are successfulyl provisioned
 kl -n bt-qbittorrent get pvc
 
 # deploy main app

@@ -45,6 +45,7 @@ checkEnv DEFAULT_CONFIG_LOCATION
 checkEnv CONFIG_LOCATION
 checkEnv FORCE_OVERWRITE_CONFIG "true false"
 checkEnv RESET_PASSWORD "true false"
+checkEnv ENABLE_TMP_FOLDER "true false"
 checkEnv TRUSTED_PROXIES "comma-separated CIDR list, or empty"
 checkEnv AUTH_WHITELIST "comma-separated CIDR list, or empty"
 checkEnv WATCH_ROOT "path to the root of the watch folder"
@@ -70,7 +71,9 @@ configFile="$profilePath/qBittorrent/config/qBittorrent.conf"
 watchFile="$profilePath/qBittorrent/config/watched_folders.json"
 logLocation="$profilePath/log"
 
+isNewConfig=false
 if [ "$FORCE_OVERWRITE_CONFIG" = "true" ] || [ ! -f "$configFile" ]; then
+    isNewConfig=true
     echo "copying/overwriting main config file..."
     rm -rf "$configFile"
     mkdir -p "$(dirname "$configFile")"
@@ -107,7 +110,7 @@ set_value "$configFile" 'WebUI\AuthSubnetWhitelistEnabled' "$useAuthWhitelist"
 set_value "$configFile" 'WebUI\AuthSubnetWhitelist' "$AUTH_WHITELIST"
 set_value "$configFile" 'WebUI\UseUPnP' "false"
 
-if [ ! -z "$INCOMPLETE_FOLDER" ] && [ ! "$INCOMPLETE_FOLDER" = "$FINISHED_FOLDER" ]; then
+if [ "$ENABLE_TMP_FOLDER" = 'true' ] && [ ! -z "$INCOMPLETE_FOLDER" ] && [ ! "$INCOMPLETE_FOLDER" = "$FINISHED_FOLDER" ]; then
     set_value "$configFile" 'Session\TempPathEnabled' "true"
 else
     set_value "$configFile" 'Session\TempPathEnabled' "false"
@@ -120,7 +123,7 @@ else
     set_value "$configFile" 'OnTorrentAdded\Program' ''
 fi
 
-if [ "$RESET_PASSWORD" = "true" ]; then
+if [ "$RESET_PASSWORD" = "true" ] || [ "$isNewConfig" = 'true' ]; then
     echo "resetting password..."
     userValue=${USERNAME:-admin}
     set_value "$configFile" 'WebUI\Username' "$userValue"
