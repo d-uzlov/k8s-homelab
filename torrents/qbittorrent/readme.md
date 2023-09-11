@@ -41,7 +41,7 @@ some settings aren't important for running the app in the k8s
 can only be changed via web-UI.
 
 ```bash
-mkdir -p ./torrents/qbittorrent/env/
+mkdir -p ./torrents/qbittorrent/main-app/env/
 cat <<EOF > ./torrents/qbittorrent/env/settings.env
 # set to true if you want to discard all changes in settings when the app is restarted
 force_overwrite_config=false
@@ -93,7 +93,7 @@ kl apply -k ./torrents/qbittorrent/pvc/
 kl -n bt-qbittorrent get pvc
 
 # deploy main app
-kl apply -k ./torrents/qbittorrent/
+kl apply -k ./torrents/qbittorrent/main-app/
 # make sure the pod is running
 kl -n bt-qbittorrent get pod
 
@@ -106,10 +106,10 @@ kl -n bt-qbittorrent get ingress
 # Alt web UI
 
 Possible web UIs:
-https://github.com/erickok/transdroid (universal)
-https://github.com/CCExtractor/rutorrent-flutter (rutorrent)
-https://github.com/lgallard/qBittorrent-Controller (qbittorrent)
+- https://github.com/erickok/transdroid (universal)
+- https://github.com/CCExtractor/rutorrent-flutter (rutorrent)
+- https://github.com/lgallard/qBittorrent-Controller (qbittorrent)
 
 # Add trackers
 
-https://github.com/ngosang/trackerslist
+- https://github.com/ngosang/trackerslist
