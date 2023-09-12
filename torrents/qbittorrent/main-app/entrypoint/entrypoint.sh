@@ -11,12 +11,26 @@ configFile="$profilePath/qBittorrent/config/qBittorrent.conf"
 watchFile="$profilePath/qBittorrent/config/watched_folders.json"
 logLocation="$profilePath/log"
 
+# =========== Update config ===========
 "$parent_path"/update_config.sh "$configFile" "$watchFile" "$logLocation"
 
+# =========== Update fastresume files ===========
 customConfigPrefix="$profilePath/qBittorrent/config/custom_config"
-echo "$FINISHED_FOLDER" > "$customConfigPrefix"-finished
+fastresumePath="$profilePath/qBittorrent/data/BT_backup"
 
-# force bittorrent logs to stdout
+echo updating .fastresume files...
+oldIncompletePath=$(cat "$customConfigPrefix"-incomplete) || true
+oldFinishedPath=$(cat "$customConfigPrefix"-finished) || true
+python3 "$parent_path"/update_fastresume.py \
+    --value 16:qBt-downloadPath "$oldIncompletePath" "$INCOMPLETE_FOLDER" \
+    --value 12:qBt-savePath "$oldFinishedPath" "$FINISHED_FOLDER" \
+    --value 9:save_path "$oldFinishedPath" "$FINISHED_FOLDER" \
+    --directory "$fastresumePath"
+echo updating .fastresume files done
+echo -n "$INCOMPLETE_FOLDER" > "$customConfigPrefix"-incomplete
+echo -n "$FINISHED_FOLDER" > "$customConfigPrefix"-finished
+
+# =========== Force q logs to stdout ===========
 # https://github.com/qbittorrent/qBittorrent/issues/10077
 echo "redirecting log file to stdout..."
 mkdir -p "$logLocation"

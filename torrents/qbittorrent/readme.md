@@ -42,7 +42,7 @@ can only be changed via web-UI.
 
 ```bash
 mkdir -p ./torrents/qbittorrent/main-app/env/
-cat <<EOF > ./torrents/qbittorrent/env/settings.env
+cat <<EOF > ./torrents/qbittorrent/main-app/env/settings.env
 # set to true if you want to discard all changes in settings when the app is restarted
 force_overwrite_config=false
 
