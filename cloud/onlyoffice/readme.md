@@ -21,17 +21,17 @@ EOF
 Generate passwords and set up config.
 
 ```bash
-mkdir -p ./cloud/onlyoffice/pvc/env/
-cat <<EOF > ./cloud/onlyoffice/env/postrgesql.env
+mkdir -p ./cloud/onlyoffice/main-app/env/
+cat <<EOF > ./cloud/onlyoffice/main-app/env/postrgesql.env
 db_root_name=onlyoffice
 db_root_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 db_name=onlyoffice
 EOF
-cat <<EOF > ./cloud/onlyoffice/env/api.env
+cat <<EOF > ./cloud/onlyoffice/main-app/env/api.env
 jwt_header=AuthorizationJwt
 jwt_secret=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 EOF
-cat <<EOF > ./cloud/onlyoffice/env/public_domain.env
+cat <<EOF > ./cloud/onlyoffice/main-app/env/public_domain.env
 # host used in ingress
 public_domain=onlyoffice.example.duckdns.org
 EOF
@@ -45,7 +45,7 @@ kl create ns onlyoffice
 kl apply -k ./cloud/onlyoffice/pvc/
 kl -n onlyoffice get pvc
 
-kl apply -k ./cloud/onlyoffice/
+kl apply -k ./cloud/onlyoffice/main-app/
 kl -n onlyoffice get pod
 
 kl label ns --overwrite onlyoffice copy-wild-cert=main
