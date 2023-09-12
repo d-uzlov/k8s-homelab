@@ -126,11 +126,6 @@ spec:
               name: onlyoffice-public-domain
               key: public_domain
               optional: true
-        - name: NEXTCLOUD_PUBLIC_DOMAIN
-          valueFrom:
-            configMapKeyRef:
-              name: ingress
-              key: public_domain
         volumeMounts:
         - name: entrypoint
           mountPath: /entrypoint.sh
@@ -169,34 +164,34 @@ spec:
           limits:
             cpu: 4
             memory: 8Gi
-      - name: healthcheck
-        # compiled manually from Dockerfile:
-        # FROM alpine:3.17.3
-        # RUN apk add --no-cache fcgi
-        # COPY ./php-fpm-healthcheck /usr/local/bin/
-        # Where php-fpm-healthcheck is from https://github.com/renatomefi/php-fpm-healthcheck
-        #
-        # Requires `pm.status_path = /status` in php-fpm config
-        image: docker.io/exampleexample/k8s-snippets:fpm-healthcheck
-        command:
-        - /bin/sh
-        - -c
-        - |
-          trap : TERM INT; sleep infinity & wait
-        resources:
-          requests:
-            cpu: 0m
-            memory: 10Mi
-          limits:
-            cpu: 10m
-            memory: 10Mi
-        readinessProbe:
-          failureThreshold: 2
-          periodSeconds: 10
-          successThreshold: 1
-          exec:
-            command:
-            - /usr/local/bin/php-fpm-healthcheck
+      # - name: healthcheck
+      #   # compiled manually from Dockerfile:
+      #   # FROM alpine:3.17.3
+      #   # RUN apk add --no-cache fcgi
+      #   # COPY ./php-fpm-healthcheck /usr/local/bin/
+      #   # Where php-fpm-healthcheck is from https://github.com/renatomefi/php-fpm-healthcheck
+      #   #
+      #   # Requires `pm.status_path = /status` in php-fpm config
+      #   image: docker.io/exampleexample/k8s-snippets:fpm-healthcheck
+      #   command:
+      #   - /bin/sh
+      #   - -c
+      #   - |
+      #     trap : TERM INT; sleep infinity & wait
+      #   resources:
+      #     requests:
+      #       cpu: 0m
+      #       memory: 10Mi
+      #     limits:
+      #       cpu: 10m
+      #       memory: 10Mi
+      #   readinessProbe:
+      #     failureThreshold: 2
+      #     periodSeconds: 10
+      #     successThreshold: 1
+      #     exec:
+      #       command:
+      #       - /usr/local/bin/php-fpm-healthcheck
       volumes:
       - name: entrypoint
         configMap:

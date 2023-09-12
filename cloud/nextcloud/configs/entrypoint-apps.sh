@@ -49,9 +49,6 @@ else
     php /var/www/html/occ app:update notify_push
 fi
 
-echo "Set base endpoint for notify_push"
-php /var/www/html/occ config:app:set notify_push base_endpoint --value="https://${NEXTCLOUD_PUBLIC_DOMAIN}/push"
-
 # -------------------
 
 echo "DB maintenance..."

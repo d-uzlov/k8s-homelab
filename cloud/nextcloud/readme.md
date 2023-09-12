@@ -1,29 +1,52 @@
 
-# deploy
+# Nextcloud
+
+References:
+- https://github.com/nextcloud/docker
+- https://hub.docker.com/_/nextcloud/
+
+# Storage setup
+
+Set storage classes for different data types:
 
 ```bash
-kl create ns nextcloud
-kl label ns --overwrite nextcloud copy-wild-cert=main
-kl label ns --overwrite nextcloud onlyoffice.replicator.io/api=
-kl label ns --overwrite nextcloud onlyoffice.replicator.io/public-domain=
+mkdir -p ./cloud/nextcloud/pvc/env/
+cat <<EOF > ./cloud/nextcloud/pvc/env/pvc.env
+mariadb=block
+mariadb_size=1Gi
+mariadb_binlog=block
+mariadb_binlog_size=1Gi
 
-# Init once
+userdata=fast
+userdata_size=1Ti
+
+web=block
+web_size=10Gi
+
+config=fast
+config_size=100Mi
+EOF
+```
+
+# Config setup
+
+Generate passwords and set up Nextcloud config.
+
+```bash
+mkdir -p ./cloud/nextcloud/env/
 cat <<EOF > ./cloud/nextcloud/env/mariadb.env
 root_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 user_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 user_name=nextcloud
 db_name=nextcloud
 EOF
-# Init once
 cat <<EOF > ./cloud/nextcloud/env/nextcloud.env
 admin_name=admin
 admin_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 EOF
-# Init once
 cat <<EOF > ./cloud/nextcloud/env/redis.env
 redis_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 EOF
-# Init once
 cat <<EOF > ./cloud/nextcloud/env/nextcloud.env
 # Space-separated list of domaind. Wildcard is allowed in any place.
 # frontend.*.svc is required for onlyoffice integration
@@ -31,21 +54,35 @@ trusted_domains=*.example.duckdns.org frontend.*.svc
 # k8s pod CIDR
 trusted_proxies=10.201.0.0/16
 EOF
-# Init once
-cat <<EOF > ./cloud/nextcloud/env/ingress.env
-# host used in ingress
-public_domain=nextcloud.example.duckdns.org
+```
 
-# set to value specified in ingress/manual-wildcard/<your-cert>
-wildcard_secret_name=main-wildcard-at-duckdns
+# Deploy
 
-# Limit access from web, or leave empty
-# Comma-separated list of CIDRs
-allowed_sources=10.0.0.0/16,1.2.3.4,1.2.3.4
-EOF
+```bash
+kl create ns nextcloud
 
 kl apply -k ./cloud/nextcloud/pvc/
+kl -n nextcloud get pvc
+
 kl apply -k ./cloud/nextcloud/
+kl -n nextcloud get pod
+
+# ingress with wildcard certificate
+kl label ns --overwrite nextcloud copy-wild-cert=main
+kl apply -k ./cloud/nextcloud/ingress-wildcard/
+
+# setup push notifications
+nextcloud_public_domain=$(kl -n nextcloud get ingress nextcloud -o go-template --template="{{range .spec.rules}}{{.host}}{{end}}")
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ config:app:set notify_push base_endpoint --value="https://${nextcloud_public_domain}/push"
+```
+
+# Setup onlyoffice
+
+TODO
+
+```bash
+kl label ns --overwrite nextcloud onlyoffice.replicator.io/api=
+kl label ns --overwrite nextcloud onlyoffice.replicator.io/public-domain=
 ```
 
 # Uninstall
