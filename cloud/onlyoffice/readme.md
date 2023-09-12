@@ -1,47 +1,69 @@
 
-https://github.com/ONLYOFFICE/DocumentServer
-https://github.com/ONLYOFFICE/Docker-DocumentServer
-https://github.com/ONLYOFFICE/docker-onlyoffice-nextcloud
+# Onlyoffice
+
+References:
+- https://github.com/ONLYOFFICE/DocumentServer
+- https://github.com/ONLYOFFICE/Docker-DocumentServer
+- https://github.com/ONLYOFFICE/docker-onlyoffice-nextcloud
+
+# Storage setup
+
+```bash
+mkdir -p ./cloud/onlyoffice/pvc/env/
+cat <<EOF > ./cloud/onlyoffice/pvc/env/pvc.env
+postgresql=block
+postgresql_size=1Gi
+EOF
+```
+
+# Config setup
+
+Generate passwords and set up config.
+
+```bash
+mkdir -p ./cloud/onlyoffice/pvc/env/
+cat <<EOF > ./cloud/onlyoffice/env/postrgesql.env
+db_root_name=onlyoffice
+db_root_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
+db_name=onlyoffice
+EOF
+cat <<EOF > ./cloud/onlyoffice/env/api.env
+jwt_header=AuthorizationJwt
+jwt_secret=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
+EOF
+cat <<EOF > ./cloud/onlyoffice/env/public_domain.env
+# host used in ingress
+public_domain=onlyoffice.example.duckdns.org
+EOF
+```
 
 # Deploy
 
 ```bash
 kl create ns onlyoffice
-kl label ns --overwrite onlyoffice copy-wild-cert=main
 
-# Init once
-cat <<EOF > ./cloud/nextcloud/env/postrgesql.env
-db_root_name=onlyoffice
-db_root_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
-db_name=onlyoffice
-EOF
-# Init once
-cat <<EOF > ./cloud/nextcloud/env/api.env
-jwt_header=AuthorizationJwt
-jwt_secret=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
-EOF
-# Init once
-cat <<EOF > ./cloud/nextcloud/env/public_domain.env
-# host used in ingress
-public_domain=onlyoffice.example.duckdns.org
-EOF
-# Init once
-cat <<EOF > ./cloud/nextcloud/env/settings.env
-# set to value specified in ingress/manual-wildcard/<your-cert>
-wildcard_secret_name=main-wildcard-at-duckdns
-
-# Limit access from web, or leave empty
-# Comma-separated list of CIDRs
-ingress_allowed_sources=10.0.0.0/16,1.2.3.4,1.2.3.4
-EOF
+kl apply -k ./cloud/onlyoffice/pvc/
+kl -n onlyoffice get pvc
 
 kl apply -k ./cloud/onlyoffice/
+kl -n onlyoffice get pod
+
+kl label ns --overwrite onlyoffice copy-wild-cert=main
+kl apply -k ./cloud/onlyoffice/ingress-wildcard/
+kl -n onlyoffice get ingress
 ```
 
-# Error on nextcloud web-UI
+# Note on certificates
 
-Если документ просто не хочет открываться, хотя все работает — проблема может быть в сертификате.
-Если открыть страницу onlyoffice и сказать браузеру доверять сертификату, то может помочь.
+If you are using a staging certificate for onlyoffice,
+you may have troubles accessing it via nextcloud interface.
+
+Usually browsers ask you if trust staging certificate.
+But when you open open an onlyoffice frame inside nextcloud page
+the browser doesn't have a chance to ask you,
+so the download silently fails.
+
+A workaround is to open onlyoffice page directly and accept the certificate.
 
 # Run scripts
 

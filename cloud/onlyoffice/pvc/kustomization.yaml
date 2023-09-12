@@ -1,0 +1,37 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: onlyoffice
+
+resources:
+- postrges.yaml
+
+configMapGenerator:
+- name: onf-pvc
+  envs:
+  - env/pvc.env
+  options:
+    disableNameSuffixHash: true
+
+replacements:
+- source:
+    kind: ConfigMap
+    name: onf-pvc
+    fieldPath: data.postgresql
+  targets:
+  - select:
+      kind: PersistentVolumeClaim
+      name: postgresql
+    fieldPaths:
+    - spec.storageClassName
+- source:
+    kind: ConfigMap
+    name: onf-pvc
+    fieldPath: data.postgresql_size
+  targets:
+  - select:
+      kind: PersistentVolumeClaim
+      name: postgresql
+    fieldPaths:
+    - spec.resources.requests.storage
