@@ -18,15 +18,17 @@ logLocation="$profilePath/log"
 customConfigPrefix="$profilePath/qBittorrent/config/custom_config"
 fastresumePath="$profilePath/qBittorrent/data/BT_backup"
 
-echo updating .fastresume files...
 oldIncompletePath=$(cat "$customConfigPrefix"-incomplete) || true
 oldFinishedPath=$(cat "$customConfigPrefix"-finished) || true
-python3 "$parent_path"/update_fastresume.py \
-    --value 16:qBt-downloadPath "$oldIncompletePath" "$INCOMPLETE_FOLDER" \
-    --value 12:qBt-savePath "$oldFinishedPath" "$FINISHED_FOLDER" \
-    --value 9:save_path "$oldFinishedPath" "$FINISHED_FOLDER" \
-    --directory "$fastresumePath"
-echo updating .fastresume files done
+if [ ! -z "$oldIncompletePath" ] && [ ! -z "$oldIncompletePath" ]; then
+    echo updating .fastresume files...
+    python3 "$parent_path"/update_fastresume.py \
+        --value 16:qBt-downloadPath "$oldIncompletePath" "$INCOMPLETE_FOLDER" \
+        --value 12:qBt-savePath "$oldFinishedPath" "$FINISHED_FOLDER" \
+        --value 9:save_path "$oldFinishedPath" "$FINISHED_FOLDER" \
+        --directory "$fastresumePath"
+    echo updating .fastresume files done
+fi
 echo -n "$INCOMPLETE_FOLDER" > "$customConfigPrefix"-incomplete
 echo -n "$FINISHED_FOLDER" > "$customConfigPrefix"-finished
 
