@@ -34,20 +34,20 @@ Generate passwords and set up Nextcloud config.
 
 ```bash
 mkdir -p ./cloud/nextcloud/env/
-cat <<EOF > ./cloud/nextcloud/env/mariadb.env
+cat <<EOF > ./cloud/nextcloud/main-app/env/mariadb.env
 root_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 user_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 user_name=nextcloud
 db_name=nextcloud
 EOF
-cat <<EOF > ./cloud/nextcloud/env/nextcloud.env
+cat <<EOF > ./cloud/nextcloud/main-app/env/nextcloud.env
 admin_name=admin
 admin_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 EOF
-cat <<EOF > ./cloud/nextcloud/env/redis.env
+cat <<EOF > ./cloud/nextcloud/main-app/env/redis.env
 redis_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 EOF
-cat <<EOF > ./cloud/nextcloud/env/nextcloud.env
+cat <<EOF > ./cloud/nextcloud/main-app/env/nextcloud.env
 # Space-separated list of domaind. Wildcard is allowed in any place.
 # frontend.*.svc is required for onlyoffice integration
 trusted_domains=*.example.duckdns.org frontend.*.svc
@@ -64,7 +64,7 @@ kl create ns nextcloud
 kl apply -k ./cloud/nextcloud/pvc/
 kl -n nextcloud get pvc
 
-kl apply -k ./cloud/nextcloud/
+kl apply -k ./cloud/nextcloud/main-app/
 kl -n nextcloud get pod
 
 # ingress with wildcard certificate
