@@ -127,7 +127,7 @@ spec:
       - name: nextcloud
         image: docker.io/nextcloud:27.0.2-fpm
         ports:
-        - name: web
+        - name: php
           containerPort: 9000
         volumeMounts:
         - name: entrypoint
@@ -151,32 +151,25 @@ spec:
             memory: 100Mi
           limits:
             memory: 8Gi
-      # - name: healthcheck
-      #   # compiled manually from Dockerfile:
-      #   # FROM alpine:3.17.3
-      #   # RUN apk add --no-cache fcgi
-      #   # COPY ./php-fpm-healthcheck /usr/local/bin/
-      #   # Where php-fpm-healthcheck is from https://github.com/renatomefi/php-fpm-healthcheck
-      #   #
-      #   # Requires `pm.status_path = /status` in php-fpm config
-      #   image: docker.io/exampleexample/k8s-snippets:fpm-healthcheck
-      #   command:
-      #   - /bin/sh
-      #   - -c
-      #   - |
-      #     trap : TERM INT; sleep infinity & wait
-      #   resources:
-      #     requests:
-      #       memory: 10Mi
-      #     limits:
-      #       memory: 10Mi
-      #   readinessProbe:
-      #     failureThreshold: 2
-      #     periodSeconds: 10
-      #     successThreshold: 1
-      #     exec:
-      #       command:
-      #       - /usr/local/bin/php-fpm-healthcheck
+      - name: healthcheck
+        image: docker.io/daniluzlov/k8s-snippets:fpm-healthcheck-3.18.3
+        command:
+        - /bin/sh
+        - -c
+        - |
+          trap : TERM INT; sleep infinity & wait
+        resources:
+          requests:
+            memory: 10Mi
+          limits:
+            memory: 10Mi
+        readinessProbe:
+          failureThreshold: 2
+          periodSeconds: 10
+          successThreshold: 1
+          exec:
+            command:
+            - /usr/local/bin/php-fpm-healthcheck
       volumes:
       - name: entrypoint
         configMap:
@@ -210,6 +203,5 @@ spec:
     app: nextcloud
   ports:
   - name: php
-    protocol: TCP
     port: 9000
-    targetPort: 9000
+    targetPort: php
