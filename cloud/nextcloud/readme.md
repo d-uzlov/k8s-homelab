@@ -68,17 +68,16 @@ nextcloud_public_domain=$(kl -n nextcloud get ingress nextcloud -o go-template -
 kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ config:system:set trusted_domains 1 --value "${nextcloud_public_domain}"
 ```
 
-# Setup push notifications
-
-Nextcloud has push notifications but it requires additional configuration to work.
+# Uninstall
 
 ```bash
-nextcloud_public_domain=$(kl -n nextcloud get ingress nextcloud -o go-template --template="{{range .spec.rules}}{{.host}}{{end}}")
-kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ config:app:set notify_push base_endpoint --value="https://${nextcloud_public_domain}/push"
-kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ app:enable notify_push
+kl delete -k ./cloud/nextcloud/ingress-wildcard/
+kl delete -k ./cloud/nextcloud/main-app/
+kl delete -k ./cloud/nextcloud/pvc/
+kl delete ns nextcloud
 ```
 
-# Setup onlyoffice
+# Onlyoffice integration
 
 Nextcloud has integration with Onlyoffice app.
 You need to deploy [onlyoffice](../onlyoffice/readme.md)
@@ -93,14 +92,33 @@ kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ
 kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ app:enable onlyoffice
 ```
 
-# Uninstall
+# Push notifications
+
+Nextcloud has push notifications but it requires additional configuration to work.
 
 ```bash
-kl delete -k ./cloud/nextcloud/ingress-wildcard/
-kl delete -k ./cloud/nextcloud/main-app/
-kl delete -k ./cloud/nextcloud/pvc/
-kl delete ns nextcloud
+kl apply -k ./cloud/nextcloud/notifications/
+kl -n nextcloud get pod
+
+nextcloud_public_domain=$(kl -n nextcloud get ingress nextcloud -o go-template --template="{{range .spec.rules}}{{.host}}{{end}}")
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ config:app:set notify_push base_endpoint --value="https://${nextcloud_public_domain}/push"
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ app:enable notify_push
 ```
+
+You can run test commands to trigger push notifications manually:
+
+```bash
+# self-test
+php /var/www/html/occ notify_push:self-test
+# show number of connections and messages
+php /var/www/html/occ notify_push:metrics
+# send a test notifications to used with id "admin"
+php /var/www/html/occ notification:test-push admin
+```
+
+**Note**: Mobile app should register itself when connecting to server.
+If you sign out and login again then it seems like it doesn't.
+This can be fixed by clearing mobile app data.
 
 # Brute-force protection FAQ
 
@@ -132,24 +150,3 @@ Potentially interesting apps:
 - Full text search (requires external setup)
 - Notes
 - Recognize
-
-# Push notifications useful commands
-
-Nextcloud supports push notifications.
-Notifications should work both in web browsers and in the mobile app.
-
-Push notifications require an external setup to work.
-You can run test commands to check if you set it up correctly.
-
-```bash
-# self-test
-php /var/www/html/occ notify_push:self-test
-# show number of connections and messages
-php /var/www/html/occ notify_push:metrics
-# send a test notifications to used with id "admin"
-php /var/www/html/occ notification:test-push admin
-```
-
-**Note**: Mobile app should register itself when connecting to server.
-If you sign out and login again then it seems like it doesn't.
-This can be fixed by clearing mobile app data.
