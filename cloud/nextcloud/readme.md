@@ -64,14 +64,14 @@ kl apply -k ./cloud/nextcloud/ingress-wildcard/
 kl -n nextcloud get ingress
 
 # tell nextcloud to allow connections via ingress domain address
-nextcloud_public_domain=$(kl -n nextcloud get ingress nextcloud -o go-template --template="{{range .spec.rules}}{{.host}}{{end}}")
+nextcloud_public_domain=$(kl -n nextcloud get ingress nextcloud -o go-template --template "{{range .spec.rules}}{{.host}}{{end}}")
 kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ config:system:set trusted_domains 1 --value "${nextcloud_public_domain}"
 ```
 
 # Uninstall
 
 ```bash
-kl delete -k ./cloud/nextcloud/ingress-wildcard/
+kl delete -k ./cloud/nextcloud/notifications/
 kl delete -k ./cloud/nextcloud/main-app/
 kl delete -k ./cloud/nextcloud/pvc/
 kl delete ns nextcloud
@@ -100,8 +100,13 @@ Nextcloud has push notifications but it requires additional configuration to wor
 kl apply -k ./cloud/nextcloud/notifications/
 kl -n nextcloud get pod
 
-nextcloud_public_domain=$(kl -n nextcloud get ingress nextcloud -o go-template --template="{{range .spec.rules}}{{.host}}{{end}}")
-kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ config:app:set notify_push base_endpoint --value="https://${nextcloud_public_domain}/push"
+# ingress with wildcard certificate
+kl label ns --overwrite nextcloud copy-wild-cert=main
+kl apply -k ./cloud/nextcloud/notifications/ingress-wildcard/
+kl -n nextcloud get ingress
+
+nextcloud_push_domain=$(kl -n nextcloud get ingress push-notifications -o go-template --template="{{range .spec.rules}}{{.host}}{{end}}")
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ config:app:set notify_push base_endpoint --value "https://${nextcloud_push_domain}"
 kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ app:enable notify_push
 ```
 
@@ -109,11 +114,11 @@ You can run test commands to trigger push notifications manually:
 
 ```bash
 # self-test
-php /var/www/html/occ notify_push:self-test
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ notify_push:self-test
 # show number of connections and messages
-php /var/www/html/occ notify_push:metrics
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ notify_push:metrics
 # send a test notifications to used with id "admin"
-php /var/www/html/occ notification:test-push admin
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ notification:test-push admin
 ```
 
 **Note**: Mobile app should register itself when connecting to server.
@@ -128,11 +133,12 @@ You can reset this:
 
 ```bash
 # list throttled ips
-kl -n nextcloud exec deployments/mariadb -- mysql -u nextcloud -pnextcloud --database nextcloud -e "select * from oc_bruteforce_attempts;"
+db_password=$(kl -n nextcloud get secret -l nextcloud=passwords --template "{{range .items}}{{.data.mariadb_user_password}}{{end}}" | base64 --decode)
+kl -n nextcloud exec deployments/mariadb -c mariadb -- mysql -u nextcloud -p"$db_password" --database nextcloud -e "select * from oc_bruteforce_attempts;"
 # unblock an ip-address
-php /var/www/html/occ security:bruteforce:reset <ip-address>
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ security:bruteforce:reset <ip-address>
 # enable a disabled user
-php /var/www/html/occ user:enable <name of user>
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ user:enable <name of user>
 ```
 
 References:
