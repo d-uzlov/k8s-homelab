@@ -63,19 +63,34 @@ kl label ns --overwrite nextcloud copy-wild-cert=main
 kl apply -k ./cloud/nextcloud/ingress-wildcard/
 kl -n nextcloud get ingress
 
-# nextcloud needs you to set public domain in settings
+# tell nextcloud to allow connections via ingress domain address
 nextcloud_public_domain=$(kl -n nextcloud get ingress nextcloud -o go-template --template="{{range .spec.rules}}{{.host}}{{end}}")
 kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ config:system:set trusted_domains 1 --value "${nextcloud_public_domain}"
+```
+
+# Setup push notifications
+
+Nextcloud has push notifications but it requires additional configuration to work.
+
+```bash
+nextcloud_public_domain=$(kl -n nextcloud get ingress nextcloud -o go-template --template="{{range .spec.rules}}{{.host}}{{end}}")
 kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ config:app:set notify_push base_endpoint --value="https://${nextcloud_public_domain}/push"
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ app:enable notify_push
 ```
 
 # Setup onlyoffice
 
-TODO
+Nextcloud has integration with Onlyoffice app.
+You need to deploy [onlyoffice](../onlyoffice/readme.md)
+and configure connection settings to use it.
 
 ```bash
-kl label ns --overwrite nextcloud onlyoffice.replicator.io/api=
-kl label ns --overwrite nextcloud onlyoffice.replicator.io/public-domain=
+onlyoffice_public_domain=$(kl -n onlyoffice get ingress onlyoffice -o go-template --template="{{range .spec.rules}}{{.host}}{{end}}")
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ config:system:set onlyoffice DocumentServerUrl --value "https://${onlyoffice_public_domain}/"
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ config:system:set onlyoffice DocumentServerInternalUrl --value "http://onlyoffice.onlyoffice.svc/"
+onlyoffice_jwt_secret=$(kl -n onlyoffice get secret onlyoffice-api --template {{.data.jwt_secret}} | base64 --decode)
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ config:system:set onlyoffice jwt_secret --value "${onlyoffice_jwt_secret}"
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ app:enable onlyoffice
 ```
 
 # Uninstall
