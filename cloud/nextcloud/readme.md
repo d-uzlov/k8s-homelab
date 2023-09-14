@@ -65,7 +65,7 @@ kl -n nextcloud get ingress
 
 # tell nextcloud to allow connections via ingress domain address
 nextcloud_public_domain=$(kl -n nextcloud get ingress nextcloud -o go-template --template "{{range .spec.rules}}{{.host}}{{end}}")
-kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ config:system:set trusted_domains 1 --value "${nextcloud_public_domain}"
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ config:system:set trusted_domains 2 --value "${nextcloud_public_domain}"
 ```
 
 # Uninstall

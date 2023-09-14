@@ -17,26 +17,41 @@ spec:
     spec:
       securityContext:
         runAsUser: 33
-        runAsGroup: 65534
       initContainers:
       - name: download-cron
-        image: docker.io/alpine:3.17.3
+        image: docker.io/alpine:3.18.3
         command:
         - sh
         - -c
         - |
           trap : TERM INT
-          apk add curl &&
-          SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.2.24/supercronic-linux-amd64 &&
-          SUPERCRONIC=supercronic-linux-amd64 &&
-          SUPERCRONIC_SHA1SUM=6817299e04457e5d6ec4809c72ee13a43e95ba41 &&
-          curl -fsSLO "$SUPERCRONIC_URL" &&
-          echo "${SUPERCRONIC_SHA1SUM}  ${SUPERCRONIC}" | sha1sum -c - &&
-          chmod +x "$SUPERCRONIC" &&
-          mv "$SUPERCRONIC" "/mnt/cron/supercronic"
+          set -eu
+          cd /mnt/config
+          mkdir -p supercronic
+          cd supercronic
+          binary_path=supercronic
+          if [ -f "$binary_path" ] && echo "$sha1sum  $binary_path" | sha1sum -c -; then
+            chmod +x "$binary_path"
+            chown 33:33 "$binary_path"
+            echo supercronic binary already exists, exiting
+            exit 0
+          fi
+          apk add curl
+          rm -rf "$binary_path"
+          url="https://github.com/aptible/supercronic/releases/download/$VERSION/supercronic-linux-amd64"
+          curl -fsSL "$url" --output "$binary_path"
+          echo "$SHA1SUM  $binary_path" | sha1sum -c -
+          chmod +x "$binary_path"
+          chown 33:33 "$binary_path"
+          echo success!
+        env:
+        - name: VERSION
+          value: v0.2.26
+        - name: SHA1SUM
+          value: 7a79496cf8ad899b99a719355d4db27422396735
         volumeMounts:
-        - name: cron
-          mountPath: /mnt/cron
+        - name: config
+          mountPath: /mnt/config
         securityContext:
           runAsUser: 0
       - name: wait-filesystem-ready
@@ -49,18 +64,16 @@ spec:
           until nc -w 1 -z backend 9000 > /dev/null
           do
             echo $(date +"%Y-%m-%dT%H:%M:%S%z") Waiting...
-            sleep 1
+            sleep 1 & wait
           done
           echo connected to backend:9000 successfully!
       containers:
       - name: cron
         image: docker.io/nextcloud:27.0.2-fpm
         command:
-        - /mnt/cron/supercronic
+        - /var/www/html/config/supercronic/supercronic
         - /var/spool/cron/crontabs/www-data
         volumeMounts:
-        - name: cron
-          mountPath: /mnt/cron
         - name: web
           mountPath: /var/www/html
         - name: config
@@ -69,12 +82,10 @@ spec:
           mountPath: /mnt/user-data
         resources:
           requests:
-            memory: 100Mi
+            memory: 5Mi
           limits:
-            memory: 1Gi
+            memory: 100Mi
       volumes:
-      - name: cron
-        emptyDir:
       - name: web
         persistentVolumeClaim:
           claimName: web

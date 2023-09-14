@@ -22,6 +22,7 @@ echo "Setting custom config..."
 php /var/www/html/occ config:system:set loglevel --value 1 --type integer
 php /var/www/html/occ config:system:set localstorage.umask --value 0 --type integer
 php /var/www/html/occ config:system:set trusted_domains 0 --value 'frontend.*.svc'
+php /var/www/html/occ config:system:set trusted_domains 1 --value frontend
 
 php /var/www/html/occ config:system:set memcache.locking --value "\OC\Memcache\Redis"
 php /var/www/html/occ config:system:set memcache.distributed --value "\OC\Memcache\Redis"
