@@ -51,43 +51,37 @@ spec:
         - name: MYSQL_HOST
           value: db
         - name: MYSQL_USER
-          valueFrom:
-            secretKeyRef:
-              name: mariadb
-              key: user_name
+          value: nextcloud
         - name: MYSQL_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: mariadb
-              key: user_password
+              name: passwords
+              key: mariadb_user_password
         - name: MYSQL_DATABASE
-          valueFrom:
-            secretKeyRef:
-              name: mariadb
-              key: db_name
+          value: nextcloud
         - name: NEXTCLOUD_ADMIN_USER
           valueFrom:
             secretKeyRef:
-              name: nextcloud
+              name: passwords
               key: admin_name
         - name: NEXTCLOUD_ADMIN_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: nextcloud
+              name: passwords
               key: admin_password
         - name: NEXTCLOUD_DATA_DIR
           value: /mnt/user-data
         - name: TRUSTED_PROXIES
           valueFrom:
             configMapKeyRef:
-              name: settings
+              name: nextcloud
               key: trusted_proxies
         - name: NEXTCLOUD_INIT_HTACCESS
           value: 'true'
         - name: REDIS_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: redis
+              name: passwords
               key: redis_password
         - name: PHP_CONF_D_LOCATION
           value: /mnt/php-conf-d
@@ -155,14 +149,6 @@ spec:
         ports:
         - name: web
           containerPort: 9000
-        # env:
-        # - name: REDIS_HOST
-        #   value: redis
-        # - name: REDIS_PASSWORD
-        #   valueFrom:
-        #     secretKeyRef:
-        #       name: redis
-        #       key: redis_password
         volumeMounts:
         - name: entrypoint
           mountPath: /entrypoint.sh
@@ -182,10 +168,8 @@ spec:
           mountPath: /tmp
         resources:
           requests:
-            cpu: 0m
             memory: 100Mi
           limits:
-            cpu: 4
             memory: 8Gi
       # - name: healthcheck
       #   # compiled manually from Dockerfile:

@@ -33,21 +33,15 @@ EOF
 Generate passwords and set up config.
 
 ```bash
-mkdir -p ./cloud/nextcloud/env/
-cat <<EOF > ./cloud/nextcloud/main-app/env/mariadb.env
-root_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
-user_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
-user_name=nextcloud
-db_name=nextcloud
-EOF
-cat <<EOF > ./cloud/nextcloud/main-app/env/nextcloud.env
+mkdir -p ./cloud/nextcloud/main-app/env/
+cat <<EOF > ./cloud/nextcloud/main-app/env/passwords.env
+mariadb_root_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
+mariadb_user_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
+redis_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 admin_name=admin
 admin_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 EOF
-cat <<EOF > ./cloud/nextcloud/main-app/env/redis.env
-redis_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
-EOF
-cat <<EOF > ./cloud/nextcloud/main-app/env/settings.env
+cat <<EOF > ./cloud/nextcloud/main-app/env/nextcloud.env
 # k8s pod CIDR
 trusted_proxies=10.201.0.0/16
 EOF
