@@ -47,10 +47,7 @@ EOF
 cat <<EOF > ./cloud/nextcloud/main-app/env/redis.env
 redis_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 EOF
-cat <<EOF > ./cloud/nextcloud/main-app/env/nextcloud.env
-# Space-separated list of domaind. Wildcard is allowed in any place.
-# frontend.*.svc is required for onlyoffice integration
-trusted_domains=*.example.duckdns.org frontend.*.svc
+cat <<EOF > ./cloud/nextcloud/main-app/env/settings.env
 # k8s pod CIDR
 trusted_proxies=10.201.0.0/16
 EOF
@@ -72,8 +69,9 @@ kl label ns --overwrite nextcloud copy-wild-cert=main
 kl apply -k ./cloud/nextcloud/ingress-wildcard/
 kl -n nextcloud get ingress
 
-# setup push notifications
+# nextcloud needs you to set public domain in settings
 nextcloud_public_domain=$(kl -n nextcloud get ingress nextcloud -o go-template --template="{{range .spec.rules}}{{.host}}{{end}}")
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ config:system:set trusted_domains 1 --value "${nextcloud_public_domain}"
 kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ config:app:set notify_push base_endpoint --value="https://${nextcloud_public_domain}/push"
 ```
 

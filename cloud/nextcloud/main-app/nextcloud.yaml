@@ -36,7 +36,18 @@ spec:
           echo connected to db:3306 successfully!
       - name: install
         image: docker.io/nextcloud:26.0-fpm
+        command:
+        - bash
+        - -c
+        args:
+        - |
+          trap : TERM INT
+          umask 0
+          echo execing entrypoint...
+          exec /entrypoint.sh true
         env:
+        - name: NEXTCLOUD_UPDATE
+          value: '1'
         - name: MYSQL_HOST
           value: db
         - name: MYSQL_USER
@@ -66,11 +77,6 @@ spec:
               key: admin_password
         - name: NEXTCLOUD_DATA_DIR
           value: /mnt/user-data
-        - name: NEXTCLOUD_TRUSTED_DOMAINS
-          valueFrom:
-            configMapKeyRef:
-              name: settings
-              key: trusted_domains
         - name: TRUSTED_PROXIES
           valueFrom:
             configMapKeyRef:
@@ -78,16 +84,28 @@ spec:
               key: trusted_proxies
         - name: NEXTCLOUD_INIT_HTACCESS
           value: 'true'
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis
+              key: redis_password
+        - name: PHP_CONF_D_LOCATION
+          value: /mnt/php-conf-d
         volumeMounts:
-        - name: entrypoint
-          mountPath: /entrypoint.sh
-          subPath: entrypoint-install.sh
-        - name: entrypoint
-          mountPath: /entrypoint-post-install.sh
-          subPath: entrypoint-post-install.sh
-        - name: php-conf
+        - name: php-custom-conf
           mountPath: /usr/local/etc/php-fpm.d/zzz-custom.conf
           subPath: custom.conf.ini
+        - name: php-conf-d
+          mountPath: /mnt/php-conf-d
+        - name: entrypoint
+          mountPath: /docker-entrypoint-hooks.d/pre-installation/pre-install.sh
+          subPath: pre-install.sh
+        - name: entrypoint
+          mountPath: /docker-entrypoint-hooks.d/before-starting/init-php-conf.sh
+          subPath: init-php-conf.sh
+        - name: entrypoint
+          mountPath: /docker-entrypoint-hooks.d/before-starting/setup-env.sh
+          subPath: setup-env.sh
         - name: web
           mountPath: /var/www/html
         - name: user-data
@@ -101,11 +119,6 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
-        - name: REDIS_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: redis
-              key: redis_password
         - name: ONLYOFFICE_NAMESPACE
           value: onlyoffice
         - name: ONLYOFFICE_HEADER
@@ -129,7 +142,7 @@ spec:
         volumeMounts:
         - name: entrypoint
           mountPath: /entrypoint.sh
-          subPath: entrypoint-apps.sh
+          subPath: install-apps.sh
         - name: web
           mountPath: /var/www/html
         - name: config
@@ -142,13 +155,23 @@ spec:
         ports:
         - name: web
           containerPort: 9000
+        # env:
+        # - name: REDIS_HOST
+        #   value: redis
+        # - name: REDIS_PASSWORD
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: redis
+        #       key: redis_password
         volumeMounts:
         - name: entrypoint
           mountPath: /entrypoint.sh
-          subPath: entrypoint-run.sh
-        - name: php-conf
+          subPath: run.sh
+        - name: php-custom-conf
           mountPath: /usr/local/etc/php-fpm.d/zzz-custom.conf
           subPath: custom.conf.ini
+        - name: php-conf-d
+          mountPath: /usr/local/etc/php/conf.d
         - name: web
           mountPath: /var/www/html
         - name: config
@@ -197,7 +220,7 @@ spec:
         configMap:
           name: nextcloud-entrypoint
           defaultMode: 0555
-      - name: php-conf
+      - name: php-custom-conf
         configMap:
           name: php-conf
       - name: web
@@ -213,6 +236,8 @@ spec:
         emptyDir:
           medium: Memory
           sizeLimit: 1500Mi
+      - name: php-conf-d
+        emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
