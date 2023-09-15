@@ -25,7 +25,7 @@ spec:
         runAsUser: 0
       containers:
       - name: install
-        image: docker.io/onlyoffice/documentserver:7.3.3
+        image: docker.io/onlyoffice/documentserver:7.4.1.1
         ports:
         - name: http
           containerPort: 80
@@ -88,9 +88,9 @@ spec:
           mountPath: /var/lib/redis
         resources:
           requests:
-            memory: 100Mi
+            memory: 1024Mi
           limits:
-            memory: 1Gi
+            memory: 1500Mi
         startupProbe:
           httpGet:
             path: /index.html
@@ -98,9 +98,24 @@ spec:
             scheme: HTTP
           periodSeconds: 2
           timeoutSeconds: 1
-          successThreshold: 1
           # Onlyoffice startup is extremely slow
           failureThreshold: 240
+        livenessProbe:
+          httpGet:
+            path: /index.html
+            port: http
+            scheme: HTTP
+          periodSeconds: 2
+          timeoutSeconds: 1
+          failureThreshold: 10
+        readinessProbe:
+          httpGet:
+            path: /index.html
+            port: http
+            scheme: HTTP
+          periodSeconds: 2
+          timeoutSeconds: 1
+          failureThreshold: 1
       volumes:
       - name: delete
         emptyDir:

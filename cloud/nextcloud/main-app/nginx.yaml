@@ -20,7 +20,7 @@ spec:
         runAsGroup: 65534
       containers:
       - name: nginx
-        image: docker.io/nginx:1.23
+        image: docker.io/nginx:1.25.2
         ports:
         - name: http
           containerPort: 8080
@@ -32,14 +32,27 @@ spec:
           subPath: nginx.conf
         resources:
           requests:
-            memory: 100Mi
+            memory: 10Mi
           limits:
-            memory: 1Gi
+            memory: 100Mi
+        startupProbe:
+          failureThreshold: 10
+          periodSeconds: 1
+          timeoutSeconds: 1
+          httpGet:
+            path: /health
+            port: 8080
         livenessProbe:
-          initialDelaySeconds: 1
-          periodSeconds: 3
           failureThreshold: 5
-          successThreshold: 1
+          periodSeconds: 3
+          timeoutSeconds: 1
+          httpGet:
+            path: /health
+            port: 8080
+        readinessProbe:
+          failureThreshold: 2
+          periodSeconds: 3
+          timeoutSeconds: 1
           httpGet:
             path: /health
             port: 8080

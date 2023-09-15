@@ -22,7 +22,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
       - name: mariadb
-        image: docker.io/mariadb:10.9.5
+        image: docker.io/mariadb:11.1.2
         args:
         - --transaction-isolation=READ-COMMITTED
         - --log-bin=/mnt/binlog/binlog
@@ -54,41 +54,40 @@ spec:
         - mountPath: /mnt/binlog
           name: binlog
         startupProbe:
-          initialDelaySeconds: 1
-          periodSeconds: 5
+          failureThreshold: 60
+          periodSeconds: 1
           timeoutSeconds: 1
-          failureThreshold: 25
           exec:
             command:
             - /bin/bash
             - -ec
             - |
-              mysqladmin status -uroot -p"${MYSQL_ROOT_PASSWORD}"
+              healthcheck.sh --connect --innodb_initialized
         livenessProbe:
           failureThreshold: 5
           periodSeconds: 10
-          successThreshold: 1
+          timeoutSeconds: 1
           exec:
             command:
             - /bin/bash
             - -ec
             - |
-              mysqladmin status -uroot -p"${MYSQL_ROOT_PASSWORD}"
+              healthcheck.sh --connect --innodb_initialized
         readinessProbe:
           failureThreshold: 2
           periodSeconds: 10
-          successThreshold: 1
+          timeoutSeconds: 1
           exec:
             command:
             - /bin/bash
             - -ec
             - |
-              mysqladmin status -uroot -p"${MYSQL_ROOT_PASSWORD}"
+              healthcheck.sh --connect --innodb_initialized
         resources:
           requests:
-            memory: 100Mi
+            memory: 250Mi
           limits:
-            memory: 1Gi
+            memory: 500Mi
       - name: free-space-check
         image: docker.io/alpine:3.17.3
         command: ["/bin/sh", "-c", "trap : TERM INT; sleep infinity & wait"]

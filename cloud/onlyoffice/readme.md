@@ -5,6 +5,9 @@ References:
 - https://github.com/ONLYOFFICE/DocumentServer
 - https://github.com/ONLYOFFICE/Docker-DocumentServer
 - https://github.com/ONLYOFFICE/docker-onlyoffice-nextcloud
+- https://hub.docker.com/r/onlyoffice/documentserver/
+- https://hub.docker.com/_/postgres
+- https://hub.docker.com/_/rabbitmq
 
 # Storage setup
 
@@ -28,12 +31,7 @@ db_root_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 db_name=onlyoffice
 EOF
 cat <<EOF > ./cloud/onlyoffice/main-app/env/api.env
-jwt_header=AuthorizationJwt
 jwt_secret=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
-EOF
-cat <<EOF > ./cloud/onlyoffice/main-app/env/public_domain.env
-# host used in ingress
-public_domain=onlyoffice.example.duckdns.org
 EOF
 ```
 

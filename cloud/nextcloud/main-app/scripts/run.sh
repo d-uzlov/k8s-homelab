@@ -4,7 +4,7 @@ set -eu
 umask 0
 
 echo "Changing config dir permissions..."
-chmod +rw -R /var/www/html/config/*
+chmod +rw -R /var/www/html/config/* || true
 
 # check_data_directory_permissions allows occ and nextcloud to work when data dir is world-readable
 # check_data_directory_permissions can't be set via occ because it's a dependency loop

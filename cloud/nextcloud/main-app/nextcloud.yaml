@@ -148,9 +148,11 @@ spec:
           mountPath: /tmp
         resources:
           requests:
-            memory: 100Mi
+            memory: 500Mi
           limits:
-            memory: 8Gi
+            # php-fpm runs a lot of processes (configured via pm.max_children)
+            # each process can consume a lot of memory
+            memory: 1Gi
       - name: healthcheck
         image: docker.io/daniluzlov/k8s-snippets:fpm-healthcheck-3.18.3
         command:
@@ -163,10 +165,26 @@ spec:
             memory: 10Mi
           limits:
             memory: 10Mi
+        securityContext:
+          readOnlyRootFilesystem: true
+        startupProbe:
+          failureThreshold: 30
+          periodSeconds: 1
+          timeoutSeconds: 1
+          exec:
+            command:
+            - /usr/local/bin/php-fpm-healthcheck
         readinessProbe:
           failureThreshold: 2
-          periodSeconds: 10
-          successThreshold: 1
+          periodSeconds: 1
+          timeoutSeconds: 1
+          exec:
+            command:
+            - /usr/local/bin/php-fpm-healthcheck
+        livenessProbe:
+          failureThreshold: 5
+          periodSeconds: 1
+          timeoutSeconds: 1
           exec:
             command:
             - /usr/local/bin/php-fpm-healthcheck
@@ -188,9 +206,7 @@ spec:
         persistentVolumeClaim:
           claimName: config
       - name: tmp
-        emptyDir:
-          medium: Memory
-          sizeLimit: 1500Mi
+        emptyDir: {}
       - name: php-conf-d
         emptyDir: {}
 ---

@@ -4,6 +4,10 @@
 References:
 - https://github.com/nextcloud/docker
 - https://hub.docker.com/_/nextcloud/
+- https://github.com/aptible/supercronic
+- https://hub.docker.com/_/mariadb
+- https://hub.docker.com/_/nginx
+- https://chrismoore.ca/2018/10/finding-the-correct-pm-max-children-settings-for-php-fpm/
 
 # Storage setup
 
