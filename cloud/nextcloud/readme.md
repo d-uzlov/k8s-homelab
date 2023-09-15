@@ -59,9 +59,6 @@ kl create ns nextcloud
 kl apply -k ./cloud/nextcloud/pvc/
 kl -n nextcloud get pvc
 
-kl apply -k ./cloud/nextcloud/main-app/
-kl -n nextcloud get pod
-
 # ingress with wildcard certificate
 kl label ns --overwrite nextcloud copy-wild-cert=main
 kl apply -k ./cloud/nextcloud/ingress-wildcard/
@@ -69,7 +66,10 @@ kl -n nextcloud get ingress
 
 # tell nextcloud to allow connections via ingress domain address
 nextcloud_public_domain=$(kl -n nextcloud get ingress nextcloud -o go-template --template "{{range .spec.rules}}{{.host}}{{end}}")
-kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ config:system:set trusted_domains 2 --value "${nextcloud_public_domain}"
+kl -n nextcloud create configmap public-domain --from-literal public_domain="$nextcloud_public_domain" -o yaml --dry-run=client | kl apply -f -
+
+kl apply -k ./cloud/nextcloud/main-app/
+kl -n nextcloud get pod
 ```
 
 # Uninstall
@@ -90,7 +90,6 @@ and configure connection settings to use it.
 ```bash
 onlyoffice_public_domain=$(kl -n onlyoffice get ingress onlyoffice -o go-template --template="{{range .spec.rules}}{{.host}}{{end}}")
 kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ config:system:set onlyoffice DocumentServerUrl --value "https://${onlyoffice_public_domain}/"
-kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ config:system:set onlyoffice DocumentServerInternalUrl --value "http://onlyoffice.onlyoffice.svc/"
 onlyoffice_jwt_secret=$(kl -n onlyoffice get secret onlyoffice-api --template {{.data.jwt_secret}} | base64 --decode)
 kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ config:system:set onlyoffice jwt_secret --value "${onlyoffice_jwt_secret}"
 kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ app:enable onlyoffice

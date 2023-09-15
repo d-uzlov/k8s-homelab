@@ -26,12 +26,10 @@ spec:
         - |
           trap : TERM INT
           set -eu
-          cd /mnt/config
-          mkdir -p supercronic
-          cd supercronic
+          cd /mnt/save-path/
           binary_path=supercronic
           if [ -f "$binary_path" ] && echo "$sha1sum  $binary_path" | sha1sum -c -; then
-            chmod +x "$binary_path"
+            chmod 777 "$binary_path"
             chown 33:33 "$binary_path"
             echo supercronic binary already exists, exiting
             exit 0
@@ -41,7 +39,7 @@ spec:
           url="https://github.com/aptible/supercronic/releases/download/$VERSION/supercronic-linux-amd64"
           curl -fsSL "$url" --output "$binary_path"
           echo "$SHA1SUM  $binary_path" | sha1sum -c -
-          chmod +x "$binary_path"
+          chmod 777 "$binary_path"
           chown 33:33 "$binary_path"
           echo success!
         env:
@@ -50,8 +48,9 @@ spec:
         - name: SHA1SUM
           value: 7a79496cf8ad899b99a719355d4db27422396735
         volumeMounts:
-        - name: config
-          mountPath: /mnt/config
+        - name: web
+          mountPath: /mnt/save-path
+          subPath: _
         securityContext:
           runAsUser: 0
       - name: wait-filesystem-ready
@@ -71,7 +70,7 @@ spec:
       - name: cron
         image: docker.io/nextcloud:27.0.2-fpm
         command:
-        - /var/www/html/config/supercronic/supercronic
+        - /var/www/html/_/supercronic
         - /var/spool/cron/crontabs/www-data
         volumeMounts:
         - name: web

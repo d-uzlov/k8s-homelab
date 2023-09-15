@@ -12,6 +12,7 @@ if [ ! -d "/var/www/html/custom_apps/onlyoffice/" ]; then
   php /var/www/html/occ config:app:set onlyoffice customizationFeedback --value false
   php /var/www/html/occ config:system:set onlyoffice StorageUrl --value "http://frontend.${NAMESPACE}.svc/"
   php /var/www/html/occ config:system:set onlyoffice jwt_header --value AuthorizationJwt
+  php /var/www/html/occ config:system:set onlyoffice DocumentServerInternalUrl --value "http://onlyoffice.onlyoffice.svc/"
 
   echo if you want to use onlyoffice app you need to enable it manually
   php /var/www/html/occ app:disable onlyoffice
