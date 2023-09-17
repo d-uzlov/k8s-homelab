@@ -1,0 +1,272 @@
+---
+
+nameOverride: kps
+fullnameOverride: kps
+
+crds:
+  enabled: true
+
+defaultRules:
+  create: true
+  rules:
+    alertmanager: true
+    etcd: true
+    configReloaders: true
+    general: true
+    k8s: true
+    kubeApiserverAvailability: true
+    kubeApiserverBurnrate: true
+    kubeApiserverHistogram: true
+    kubeApiserverSlos: true
+    kubeControllerManager: true
+    kubelet: true
+    kubeProxy: true
+    kubePrometheusGeneral: true
+    kubePrometheusNodeRecording: true
+    kubernetesApps: true
+    kubernetesResources: true
+    kubernetesStorage: true
+    kubernetesSystem: true
+    kubeSchedulerAlerting: true
+    kubeSchedulerRecording: true
+    kubeStateMetrics: true
+    network: true
+    node: true
+    nodeExporterAlerting: true
+    nodeExporterRecording: true
+    prometheus: true
+    prometheusOperator: true
+    windows: true
+
+alertmanager:
+  enabled: true
+  ingress:
+    enabled: false
+  serviceMonitor:
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_pod_node_name]
+      separator: ;
+      regex: ^(.*)$
+      targetLabel: nodename
+      replacement: $1
+      action: replace
+
+grafana:
+  enabled: true
+  # defaultDashboardsEnabled: true
+  defaultDashboardsTimezone: browser
+  # admin:
+  #   existingSecret: grafana-admin-credentials
+  #   userKey: admin-user
+  #   passwordKey: admin-password
+  serviceMonitor:
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_pod_node_name]
+      separator: ;
+      regex: ^(.*)$
+      targetLabel: nodename
+      replacement: $1
+      action: replace
+
+kubeApiServer:
+  enabled: true
+  tlsConfig:
+    serverName: kubernetes
+    insecureSkipVerify: false
+  serviceMonitor:
+    relabelings:
+    - sourceLabels:
+        - __meta_kubernetes_namespace
+        - __meta_kubernetes_service_name
+        - __meta_kubernetes_endpoint_port_name
+      action: keep
+      regex: default;kubernetes;https
+    - targetLabel: __address__
+      replacement: kubernetes.default.svc:443
+
+kubelet:
+  enabled: true
+  serviceMonitor:
+    metricRelabelings:
+    cAdvisorRelabelings:
+    - action: replace
+      sourceLabels: [__metrics_path__]
+      targetLabel: metrics_path
+    - sourceLabels: [__meta_kubernetes_pod_node_name]
+      separator: ;
+      regex: ^(.*)$
+      targetLabel: nodename
+      replacement: $1
+      action: replace
+    probesRelabelings:
+    - action: replace
+      sourceLabels: [__metrics_path__]
+      targetLabel: metrics_path
+    - sourceLabels: [__meta_kubernetes_pod_node_name]
+      separator: ;
+      regex: ^(.*)$
+      targetLabel: nodename
+      replacement: $1
+      action: replace
+    resourceRelabelings:
+    - action: replace
+      sourceLabels: [__metrics_path__]
+      targetLabel: metrics_path
+    - sourceLabels: [__meta_kubernetes_pod_node_name]
+      separator: ;
+      regex: ^(.*)$
+      targetLabel: nodename
+      replacement: $1
+      action: replace
+    relabelings:
+    - action: replace
+      sourceLabels: [__metrics_path__]
+      targetLabel: metrics_path
+    - sourceLabels: [__meta_kubernetes_pod_node_name]
+      separator: ;
+      regex: ^(.*)$
+      targetLabel: nodename
+      replacement: $1
+      action: replace
+
+kubeControllerManager:
+  enabled: true
+  serviceMonitor:
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_pod_node_name]
+      separator: ;
+      regex: ^(.*)$
+      targetLabel: nodename
+      replacement: $1
+      action: replace
+
+coreDns:
+  enabled: true
+  serviceMonitor:
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_pod_node_name]
+      separator: ;
+      regex: ^(.*)$
+      targetLabel: nodename
+      replacement: $1
+      action: replace
+
+kubeDns:
+  enabled: false
+
+kubeEtcd:
+  enabled: true
+  service:
+    enabled: true
+    port: 2379
+    targetPort: 2379
+  serviceMonitor:
+    scheme: https
+    insecureSkipVerify: false
+    serverName: localhost
+    caFile: /etc/prometheus/secrets/etcd-client-cert/ca.crt
+    certFile: /etc/prometheus/secrets/etcd-client-cert/healthcheck-client.crt
+    keyFile: /etc/prometheus/secrets/etcd-client-cert/healthcheck-client.key
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_pod_node_name]
+      separator: ;
+      regex: ^(.*)$
+      targetLabel: nodename
+      replacement: $1
+      action: replace
+
+kubeScheduler:
+  enabled: true
+  serviceMonitor:
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_pod_node_name]
+      separator: ;
+      regex: ^(.*)$
+      targetLabel: nodename
+      replacement: $1
+      action: replace
+
+kubeProxy:
+  enabled: true
+
+kubeStateMetrics:
+  enabled: true
+
+kube-state-metrics:
+  enabled: true
+  fullnameOverride: kube-state-metrics
+  selfMonitor:
+    enabled: true
+  prometheus:
+    monitor:
+      enabled: true
+      relabelings:
+      - sourceLabels: [__meta_kubernetes_pod_node_name]
+        separator: ;
+        regex: ^(.*)$
+        targetLabel: nodename
+        replacement: $1
+        action: replace
+
+nodeExporter:
+  enabled: true
+
+prometheus-node-exporter:
+  # fullnameOverride: node-exporter
+  # podLabels:
+  #   jobLabel: node-exporter
+  # extraArgs:
+  #   - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|var/lib/docker/.+|var/lib/kubelet/.+)($|/)
+  #   - --collector.filesystem.fs-types-exclude=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs)$
+  # service:
+  #   portName: http-metrics
+  prometheus:
+    monitor:
+      enabled: true
+      relabelings:
+      - sourceLabels: [__meta_kubernetes_pod_node_name]
+        separator: ;
+        regex: ^(.*)$
+        targetLabel: nodename
+        replacement: $1
+        action: replace
+
+prometheusOperator:
+  enabled: true
+  serviceMonitor:
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_pod_node_name]
+      separator: ;
+      regex: ^(.*)$
+      targetLabel: nodename
+      replacement: $1
+      action: replace
+
+prometheus:
+  enabled: true
+  prometheusSpec:
+    scrapeInterval: 5s
+    disableCompaction: false
+    replicas: 1
+    retention: 10y
+    enableAdminAPI: true
+    secrets: ['etcd-client-cert']
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: fast
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 50Gi
+  serviceMonitor:
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_pod_node_name]
+      separator: ;
+      regex: ^(.*)$
+      targetLabel: nodename
+      replacement: $1
+      action: replace
+
+thanosRuler:
+  enabled: false
