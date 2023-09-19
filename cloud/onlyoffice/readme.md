@@ -57,7 +57,7 @@ If you are using a staging certificate for onlyoffice,
 you may have troubles accessing it via nextcloud interface.
 
 Usually browsers ask you if trust staging certificate.
-But when you open open an onlyoffice frame inside nextcloud page
+But when you open an onlyoffice frame inside nextcloud page
 the browser doesn't have a chance to ask you,
 so the download silently fails.
 

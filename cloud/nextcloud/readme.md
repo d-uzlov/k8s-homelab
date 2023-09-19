@@ -89,15 +89,15 @@ and configure connection settings to use it.
 
 ```bash
 onlyoffice_public_domain=$(kl -n onlyoffice get ingress onlyoffice -o go-template --template="{{range .spec.rules}}{{.host}}{{end}}")
-kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ config:system:set onlyoffice DocumentServerUrl --value "https://${onlyoffice_public_domain}/"
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ config:system:set onlyoffice DocumentServerUrl --value "https://${onlyoffice_public_domain}/"
 onlyoffice_jwt_secret=$(kl -n onlyoffice get secret onlyoffice-api --template {{.data.jwt_secret}} | base64 --decode)
-kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ config:system:set onlyoffice jwt_secret --value "${onlyoffice_jwt_secret}"
-kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ app:enable onlyoffice
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ config:system:set onlyoffice jwt_secret --value "${onlyoffice_jwt_secret}"
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ app:enable onlyoffice
 ```
 
 # Push notifications
 
-Nextcloud has push notifications but it requires additional configuration to work.
+Nextcloud has push notifications system but it requires additional configuration to work.
 
 ```bash
 kl apply -k ./cloud/nextcloud/notifications/
@@ -109,19 +109,19 @@ kl apply -k ./cloud/nextcloud/notifications/ingress-wildcard/
 kl -n nextcloud get ingress
 
 nextcloud_push_domain=$(kl -n nextcloud get ingress push-notifications -o go-template --template="{{range .spec.rules}}{{.host}}{{end}}")
-kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ config:app:set notify_push base_endpoint --value "https://${nextcloud_push_domain}"
-kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ app:enable notify_push
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ config:app:set notify_push base_endpoint --value "https://${nextcloud_push_domain}"
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ app:enable notify_push
 ```
 
 You can run test commands to trigger push notifications manually:
 
 ```bash
 # self-test
-kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ notify_push:self-test
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ notify_push:self-test
 # show number of connections and messages
-kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ notify_push:metrics
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ notify_push:metrics
 # send a test notifications to used with id "admin"
-kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ notification:test-push admin
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ notification:test-push admin
 ```
 
 **Note**: Mobile app should register itself when connecting to server.
@@ -139,9 +139,9 @@ You can reset this:
 db_password=$(kl -n nextcloud get secret -l nextcloud=passwords --template "{{range .items}}{{.data.mariadb_user_password}}{{end}}" | base64 --decode)
 kl -n nextcloud exec deployments/mariadb -c mariadb -- mysql -u nextcloud -p"$db_password" --database nextcloud -e "select * from oc_bruteforce_attempts;"
 # unblock an ip-address
-kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ security:bruteforce:reset <ip-address>
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ security:bruteforce:reset <ip-address>
 # enable a disabled user
-kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php /var/www/html/occ user:enable <name of user>
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ user:enable <name of user>
 ```
 
 References:

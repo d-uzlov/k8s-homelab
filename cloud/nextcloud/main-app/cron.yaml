@@ -18,6 +18,21 @@ spec:
       securityContext:
         runAsUser: 33
       initContainers:
+      # we need to wait before downloading the file,
+      # because nextcloud could delete files during installation
+      - name: wait-filesystem-ready
+        image: busybox
+        command:
+        - sh
+        - -c
+        - |
+          trap : TERM INT
+          until nc -w 1 -z backend 9000 > /dev/null
+          do
+            echo $(date +"%Y-%m-%dT%H:%M:%S%z") Waiting...
+            sleep 1 & wait
+          done
+          echo connected to backend:9000 successfully!
       - name: download-cron
         image: docker.io/alpine:3.18.3
         command:
@@ -53,19 +68,6 @@ spec:
           subPath: _
         securityContext:
           runAsUser: 0
-      - name: wait-filesystem-ready
-        image: busybox
-        command:
-        - sh
-        - -c
-        - |
-          trap : TERM INT
-          until nc -w 1 -z backend 9000 > /dev/null
-          do
-            echo $(date +"%Y-%m-%dT%H:%M:%S%z") Waiting...
-            sleep 1 & wait
-          done
-          echo connected to backend:9000 successfully!
       containers:
       - name: cron
         image: docker.io/nextcloud:27.0.2-fpm

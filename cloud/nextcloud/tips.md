@@ -69,11 +69,11 @@ or if external storages which do not support streaming are in use.
 
 ```bash
 # list all commands
-php /var/www/html/occ list
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ list
 # show current config for all apps
-kl -n nextcloud exec deployments/nextcloud -it -- php /var/www/html/occ config:list > config-list.json
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ config:list > config-list.json
 # show current config for onlyoffice
-kl -n nextcloud exec deployments/nextcloud -it -- php /var/www/html/occ config:list onlyoffice
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ config:list onlyoffice
 ```
 
 # TODO
