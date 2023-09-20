@@ -6,3 +6,32 @@ namespace: ubiquiti
 
 resources:
 - config.yaml
+
+configMapGenerator:
+- name: unifi-pvc
+  envs:
+  - env/pvc.env
+  options:
+    disableNameSuffixHash: true
+
+replacements:
+- source:
+    kind: ConfigMap
+    name: unifi-pvc
+    fieldPath: data.config
+  targets:
+  - select:
+      kind: PersistentVolumeClaim
+      name: config
+    fieldPaths:
+    - spec.storageClassName
+- source:
+    kind: ConfigMap
+    name: unifi-pvc
+    fieldPath: data.config_size
+  targets:
+  - select:
+      kind: PersistentVolumeClaim
+      name: config
+    fieldPaths:
+    - spec.resources.requests.storage

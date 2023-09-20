@@ -15,6 +15,7 @@ spec:
         app: unifi
     spec:
       securityContext:
+        # folders in the image are owned by user 102:103
         runAsUser: 102
         runAsGroup: 103
       containers:
@@ -23,35 +24,68 @@ spec:
         command:
         - /entrypoint.sh
         ports:
-        - containerPort: 8443
+        - name: web-https
+          containerPort: 8443
         - containerPort: 3478
           protocol: UDP
         - containerPort: 10001
           protocol: UDP
         - containerPort: 8080
-        - containerPort: 1900 #optional
-          protocol: UDP
-        - containerPort: 8843 #optional
-        - containerPort: 8880 #optional
-        - containerPort: 6789 #optional
-        - containerPort: 5514 #optional
-          protocol: UDP
-        # securityContext:
-        #   readOnlyRootFilesystem: true
-        env: []
+        # - containerPort: 1900 #optional
+        #   protocol: UDP
+        # - containerPort: 8843 #optional
+        # - containerPort: 8880 #optional
+        # - containerPort: 6789 #optional
+        # - containerPort: 5514 #optional
+        #   protocol: UDP
+        env:
+        - name: MEM_STARTUP
+          value: '32'
+        - name: MEM_LIMIT
+          value: '128'
         resources:
           requests:
-            memory: 50Mi
+            memory: 500Mi
           limits:
-            memory: 1000Mi
+            memory: 700Mi
         volumeMounts:
         - name: entrypoint
           mountPath: /entrypoint.sh
           subPath: entrypoint.sh
         - name: config
-          mountPath: /config
+          mountPath: /usr/lib/unifi/data
+          subPath: data
+        - name: config
+          mountPath: /usr/lib/unifi/logs
+          subPath: logs
+        # - name: config
+        #   mountPath: /usr/lib/unifi/run
         # - name: run
         #   mountPath: /run
+        startupProbe:
+          httpGet:
+            path: /
+            port: web-https
+            scheme: HTTPS
+          periodSeconds: 1
+          timeoutSeconds: 1
+          failureThreshold: 30
+        livenessProbe:
+          httpGet:
+            path: /
+            port: web-https
+            scheme: HTTPS
+          periodSeconds: 1
+          timeoutSeconds: 1
+          failureThreshold: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: web-https
+            scheme: HTTPS
+          periodSeconds: 1
+          timeoutSeconds: 1
+          failureThreshold: 1
       volumes:
       - name: entrypoint
         configMap:
@@ -60,40 +94,15 @@ spec:
       - name: config
         persistentVolumeClaim:
           claimName: config
-      - name: run
-        emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: unifi
+  name: web
 spec:
-  type: LoadBalancer
-  loadBalancerIP: 10.0.3.18
-  allocateLoadBalancerNodePorts: false
-  externalTrafficPolicy: Cluster
   selector:
     app: unifi
   ports:
-  - name: '8443'
+  - name: https
     port: 8443
-  - name: '3478'
-    port: 3478
-    protocol: UDP
-  - name: '10001'
-    port: 10001
-    protocol: UDP
-  - name: '8080'
-    port: 8080
-  - name: '1900'
-    port: 1900 #optional
-    protocol: UDP
-  - name: '8843'
-    port: 8843 #optional
-  - name: '8880'
-    port: 8880 #optional
-  - name: '6789'
-    port: 6789 #optional
-  - name: '5514'
-    port: 5514 #optional
-    protocol: UDP
+    targetPort: web-https

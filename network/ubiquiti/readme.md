@@ -1,4 +1,10 @@
 
+# unifi controller
+
+References:
+- https://hub.docker.com/r/linuxserver/unifi-controller
+- https://hub.docker.com/r/linuxserver/unifi-network-application
+
 # L3 adoption
 
 When unify controller is not in the same L2 network,
@@ -14,6 +20,35 @@ which means you will still need to use `unify` address for initial connection.
 
 References:
 - https://help.ui.com/hc/en-us/articles/204909754-UniFi-Device-Adoption-Methods-for-Remote-UniFi-Controllers
+
+# SSH adoption
+
+- `ssh ubnt@10.0.1.0`
+- - Replace IP with your value
+- - default password is `ubnt`
+- Run: `set-inform http://unify:8080/inform`
+- - here `unify` is a DNS record that points to the controller
+- - replace it with another appropriate record or with IP address
+- Go to controller web-ui -> `System Log` -> `<name> is ready for adoption. Click to adopt it`
+
+# Deploy
+
+```bash
+kl create ns ubiquiti
+
+kl apply -k ./network/ubiquiti/loadbalancer/
+kl -n ubiquiti get svc
+
+kl label ns --overwrite ubiquiti copy-wild-cert=main
+kl apply -k ./network/ubiquiti/ingress-wildcard/
+kl -n ubiquiti get ingress
+
+kl apply -k ./network/ubiquiti/pvc/
+kl -n ubiquiti get pvc
+
+kl apply -k ./network/ubiquiti/
+kl -n ubiquiti get pod
+```
 
 # Run temporary controller locally
 
