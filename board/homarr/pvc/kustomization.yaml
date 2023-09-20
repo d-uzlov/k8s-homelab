@@ -1,0 +1,37 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: homarr
+
+resources:
+- config.yaml
+
+configMapGenerator:
+- name: homarr-pvc
+  envs:
+  - env/pvc.env
+  options:
+    disableNameSuffixHash: true
+
+replacements:
+- source:
+    kind: ConfigMap
+    name: homarr-pvc
+    fieldPath: data.config
+  targets:
+  - select:
+      kind: PersistentVolumeClaim
+      name: config
+    fieldPaths:
+    - spec.storageClassName
+- source:
+    kind: ConfigMap
+    name: homarr-pvc
+    fieldPath: data.config_size
+  targets:
+  - select:
+      kind: PersistentVolumeClaim
+      name: config
+    fieldPaths:
+    - spec.resources.requests.storage

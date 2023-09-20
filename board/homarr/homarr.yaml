@@ -1,0 +1,53 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: homarr
+spec:
+  selector:
+    matchLabels:
+      app: homarr
+  template:
+    metadata:
+      labels:
+        app: homarr
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+      - name: homarr
+        image: ghcr.io/ajnart/homarr:0.13.4
+        ports:
+        - name: http
+          containerPort: 7575
+        volumeMounts:
+        - name: config
+          mountPath: /app/data/configs
+          subPath: configs
+        - name: config
+          mountPath: /app/public/icons
+          subPath: icons
+        resources:
+          requests:
+            memory: 100Mi
+          limits:
+            memory: 1Gi
+      volumes:
+      - name: config
+        persistentVolumeClaim:
+          claimName: config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: homarr
+spec:
+  selector:
+    app: homarr
+  ports:
+  - name: http
+    port: 7575
+    targetPort: http
