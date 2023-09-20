@@ -68,7 +68,7 @@ kl delete -k ./ingress/dns-k8s-gateway/
 kl delete ns exdns
 ```
 
-# Rerouting setup
+# DNS re-routing setup
 
 I use OPNSense with Unbound DNS plugin.
 
@@ -78,3 +78,15 @@ pointing to load balancer address of `exdns-k8s-gateway` service.
 
 If you add `example.com` then all `*.example.com` requests
 will be redirected to this deployment.
+
+# Coredns setup for ingress loopback
+
+When using LAN-local IPs in LAN DNS server there may be connectivity issues
+when some workload inside the cluster tries to connect to exposed service.
+
+For ingress you can fix it by editing coredns config
+
+- Open the config: `kl -n kube-system edit cm coredns`
+- Insert a line before line with `kubernetes` plugin:
+- - `rewrite name regex (.+)\.example\.duckdns\.org nginx-controller.ingress-nginx.svc.cluster.local answer auto`
+- - Replace `example\.duckdns\.org` with your domain
