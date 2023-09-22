@@ -38,3 +38,18 @@ kl label ns --overwrite jellyfin copy-wild-cert=main
 kl apply -k ./video/jellyfin/ingress-wildcard/
 kl -n jellyfin get ingress
 ```
+
+# Checking hardware capabilities on intel
+
+```bash
+sudo cat /sys/kernel/debug/dri/0/gt0/uc/guc_info
+sudo cat /sys/kernel/debug/dri/0/gt0/uc/huc_info
+```
+
+# Enable hardware transcoding
+
+By default hardware decoding and encoding is disabled.
+
+You can go to `Dashboard` -> `Playback` to enable it.
+
+VAAPI is a semi-universal API supported by both AMD and Intel but not by NVidia.
