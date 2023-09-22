@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jellyfin
+spec:
+  selector:
+    matchLabels:
+      app: jellyfin
+  template:
+    metadata:
+      labels:
+        app: jellyfin
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+      - name: jellyfin
+        image: docker.io/jellyfin/jellyfin:10.8.10
+        ports:
+        - name: http
+          containerPort: 8096
+        # securityContext:
+        #   readOnlyRootFilesystem: true
+        resources:
+          requests:
+            memory: 850Mi
+          # limits:
+          #   gpu.intel.com/i915: 1
+        volumeMounts:
+        - name: config
+          mountPath: /config
+        - name: media
+          mountPath: /media
+        - name: tmp
+          mountPath: /cache
+          subPath: cache
+        - name: tmp
+          mountPath: /transcode
+          subPath: transcode
+      volumes:
+      - name: config
+        persistentVolumeClaim:
+          claimName: config
+      - name: tmp
+        emptyDir: {}
+      - name: media
+        persistentVolumeClaim:
+          claimName: torrent
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jellyfin
+spec:
+  selector:
+    app: jellyfin
+  ports:
+  - name: http
+    port: 80
+    targetPort: http

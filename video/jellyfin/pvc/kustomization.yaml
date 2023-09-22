@@ -1,0 +1,58 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: jellyfin
+
+resources:
+- config.yaml
+- torrent.yaml
+
+configMapGenerator:
+- name: jellyfin-pvc
+  envs:
+  - env/pvc.env
+  options:
+    disableNameSuffixHash: true
+
+replacements:
+- source:
+    kind: ConfigMap
+    name: jellyfin-pvc
+    fieldPath: data.config
+  targets:
+  - select:
+      kind: PersistentVolumeClaim
+      name: config
+    fieldPaths:
+    - spec.storageClassName
+- source:
+    kind: ConfigMap
+    name: jellyfin-pvc
+    fieldPath: data.config_size
+  targets:
+  - select:
+      kind: PersistentVolumeClaim
+      name: config
+    fieldPaths:
+    - spec.resources.requests.storage
+- source:
+    kind: ConfigMap
+    name: jellyfin-pvc
+    fieldPath: data.torrent
+  targets:
+  - select:
+      kind: PersistentVolumeClaim
+      name: torrent
+    fieldPaths:
+    - spec.storageClassName
+- source:
+    kind: ConfigMap
+    name: jellyfin-pvc
+    fieldPath: data.torrent_size
+  targets:
+  - select:
+      kind: PersistentVolumeClaim
+      name: torrent
+    fieldPaths:
+    - spec.resources.requests.storage
