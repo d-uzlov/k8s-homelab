@@ -23,7 +23,7 @@ helm show values kubelet-csr-approver/kubelet-csr-approver > ./metrics/kubelet-c
 helm template \
   csr-approver \
   kubelet-csr-approver/kubelet-csr-approver \
-  --version 1.0.4 \
+  --version 1.0.5 \
   --values ./metrics/kubelet-csr-approver/values.yaml \
   --namespace csr-approver \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' \

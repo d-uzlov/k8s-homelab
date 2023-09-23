@@ -1,9 +1,32 @@
 
-https://github.com/kubernetes-csi/csi-driver-nfs
-
 # NFS CSI
 
 This is s CSI plugin that can connect pods to remote NFS server.
+
+References:
+- https://github.com/kubernetes-csi/csi-driver-nfs
+
+# Generate config
+
+You only need to do this if you change `values.yaml` file.
+
+```bash
+helm repo add csi-driver-nfs https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts/
+helm repo update csi-driver-nfs
+helm search repo csi-driver-nfs/csi-driver-nfs --versions --devel | head
+helm show values csi-driver-nfs/csi-driver-nfs > ./storage/nfs-csi/default-values.yaml
+```
+
+```bash
+helm template \
+  csi-nfs \
+  csi-driver-nfs/csi-driver-nfs \
+  --version v4.4.0 \
+  --values ./storage/nfs-csi/values.yaml \
+  --namespace pv-nfs \
+  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' \
+  > ./storage/nfs-csi/nfs-csi.gen.yaml
+```
 
 # Deploy
 

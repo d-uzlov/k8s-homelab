@@ -1,0 +1,80 @@
+
+nameOverride: csi-nfs
+
+driver:
+  name: nfs.csi.k8s.io
+  mountPermissions: 0
+
+feature:
+  enableFSGroupPolicy: true
+  enableInlineVolume: false
+
+controller:
+  name: csi-nfs-controller
+  replicas: 1
+  strategyType: Recreate
+  runOnMaster: false
+  runOnControlPlane: false
+  defaultOnDeletePolicy: delete  # available values: delete, retain
+  affinity: {}
+  nodeSelector: {}
+  resources:
+    csiProvisioner:
+      requests:
+        cpu: 0m
+        memory: 25Mi
+      limits:
+        memory: 35Mi
+    csiSnapshotter:
+      requests:
+        cpu: 0m
+        memory: 25Mi
+      limits:
+        memory: 30Mi
+    livenessProbe:
+      requests:
+        cpu: 0m
+        memory: 15Mi
+      limits:
+        memory: 20Mi
+    nfs:
+      requests:
+        cpu: 0m
+        memory: 20Mi
+      limits:
+        memory: 40Mi
+
+node:
+  name: csi-nfs-node
+  maxUnavailable: 1
+  resources:
+    livenessProbe:
+      requests:
+        cpu: 0m
+        memory: 15Mi
+      limits:
+        memory: 25Mi
+    nodeDriverRegistrar:
+      requests:
+        cpu: 0m
+        memory: 15Mi
+      limits:
+        memory: 30Mi
+    nfs:
+      requests:
+        cpu: 0m
+        memory: 20Mi
+      limits:
+        memory: 40Mi
+
+externalSnapshotter:
+  enabled: false
+  name: snapshot-controller
+  controller:
+    replicas: 1
+  resources:
+    requests:
+      cpu: 00m
+      memory: 20Mi
+    limits:
+      memory: 300Mi

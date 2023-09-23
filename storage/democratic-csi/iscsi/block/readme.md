@@ -98,3 +98,14 @@ kl exec deployments/test-iscsi-block -- mount | grep /mnt/data
 # cleanup resources
 kl delete -f ./storage/democratic-csi/iscsi/block/test.yaml
 ```
+
+Sometimes you can get a strange error
+"volume has already been created with a different size: -".
+Obviously, volume is not created, and volume can't have size `-`.
+
+I observer this error when I deployed controller
+while there were config issues on Truenas side, and controller was failing to start,
+then I fixed the issues, controller successfully started,
+but it failed to provision PVCs with the error as above.
+
+This error can be fixed by deleting controller pod.
