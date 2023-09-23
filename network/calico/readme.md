@@ -27,6 +27,8 @@ NAME                                   DESIRED   CURRENT   READY   AGE
 replicaset.apps/echoserver-96ffcc7c8   1         1         1       8s
 ```
 
+v1.26.1 seems to work fine, but it doesn't support eBPF in Debian 12: https://github.com/projectcalico/calico/issues/8001
+
 # Install operator
 
 ```bash

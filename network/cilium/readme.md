@@ -3,21 +3,40 @@
 
 Cilium is an alternative CNI, with the main feature of being eBPF-only.
 
+DSR is broken in 1.14.1 and 1.14.2.
+
 # Generate deployment
+
+You need to regenerate the deployment if you use control plane endpoint other than `cp.k8s.lan`.
 
 ```bash
 helm repo add cilium https://helm.cilium.io/
 helm repo update cilium
 helm search repo cilium/cilium --versions --devel | head
-helm show values cilium cilium/cilium --version 1.14.1 > ./network/cilium/default-values.yaml
+helm show values cilium cilium/cilium --version 1.14.2 > ./network/cilium/default-values.yaml
 
+# replace k8sServiceHost with your value
 helm template cilium cilium/cilium \
-  --version 1.14.1 \
+  --version 1.14.2 \
   --values ./network/cilium/values.yaml \
   --namespace cilium \
   --set k8sServiceHost=cp.k8s.lan \
   > ./network/cilium/deploy.gen.yaml
 ```
+
+# Disable kube-proxy
+
+Cilium completely replaces kube-proxy so you need to disable it.
+
+```bash
+# disable kube-proxy
+kl -n kube-system patch ds kube-proxy -p '{"spec":{"template":{"spec":{"nodeSelector":{"non-cilium": "true"}}}}}'
+# revert if you uninstall cilium
+kl -n kube-system patch ds kube-proxy --type=json -p='[{"op": "remove", "path": "/spec/template/spec/nodeSelector/non-cilium"}]'
+```
+
+It's possible to make Cilium coexist with kube-proxy
+if you change Cilium settings but it's more effective to replace it.
 
 # Deploy
 
@@ -32,6 +51,8 @@ kl -n cilium get pod
 
 Cilium CLI is not strictly required but it can be very convenient to use.
 
+Install:
+
 ```bash
 CILIUM_CLI_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/cilium-cli/main/stable.txt)
 CLI_ARCH=amd64
@@ -42,7 +63,11 @@ sudo tar xzvfC cilium-linux-${CLI_ARCH}.tar.gz /usr/local/bin
 rm cilium-linux-${CLI_ARCH}.tar.gz{,.sha256sum}
 
 cilium version --client
+```
 
+Test connection to cluster:
+
+```bash
 # if you are using a custom kubecondig, set it before running the command
 KUBECONFIG=$KUBECONFIGLOCAL cilium status -n cilium
 # or define a short alias
@@ -51,6 +76,8 @@ function cilium() {
 }
 # check that the tool works
 cilium status
+
+cilium connectivity test
 ```
 
 You can also run `cilium` tool in the cilium pod
