@@ -129,8 +129,10 @@ fi
 set_prop_value "$configFile" 'Session\TempPath' "$INCOMPLETE_FOLDER"
 
 if [ ! -z "$ADDED_HOOK_SCRIPT" ]; then
-    set_prop_value "$configFile" 'OnTorrentAdded\Program' "$ADDED_HOOK_SCRIPT "'\"%I\" \"%D\"'
+    set_prop_value "$configFile" 'OnTorrentAdded\Enabled' true
+    set_prop_value "$configFile" 'OnTorrentAdded\Program' "$ADDED_HOOK_SCRIPT "'\"%I\"'
 else
+    set_prop_value "$configFile" 'OnTorrentAdded\Enabled' false
     set_prop_value "$configFile" 'OnTorrentAdded\Program' ''
 fi
 

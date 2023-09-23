@@ -60,7 +60,7 @@ def run():
         return 1
     if args.value == None:
         return 1
-    
+
     updateFilesInDirectory(directoryPath, args.value)
 
 if __name__ == "__main__":

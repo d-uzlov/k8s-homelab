@@ -103,6 +103,16 @@ kl apply -k ./torrents/qbittorrent/ingress-wildcard/
 kl -n bt-qbittorrent get ingress
 ```
 
+# Cleanup
+
+```bash
+kl delete -k ./torrents/qbittorrent/main-app/
+kl delete -k ./torrents/qbittorrent/ingress-wildcard/
+kl delete -k ./torrents/qbittorrent/loadbalancer/
+kl delete -k ./torrents/qbittorrent/pvc/
+kl delete ns bt-qbittorrent
+```
+
 # Alt web UI
 
 Possible web UIs:

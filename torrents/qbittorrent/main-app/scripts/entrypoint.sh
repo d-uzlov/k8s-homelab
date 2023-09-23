@@ -20,7 +20,7 @@ fastresumePath="$profilePath/qBittorrent/data/BT_backup"
 
 oldIncompletePath=$(cat "$customConfigPrefix"-incomplete) || true
 oldFinishedPath=$(cat "$customConfigPrefix"-finished) || true
-if [ ! -z "$oldIncompletePath" ] && [ ! -z "$oldIncompletePath" ]; then
+if [ ! -z "$oldIncompletePath" ] && [ ! -z "$oldFinishedPath" ]; then
     if [ ! "$oldIncompletePath" = "$INCOMPLETE_FOLDER" ] || [ ! "$oldFinishedPath" = "$FINISHED_FOLDER" ]; then
         echo updating .fastresume files...
         python3 "$parent_path"/update_fastresume.py \
@@ -34,7 +34,7 @@ fi
 echo -n "$INCOMPLETE_FOLDER" > "$customConfigPrefix"-incomplete
 echo -n "$FINISHED_FOLDER" > "$customConfigPrefix"-finished
 
-# =========== Force q logs to stdout ===========
+# =========== Force logs to stdout ===========
 # https://github.com/qbittorrent/qBittorrent/issues/10077
 echo "redirecting log file to stdout..."
 mkdir -p "$logLocation"
