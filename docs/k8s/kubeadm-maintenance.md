@@ -31,6 +31,16 @@ Then ssh into the removed node and disable kubelet:
 sudo kubeadm reset
 ```
 
+# Edit kubelet args
+
+```bash
+echo "KUBELET_EXTRA_ARGS=--housekeeping-interval=5s" | sudo tee /etc/default/kubelet
+```
+
+References:
+- https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-reconfigure/#reflecting-clusterconfiguration-changes-on-control-plane-nodes
+- https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/kubelet-integration/#the-kubelet-drop-in-file-for-systemd
+
 # Update kubeadm and cluster
 
 List latest versions:

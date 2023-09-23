@@ -8,6 +8,11 @@ resources:
 # https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.6.3/components.yaml
 - metrics-server.yaml
 
+# we need to use patchesJson6902 because of replacement order:
+# - patches
+# - namespace
+# - patchesJson6902
+# we need to override namespace: metrics and return kube-system to some resources
 patchesJson6902:
 - patch: |-
     - op: replace
@@ -27,3 +32,13 @@ patchesJson6902:
     version: v1
     kind: RoleBinding
     name: metrics-server-auth-reader
+- patch: |-
+    - op: add
+      path: /spec/template/spec/containers/0/args/-
+      # 10s is the lowest allowed value
+      value: --metric-resolution=10s
+  target:
+    group: apps
+    version: v1
+    kind: Deployment
+    name: metrics-server

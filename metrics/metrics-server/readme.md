@@ -1,25 +1,25 @@
 
-https://github.com/kubernetes-sigs/metrics-server
-
 # Metrics server
 
-# Requirements
-
-You either need to disable TLS verification or add certificates.
-
-Look here for instructions to add certificates: [kubelet-csr-approver](../kubelet-csr-approver/).
+References:
+- https://github.com/kubernetes-sigs/metrics-server
 
 # Install
 
 ```bash
 kl create ns metrics
-kl apply -k ./metrics/metrics-server/
+
+# if your cluster have proper TLS certificates
+kl apply -k ./metrics/metrics-server/secure/
+# if your cluster doesn't have proper TLS certificates
+kl apply -k ./metrics/metrics-server/insecure/
+
 kl -n metrics get pod
 ```
 
 # Cleanup
 
 ```bash
-kl Delete -k ./metrics/metrics-server/
+kl delete -k ./metrics/metrics-server/secure/
 kl delete ns metrics
 ```
