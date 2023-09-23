@@ -30,7 +30,12 @@ kl create ns jellyfin
 kl apply -k ./video/jellyfin/pvc/
 kl -n jellyfin get pvc
 
-kl apply -k ./video/jellyfin/
+# choose one:
+#   generic doesn't have hardware acceleration
+kl apply -k ./video/jellyfin/generic/
+#   for intel GPUs
+kl apply -k ./video/jellyfin/intel/
+
 kl -n jellyfin get pod
 
 # setup wildcard ingress
@@ -39,9 +44,15 @@ kl apply -k ./video/jellyfin/ingress-wildcard/
 kl -n jellyfin get ingress
 ```
 
-# Checking hardware capabilities on intel
+# Hardware acceleration on Intel GPUs
+
+Prerequisites:
+- [Intel device plugin](../../hardware/intel-device-plugin/readme.md)
+
+Checking hardware capabilities:
 
 ```bash
+# run on host
 sudo cat /sys/kernel/debug/dri/0/gt0/uc/guc_info
 sudo cat /sys/kernel/debug/dri/0/gt0/uc/huc_info
 ```
