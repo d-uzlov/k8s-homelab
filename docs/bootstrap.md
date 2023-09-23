@@ -12,7 +12,7 @@ This setup expects that you have a LAN behind NAT
 with a public (although possibly dynamic) IP address.
 
 It is advised to also have a DNS server in LAN.
-This repo does not have instructions to set up one yet.
+This repo does not have instructions on how to set up one yet.
 
 This repo uses only ipv4 addresses.
 
@@ -61,25 +61,25 @@ If your IP is static you can simply skip setting up an IP updater.
 
 # k8s setup
 
-- [optional] Set up Debian template in Proxmox
-- - [Template setup](./proxmox.md#templates)
+- [optional] Make sure that `hostname --fqdn` resolves to node IP
+- [optional] Make sure that `hostname --fqdn` follows the same pattern on all nodes, for consistency
 - Install k8s
-- - This repo describes how to do it using [kubeadm](./kubeadm.md)
-- - If you use templates, you can install it once, convert VM to template, and clone it to create nodes
+- - This repo describes how to do it using [kubeadm](./k8s/kubeadm-install.md)
+- - [optional] If you use templates, you can install it once, convert VM to template, and clone it to create more nodes
+- - - [Template setup](./proxmox.md#templates)
 - - It is recommended to setup one separate master node and join at least one worker node
+- Setup k8s:
+- - [setup](./k8s/kubeadm-setup.md)
+- - [maintenance](./k8s/kubeadm-maintenance.md)
 - Install CNI. For example:
 - - [cilium](../network/cilium/readme.md) (recommended)
 - - [calico](../network/calico/readme.md)
+- Install [kubelet-csr-approver](../metrics/kubelet-csr-approver/readme.md)
+- - This is required because we enabled proper certificates
+- - `kubectl logs` command will not work until kubelet CSRs are approved.
+- - - You can approve CSRs manually if you are having issues with the automatic approval
 - [optional] Enable metrics
-- - Make sure you enable k8s certificates generation during k8s installation
-- - Install [kubelet-csr-approver](../metrics/kubelet-csr-approver/readme.md)
 - - Install [metrics-server](../metrics/metrics-server/readme.md)
-- - Note, that if you enable TLS certificate bootstrap,
-`kubectl logs` command will not work until kubelet CSRs are approved.
-- - - If there are any issues with CNI, you will have a hard time debugging it.
-- - - It would be easier to re-deploy the cluster with automatic certificates,
-make sure that CNI config is correct, and then re-deploy it again with manual certificates.
-- - - Alternatively, you could approve CSRs manually.
 - Install load balancer controller. For example:
 - - [kube-vip](../network/kube-vip-load-balancer/readme.md) (recommended)
 - - [metallb](../network/metallb/readme.md)
@@ -88,10 +88,13 @@ make sure that CNI config is correct, and then re-deploy it again with manual ce
 - - Test that ingress works: [example](../test/ingress/readme.md)
 - Set up public certificates
 - - Install [cert-manager](../ingress/cert-manager/readme.md)
-- - Test cert-manager using letsencrypt staging environment
-- Connect storage to the cluster
-- - Set up [nfs](../storage/nfs-csi/readme.md)
-- - Set up [iscsi](../storage/democratic-csi/readme.md)
+- - Option: use [HTTP01 challenge](../ingress/cert-manager/letsencrypt/readme.md) for certificates
+- - - This should work universally, as long as your ingress can be accessed from the internet
+- - Option: use DNS01 challenge for certificates:
+- - - This allows you to create wildcard certificates
+- - - [DuckDNS](../ingress/cert-manager/duckdns/readme.md)
+- Connect cluster to some storage location
+- - [List of available options](../storage/readme.md#storage-classes)
 
 This mostly sums up all the infrastructure setup for k8s.
 

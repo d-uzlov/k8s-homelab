@@ -53,8 +53,6 @@ __prompt_command() {
 ```bash
 source <(kind completion bash)
 source <(kubectl completion bash)
-alias k=kubectl
-complete -o default -F __start_kubectl k
 
 export KUBECONFIG1=/tmp/kind-configs/kubeconfig-kind
 export KUBECONFIG2=/tmp/kind-configs/kubeconfig-kind-2
@@ -66,10 +64,10 @@ export CLUSTER1_CIDR=172.18.201.0/24
 export CLUSTER2_CIDR=172.18.202.0/24
 export CLUSTER3_CIDR=172.18.203.0/24
 
-alias k1"=kubectl --kubeconfig=$KUBECONFIG1"
-alias k2="kubectl --kubeconfig=$KUBECONFIG2"
-# alias k3="kubectl --kubeconfig=$KUBECONFIG3"
-complete -o default -F __start_kubectl k1
-complete -o default -F __start_kubectl k2
-# complete -o default -F __start_kubectl k3
+function k() { kubectl "$@"; }; export -f k
+function k1() { kubectl --kubeconfig "$KUBECONFIG1" "$@"; }; export -f k1
+function k2() { kubectl --kubeconfig "$KUBECONFIG2" "$@"; }; export -f k2
+function k3() { kubectl --kubeconfig "$KUBECONFIG3" "$@"; }; export -f k3
+
+function kl() { kubectl --kubeconfig "$KUBECONFIGLOCAL" "$@"; }; export -f kl
 ```

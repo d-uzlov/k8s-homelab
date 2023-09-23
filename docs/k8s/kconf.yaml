@@ -7,15 +7,16 @@ nodeRegistration:
     # automatically delete orphaned pods
     # terminated-pod-gc-threshold: '1'
 localAPIEndpoint:
+  # ¿ this seems to also be a bind address ?
   advertiseAddress: 0.0.0.0
   bindPort: 6443
 ---
 # https://kubernetes.io/docs/reference/config-api/kubeadm-config.v1beta3/#kubeadm-k8s-io-v1beta3-ClusterConfiguration
 apiVersion: kubeadm.k8s.io/v1beta3
 kind: ClusterConfiguration
-controlPlaneEndpoint: cp.k8s.lan
+controlPlaneEndpoint: REPLACE_ME_CONTROL_PLANE_ENDPOINT
 clusterName: kubernetes
-kubernetesVersion: 1.28.1
+kubernetesVersion: 1.28.2
 networking:
   dnsDomain: cluster.local
   podSubnet: 10.201.0.0/16
@@ -29,8 +30,14 @@ apiServer:
   # add anything that doesn't match this list
   certSANs:
   - 127.0.0.1
-  - cp.k8s.lan
-  - m1.k8s.lan
+controllerManager:
+  extraArgs:
+    # required for prometheus metrics gathering
+    bind-address: 0.0.0.0
+scheduler:
+  extraArgs:
+    # required for prometheus metrics gathering
+    bind-address: 0.0.0.0
 ---
 # https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/
 apiVersion: kubelet.config.k8s.io/v1beta1
@@ -40,5 +47,13 @@ resolvConf: /run/systemd/resolve/resolv.conf
 shutdownGracePeriod: 60s
 shutdownGracePeriodCriticalPods: 20s
 staticPodPath: /etc/kubernetes/manifests
+# reduce time of config map synchronization at expense of increased apiserver load
+# default value is 60s
 syncFrequency: 10s
-serverTLSBootstrap: false
+serverTLSBootstrap: true
+---
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+kind: KubeProxyConfiguration
+# bindAddress: 0.0.0.0
+# hostnameOverride: ""
+metricsBindAddress: 0.0.0.0
