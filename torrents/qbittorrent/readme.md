@@ -113,6 +113,13 @@ kl delete -k ./torrents/qbittorrent/pvc/
 kl delete ns bt-qbittorrent
 ```
 
+# Fix tags on existing torrents
+
+```bash
+qbt_domain=$(kl -n bt-qbittorrent get ingress qbittorrent -o go-template --template "{{range .spec.rules}}{{.host}}{{end}}")
+./torrents/qbittorrent/fix-tags.sh "$qbt_domain" /mnt/finished
+```
+
 # Alt web UI
 
 Possible web UIs:

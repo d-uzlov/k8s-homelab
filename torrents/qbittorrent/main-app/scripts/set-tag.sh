@@ -3,12 +3,17 @@
 set -eu
 set -o pipefail
 
-hash="$1"
+hash=$1
+
+qbt_api_host=${QBT_API_HOST:-}
+if [ -z "$qbt_api_host" ]; then
+  qbt_api_host=http://localhost:${WEBUI_PORT}
+fi
 
 function run_curl() {
   api=$1
   data=$2
-  curl --silent --fail-with-body --noproxy localhost --request POST "http://localhost:${WEBUI_PORT}$api" --data "$data"
+  curl --silent --fail-with-body --noproxy localhost --request POST "$qbt_api_host$api" --data "$data"
 }
 
 function get_torrent_info() {
@@ -26,12 +31,13 @@ function curl_set() {
 
   retcode=0
   result=$(run_curl "$api" "$data") || retcode=$?
-  if [ "$check_result" = 'true' ] && ([ ! -z "$result" ] || [ $retcode = 0 ]); then
+  if [ "$check_result" = 'true' ] && ([ ! -z "$result" ] || [ ! $retcode = 0 ]); then
       echo "error: $error_prefix: \$?=$retcode: $result"
+      return $retcode
   fi
 }
 
-savepath=$(get_torrent_info '/api/v2/torrents/properties' save_path "$hash")
+savepath=$(get_torrent_info /api/v2/torrents/properties save_path "$hash")
 
 [[ "$savepath" == "$FINISHED_FOLDER"* ]] || exit
 
@@ -56,6 +62,6 @@ fi
 #     "http://localhost:8080/api/v2/auth/login"
 
 error_prefix="$hash: $savepath"
-[ -z "$category" ] || curl_set '/api/v2/torrents/createCategory' false "$error_prefix" "category=$category&savePath=$FINISHED_FOLDER/$category"
-[ -z "$category" ] || curl_set '/api/v2/torrents/setCategory'    true  "$error_prefix" "hashes=$hash&category=$category"
-[ -z "$tags" ]     || curl_set '/api/v2/torrents/addTags'        true  "$error_prefix" "hashes=$hash&tags=$tags"
+[ -z "$category" ] || curl_set /api/v2/torrents/createCategory false "$error_prefix"             "category=$category&savePath=$FINISHED_FOLDER/$category"
+[ -z "$category" ] || curl_set /api/v2/torrents/setCategory    true  "setCategory $error_prefix" "hashes=$hash&category=$category"
+[ -z "$tags" ]     || curl_set /api/v2/torrents/addTags        true  "addTags $error_prefix"     "hashes=$hash&tags=$tags"
