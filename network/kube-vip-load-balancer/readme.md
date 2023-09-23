@@ -3,9 +3,13 @@
 
 This is a load balancer for both control plane and services in the cluster.
 
-Version `v0.6.0` seems to be broken.
-It has some issues with k8s API,
-which causes it to release all virtual IPs and never re-acquire them.
+Versions that are known to usually work:
+- v0.5.12
+- v0.6.2
+
+Versions that are known to be broken:
+- v0.6.0
+- v0.6.1
 
 References:
 - https://github.com/kube-vip/kube-vip
@@ -16,27 +20,20 @@ Required for major config changes or updates.
 
 You don't need to do it if you are just deploying it.
 
-Versions that are known to usually work:
-- v0.5.12
-- 0.6.2
-
-Versions that are known to be broken:
-- 0.6.0
-- 0.6.1
-
 ```bash
 docker run \
-    --network host \
-    --rm \
-    ghcr.io/kube-vip/kube-vip:v0.6.2 \
-    manifest \
-    daemonset \
-    --inCluster \
-    --services \
-    --arp \
-    --servicesElection \
-    --prometheusHTTPServer :2113 \
-    > ./network/kube-vip-load-balancer/daemonset.gen.yaml
+  --network host \
+  --rm \
+  ghcr.io/kube-vip/kube-vip:v0.6.2 \
+  manifest \
+  daemonset \
+  --inCluster \
+  --services \
+  --arp \
+  --servicesElection \
+  --prometheusHTTPServer :2113 \
+  | sed -e '/creationTimestamp/d' \
+  > ./network/kube-vip-load-balancer/daemonset.gen.yaml
 ```
 
 # Set up your local environment
@@ -44,7 +41,8 @@ docker run \
 Define CIDR or range of IPs that LoadBalancer services are allowed to use:
 
 ```bash
-cat <<EOF > ./network/kube-vip-load-balancer/cm/env/ccm.env
+mkdir -p ./network/kube-vip-load-balancer/ccm/cm/env/
+cat <<EOF > ./network/kube-vip-load-balancer/ccm/cm/env/ccm.env
 cidr-global=10.0.2.0/24
 range-global=
 EOF
@@ -54,15 +52,22 @@ EOF
 
 ```bash
 kl create ns kube-vip
-kl apply -k ./network/kube-vip-load-balancer/cm
-kl apply -k ./network/kube-vip-load-balancer
+
+# main app
+kl apply -k ./network/kube-vip-load-balancer/
+# cloud controller manager, required to assign external IPs to services
+kl apply -k ./network/kube-vip-load-balancer/ccm/
+# configmap for ccm
+kl apply -k ./network/kube-vip-load-balancer/ccm/cm/
+
 kl -n kube-vip get pod
 ```
 
 # Cleanup
 
 ```bash
-kl delete -k ./network/kube-vip-load-balancer
+kl delete -k ./network/kube-vip-load-balancer/
+kl delete -k ./network/kube-vip-load-balancer/ccm/
 kl delete ns kube-vip
 ```
 
@@ -81,6 +86,8 @@ References:
 Kube-vip supports allocating IPs for LoadBalancer services from DHCP server.
 
 It can also manage port-forwarding via UPnP.
+
+To do this you need to assign a special IP `0.0.0.0` to the service.
 
 References:
 - https://kube-vip.io/docs/usage/kubernetes-services/#using-dhcp-for-load-balancers-experimental-kube-vip-v021
