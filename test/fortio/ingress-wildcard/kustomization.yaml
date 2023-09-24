@@ -1,0 +1,34 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: fortio
+
+resources:
+- ingress.yaml
+- ../../../ingress/manual-wildcard/domain-info
+
+replacements:
+- source:
+    kind: ConfigMap
+    name: main-domain
+    fieldPath: data.subdomain
+  targets:
+  - select:
+      kind: Ingress
+      name: fortio
+    options:
+      delimiter: .
+      index: 1
+    fieldPaths:
+    - spec.rules.0.host
+- source:
+    kind: ConfigMap
+    name: main-domain
+    fieldPath: data.secret_name
+  targets:
+  - select:
+      kind: Ingress
+      name: fortio
+    fieldPaths:
+    - spec.tls.0.secretName
