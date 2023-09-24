@@ -2,12 +2,15 @@
 # Documentation
 
 Annotations:
-https://github.com/kubernetes/ingress-nginx/blob/controller-v1.6.4/docs/user-guide/nginx-configuration/annotations.md
+- https://github.com/kubernetes/ingress-nginx/blob/controller-v1.6.4/docs/user-guide/nginx-configuration/annotations.md
 
 Configmap:
-https://github.com/kubernetes/ingress-nginx/blob/controller-v1.6.4/docs/user-guide/nginx-configuration/configmap.md
+- https://github.com/kubernetes/ingress-nginx/blob/controller-v1.6.4/docs/user-guide/nginx-configuration/configmap.md
 
 Beware of changes between versions.
+
+References:
+- https://github.com/kubernetes/ingress-nginx
 
 # Generate config
 
@@ -24,7 +27,7 @@ helm show values ingress-nginx/ingress-nginx > ./ingress/nginx/default-values.ya
 helm template \
   ingress-nginx \
   ingress-nginx/ingress-nginx \
-  --version 4.7.2 \
+  --version 4.8.0 \
   --namespace ingress-nginx \
   --values ./ingress/nginx/values.yaml \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/instance|d' -e '\|app.kubernetes.io/part-of|d' \
