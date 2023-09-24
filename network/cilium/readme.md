@@ -13,7 +13,7 @@ You need to regenerate the deployment if you use control plane endpoint other th
 helm repo add cilium https://helm.cilium.io/
 helm repo update cilium
 helm search repo cilium/cilium --versions --devel | head
-helm show values cilium cilium/cilium --version 1.14.2 > ./network/cilium/default-values.yaml
+helm show values cilium/cilium --version 1.14.2 > ./network/cilium/default-values.yaml
 
 # replace k8sServiceHost with your value
 helm template cilium cilium/cilium \
@@ -22,6 +22,12 @@ helm template cilium cilium/cilium \
   --namespace cilium \
   --set k8sServiceHost=cp.k8s.lan \
   > ./network/cilium/deploy.gen.yaml
+helm template cilium cilium/cilium \
+  --version 1.14.2 \
+  --values ./network/cilium/loadbalancer/values.yaml \
+  --namespace cilium \
+  --set k8sServiceHost=cp.k8s.lan \
+  > ./network/cilium/loadbalancer/deploy.gen.yaml
 ```
 
 # Disable kube-proxy
@@ -38,13 +44,33 @@ kl -n kube-system patch ds kube-proxy --type=json -p='[{"op": "remove", "path": 
 It's possible to make Cilium coexist with kube-proxy
 if you change Cilium settings but it's more effective to replace it.
 
-# Deploy
+# Deploy without load balancer
 
 ```bash
 kl create ns cilium
 kl apply -f ./network/cilium/deploy.gen.yaml --server-side=true
 # check that pods are running
 kl -n cilium get pod
+```
+
+# Deploy with load balancer
+
+```bash
+mkdir -p ./network/cilium/loadbalancer/env/
+cat <<EOF > ./network/cilium/loadbalancer/env/ip-pool.env
+pool=10.0.2.0/24
+EOF
+```
+
+```bash
+kl create ns cilium
+
+kl apply -f ./network/cilium/loadbalancer/deploy.gen.yaml --server-side=true
+kl -n cilium get pod
+
+kl apply -k ./network/cilium/loadbalancer/
+kl get ippools
+kl get ciliuml2announcementpolicy
 ```
 
 # Cilium CLI

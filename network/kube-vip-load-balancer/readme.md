@@ -3,14 +3,6 @@
 
 This is a load balancer for both control plane and services in the cluster.
 
-Versions that are known to usually work:
-- v0.5.12
-- v0.6.2
-
-Versions that are known to be broken:
-- v0.6.0
-- v0.6.1
-
 References:
 - https://github.com/kube-vip/kube-vip
 
