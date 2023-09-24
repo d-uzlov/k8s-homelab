@@ -63,6 +63,11 @@ kl delete -k ./network/kube-vip-load-balancer/ccm/
 kl delete ns kube-vip
 ```
 
+# Test
+
+References:
+- [ingress example](../../test/ingress/readme.md)
+
 # Lease settings
 
 Kube-vip can restart due to improper lease settings.

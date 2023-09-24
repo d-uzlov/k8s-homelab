@@ -65,7 +65,7 @@ If your IP is static you can simply skip setting up an IP updater.
 - [optional] Make sure that `hostname --fqdn` follows the same pattern on all nodes, for consistency
 - Install k8s
 - - This repo describes how to do it using [kubeadm](./k8s/kubeadm-install.md)
-- - [optional] If you use templates, you can install it once, convert VM to template, and clone it to create more nodes
+- - [optional] If you use proxmox, you can use VM templates: install k8s once, convert VM to template, clone it to create more nodes
 - - - [Template setup](./proxmox.md#templates)
 - - It is recommended to setup one separate master node and join at least one worker node
 - Setup k8s:
@@ -81,8 +81,10 @@ If your IP is static you can simply skip setting up an IP updater.
 - [optional] Enable metrics
 - - Install [metrics-server](../metrics/metrics-server/readme.md)
 - Install load balancer controller. For example:
-- - [kube-vip](../network/kube-vip-load-balancer/readme.md) (recommended)
-- - [metallb](../network/metallb/readme.md)
+- - [metallb](../network/metallb/readme.md) (recommended)
+- - [kube-vip](../network/kube-vip-load-balancer/readme.md)
+- - [cilium](../network/cilium/readme.md)
+- - Test that load balancer services work: [example](../test/ingress/readme.md)
 - Install ingress controller
 - - [nginx](../ingress/nginx/readme.md)
 - - Test that ingress works: [example](../test/ingress/readme.md)

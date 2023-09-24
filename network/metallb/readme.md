@@ -23,3 +23,8 @@ kl apply -k ./network/metallb/
 ```bash
 kl delete -f https://raw.githubusercontent.com/metallb/metallb/v0.13.11/config/manifests/metallb-native.yaml
 ```
+
+# Test
+
+References:
+- [ingress example](../../test/ingress/readme.md)

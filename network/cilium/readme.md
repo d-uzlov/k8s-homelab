@@ -73,6 +73,13 @@ kl get ippools
 kl get ciliuml2announcementpolicy
 ```
 
+Test: [ingress example](../../test/ingress/readme.md)
+
+References:
+- https://docs.cilium.io/en/latest/network/l2-announcements/
+- https://docs.cilium.io/en/stable/network/lb-ipam/#lb-ipam
+- https://github.com/cilium/cilium/issues/26586
+
 # Cilium CLI
 
 Cilium CLI is not strictly required but it can be very convenient to use.

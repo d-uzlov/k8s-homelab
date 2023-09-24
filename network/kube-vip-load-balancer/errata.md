@@ -20,3 +20,6 @@ Broken on versions:
 - v0.6.2
 
 I didn't test versions below v0.5.12.
+
+References:
+- https://github.com/kube-vip/kube-vip/issues/608
