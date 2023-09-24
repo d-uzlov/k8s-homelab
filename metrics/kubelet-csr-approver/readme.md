@@ -26,7 +26,7 @@ helm template \
   --version 1.0.5 \
   --values ./metrics/kubelet-csr-approver/values.yaml \
   --namespace csr-approver \
-  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' \
+  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' -e '\|app.kubernetes.io/version|d' \
   > ./metrics/kubelet-csr-approver/deployment.gen.yaml
 ```
 
@@ -35,12 +35,14 @@ helm template \
 ```bash
 mkdir -p ./metrics/kubelet-csr-approver/env
 cat <<EOF > ./metrics/kubelet-csr-approver/env/rules.env
-# limit allowed node names
-PROVIDER_REGEX=.*
-# limit allowed node IPs
-PROVIDER_IP_PREFIXES=0.0.0.0/0,::/0
 # set to true if your node names don't resolve as valid DNS names
-BYPASS_DNS_RESOLUTION=true
+BYPASS_DNS_RESOLUTION=false
+# pattern for allowed node names
+PROVIDER_REGEX=.*\.k8s\.lan$
+# allowed node IPs
+# you probably want to set this to your LAN CIDR
+# set to 0.0.0.0/0,::/0 to disable this check
+PROVIDER_IP_PREFIXES=10.0.0.0/24
 EOF
 ```
 
