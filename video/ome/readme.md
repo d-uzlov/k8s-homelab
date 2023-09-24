@@ -12,15 +12,19 @@ References:
 
 ```bash
 kl create ns ome
-kl apply -k ./video/ome/
 
 # create loadbalancer service
 kl apply -k ./video/ome/loadbalancer/
 # get assigned IP to set up DNS or NAT port-forwarding
 kl -n ome get svc
 
+# setup wildcard ingress
 kl label ns --overwrite ome copy-wild-cert=main
 kl apply -k ./video/ome/ingress-wildcard/
+kl -n ome get ingress
+
+kl apply -k ./video/ome/
+kl -n ome get pod
 ```
 
 # Load balancer services

@@ -14,10 +14,14 @@ References:
 
 ```bash
 kl create ns ome-player
-kl apply -k ./video/ovenplayer/
 
+# setup wildcard ingress
 kl label ns --overwrite ome-player copy-wild-cert=main
 kl apply -k ./video/ovenplayer/ingress-wildcard/
+kl -n ome-player get ingress
+
+kl apply -k ./video/ovenplayer/
+kl -n ome-player get pod
 ```
 
 # Stream links
