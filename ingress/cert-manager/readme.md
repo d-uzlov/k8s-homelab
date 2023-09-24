@@ -19,9 +19,9 @@ helm show values jetstack/cert-manager > ./ingress/cert-manager/default-values.y
 helm template \
   cert-manager jetstack/cert-manager \
   --values ./ingress/cert-manager/values.yaml \
-  --version v1.12.4 \
+  --version v1.13.0 \
   --namespace cert-manager \
-  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' \
+  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' \
   > ./ingress/cert-manager/cert-manager.gen.yaml
 ```
 
@@ -41,6 +41,11 @@ Choose what you need:
 - - [LetsEncrypt](./letsencrypt/readme.md)
 - DNS-01
 - - [DuckDNS](./duckdns/readme.md)
+
+TODO
+
+- https://www.cloudns.net
+- https://github.com/ixoncloud/cert-manager-webhook-cloudns
 
 # Ingress with single-domain certificates
 

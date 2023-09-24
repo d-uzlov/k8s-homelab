@@ -12,7 +12,7 @@ These issuers use HTTP-01 challenge:
 
 ```bash
 # Init once
-mkdir -p ./ingress/cert-manager/letsencrypt/env
+mkdir -p ./ingress/cert-manager/letsencrypt/env/
 echo <<EOF > ./ingress/cert-manager/letsencrypt/env/letsencrypt.env
 # Can be any valid email.
 # Letsencrypt will send you a warning on this address
@@ -20,7 +20,7 @@ echo <<EOF > ./ingress/cert-manager/letsencrypt/env/letsencrypt.env
 email=example@example.com
 EOF
 
-kl apply -k ./ingress/cert-manager/letsencrypt
+kl apply -k ./ingress/cert-manager/letsencrypt/
 ```
 
 # Letsencrypt rate limits

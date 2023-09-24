@@ -75,7 +75,9 @@ After you verified that your setup works
 you can re-issue a proper production certificate:
 
 ```bash
-kl apply -k ./ingress/manual-wildcard/production
+kl create ns cm-manual
+
+kl apply -k ./ingress/manual-wildcard/production/
 
 kl -n cm-manual get certificate
 ```
