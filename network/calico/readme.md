@@ -32,17 +32,10 @@ v1.26.1 seems to work fine, but it doesn't support eBPF in Debian 12: https://gi
 # Install operator
 
 ```bash
-# Local init
-cat <<EOF > ./network/calico/cm/env/api.env
-KUBERNETES_SERVICE_HOST=kcp.lan
-KUBERNETES_SERVICE_PORT=6443
-EOF
-
 # Install CRDs
 kl apply -k ./network/calico/crds --server-side=true &&
 # Deploy Calico using an operator
 kl create ns tigera-operator &&
-kl apply -k ./network/calico/cm &&
 kl apply -k ./network/calico/operator
 ```
 
@@ -52,18 +45,27 @@ kl apply -k ./network/calico/operator
 kl apply -f ./network/calico/installation-default.yaml
 
 # wait for all pods to be ready
-kl wait -n calico-system get pod
-kl wait -n calico-apiserver get pod
+kl -n calico-system get pod
+kl -n calico-apiserver get pod
 ```
 
 # Install eBPF version
 
 ```bash
+# Local init
+cat <<EOF > ./network/calico/cm/env/api.env
+KUBERNETES_SERVICE_HOST=kcp.lan
+KUBERNETES_SERVICE_PORT=6443
+EOF
+
+kl apply -k ./network/calico/cm
+# reload operator after applying cm
+
 kl apply -f ./network/calico/installation-ebpf.yaml
 
 # wait for all pods to be ready
-kl wait -n calico-system get pod
-kl wait -n calico-apiserver get pod
+kl -n calico-system get pod
+kl -n calico-apiserver get pod
 
 # enable Direct Server Return
 kl patch felixconfiguration default --type=merge --patch='{"spec": {"bpfExternalServiceMode": "DSR"}}'

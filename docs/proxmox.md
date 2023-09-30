@@ -341,6 +341,13 @@ https://www.wundertech.net/how-to-set-up-iscsi-storage-on-proxmox/
 
 zfs over iscsi:
 
-https://forum.proxmox.com/threads/proxmox-ve-and-zfs-over-iscsi-on-truenas-scale-my-steps-to-make-it-work.125387/
-https://xinux.net/index.php/Proxmox_iscsi_over_zfs_with_freenas
-https://github.com/TheGrandWazoo/freenas-proxmox
+- https://forum.proxmox.com/threads/proxmox-ve-and-zfs-over-iscsi-on-truenas-scale-my-steps-to-make-it-work.125387/
+- https://xinux.net/index.php/Proxmox_iscsi_over_zfs_with_freenas
+- https://github.com/TheGrandWazoo/freenas-proxmox
+
+# Perfect resource isolation
+
+May be useful for gaming in VM.
+
+References:
+- https://forum.proxmox.com/threads/hey-proxmox-community-lets-talk-about-resources-isolation.124256/

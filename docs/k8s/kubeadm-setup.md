@@ -32,7 +32,9 @@ Copy config to the first master node:
 ```bash
 # Set to your value
 control_plane_endpoint=cp.k8s.lan
-sed -e "s/REPLACE_ME_CONTROL_PLANE_ENDPOINT/$control_plane_endpoint/" ./docs/k8s/kconf.yaml | ssh m1.k8s.lan "cat > kconf.yaml"
+# ip of the first control plane node
+cp_node1=m1.k8s.lan
+sed -e "s/REPLACE_ME_CONTROL_PLANE_ENDPOINT/$control_plane_endpoint/" ./docs/k8s/kconf.yaml | ssh "$cp_node1" "cat > kconf.yaml"
 ```
 
 Note that this config uses `serverTLSBootstrap: true`,
@@ -43,6 +45,10 @@ refer to its documentation for list of things
 you need to do before and after using kubeadm.
 
 SSH into the master node and create cluster:
+
+```bash
+ssh "$cp_node_address"
+```
 
 ```bash
 # validate config
@@ -63,12 +69,16 @@ sudo cat /etc/kubernetes/admin.conf > $HOME/.kube/config
 Fetch admin config file from master node to your local machine:
 
 ```bash
-scp m1.k8s.lan:.kube/config ./_env/kubeadm-master-config.yaml
+scp "$cp_node1":.kube/config ./_env/"$control_plane_endpoint".yaml
 ```
 
 # Join other nodes
 
 Make sure that you have kubeadm and its dependencies on all nodes.
+
+```bash
+ssh "$cp_node1"
+```
 
 On a master node:
 

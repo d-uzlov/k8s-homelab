@@ -7,8 +7,11 @@ This file describes various maintenance commands for kubeadm-based cluster.
 
 ```bash
 kl taint nodes nodename key=value:type
+kl label node nodename key=value
+# value is optional
 # for example
-kl taint nodes n100.k8s.lan weak-node=true:PreferNoSchedule
+kl taint nodes --overwrite n100.k8s.lan weak-node=:PreferNoSchedule
+kl label node --overwrite n100.k8s.lan weak-node=
 ```
 
 Key and value can be whatever.

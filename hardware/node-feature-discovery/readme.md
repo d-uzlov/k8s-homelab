@@ -14,8 +14,6 @@ helm repo add nfd https://kubernetes-sigs.github.io/node-feature-discovery/chart
 helm repo update nfd
 helm search repo nfd/node-feature-discovery --versions --devel | head
 helm show values nfd/node-feature-discovery > ./hardware/node-feature-discovery/default-values.yaml
-
-helm install nfd/node-feature-discovery --namespace $NFD_NS --create-namespace --generate-name
 ```
 
 ```bash
@@ -52,6 +50,6 @@ kl describe node | grep feature.node.kubernetes.io
 
 ```bash
 kl delete -f ./hardware/node-feature-discovery/nfd.gen.yaml
-kl delete -f ./hardware/node-feature-discovery/nfd.gen.yaml
+kl delete -f ./hardware/node-feature-discovery/crd.yaml
 kl delete ns nfd
 ```

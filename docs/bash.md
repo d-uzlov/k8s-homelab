@@ -54,20 +54,29 @@ __prompt_command() {
 source <(kind completion bash)
 source <(kubectl completion bash)
 
+alias k=kubectl
+complete -o default -F __start_kubectl k
+
+function createKubectlAlias() {
+    name=$1
+    config=$2
+    . <(echo 'function '$name'() { kubectl --kubeconfig "'"$config"'" "$@"; }; export -f '$name'; alias '$name'="kubectl --kubeconfig='$config'"; complete -o default -F __start_kubectl '$name)
+}
+
+export KUBECONFIGLOCAL=/mnt/c/Users/danil/Documents/k8s-public-copy/_env/cp.k8s.lan.yaml
+
+createKubectlAlias kl "$KUBECONFIGLOCAL"
+
 export KUBECONFIG1=/tmp/kind-configs/kubeconfig-kind
 export KUBECONFIG2=/tmp/kind-configs/kubeconfig-kind-2
-# export KUBECONFIG3=/tmp/kind-configs/kubeconfig-kind-3
-
+export KUBECONFIG3=/tmp/kind-configs/kubeconfig-kind-3
 export KUBECONFIG=$KUBECONFIG1
 
 export CLUSTER1_CIDR=172.18.201.0/24
 export CLUSTER2_CIDR=172.18.202.0/24
 export CLUSTER3_CIDR=172.18.203.0/24
 
-function k() { kubectl "$@"; }; export -f k
-function k1() { kubectl --kubeconfig "$KUBECONFIG1" "$@"; }; export -f k1
-function k2() { kubectl --kubeconfig "$KUBECONFIG2" "$@"; }; export -f k2
-function k3() { kubectl --kubeconfig "$KUBECONFIG3" "$@"; }; export -f k3
-
-function kl() { kubectl --kubeconfig "$KUBECONFIGLOCAL" "$@"; }; export -f kl
+createKubectlAlias k1 "$KUBECONFIG1"
+createKubectlAlias k2 "$KUBECONFIG2"
+createKubectlAlias k3 "$KUBECONFIG3"
 ```

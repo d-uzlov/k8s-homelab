@@ -59,6 +59,7 @@ kl -n kube-vip get pod
 
 ```bash
 kl delete -k ./network/kube-vip-load-balancer/
+kl delete -k ./network/kube-vip-load-balancer/ccm/cm/
 kl delete -k ./network/kube-vip-load-balancer/ccm/
 kl delete ns kube-vip
 ```

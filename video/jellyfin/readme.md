@@ -5,6 +5,7 @@ References:
 - https://jellyfin.org/docs/general/installation/container
 - https://hub.docker.com/r/jellyfin/jellyfin
 - https://github.com/jellyfin/jellyfin
+- https://github.com/jellyfin/jellyfin/releases
 
 # Storage setup
 
@@ -44,18 +45,35 @@ kl apply -k ./video/jellyfin/ingress-wildcard/
 kl -n jellyfin get ingress
 ```
 
+# Cleanup
+
+```bash
+kl delete -k ./video/jellyfin/generic/
+kl delete -k ./video/jellyfin/pvc/
+kl delete ns jellyfin
+```
+
 # Hardware acceleration on Intel GPUs
 
 Prerequisites:
 - [Intel device plugin](../../hardware/intel-device-plugin/readme.md)
 
-Checking hardware capabilities:
+Checking hardware capabilities (run on host):
 
 ```bash
-# run on host
 sudo cat /sys/kernel/debug/dri/0/gt0/uc/guc_info
 sudo cat /sys/kernel/debug/dri/0/gt0/uc/huc_info
 ```
+
+GPU load monitoring:
+
+```bash
+sudo apt install -y intel-gpu-tools
+intel_gpu_top
+```
+
+References:
+- https://jellyfin.org/docs/general/administration/hardware-acceleration/intel
 
 # Enable hardware transcoding
 

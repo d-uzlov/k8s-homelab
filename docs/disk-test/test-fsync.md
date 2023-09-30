@@ -1,7 +1,9 @@
 
 # Run test
 
-https://www.ibm.com/cloud/blog/using-fio-to-tell-whether-your-storage-is-fast-enough-for-etcd
+References:
+- https://www.ibm.com/cloud/blog/using-fio-to-tell-whether-your-storage-is-fast-enough-for-etcd
+- https://prog.world/is-storage-speed-suitable-for-etcd-ask-fio/
 
 ```bash
 # test on a filesystem

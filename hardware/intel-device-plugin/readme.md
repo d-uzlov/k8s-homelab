@@ -13,6 +13,7 @@ kl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deploym
 
 kl create ns hardware
 kl apply -n hardware -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/gpu_plugin/overlays/monitoring_shared-dev_nfd/?ref=v0.28.0
+kl -n hardware get pod
 ```
 
 # Test that pods can access GPU

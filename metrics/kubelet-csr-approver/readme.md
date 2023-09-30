@@ -59,6 +59,13 @@ kl -n csr-approver get pod
 kl get csr
 ```
 
+# Cleanup
+
+```bash
+kl delete -k ./metrics/kubelet-csr-approver/
+kl delete ns csr-approver
+```
+
 # More docs
 
 - https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/#kubelet-serving-certs

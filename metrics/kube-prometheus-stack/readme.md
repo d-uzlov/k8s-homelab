@@ -103,6 +103,7 @@ kl apply -f ./metrics/kube-prometheus-stack/cert-extractor.yaml
 
 kl wait -n kps --for=condition=ready pods/cert-extractor
 
+rm -f ./metrics/kube-prometheus-stack/env/ca.crt ./metrics/kube-prometheus-stack/env/healthcheck-client.*
 kl cp kps/cert-extractor:/etc/kubernetes/pki/etcd/ca.crt ./metrics/kube-prometheus-stack/env/ca.crt &&
 kl cp kps/cert-extractor:/etc/kubernetes/pki/etcd/healthcheck-client.crt ./metrics/kube-prometheus-stack/env/healthcheck-client.crt &&
 kl cp kps/cert-extractor:/etc/kubernetes/pki/etcd/healthcheck-client.key ./metrics/kube-prometheus-stack/env/healthcheck-client.key
