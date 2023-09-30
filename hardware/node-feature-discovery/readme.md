@@ -23,7 +23,7 @@ helm template \
   --version 0.14.1 \
   --namespace nfd \
   --values ./hardware/node-feature-discovery/values.yaml \
-  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/part-of|d' \
+  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/part-of|d' -e '\|app.kubernetes.io/version|d' \
   > ./hardware/node-feature-discovery/nfd.gen.yaml
 ```
 
@@ -44,7 +44,11 @@ kl -n nfd get pod
 
 # check that nfd deployment updated node labels
 kl describe node | grep feature.node.kubernetes.io
+kl describe node | grep pci
 ```
+
+List of PCI vendor IDs:
+- https://admin.pci-ids.ucw.cz/read/PC?restrict=
 
 # Cleanup
 

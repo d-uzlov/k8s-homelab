@@ -7,17 +7,6 @@ metadata:
   labels:
     app.kubernetes.io/name: nfd
     app.kubernetes.io/instance: nfd
-    app.kubernetes.io/version: "v0.14.1"
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: nfd-gc
-  namespace: nfd
-  labels:
-    app.kubernetes.io/name: nfd
-    app.kubernetes.io/instance: nfd
-    app.kubernetes.io/version: "v0.14.1"
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -27,7 +16,6 @@ metadata:
   labels:
     app.kubernetes.io/name: nfd
     app.kubernetes.io/instance: nfd
-    app.kubernetes.io/version: "v0.14.1"
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -37,10 +25,10 @@ metadata:
   labels:
     app.kubernetes.io/name: nfd
     app.kubernetes.io/instance: nfd
-    app.kubernetes.io/version: "v0.14.1"
 data:
   nfd-master.conf: |-
-    null
+    extraLabelNs:
+    - nvidia.com
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -50,7 +38,6 @@ metadata:
   labels:
     app.kubernetes.io/name: nfd
     app.kubernetes.io/instance: nfd
-    app.kubernetes.io/version: "v0.14.1"
 data:
   nfd-topology-updater.conf: |-
     null
@@ -63,10 +50,20 @@ metadata:
   labels:
     app.kubernetes.io/name: nfd
     app.kubernetes.io/instance: nfd
-    app.kubernetes.io/version: "v0.14.1"
 data:
   nfd-worker.conf: |-
-    null
+    sources:
+      pci:
+        deviceClassWhitelist:
+        - "0200"
+        - "03"
+        - "12"
+        - 0b40
+        - "0207"
+        - "0300"
+        - "0302"
+        deviceLabelFields:
+        - vendor
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -75,7 +72,6 @@ metadata:
   labels:
     app.kubernetes.io/name: nfd
     app.kubernetes.io/instance: nfd
-    app.kubernetes.io/version: "v0.14.1"
 rules:
 - apiGroups:
   - ""
@@ -113,50 +109,12 @@ rules:
   - update
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: nfd-gc
-  labels:
-    app.kubernetes.io/name: nfd
-    app.kubernetes.io/instance: nfd
-    app.kubernetes.io/version: "v0.14.1"
-rules:
-- apiGroups:
-  - ""
-  resources:
-  - nodes
-  verbs:
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - nodes/proxy
-  verbs:
-  - get
-- apiGroups:
-  - topology.node.k8s.io
-  resources:
-  - noderesourcetopologies
-  verbs:
-  - delete
-  - list
-- apiGroups:
-  - nfd.k8s-sigs.io
-  resources:
-  - nodefeatures
-  verbs:
-  - delete
-  - list
----
-apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: nfd
   labels:
     app.kubernetes.io/name: nfd
     app.kubernetes.io/instance: nfd
-    app.kubernetes.io/version: "v0.14.1"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -164,23 +122,6 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: nfd
-  namespace: nfd
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: nfd-gc
-  labels:
-    app.kubernetes.io/name: nfd
-    app.kubernetes.io/instance: nfd
-    app.kubernetes.io/version: "v0.14.1"
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: nfd-gc
-subjects:
-- kind: ServiceAccount
-  name: nfd-gc
   namespace: nfd
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -191,7 +132,6 @@ metadata:
   labels:
     app.kubernetes.io/name: nfd
     app.kubernetes.io/instance: nfd
-    app.kubernetes.io/version: "v0.14.1"
 rules:
 - apiGroups:
   - nfd.k8s-sigs.io
@@ -210,7 +150,6 @@ metadata:
   labels:
     app.kubernetes.io/name: nfd
     app.kubernetes.io/instance: nfd
-    app.kubernetes.io/version: "v0.14.1"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -228,7 +167,6 @@ metadata:
   labels:
     app.kubernetes.io/name: nfd
     app.kubernetes.io/instance: nfd
-    app.kubernetes.io/version: "v0.14.1"
     role: master
 spec:
   type: ClusterIP
@@ -250,7 +188,6 @@ metadata:
   labels:
     app.kubernetes.io/name: nfd
     app.kubernetes.io/instance: nfd
-    app.kubernetes.io/version: "v0.14.1"
     role: worker
 spec:
   selector:
@@ -291,6 +228,7 @@ spec:
         - "nfd-worker"
         args:
         - "-server=nfd-master:8080"
+        - "-enable-nodefeature-api=false"
         - "-metrics=8081"
         ports:
           - name: metrics
@@ -357,7 +295,6 @@ metadata:
   labels:
     app.kubernetes.io/name: nfd
     app.kubernetes.io/instance: nfd
-    app.kubernetes.io/version: "v0.14.1"
     role: master
 spec:
   replicas: 1
@@ -419,6 +356,7 @@ spec:
             {}
           args:
             - "-port=8080"
+            - "-enable-nodefeature-api=false"
             ## By default, disable crd controller for other than the default instances
             - "-crd-controller=true"
             - "-metrics=8081"
@@ -459,53 +397,3 @@ spec:
           key: node-role.kubernetes.io/control-plane
           operator: Equal
           value: ""
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: nfd-gc
-  namespace: nfd
-  labels:
-    app.kubernetes.io/name: nfd
-    app.kubernetes.io/instance: nfd
-    app.kubernetes.io/version: "v0.14.1"
-    role: gc
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: nfd
-      app.kubernetes.io/instance: nfd
-      role: gc
-  template:
-    metadata:
-      labels:
-        app.kubernetes.io/name: nfd
-        app.kubernetes.io/instance: nfd
-        role: gc
-    spec:
-      serviceAccountName: nfd-gc
-      dnsPolicy: ClusterFirstWithHostNet
-      securityContext:
-        {}
-      containers:
-      - name: gc
-        image: "registry.k8s.io/nfd/node-feature-discovery:v0.14.1"
-        imagePullPolicy: "IfNotPresent"
-        env:
-        - name: NODE_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: spec.nodeName
-        command:
-          - "nfd-gc"
-        args:
-          - "-gc-interval=1h"
-        resources:
-            {}
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop: [ "ALL" ]
-          readOnlyRootFilesystem: true
-          runAsNonRoot: true

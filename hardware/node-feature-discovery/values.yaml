@@ -3,12 +3,14 @@ nameOverride: nfd
 fullnameOverride: ''
 namespaceOverride: ""
 
-enableNodeFeatureApi: true
+enableNodeFeatureApi: false
 
 master:
   config: ### <NFD-MASTER-CONF-START-DO-NOT-REMOVE>
     # noPublish: false
     # extraLabelNs: ["added.ns.io","added.kubernets.io"]
+    extraLabelNs:
+      - nvidia.com
     # denyLabelNs: ["denied.ns.io","denied.kubernetes.io"]
     # resourceLabels: ["vendor-1.com/feature-1","vendor-2.io/feature-2"]
     # enableTaints: false
@@ -145,7 +147,7 @@ worker:
     #    logFile:
     #    logFileMaxSize: 1800
     #    skipLogHeaders: false
-    #sources:
+    sources:
     #  cpu:
     #    cpuid:
     ##     NOTE: whitelist has priority over blacklist
@@ -181,17 +183,27 @@ worker:
     #      - "NO_HZ"
     #      - "X86"
     #      - "DMI"
-    #  pci:
-    #    deviceClassWhitelist:
-    #      - "0200"
-    #      - "03"
-    #      - "12"
-    #    deviceLabelFields:
-    #      - "class"
-    #      - "vendor"
-    #      - "device"
-    #      - "subsystem_vendor"
-    #      - "subsystem_device"
+      pci:
+        deviceClassWhitelist:
+        # default values
+        - "0200"
+        - "03"
+        - "12"
+        - '0b40'
+        # from nvidia chart
+        - "0207"
+        - "0300"
+        - "0302"
+        deviceLabelFields:
+        # format will be like this: feature.node.kubernetes.io/pci-0200_1af4_1000_1af4_0001.present=true
+        # if you want this: feature.node.kubernetes.io/pci-10de.present=true
+        # you need to disable everything except `vendor`
+        # nvdp default setup requires you to only have `vendor`
+        # - class
+        - vendor
+        # - device
+        # - subsystem_vendor
+        # - subsystem_device
     #  usb:
     #    deviceClassWhitelist:
     #      - "0e"
@@ -460,7 +472,7 @@ topologyUpdater:
   podSetFingerprint: true
 
 gc:
-  enable: true
+  enable: false
   replicaCount: 1
 
   serviceAccount:
