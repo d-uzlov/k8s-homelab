@@ -6,14 +6,24 @@ References:
 - https://github.com/intel/intel-device-plugins-for-kubernetes
 - https://github.com/intel/helm-charts
 
+# Prerequisites
+
+References:
+- [node-feature-discovery](../node-feature-discovery/readme.md)
+
 # Deploy
 
 ```bash
-kl apply -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/nfd/overlays/node-feature-rules?ref=v0.28.0
+kl create ns hw-intel
+kl apply -k ./hardware/intel-device-plugin/
+kl -n hw-intel get pod
+```
 
-kl create ns hardware
-kl apply -n hardware -k https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/gpu_plugin/overlays/monitoring_shared-dev_nfd/?ref=v0.28.0
-kl -n hardware get pod
+# Cleanup
+
+```bash
+kl delete -k ./hardware/intel-device-plugin/
+kl delete ns hardware
 ```
 
 # Test that pods can access GPU

@@ -21,7 +21,7 @@ helm template \
   nfd \
   nfd/node-feature-discovery \
   --version 0.14.1 \
-  --namespace nfd \
+  --namespace hw-nfd \
   --values ./hardware/node-feature-discovery/values.yaml \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/part-of|d' -e '\|app.kubernetes.io/version|d' \
   > ./hardware/node-feature-discovery/nfd.gen.yaml
@@ -37,10 +37,10 @@ curl -fsSL "$crd_url" --output ./hardware/node-feature-discovery/crd.yaml
 ```bash
 kl apply -f ./hardware/node-feature-discovery/crd.yaml --server-side
 
-kl create ns nfd
+kl create ns hw-nfd
 kl apply -f ./hardware/node-feature-discovery/nfd.gen.yaml
 
-kl -n nfd get pod
+kl -n hw-nfd get pod
 
 # check that nfd deployment updated node labels
 kl describe node | grep feature.node.kubernetes.io
@@ -55,5 +55,5 @@ List of PCI vendor IDs:
 ```bash
 kl delete -f ./hardware/node-feature-discovery/nfd.gen.yaml
 kl delete -f ./hardware/node-feature-discovery/crd.yaml
-kl delete ns nfd
+kl delete ns hw-nfd
 ```
