@@ -29,3 +29,10 @@ kl delete -f ./hardware/intel-device-plugin/test.yaml
 References:
 - https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/cmd/gpu_plugin/README.md#testing-and-demos
 - https://github.com/intel/intel-device-plugins-for-kubernetes/blob/bcf8f016107de64539343a9996f17e2bd42833c9/demo/intelgpu-job.yaml
+
+# GPU load monitoring
+
+```bash
+sudo apt install -y intel-gpu-tools
+intel_gpu_top
+```

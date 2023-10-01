@@ -36,6 +36,8 @@ kl -n jellyfin get pvc
 kl apply -k ./video/jellyfin/generic/
 #   for intel GPUs
 kl apply -k ./video/jellyfin/intel/
+#   for nvidia GPUs
+kl apply -k ./video/jellyfin/nvidia/
 
 kl -n jellyfin get pod
 
@@ -53,6 +55,14 @@ kl delete -k ./video/jellyfin/pvc/
 kl delete ns jellyfin
 ```
 
+# Enable hardware transcoding
+
+By default hardware decoding and encoding is disabled.
+
+You can go to `Dashboard` -> `Playback` to enable it.
+
+VAAPI is a semi-universal API supported by both AMD and Intel but not by NVidia.
+
 # Hardware acceleration on Intel GPUs
 
 Prerequisites:
@@ -65,20 +75,21 @@ sudo cat /sys/kernel/debug/dri/0/gt0/uc/guc_info
 sudo cat /sys/kernel/debug/dri/0/gt0/uc/huc_info
 ```
 
-GPU load monitoring:
-
-```bash
-sudo apt install -y intel-gpu-tools
-intel_gpu_top
-```
-
 References:
 - https://jellyfin.org/docs/general/administration/hardware-acceleration/intel
 
-# Enable hardware transcoding
+# Hardware acceleration on NVidia GPUs
 
-By default hardware decoding and encoding is disabled.
+Prerequisites:
+- [NVidia device plugin](../../hardware/nvidia-device-plugin/readme.md)
 
-You can go to `Dashboard` -> `Playback` to enable it.
+# Proper database support
 
-VAAPI is a semi-universal API supported by both AMD and Intel but not by NVidia.
+Jellyfin uses SQLite and doesn't support remote databases.
+
+But the support is coming soon™ (for about 3 years at the moment).
+
+References:
+- https://github.com/jellyfin/jellyfin/issues/42
+- https://features.jellyfin.org/posts/315/mysql-server-back-end
+- https://old.reddit.com/r/jellyfin/comments/y2ib5w/is_it_possible_to_use_jellyfin_with_a_remote/
