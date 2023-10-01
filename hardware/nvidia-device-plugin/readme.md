@@ -22,7 +22,7 @@ helm template \
   --version 0.14.1 \
   --namespace hardware \
   --values ./hardware/nvidia-device-plugin/values.yaml \
-  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/part-of|d' \
+  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/part-of|d' -e '\|app.kubernetes.io/version|d' \
   > ./hardware/nvidia-device-plugin/nvdp.gen.yaml
 ```
 
@@ -35,18 +35,21 @@ kl create ns hardware
 kl apply -f ./hardware/nvidia-device-plugin/nvdp.gen.yaml
 kl -n nfd get pod
 kl -n hardware get pod
+kl describe node | grep nvidia
+```
+
+# Cleanup
+
+```bash
+kl delete -f ./hardware/nvidia-device-plugin/nvdp.gen.yaml
 ```
 
 # Test that pods can access GPU
 
 ```bash
-kl apply -f ./hardware/intel-device-plugin/test.yaml
+kl apply -f ./hardware/nvidia-device-plugin/test.yaml
 kl get pod
-kl logs jobs/intelgpu-demo-job | less
+kl logs pods/gpu-pod
 
-kl delete -f ./hardware/intel-device-plugin/test.yaml
+kl delete -f ./hardware/nvidia-device-plugin/test.yaml
 ```
-
-References:
-- https://github.com/intel/intel-device-plugins-for-kubernetes/blob/main/cmd/gpu_plugin/README.md#testing-and-demos
-- https://github.com/intel/intel-device-plugins-for-kubernetes/blob/bcf8f016107de64539343a9996f17e2bd42833c9/demo/intelgpu-job.yaml
