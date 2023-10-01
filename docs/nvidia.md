@@ -1,39 +1,39 @@
 
-Source:
-https://docs.nvidia.com/cuda/cuda-installation-guide-linux/
+# NVidia drivers
 
-# Install
+References:
+- https://docs.nvidia.com/cuda/cuda-installation-guide-linux/
+- https://developer.nvidia.com/cuda-toolkit-archive
+- https://wiki.debian.org/NvidiaGraphicsDrivers#bookworm-525
 
-First disable secure boot.
-
-```bash
-# make sure everything is updated
-
-# install packages for kernel
-sudo apt-get install linux-headers-$(uname -r)
-
-sudo apt install gcc -y
-sudo apt install make -y
-```
+# Install CUDA
 
 ```bash
-sudo nano /etc/modprobe.d/blacklist-nouveau.conf
-```
-```conf
+# install dependencies
+sudo apt update
+sudo apt install -y gcc linux-headers-$(uname -r) make dkms
+# disable nouveau driver (runfile will fail if it detects that nouveau is loaded)
+sudo tee /etc/modprobe.d/blacklist-nouveau.conf << EOF
 blacklist nouveau
 options nouveau modeset=0
+EOF
+sudo update-initramfs -u
+# reboot after creating blacklist-nouveau.conf
 ```
 
-```bash
-sudo update-initramfs -u
-```
+Look for available CUDA downloads:
+- https://developer.nvidia.com/cuda-toolkit-archive
 
 ```bash
 # run installer
 wget https://developer.download.nvidia.com/compute/cuda/12.1.1/local_installers/cuda_12.1.1_530.30.02_linux.run &&
 chmod +x ./cuda_12.1.1_530.30.02_linux.run &&
 sudo sh cuda_12.1.1_530.30.02_linux.run
+# wait for it to load and type `accept`
+# you can leave installation options on default
 ```
+
+Upon successful installation you should see something like this:
 
 ```log
 ===========
@@ -50,6 +50,49 @@ Please make sure that
 To uninstall the CUDA Toolkit, run cuda-uninstaller in /usr/local/cuda-12.1/bin
 To uninstall the NVIDIA Driver, run nvidia-uninstall
 Logfile is /var/log/cuda-installer.log
+```
+
+Update environment:
+
+```bash
+echo >> ~/.bashrc '
+export PATH=/usr/local/cuda-12.2/bin${PATH:+:${PATH}}
+export LD_LIBRARY_PATH=/usr/local/cuda-12.2/lib64\
+                         ${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+'
+```
+
+# Install Nvidia proprietary container toolkit
+
+```bash
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey |
+sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg &&
+curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list |
+sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' |
+sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list &&
+sudo apt-get update
+
+sudo apt-get install -y nvidia-container-toolkit
+
+sudo nvidia-ctk runtime configure --runtime=containerd && sudo systemctl restart containerd
+
+# additionally set containerd default runtime to nvidia:
+# [plugins]
+#   [plugins."io.containerd.grpc.v1.cri"]
+#     [plugins."io.containerd.grpc.v1.cri".containerd]
+#       default_runtime_name = "nvidia"
+```
+
+References:
+- https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+- https://github.com/NVIDIA/k8s-device-plugin#quick-start
+
+# Uninstall
+
+```bash
+# replace X.Y with your values
+sudo /usr/local/cuda-X.Y/bin/cuda-uninstaller
+sudo /usr/bin/nvidia-uninstall
 ```
 
 # Control
@@ -117,3 +160,12 @@ MAXPWM=hwmon3/pwm5=199
 ```bash
 watch -d -n 1 sh -c "nvidia-smi && echo && nvidia-smi --query-gpu=index,pstate,power.draw,clocks.sm,clocks.mem --format=csv"
 ```
+
+# vGPU drivers
+
+References:
+- https://github.com/justin-himself/NVIDIA-VGPU-Driver-Archive
+- https://github.com/mbilker/vgpu_unlock-rs
+- https://gitlab.com/polloloco/vgpu-proxmox
+- https://gitea.publichub.eu/oscar.krause/fastapi-dls
+- https://pve.proxmox.com/wiki/NVIDIA_vGPU_on_Proxmox_VE_7.x
