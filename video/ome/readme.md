@@ -23,8 +23,19 @@ kl label ns --overwrite ome copy-wild-cert=main
 kl apply -k ./video/ome/ingress-wildcard/
 kl -n ome get ingress
 
-kl apply -k ./video/ome/
+# cpu-only
+kl apply -k ./video/ome/generic/
+# nvidia gpu (doesn't work)
+kl apply -k ./video/ome/nvidia/
+
 kl -n ome get pod
+```
+
+# Cleanup
+
+```bash
+kl delete -k ./video/ome/generic/
+kl delete ns ome
 ```
 
 # Load balancer services

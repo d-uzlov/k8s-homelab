@@ -179,60 +179,15 @@
 					<!-- Application type (live/vod) -->
 					<Type>live</Type>
 					<OutputProfiles>
-                        <!-- <HardwareAcceleration>true</HardwareAcceleration> -->
 						<OutputProfile>
 							<Name>bypass_stream</Name>
 							<OutputStreamName>${OriginStreamName}</OutputStreamName>
-
-
-							<!-- <Playlist>
-								<Name>Paid</Name>
-								You can play this playlist with 
-								LLHLS : http[s]://<domain>[:port]/<app>/<stream>/<FileName>.m3u8 
-								WebRTC : ws[s]://<domain>[:port]/<app>/<stream>/<FileName>
-								Note that the keywords "playlist" and "chunklist" MUST NOT be included in FileName.
-								<FileName>premium</FileName>
-
-								<Options>
-									WebRtcAutoAbr : Default value is true
-									<WebRtcAutoAbr>true</WebRtcAutoAbr> 
-								</Options>
-
-								<Rendition>
-									<Name>bypass</Name>
-									<Video>bypass_video</Video>
-									bypass_audio doesn't work because we don't have this audio stream
-									<Audio>bypass_audio</Audio>
-								</Rendition>
-								<Rendition>
-									<Name>480p</Name>
-									<Video>480p</Video>
-									<Audio>bypass_audio</Audio>
-								</Rendition>
-								<Rendition>
-									<Name>720p</Name>
-									<Video>h264_hd</Video>
-									<Audio>bypass_audio</Audio>
-								</Rendition>
-							</Playlist> -->
 
 							<Encodes>
 								<Video>
 									<Name>bypass_video</Name>
 									<Bypass>true</Bypass>
 								</Video>
-								<!-- <Video>
-									<Name>h264_hd</Name>
-									<Codec>h264</Codec>
-									<Width>1280</Width>
-									<Height>720</Height>
-									<Bitrate>2000000</Bitrate>
-									<Framerate>30.0</Framerate>
-									<KeyFrameInterval>30</KeyFrameInterval>
-									<BFrames>0</BFrames>
-									<Preset>fast</Preset>
-									<ThreadCount>4</ThreadCount>
-								</Video> -->
 								<Audio>
 									<Name>aac_audio</Name>
 									<Codec>aac</Codec>
@@ -242,7 +197,7 @@
 									<BypassIfMatch>
 										<Codec>eq</Codec>
 									</BypassIfMatch>
-								</Audio>								
+								</Audio>
 								<Audio>
 									<Name>opus_audio</Name>
 									<Codec>opus</Codec>
@@ -251,28 +206,8 @@
 									<Channel>2</Channel>
 									<BypassIfMatch>
 										<Codec>eq</Codec>
-									</BypassIfMatch>									
+									</BypassIfMatch>
 								</Audio>
-								<!-- 							
-								<Video>
-									<Name>video_1280</Name>
-									<Codec>h264</Codec>
-									<Bitrate>5024000</Bitrate>
-									<Framerate>30</Framerate>
-									<Width>1920</Width>
-									<Height>1280</Height>
-									<Preset>faster</Preset>
-								</Video>
-								<Video>
-									<Name>video_720</Name>
-									<Codec>h264</Codec>
-									<Bitrate>2024000</Bitrate>
-									<Framerate>30</Framerate>
-									<Width>1280</Width>
-									<Height>720</Height>
-									<Preset>faster</Preset>
-								</Video>
-								-->
 							</Encodes>
 						</OutputProfile>
 					</OutputProfiles>
@@ -287,24 +222,169 @@
 						<RTMP />
 						<SRT />
 						<RTSPPull />
-						<!-- <MPEGTS>
-							<StreamMap>
-									<- Set the stream name of the client connected to the port to "stream_${Port}"
-									For example, if a client connets to port 4000, OME creates a "stream_4000" stream ->
-									<Stream>
-										<Name>stream_${Port}</Name>
-										<Port>4000,4001-4004</Port>
-									</Stream>
-									<Stream>
-										<Name>stream_4005</Name>
-										<Port>4005</Port>
-									</Stream>
-								<Stream>
-									<Name>stream_${Port}</Name>
-									<Port>${env:OME_MPEGTS_PROV_PORT:4000-4005/udp}</Port>
-								</Stream>
-							</StreamMap>
-						</MPEGTS> -->
+					</Providers>
+					<Publishers>
+						<AppWorkerCount>1</AppWorkerCount>
+						<StreamWorkerCount>8</StreamWorkerCount>
+						<OVT />
+						<WebRTC>
+							<Timeout>30000</Timeout>
+							<Rtx>false</Rtx>
+							<Ulpfec>false</Ulpfec>
+							<JitterBuffer>false</JitterBuffer>
+						</WebRTC>
+						<LLHLS>
+							<OriginMode>true</OriginMode>
+							<!--
+							<CacheControl>
+								<MasterPlaylistMaxAge>0</MasterPlaylistMaxAge>
+								<ChunklistMaxAge>0</ChunklistMaxAge>
+								<ChunklistWithDirectivesMaxAge>60</ChunklistWithDirectivesMaxAge>
+								<SegmentMaxAge>-1</SegmentMaxAge>
+								<PartialSegmentMaxAge>-1</PartialSegmentMaxAge>
+							</CacheControl>
+							-->
+							<ChunkDuration>0.5</ChunkDuration>
+							<!-- PartHoldBack SHOULD be at least three times the Part Target Duration -->
+							<PartHoldBack>1.5</PartHoldBack>
+							<SegmentDuration>6</SegmentDuration>
+							<SegmentCount>10</SegmentCount>
+							<CrossDomains>
+								<Url>*</Url>
+							</CrossDomains>
+						</LLHLS>
+					</Publishers>
+				</Application>
+				
+				<Application>
+					<Name>tc</Name>
+					<!-- Application type (live/vod) -->
+					<Type>live</Type>
+					<OutputProfiles>
+                        <HardwareAcceleration>true</HardwareAcceleration>
+						<OutputProfile>
+							<Name>bypass_stream</Name>
+							<OutputStreamName>${OriginStreamName}</OutputStreamName>
+
+							<Playlist>
+								<Name>transcode_webrtc</Name>
+								<!-- You can play this playlist with 
+								LLHLS : http[s]://<domain>[:port]/<app>/<stream>/<FileName>.m3u8 
+								WebRTC : ws[s]://<domain>[:port]/<app>/<stream>/<FileName>
+								Note that the keywords "playlist" and "chunklist" MUST NOT be included in FileName. -->
+								<FileName>webrtc</FileName>
+								<!-- <Options>
+									WebRtcAutoAbr : Default value is true
+									<WebRtcAutoAbr>true</WebRtcAutoAbr> 
+								</Options> -->
+								<Rendition>
+									<Name>bypass</Name>
+									<Video>bypass_video</Video>
+									<Audio>opus</Audio>
+								</Rendition>
+								<Rendition>
+									<Name>1080p</Name>
+									<Video>1080p</Video>
+									<Audio>opus</Audio>
+								</Rendition>
+								<Rendition>
+									<Name>720p</Name>
+									<Video>720p</Video>
+									<Audio>opus</Audio>
+								</Rendition>
+							</Playlist>
+
+							<Playlist>
+								<Name>transcode_hls</Name>
+								<!-- You can play this playlist with 
+								LLHLS : http[s]://<domain>[:port]/<app>/<stream>/<FileName>.m3u8 
+								WebRTC : ws[s]://<domain>[:port]/<app>/<stream>/<FileName>
+								Note that the keywords "playlist" and "chunklist" MUST NOT be included in FileName. -->
+								<FileName>hls</FileName>
+								<Rendition>
+									<Name>bypass</Name>
+									<Video>bypass_video</Video>
+									<Audio>aac</Audio>
+								</Rendition>
+								<Rendition>
+									<Name>1080p</Name>
+									<Video>1080p</Video>
+									<Audio>aac</Audio>
+								</Rendition>
+								<Rendition>
+									<Name>720p</Name>
+									<Video>720p</Video>
+									<Audio>aac</Audio>
+								</Rendition>
+							</Playlist>
+
+							<Encodes>
+								<Video>
+									<Name>bypass_video</Name>
+									<Bypass>true</Bypass>
+								</Video>
+								<Video>
+									<Name>1080p</Name>
+									<Codec>h264</Codec>
+									<Width>1920</Width>
+									<Height>1080</Height>
+									<Bitrate>5000000</Bitrate>
+									<Framerate>60.0</Framerate>
+									<KeyFrameInterval>60</KeyFrameInterval>
+									<BFrames>0</BFrames>
+									<Preset>fast</Preset>
+									<ThreadCount>4</ThreadCount>
+								</Video>
+								<Video>
+									<Name>720p</Name>
+									<Codec>h264</Codec>
+									<Width>1280</Width>
+									<Height>720</Height>
+									<Bitrate>1500000</Bitrate>
+									<Framerate>60.0</Framerate>
+									<KeyFrameInterval>60</KeyFrameInterval>
+									<BFrames>0</BFrames>
+									<Preset>fast</Preset>
+									<ThreadCount>4</ThreadCount>
+								</Video>
+								<Audio>
+									<Name>aac</Name>
+									<Codec>aac</Codec>
+									<Bitrate>128000</Bitrate>
+									<Samplerate>48000</Samplerate>
+									<Channel>2</Channel>
+									<BypassIfMatch>
+										<Codec>eq</Codec>
+										<Samplerate>lte</Samplerate>
+										<Channel>eq</Channel>	
+									</BypassIfMatch>
+								</Audio>								
+								<Audio>
+									<Name>opus</Name>
+									<Codec>opus</Codec>
+									<Bitrate>128000</Bitrate>
+									<Samplerate>48000</Samplerate>
+									<Channel>2</Channel>
+									<BypassIfMatch>
+										<Codec>eq</Codec>
+										<Samplerate>lte</Samplerate>
+										<Channel>eq</Channel>	
+									</BypassIfMatch>									
+								</Audio>
+							</Encodes>
+						</OutputProfile>
+					</OutputProfiles>
+					<Providers>
+						<OVT />
+						<WebRTC>
+							<Timeout>30000</Timeout>
+							<CrossDomains>
+								<Url>*</Url>
+							</CrossDomains>
+						</WebRTC>
+						<RTMP />
+						<SRT />
+						<RTSPPull />
 					</Providers>
 					<Publishers>
 						<AppWorkerCount>1</AppWorkerCount>
