@@ -1,4 +1,41 @@
 ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nvdp-service-account
+  namespace: hw-nvidia
+  labels:
+    app.kubernetes.io/name: nvdp
+    app.kubernetes.io/instance: nvdp
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: nvdp-role
+  labels:
+    app.kubernetes.io/name: nvdp
+    app.kubernetes.io/instance: nvdp
+rules:
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: nvdp-role-binding
+  labels:
+    app.kubernetes.io/name: nvdp
+    app.kubernetes.io/instance: nvdp
+subjects:
+  - kind: ServiceAccount
+    name: nvdp-service-account
+    namespace: hw-nvidia
+roleRef:
+  kind: ClusterRole
+  name: nvdp-role
+  apiGroup: rbac.authorization.k8s.io
+---
 # Copyright (c) 2019, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +53,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: nvdp
-  namespace: hw-ndivia
+  namespace: hw-nvidia
   labels:
     app.kubernetes.io/name: nvdp
     app.kubernetes.io/instance: nvdp
@@ -38,11 +75,86 @@ spec:
       priorityClassName: system-node-critical
       securityContext:
         {}
+      serviceAccountName: nvdp-service-account
+      shareProcessNamespace: true
+      initContainers:
+      - image: nvcr.io/nvidia/k8s-device-plugin:v0.14.1
+        name: nvidia-device-plugin-init
+        command: ["config-manager"]
+        env:
+        - name: ONESHOT
+          value: "true"
+        - name: KUBECONFIG
+          value: ""
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: "spec.nodeName"
+        - name: NODE_LABEL
+          value: "nvidia.com/device-plugin.config"
+        - name: CONFIG_FILE_SRCDIR
+          value: "/available-configs"
+        - name: CONFIG_FILE_DST
+          value: "/config/config.yaml"
+        - name: DEFAULT_CONFIG
+          value: ""
+        - name: FALLBACK_STRATEGIES
+          value: "named,single"
+        - name: SEND_SIGNAL
+          value: "false"
+        - name: SIGNAL
+          value: ""
+        - name: PROCESS_TO_SIGNAL
+          value: ""
+        volumeMounts:
+          - name: available-configs
+            mountPath: /available-configs
+          - name: config
+            mountPath: /config
       containers:
+      - image: nvcr.io/nvidia/k8s-device-plugin:v0.14.1
+        name: nvidia-device-plugin-sidecar
+        command: ["config-manager"]
+        env:
+        - name: ONESHOT
+          value: "false"
+        - name: KUBECONFIG
+          value: ""
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: "spec.nodeName"
+        - name: NODE_LABEL
+          value: "nvidia.com/device-plugin.config"
+        - name: CONFIG_FILE_SRCDIR
+          value: "/available-configs"
+        - name: CONFIG_FILE_DST
+          value: "/config/config.yaml"
+        - name: DEFAULT_CONFIG
+          value: ""
+        - name: FALLBACK_STRATEGIES
+          value: "named,single"
+        - name: SEND_SIGNAL
+          value: "true"
+        - name: SIGNAL
+          value: "1" # SIGHUP
+        - name: PROCESS_TO_SIGNAL
+          value: "nvidia-device-plugin"
+        volumeMounts:
+          - name: available-configs
+            mountPath: /available-configs
+          - name: config
+            mountPath: /config
+        securityContext:
+          capabilities:
+            add:
+              - SYS_ADMIN
       - image: nvcr.io/nvidia/k8s-device-plugin:v0.14.1
         imagePullPolicy: IfNotPresent
         name: nvidia-device-plugin-ctr
         env:
+          - name: CONFIG_FILE
+            value: /config/config.yaml
           - name: NVIDIA_MIG_MONITOR_DEVICES
             value: all
         securityContext:
@@ -52,10 +164,19 @@ spec:
         volumeMounts:
           - name: device-plugin
             mountPath: /var/lib/kubelet/device-plugins
+          - name: available-configs
+            mountPath: /available-configs
+          - name: config
+            mountPath: /config
       volumes:
         - name: device-plugin
           hostPath:
             path: /var/lib/kubelet/device-plugins
+        - name: available-configs
+          configMap:
+            name: "nvdp-config"
+        - name: config
+          emptyDir: {}
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -99,7 +220,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: nvdp-gfd
-  namespace: hw-ndivia
+  namespace: hw-nvidia
   labels:
     app.kubernetes.io/name: gfd
     app.kubernetes.io/instance: nvdp
@@ -121,11 +242,84 @@ spec:
       priorityClassName: system-node-critical
       securityContext:
         {}
+      serviceAccountName: nvdp-service-account
+      shareProcessNamespace: true
+      initContainers:
+      - image: nvcr.io/nvidia/k8s-device-plugin:v0.14.1
+        name: gpu-feature-discovery-init
+        command: ["config-manager"]
+        env:
+        - name: ONESHOT
+          value: "true"
+        - name: KUBECONFIG
+          value: ""
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: "spec.nodeName"
+        - name: NODE_LABEL
+          value: "nvidia.com/device-plugin.config"
+        - name: CONFIG_FILE_SRCDIR
+          value: "/available-configs"
+        - name: CONFIG_FILE_DST
+          value: "/config/config.yaml"
+        - name: DEFAULT_CONFIG
+          value: ""
+        - name: FALLBACK_STRATEGIES
+          value: "named,single"
+        - name: SEND_SIGNAL
+          value: "false"
+        - name: SIGNAL
+          value: ""
+        - name: PROCESS_TO_SIGNAL
+          value: ""
+        volumeMounts:
+          - name: available-configs
+            mountPath: /available-configs
+          - name: config
+            mountPath: /config
       containers:
+        - image: nvcr.io/nvidia/k8s-device-plugin:v0.14.1
+          name: gpu-feature-discovery-sidecar
+          command: ["config-manager"]
+          env:
+          - name: ONESHOT
+            value: "false"
+          - name: KUBECONFIG
+            value: ""
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: "spec.nodeName"
+          - name: NODE_LABEL
+            value: "nvidia.com/device-plugin.config"
+          - name: CONFIG_FILE_SRCDIR
+            value: "/available-configs"
+          - name: CONFIG_FILE_DST
+            value: "/config/config.yaml"
+          - name: DEFAULT_CONFIG
+            value: ""
+          - name: FALLBACK_STRATEGIES
+            value: "named,single"
+          - name: SEND_SIGNAL
+            value: "true"
+          - name: SIGNAL
+            value: "1"
+          - name: PROCESS_TO_SIGNAL
+            value: "/usr/bin/gpu-feature-discovery"
+          volumeMounts:
+            - name: available-configs
+              mountPath: /available-configs
+            - name: config
+              mountPath: /config
+          securityContext:
+            privileged: true
         - image: nvcr.io/nvidia/gpu-feature-discovery:v0.8.1
           imagePullPolicy: IfNotPresent
           name: gpu-feature-discovery-ctr
           env:
+            - name: GFD_CONFIG_FILE
+              value: /config/config.yaml
             - name: NVIDIA_MIG_MONITOR_DEVICES
               value: all
           securityContext:
@@ -135,6 +329,10 @@ spec:
               mountPath: "/etc/kubernetes/node-feature-discovery/features.d"
             - name: host-sys
               mountPath: "/sys"
+            - name: available-configs
+              mountPath: /available-configs
+            - name: config
+              mountPath: /config
       volumes:
         - name: output-dir
           hostPath:
@@ -142,6 +340,11 @@ spec:
         - name: host-sys
           hostPath:
             path: "/sys"
+        - name: available-configs
+          configMap:
+            name: "nvdp-config"
+        - name: config
+          emptyDir: {}
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
