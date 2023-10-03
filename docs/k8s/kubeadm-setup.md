@@ -19,10 +19,28 @@ because it tries to connect to it.
 
 DNS address is recommended, preferably a separate one, not the one linked to the master node.
 
+# Set your local environment variables
+
+```bash
+# address where some control plane node will always be available
+control_plane_endpoint=
+# ip of the first control plane node
+cp_node1=
+
+# for example:
+control_plane_endpoint=cp.k8s.lan
+cp_node1=m1.k8s.lan
+```
+
 # Print default config:
 
 ```bash
-ssh m1.k8s.lan sudo kubeadm config print init-defaults --component-configs KubeletConfiguration,KubeProxyConfiguration > ./docs/k8s/kconf-default.yaml
+ssh "$cp_node1" \
+    sudo kubeadm \
+        config print \
+        init-defaults \
+        --component-configs KubeletConfiguration,KubeProxyConfiguration \
+    > ./docs/k8s/kconf-default.yaml
 ```
 
 # Setup cluster
@@ -30,10 +48,6 @@ ssh m1.k8s.lan sudo kubeadm config print init-defaults --component-configs Kubel
 Copy config to the first master node:
 
 ```bash
-# Set to your value
-control_plane_endpoint=cp.k8s.lan
-# ip of the first control plane node
-cp_node1=m1.k8s.lan
 sed -e "s/REPLACE_ME_CONTROL_PLANE_ENDPOINT/$control_plane_endpoint/" ./docs/k8s/kconf.yaml | ssh "$cp_node1" "cat > kconf.yaml"
 ```
 
@@ -47,7 +61,7 @@ you need to do before and after using kubeadm.
 SSH into the master node and create cluster:
 
 ```bash
-ssh "$cp_node_address"
+ssh "$cp_node1"
 ```
 
 ```bash
@@ -77,17 +91,8 @@ scp "$cp_node1":.kube/config ./_env/"$control_plane_endpoint".yaml
 Make sure that you have kubeadm and its dependencies on all nodes.
 
 ```bash
-ssh "$cp_node1"
-```
-
-On a master node:
-
-```bash
-# show command to join worker nodes
-echo "sudo $(sudo kubeadm token create --print-join-command) --node-name "'$(hostname --fqdn)'
-
-# show command to join additional control plane nodes
-echo "sudo $(kubeadm token create --print-join-command) --node-name "'$(hostname --fqdn)'" --control-plane --certificate-key $(kubeadm init phase upload-certs --upload-certs | grep -vw -e certificate -e Namespace)"
+scp ./docs/k8s/print-join.sh "$cp_node1":print-join.sh
+ssh "$cp_node1" bash -c ./print-join.sh
 ```
 
 Then SSH into the new node and execute the printed command.
