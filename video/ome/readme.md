@@ -25,7 +25,7 @@ kl -n ome get ingress
 
 # cpu-only
 kl apply -k ./video/ome/generic/
-# nvidia gpu (doesn't work)
+# nvidia gpu
 kl apply -k ./video/ome/nvidia/
 
 kl -n ome get pod
@@ -37,6 +37,11 @@ kl -n ome get pod
 kl delete -k ./video/ome/generic/
 kl delete ns ome
 ```
+
+# Hardware acceleration on NVidia GPUs
+
+Prerequisites:
+- [NVidia device plugin](../../hardware/nvidia-device-plugin/readme.md)
 
 # Load balancer services
 
