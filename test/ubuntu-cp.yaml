@@ -15,15 +15,9 @@ spec:
       terminationGracePeriodSeconds: 0
       containers:
       - name: ubuntu
-        image: ubuntu:latest
+        image: ubuntu:20.04
         # Just sleep forever
-        command: ["sleep"]
-        args: ["infinity"]
-        resources:
-          requests:
-            memory: 0
-          limits:
-            memory: 10Ti
+        command: ["/bin/sh", "-c", "trap : TERM INT; sleep infinity & wait"]
       hostNetwork: true
       dnsPolicy: ClusterFirst
       tolerations:
@@ -35,14 +29,12 @@ spec:
         key: node.kubernetes.io/not-ready
       affinity:
         nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 10
-            preference:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - preference:
               matchExpressions:
               - key: node-role.kubernetes.io/control-plane
                 operator: Exists
-          - weight: 10
-            preference:
+          - preference:
               matchExpressions:
               - key: node-role.kubernetes.io/master
                 operator: Exists
