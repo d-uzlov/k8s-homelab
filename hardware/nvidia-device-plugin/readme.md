@@ -58,3 +58,21 @@ kl logs pods/gpu-pod
 
 kl delete -f ./hardware/nvidia-device-plugin/test.yaml
 ```
+
+# Enable container to access additional GPU functions
+
+You can use `NVIDIA_DRIVER_CAPABILITIES` env
+with a list of following comma-separated values:
+
+- `compute`: required for CUDA and OpenCL applications.
+- `compat32`: required for running 32-bit applications.
+- `graphics`: required for running OpenGL and Vulkan applications.
+- `utility`: required for using `nvidia-smi` and NVML.
+- `video`: required for using the Video Codec SDK.
+- `display`: required for leveraging X11 display.
+- `all`: all of the above
+
+Default value is `utility,compute`.
+
+References:
+- https://github.com/NVIDIA/nvidia-container-runtime
