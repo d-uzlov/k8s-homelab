@@ -11,6 +11,15 @@ metadata:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
+  name: nfd-gc
+  namespace: hw-nfd
+  labels:
+    app.kubernetes.io/name: nfd
+    app.kubernetes.io/instance: nfd
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
   name: nfd-worker
   namespace: hw-nfd
   labels:
@@ -29,6 +38,7 @@ data:
   nfd-master.conf: |-
     extraLabelNs:
     - nvidia.com
+    klog: {}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -52,7 +62,88 @@ metadata:
     app.kubernetes.io/instance: nfd
 data:
   nfd-worker.conf: |-
+    core:
+      featureSources:
+      - all
+      - -storage
+      - -system
+      klog: {}
+      labelSources:
+      - all
+      - -storage
+      - -system
     sources:
+      cpu:
+        cpuid:
+          attributeBlacklist:
+          - BMI1
+          - BMI2
+          - CLMUL
+          - CMOV
+          - CX16
+          - ERMS
+          - F16C
+          - FMA3
+          - HTT
+          - LZCNT
+          - MMX
+          - MMXEXT
+          - NX
+          - POPCNT
+          - RDRAND
+          - RDSEED
+          - RDTSCP
+          - SSE
+          - SSE2
+          - SSE3
+          - SSE4
+          - SSE42
+          - SSSE3
+          - ADX
+          - AVX
+          - CMPXCHG8
+          - CLZERO
+          - FSRM
+          - FXSR
+          - FXSROPT
+          - GFNI
+          - IA32_ARCH_CAP
+          - IBPB
+          - IBRS
+          - LAHF
+          - LBRVIRT
+          - NRIPS
+          - MD_CLEAR
+          - MOVBE
+          - MOVDIR64B
+          - MOVDIRI
+          - OSXSAVE
+          - SERIALIZE
+          - SPEC_CTRL_SSBD
+          - STIBP
+          - STOSB_SHORT
+          - SYSCALL
+          - SYSEE
+          - SSE4A
+          - SVMNP
+          - SVMPF
+          - SVMPFT
+          - TSCRATEMSR
+          - VPCLMULQDQ
+          - VMCBCLEAN
+          - WAITPKG
+          - WBNOINVD
+          - X87
+          - XGETBV1
+          - XSAVE
+          - XSAVEC
+          - XSAVEOPT
+          - XSAVES
+          attributeWhitelist: []
+      custom: []
+      kernel:
+        configOpts:
+        - ""
       pci:
         deviceClassWhitelist:
         - "0200"
@@ -60,8 +151,6 @@ data:
         - "12"
         - 0b40
         - "0207"
-        - "0300"
-        - "0302"
         deviceLabelFields:
         - vendor
 ---
@@ -109,6 +198,42 @@ rules:
   - update
 ---
 apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: nfd-gc
+  labels:
+    app.kubernetes.io/name: nfd
+    app.kubernetes.io/instance: nfd
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - nodes/proxy
+  verbs:
+  - get
+- apiGroups:
+  - topology.node.k8s.io
+  resources:
+  - noderesourcetopologies
+  verbs:
+  - delete
+  - list
+- apiGroups:
+  - nfd.k8s-sigs.io
+  resources:
+  - nodefeatures
+  verbs:
+  - delete
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: nfd
@@ -122,6 +247,22 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: nfd
+  namespace: hw-nfd
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: nfd-gc
+  labels:
+    app.kubernetes.io/name: nfd
+    app.kubernetes.io/instance: nfd
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: nfd-gc
+subjects:
+- kind: ServiceAccount
+  name: nfd-gc
   namespace: hw-nfd
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -228,7 +369,9 @@ spec:
         - "nfd-worker"
         args:
         - "-server=nfd-master:8080"
-        - "-enable-nodefeature-api=false"
+        - "-ca-file=/etc/kubernetes/node-feature-discovery/certs/ca.crt"
+        - "-key-file=/etc/kubernetes/node-feature-discovery/certs/tls.key"
+        - "-cert-file=/etc/kubernetes/node-feature-discovery/certs/tls.crt"
         - "-metrics=8081"
         ports:
           - name: metrics
@@ -258,6 +401,9 @@ spec:
         - name: nfd-worker-conf
           mountPath: "/etc/kubernetes/node-feature-discovery"
           readOnly: true
+        - name: nfd-worker-cert
+          mountPath: "/etc/kubernetes/node-feature-discovery/certs"
+          readOnly: true
       volumes:
         - name: host-boot
           hostPath:
@@ -286,6 +432,9 @@ spec:
             items:
               - key: nfd-worker.conf
                 path: nfd-worker.conf
+        - name: nfd-worker-cert
+          secret:
+            secretName: nfd-worker-cert
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -330,6 +479,10 @@ spec:
               command:
               - "/usr/bin/grpc_health_probe"
               - "-addr=:8080"
+              - "-tls"
+              - "-tls-ca-cert=/etc/kubernetes/node-feature-discovery/certs/ca.crt"
+              - "-tls-client-key=/etc/kubernetes/node-feature-discovery/certs/tls.key"
+              - "-tls-client-cert=/etc/kubernetes/node-feature-discovery/certs/tls.crt"
             initialDelaySeconds: 10
             periodSeconds: 10
           readinessProbe:
@@ -337,6 +490,10 @@ spec:
               command:
               - "/usr/bin/grpc_health_probe"
               - "-addr=:8080"
+              - "-tls"
+              - "-tls-ca-cert=/etc/kubernetes/node-feature-discovery/certs/ca.crt"
+              - "-tls-client-key=/etc/kubernetes/node-feature-discovery/certs/tls.key"
+              - "-tls-client-cert=/etc/kubernetes/node-feature-discovery/certs/tls.crt"
             initialDelaySeconds: 5
             periodSeconds: 10
             failureThreshold: 10
@@ -356,15 +513,23 @@ spec:
             {}
           args:
             - "-port=8080"
-            - "-enable-nodefeature-api=false"
             ## By default, disable crd controller for other than the default instances
             - "-crd-controller=true"
+            - "-ca-file=/etc/kubernetes/node-feature-discovery/certs/ca.crt"
+            - "-key-file=/etc/kubernetes/node-feature-discovery/certs/tls.key"
+            - "-cert-file=/etc/kubernetes/node-feature-discovery/certs/tls.crt"
             - "-metrics=8081"
           volumeMounts:
+            - name: nfd-master-cert
+              mountPath: "/etc/kubernetes/node-feature-discovery/certs"
+              readOnly: true
             - name: nfd-master-conf
               mountPath: "/etc/kubernetes/node-feature-discovery"
               readOnly: true
       volumes:
+        - name: nfd-master-cert
+          secret:
+            secretName: nfd-master-cert
         - name: nfd-master-conf
           configMap:
             name: nfd-master-conf
@@ -397,3 +562,133 @@ spec:
           key: node-role.kubernetes.io/control-plane
           operator: Equal
           value: ""
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nfd-gc
+  namespace: hw-nfd
+  labels:
+    app.kubernetes.io/name: nfd
+    app.kubernetes.io/instance: nfd
+    role: gc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nfd
+      app.kubernetes.io/instance: nfd
+      role: gc
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: nfd
+        app.kubernetes.io/instance: nfd
+        role: gc
+    spec:
+      serviceAccountName: nfd-gc
+      dnsPolicy: ClusterFirstWithHostNet
+      securityContext:
+        {}
+      containers:
+      - name: gc
+        image: "registry.k8s.io/nfd/node-feature-discovery:v0.14.1"
+        imagePullPolicy: "IfNotPresent"
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        command:
+          - "nfd-gc"
+        args:
+          - "-gc-interval=1h"
+        resources:
+            {}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ "ALL" ]
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+---
+# See https://cert-manager.io/docs/configuration/selfsigned/#bootstrapping-ca-issuers
+# - Create a self signed issuer
+# - Use this to create a CA cert
+# - Use this to now create a CA issuer
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: nfd-master-cert
+  namespace: hw-nfd
+spec:
+  secretName: nfd-master-cert
+  subject:
+    organizations:
+    - node-feature-discovery
+  commonName: nfd-master
+  dnsNames:
+  # must match the service name
+  - nfd-master
+  # first one is configured for use by the worker; below are for completeness
+  - nfd-master.hw-nfd.svc
+  - nfd-master.hw-nfd.svc.cluster.local
+  # localhost needed for grpc_health_probe
+  - localhost
+  issuerRef:
+    name: nfd-ca-issuer
+    kind: Issuer
+    group: cert-manager.io
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: nfd-worker-cert
+  namespace: hw-nfd
+spec:
+  secretName: nfd-worker-cert
+  subject:
+    organizations:
+    - node-feature-discovery
+  commonName: nfd-worker
+  dnsNames:
+  - nfd-worker.hw-nfd.svc.cluster.local
+  issuerRef:
+    name: nfd-ca-issuer
+    kind: Issuer
+    group: cert-manager.io
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: nfd-ca-cert
+  namespace: hw-nfd
+spec:
+  isCA: true
+  secretName: nfd-ca-cert
+  subject:
+    organizations:
+    - node-feature-discovery
+  commonName: nfd-ca-cert
+  issuerRef:
+    name: nfd-ca-bootstrap
+    kind: Issuer
+    group: cert-manager.io
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: nfd-ca-bootstrap
+  namespace: hw-nfd
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: nfd-ca-issuer
+  namespace: hw-nfd
+spec:
+  ca:
+    secretName: nfd-ca-cert
