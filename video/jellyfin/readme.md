@@ -31,6 +31,11 @@ kl create ns jellyfin
 kl apply -k ./video/jellyfin/pvc/
 kl -n jellyfin get pvc
 
+# setup wildcard ingress
+kl label ns --overwrite jellyfin copy-wild-cert=main
+kl apply -k ./video/jellyfin/ingress-wildcard/
+kl -n jellyfin get ingress
+
 # choose one:
 #   generic doesn't have hardware acceleration
 kl apply -k ./video/jellyfin/generic/
@@ -39,12 +44,7 @@ kl apply -k ./video/jellyfin/intel/
 #   for nvidia GPUs
 kl apply -k ./video/jellyfin/nvidia/
 
-kl -n jellyfin get pod
-
-# setup wildcard ingress
-kl label ns --overwrite jellyfin copy-wild-cert=main
-kl apply -k ./video/jellyfin/ingress-wildcard/
-kl -n jellyfin get ingress
+kl -n jellyfin get pod -o wide
 ```
 
 # Cleanup

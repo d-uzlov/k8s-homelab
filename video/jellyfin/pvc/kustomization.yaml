@@ -5,6 +5,7 @@ kind: Kustomization
 namespace: jellyfin
 
 resources:
+- db.yaml
 - config.yaml
 - torrent.yaml
 
@@ -54,5 +55,25 @@ replacements:
   - select:
       kind: PersistentVolumeClaim
       name: torrent
+    fieldPaths:
+    - spec.resources.requests.storage
+- source:
+    kind: ConfigMap
+    name: jellyfin-pvc
+    fieldPath: data.db
+  targets:
+  - select:
+      kind: PersistentVolumeClaim
+      name: db
+    fieldPaths:
+    - spec.storageClassName
+- source:
+    kind: ConfigMap
+    name: jellyfin-pvc
+    fieldPath: data.db_size
+  targets:
+  - select:
+      kind: PersistentVolumeClaim
+      name: db
     fieldPaths:
     - spec.resources.requests.storage

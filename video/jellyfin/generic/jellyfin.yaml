@@ -22,7 +22,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
       - name: jellyfin
-        image: docker.io/jellyfin/jellyfin:10.8.10
+        image: docker.io/jellyfin/jellyfin:10.8.11
         ports:
         - name: http
           containerPort: 8096
@@ -34,20 +34,27 @@ spec:
         volumeMounts:
         - name: config
           mountPath: /config
+        - name: db
+          mountPath: /config/data
         - name: media
           mountPath: /media
-        - name: tmp
+        - name: cache
           mountPath: /cache
-          subPath: cache
-        - name: tmp
-          mountPath: /transcode
-          subPath: transcode
+        - name: transcodes
+          mountPath: /config/transcodes
       volumes:
+      - name: db
+        persistentVolumeClaim:
+          claimName: db
       - name: config
         persistentVolumeClaim:
           claimName: config
-      - name: tmp
+      - name: cache
         emptyDir: {}
+      - name: transcodes
+        emptyDir:
+          medium: Memory
+          sizeLimit: 3Gi
       - name: media
         persistentVolumeClaim:
           claimName: torrent
