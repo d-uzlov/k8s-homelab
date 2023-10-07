@@ -60,3 +60,16 @@ Disable built-in commandsToSkipShell.
   "-workbench.action.closeQuickOpen"
 ]
 ```
+
+# Disable CRLF
+
+Add the following to the `settings.json`:
+
+```json
+{
+    "files.eol": "\n",
+}
+```
+
+References:
+- https://medium.com/bootdotdev/how-to-get-consistent-line-breaks-in-vs-code-lf-vs-crlf-e1583bf0f0b6
