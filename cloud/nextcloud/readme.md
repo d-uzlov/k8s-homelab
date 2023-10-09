@@ -56,9 +56,6 @@ EOF
 ```bash
 kl create ns nextcloud
 
-kl apply -k ./cloud/nextcloud/pvc/
-kl -n nextcloud get pvc
-
 # ingress with wildcard certificate
 kl label ns --overwrite nextcloud copy-wild-cert=main
 kl apply -k ./cloud/nextcloud/ingress-wildcard/
@@ -68,8 +65,11 @@ kl -n nextcloud get ingress
 nextcloud_public_domain=$(kl -n nextcloud get ingress nextcloud -o go-template --template "{{range .spec.rules}}{{.host}}{{end}}")
 kl -n nextcloud create configmap public-domain --from-literal public_domain="$nextcloud_public_domain" -o yaml --dry-run=client | kl apply -f -
 
+kl apply -k ./cloud/nextcloud/pvc/
+kl -n nextcloud get pvc
+
 kl apply -k ./cloud/nextcloud/main-app/
-kl -n nextcloud get pod
+kl -n nextcloud get pod -o wide
 ```
 
 # Uninstall
