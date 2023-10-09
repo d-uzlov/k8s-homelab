@@ -45,6 +45,8 @@ spec:
           umask 0
           echo execing entrypoint...
           exec /entrypoint.sh true
+        securityContext:
+          readOnlyRootFilesystem: true
         env:
         - name: NEXTCLOUD_UPDATE
           value: '1'
@@ -128,6 +130,8 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
+        securityContext:
+          readOnlyRootFilesystem: true
         volumeMounts:
         - name: entrypoint
           mountPath: /entrypoint.sh
@@ -145,12 +149,16 @@ spec:
         - name: config
           mountPath: /var/www/html/themes
           subPath: themes
+        - name: tmp
+          mountPath: /tmp
       containers:
       - name: nextcloud
         image: docker.io/nextcloud:27.0.2-fpm
         ports:
         - name: php
           containerPort: 9000
+        securityContext:
+          readOnlyRootFilesystem: true
         volumeMounts:
         - name: entrypoint
           mountPath: /entrypoint.sh
