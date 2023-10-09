@@ -99,18 +99,22 @@ kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ app:enable on
 
 Nextcloud has push notifications system but it requires additional configuration to work.
 
-```bash
-kl apply -k ./cloud/nextcloud/notifications/
-kl -n nextcloud get pod
+Note that push server must be in the `trusted_proxies` CIDR.
 
+References:
+- https://github.com/nextcloud/notify_push
+
+```bash
 # ingress with wildcard certificate
 kl label ns --overwrite nextcloud copy-wild-cert=main
 kl apply -k ./cloud/nextcloud/notifications/ingress-wildcard/
 kl -n nextcloud get ingress
 
 nextcloud_push_domain=$(kl -n nextcloud get ingress push-notifications -o go-template --template="{{range .spec.rules}}{{.host}}{{end}}")
-kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ config:app:set notify_push base_endpoint --value "https://${nextcloud_push_domain}"
-kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ app:enable notify_push
+kl -n nextcloud create configmap push --from-literal push_address="https://${nextcloud_push_domain}" -o yaml --dry-run=client | kl apply -f -
+
+kl apply -k ./cloud/nextcloud/notifications/
+kl -n nextcloud get pod -o wide
 ```
 
 You can run test commands to trigger push notifications manually:

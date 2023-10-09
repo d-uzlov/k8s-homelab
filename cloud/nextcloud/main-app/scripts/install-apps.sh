@@ -23,21 +23,6 @@ fi
 
 # -------------------
 
-echo "Notify push app..."
-if ! [ -d "/var/www/html/custom_apps/notify_push/" ]; then
-  echo "Notify push app: install..."
-  rm -rf /var/www/html/custom_apps/notify_push/
-  php occ app:install notify_push
-
-  echo if you want to use push notifications you need to enable it manually
-  php occ app:disable notify_push
-else
-  echo "Notify push app: update..."
-  php occ app:update notify_push
-fi
-
-# -------------------
-
 echo "DB maintenance..."
 # https://docs.nextcloud.com/server/latest/admin_manual/configuration_server/occ_command.html#add-missing-indices
 echo "Add missing indices..."

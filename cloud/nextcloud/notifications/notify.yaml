@@ -17,7 +17,7 @@ spec:
     spec:
       securityContext:
         runAsUser: 33
-        runAsGroup: 65534
+        runAsGroup: 33
       initContainers:
       - name: wait-filesystem-ready
         image: busybox
@@ -32,6 +32,33 @@ spec:
             sleep 1
           done
           echo connected to backend:9000 successfully!
+      - name: install
+        image: docker.io/nextcloud:27.1.1-fpm
+        command:
+        - bash
+        - -c
+        - |
+          set -eu
+          trap : TERM INT
+          ln -s /usr/src/nextcloud/* /var/www/html/
+          php occ app:enable notify_push
+          php occ app:update notify_push
+          php occ config:app:set notify_push base_endpoint --value "$PUSH_ADDRESS"
+        env:
+        - name: PUSH_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              name: push
+              key: push_address
+        volumeMounts:
+        - mountPath: /mnt/user-data
+          name: user-data
+        - mountPath: /usr/src/nextcloud/config
+          name: config
+          subPath: config
+        - mountPath: /usr/src/nextcloud/custom_apps
+          name: config
+          subPath: custom_apps
       containers:
       - name: notify
         image: docker.io/fpco/pid1:22.04
@@ -45,23 +72,26 @@ spec:
         - name: PORT
           value: '7867'
         - name: NEXTCLOUD_URL
-          value: 'http://frontend.nextcloud.svc/'
+          value: http://frontend/
         volumeMounts:
-        - name: web
-          mountPath: /var/www/html
         - name: config
           mountPath: /var/www/html/config
-        - name: user-data
-          mountPath: /mnt/user-data
+          subPath: config
+          readOnly: true
+        - name: config
+          mountPath: /var/www/html/custom_apps
+          subPath: custom_apps
+          readOnly: true
         resources:
           requests:
             memory: 10Mi
           limits:
             memory: 50Mi
+        readinessProbe:
+          failureThreshold: 1
+          tcpSocket:
+            port: notify
       volumes:
-      - name: web
-        persistentVolumeClaim:
-          claimName: web
       - name: user-data
         persistentVolumeClaim:
           claimName: user-data
