@@ -92,23 +92,22 @@ spec:
         image: docker.io/alpine:3.17.3
         command: ["/bin/sh", "-c", "trap : TERM INT; sleep infinity & wait"]
         readinessProbe:
-          failureThreshold: 1
-          periodSeconds: 10
-          successThreshold: 1
+          periodSeconds: 60
           exec:
             command:
             - /bin/sh
             - -c
             - |
+              echo checking at $(date +"%Y-%m-%dT%H:%M:%S%z")
               main_path=/var/lib/mysql
               main_used=$(df -P "${main_path}" | awk 'NR == 2{print $5+0}')
-              echo "main mount: ${main_path}: used ${main_used}% of space"
-              [ "$main_used" -lt "80" ] || exit 1
+              [ "$main_used" -lt "80" ] || { echo "main mount: ${main_path}: used ${main_used}% of space"; exit 1; }
               
               binlog_path=/mnt/binlog
               binlog_used=$(df -P "${binlog_path}" | awk 'NR == 2{print $5+0}')
-              echo "main mount: ${binlog_path}: used ${binlog_used}% of space"
-              [ "$binlog_used" -lt "80" ] || exit 1
+              [ "$binlog_used" -lt "80" ] || { echo "main mount: ${binlog_path}: used ${binlog_used}% of space"; exit 1; }
+              
+              echo space is OK
         volumeMounts:
         - mountPath: /var/lib/mysql
           name: data

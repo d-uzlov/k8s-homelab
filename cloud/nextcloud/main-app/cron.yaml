@@ -47,6 +47,15 @@ spec:
           trap : TERM INT
           echo '*/5 * * * * /mnt/scripts/cron.sh' > /mnt/cron/crontab-for-cron-sh
           ln -s /usr/src/nextcloud/* /var/www/html/
+
+          echo running cron job manually because of startup...
+          until /mnt/scripts/cron.sh
+          do
+            echo $(date +"%Y-%m-%dT%H:%M:%S%z") Waiting...
+            sleep 10
+          done
+          echo done running cron first time
+
           exec /mnt/cron/supercronic /mnt/cron/crontab-for-cron-sh
         securityContext:
           readOnlyRootFilesystem: true
@@ -55,6 +64,7 @@ spec:
           name: scripts
         - mountPath: /mnt/user-data
           name: user-data
+          # cron needs read-write access to all important folders
           readOnly: false
         - mountPath: /usr/src/nextcloud/config
           name: config
