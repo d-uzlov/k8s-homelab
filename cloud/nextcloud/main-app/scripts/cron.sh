@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-install_flag_file=/var/www/html/version.php
+install_flag_file=/var/nextcloud/shared-lock/version.php
 if [ ! -f "$install_flag_file" ]; then
   echo "$install_flag_file does not exist, make sure that nextcloud is installed"
   exit 1

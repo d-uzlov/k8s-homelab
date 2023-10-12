@@ -17,7 +17,39 @@ spec:
     spec:
       securityContext:
         runAsUser: 33
-        runAsGroup: 65534
+        runAsGroup: 33
+      initContainers:
+      - name: init-filesystem
+        image: docker.io/nextcloud:27.0.2-fpm
+        command:
+        - bash
+        - -c
+        - |
+          set -eu
+          rsync -rlDm \
+            --exclude /config \
+            --exclude /lib \
+            --exclude /3rdparty \
+            --include="*/" \
+            --include '*.php' \
+            --include '*.css' \
+            --include '*.js' \
+            --include '*.mjs' \
+            --include '*.svg' \
+            --include '*.gif' \
+            --include '*.png' \
+            --include '*.jpg' \
+            --include '*.ico' \
+            --include '*.wasm' \
+            --include '*.html' \
+            --exclude '*.js.map' \
+            --exclude '/*' \
+            /usr/src/nextcloud/ /var/www/html && ls -la /var/www/html
+        volumeMounts:
+        - mountPath: /scripts
+          name: entrypoint
+        - mountPath: /var/www/html
+          name: webroot
       containers:
       - name: nginx
         image: docker.io/nginx:1.25.2
@@ -25,8 +57,17 @@ spec:
         - name: http
           containerPort: 8080
         volumeMounts:
-        - name: web
-          mountPath: /var/www/html
+        - mountPath: /var/www/html
+          name: webroot
+        - mountPath: /var/www/html/config
+          name: config
+          subPath: config
+        - mountPath: /var/www/html/custom_apps
+          name: config
+          subPath: custom_apps
+        - mountPath: /var/www/html/themes
+          name: config
+          subPath: themes
         - name: nginx-conf
           mountPath: /etc/nginx/nginx.conf
           subPath: nginx.conf
@@ -57,13 +98,18 @@ spec:
             path: /health
             port: 8080
       volumes:
-      - name: web
-        persistentVolumeClaim:
-          claimName: web
-          readOnly: false
+      - name: entrypoint
+        configMap:
+          name: nextcloud-entrypoint
+          defaultMode: 0555
+      - name: webroot
+        emptyDir: {}
       - name: nginx-conf
         configMap:
           name: nginx-conf
+      - name: config
+        persistentVolumeClaim:
+          claimName: config
 ---
 apiVersion: v1
 kind: Service

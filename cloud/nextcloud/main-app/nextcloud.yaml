@@ -17,7 +17,7 @@ spec:
     spec:
       securityContext:
         runAsUser: 33
-        runAsGroup: 65534
+        runAsGroup: 33
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
       initContainers:
@@ -34,22 +34,59 @@ spec:
             sleep 1
           done
           echo connected to db:3306 successfully!
+      - name: init-filesystem
+        image: docker.io/nextcloud:27.0.2-fpm
+        command:
+        - bash
+        - -c
+        - |
+          set -eu
+          /scripts/init-webroot-links.sh /var/www/html/
+          (
+            set -eu
+            if ! flock -n 9; then
+                echo "Waiting to acquire Nextcloud lock..."
+                flock 9
+            fi
+            /scripts/init-webroot-mutable.sh /mnt
+          ) 9> /mnt/shared-lock/nextcloud-init-sync.lock
+        volumeMounts:
+        - mountPath: /scripts
+          name: entrypoint
+        - mountPath: /var/www/html
+          name: webroot
+        - mountPath: /mnt/config
+          name: config
+          subPath: config
+        - mountPath: /mnt/custom_apps
+          name: config
+          subPath: custom_apps
+        - mountPath: /mnt/themes
+          name: config
+          subPath: themes
+        - mountPath: /mnt/shared-lock
+          name: config
+          subPath: shared-lock
       - name: install
         image: docker.io/nextcloud:27.0.2-fpm
         command:
         - bash
         - -c
-        args:
         - |
-          trap : TERM INT
-          umask 0
-          echo execing entrypoint...
-          exec /entrypoint.sh true
+          set -eu
+          (
+            set -eu
+            if ! flock -n 9; then
+                echo "Waiting to acquire Nextcloud lock..."
+                flock 9
+            fi
+            /scripts/install.sh /mnt/shared-lock/version.php
+          ) 9> /mnt/shared-lock/nextcloud-init-sync.lock
         securityContext:
           readOnlyRootFilesystem: true
         env:
-        - name: NEXTCLOUD_UPDATE
-          value: '1'
+        - name: DB_TYPE
+          value: mysql
         - name: MYSQL_HOST
           value: db
         - name: MYSQL_USER
@@ -100,7 +137,6 @@ spec:
           mountPath: /mnt/php-conf-d
         - name: entrypoint
           mountPath: /scripts
-          readOnly: true
         - name: entrypoint
           mountPath: /docker-entrypoint-hooks.d/pre-installation/pre-install.sh
           subPath: pre-install.sh
@@ -110,19 +146,24 @@ spec:
         - name: entrypoint
           mountPath: /docker-entrypoint-hooks.d/before-starting/setup-env.sh
           subPath: setup-env.sh
-        - name: web
-          mountPath: /var/www/html
-        - name: user-data
-          mountPath: /mnt/user-data
-        - name: config
-          mountPath: /var/www/html/config
+        - mountPath: /var/www/html
+          name: webroot
+        - mountPath: /mnt/user-data
+          name: user-data
+        - mountPath: /usr/src/nextcloud/config
+          name: config
           subPath: config
-        - name: config
-          mountPath: /var/www/html/custom_apps
+        - mountPath: /usr/src/nextcloud/custom_apps
+          name: config
           subPath: custom_apps
-        - name: config
-          mountPath: /var/www/html/themes
+        - mountPath: /usr/src/nextcloud/themes
+          name: config
           subPath: themes
+        - mountPath: /mnt/shared-lock
+          name: config
+          subPath: shared-lock
+        - name: tmp
+          mountPath: /tmp
       - name: install-apps
         image: docker.io/nextcloud:27.0.2-fpm
         env:
@@ -136,18 +177,18 @@ spec:
         - name: entrypoint
           mountPath: /entrypoint.sh
           subPath: install-apps.sh
-        - name: web
-          mountPath: /var/www/html
-        - name: user-data
-          mountPath: /mnt/user-data
-        - name: config
-          mountPath: /var/www/html/config
+        - mountPath: /var/www/html
+          name: webroot
+        - mountPath: /mnt/user-data
+          name: user-data
+        - mountPath: /usr/src/nextcloud/config
+          name: config
           subPath: config
-        - name: config
-          mountPath: /var/www/html/custom_apps
+        - mountPath: /usr/src/nextcloud/custom_apps
+          name: config
           subPath: custom_apps
-        - name: config
-          mountPath: /var/www/html/themes
+        - mountPath: /usr/src/nextcloud/themes
+          name: config
           subPath: themes
         - name: tmp
           mountPath: /tmp
@@ -168,18 +209,18 @@ spec:
           subPath: custom.conf.ini
         - name: php-conf-d
           mountPath: /usr/local/etc/php/conf.d
-        - name: user-data
-          mountPath: /mnt/user-data
-        - name: web
-          mountPath: /var/www/html
-        - name: config
-          mountPath: /var/www/html/config
+        - mountPath: /var/www/html
+          name: webroot
+        - mountPath: /mnt/user-data
+          name: user-data
+        - mountPath: /usr/src/nextcloud/config
+          name: config
           subPath: config
-        - name: config
-          mountPath: /var/www/html/custom_apps
+        - mountPath: /usr/src/nextcloud/custom_apps
+          name: config
           subPath: custom_apps
-        - name: config
-          mountPath: /var/www/html/themes
+        - mountPath: /usr/src/nextcloud/themes
+          name: config
           subPath: themes
         - name: tmp
           mountPath: /tmp
@@ -233,9 +274,8 @@ spec:
       - name: php-custom-conf
         configMap:
           name: php-conf
-      - name: web
-        persistentVolumeClaim:
-          claimName: web
+      - name: webroot
+        emptyDir: {}
       - name: user-data
         persistentVolumeClaim:
           claimName: user-data
