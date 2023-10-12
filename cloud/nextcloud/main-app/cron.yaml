@@ -4,12 +4,9 @@ kind: Deployment
 metadata:
   name: cron
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: cron
-  strategy:
-    type: RollingUpdate
   template:
     metadata:
       labels:
@@ -17,80 +14,81 @@ spec:
     spec:
       securityContext:
         runAsUser: 33
+        runAsGroup: 33
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
       initContainers:
-      # we need to wait before downloading the file,
-      # because nextcloud could delete files during installation
-      - name: wait-filesystem-ready
-        image: busybox
-        command:
-        - sh
-        - -c
-        - |
-          trap : TERM INT
-          until nc -w 1 -z backend 9000 > /dev/null
-          do
-            echo $(date +"%Y-%m-%dT%H:%M:%S%z") Waiting...
-            sleep 1 & wait
-          done
-          echo connected to backend:9000 successfully!
       - name: download-cron
-        image: docker.io/alpine:3.18.3
+        image: docker.io/alpine/curl:8.3.0
         command:
-        - sh
-        - -c
-        - |
-          trap : TERM INT
-          set -eu
-          cd /mnt/save-path/
-          binary_path=supercronic
-          if [ -f "$binary_path" ] && echo "$sha1sum  $binary_path" | sha1sum -c -; then
-            chmod 777 "$binary_path"
-            chown 33:33 "$binary_path"
-            echo supercronic binary already exists, exiting
-            exit 0
-          fi
-          apk add curl
-          rm -rf "$binary_path"
-          url="https://github.com/aptible/supercronic/releases/download/$VERSION/supercronic-linux-amd64"
-          curl -fsSL "$url" --output "$binary_path"
-          echo "$SHA1SUM  $binary_path" | sha1sum -c -
-          chmod 777 "$binary_path"
-          chown 33:33 "$binary_path"
-          echo success!
+        - /mnt/scripts/get-supercronic.sh
+        - /mnt/cron/supercronic
         env:
         - name: VERSION
           value: v0.2.26
         - name: SHA1SUM
           value: 7a79496cf8ad899b99a719355d4db27422396735
-        volumeMounts:
-        - name: web
-          mountPath: /mnt/save-path
-          subPath: _
         securityContext:
-          runAsUser: 0
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /mnt/scripts
+          name: scripts
+        - mountPath: /mnt/cron
+          name: config
+          subPath: cron
       containers:
       - name: cron
         image: docker.io/nextcloud:27.0.2-fpm
         command:
-        - /var/www/html/_/supercronic
-        - /var/spool/cron/crontabs/www-data
+        - bash
+        - -c
+        - |
+          set -eu
+          trap : TERM INT
+          echo '*/5 * * * * /mnt/scripts/cron.sh' > /mnt/cron/crontab-for-cron-sh
+          ln -s /usr/src/nextcloud/* /var/www/html/
+          exec /mnt/cron/supercronic /mnt/cron/crontab-for-cron-sh
+        securityContext:
+          readOnlyRootFilesystem: true
         volumeMounts:
-        - name: web
-          mountPath: /var/www/html
-        - name: config
-          mountPath: /var/www/html/config
-        - name: user-data
-          mountPath: /mnt/user-data
+        - mountPath: /mnt/scripts
+          name: scripts
+        - mountPath: /mnt/user-data
+          name: user-data
+          readOnly: false
+        - mountPath: /usr/src/nextcloud/config
+          name: config
+          subPath: config
+          readOnly: false
+        - mountPath: /usr/src/nextcloud/custom_apps
+          name: config
+          subPath: custom_apps
+          readOnly: false
+        - mountPath: /usr/src/nextcloud/themes
+          name: config
+          subPath: themes
+          readOnly: true
+        - mountPath: /mnt/cron
+          name: config
+          subPath: cron
+        - mountPath: /var/nextcloud/shared-lock
+          name: config
+          subPath: shared-lock
+        - mountPath: /tmp
+          name: tmp
         resources:
           requests:
             memory: 60Mi
           limits:
-            # TODO it is getting OOMKilled when limit is 100Mi, check out how much it actually uses
+            # TODO cron is getting OOMKilled when limit is 100Mi, check out how much it actually uses
             memory: 1000Mi
       volumes:
-      - name: web
-        persistentVolumeClaim:
-          claimName: web
+      - name: scripts
+        configMap:
+          name: cron-scripts
+          defaultMode: 0555
+      - name: tmp
+        emptyDir: {}
       - name: user-data
         persistentVolumeClaim:
           claimName: user-data
