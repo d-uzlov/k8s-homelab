@@ -8,8 +8,6 @@ spec:
   selector:
     matchLabels:
       app: nginx
-  strategy:
-    type: RollingUpdate
   template:
     metadata:
       labels:
@@ -56,21 +54,24 @@ spec:
         ports:
         - name: http
           containerPort: 8080
+        securityContext:
+          readOnlyRootFilesystem: true
         volumeMounts:
         - mountPath: /var/www/html
           name: webroot
-        - mountPath: /var/www/html/config
-          name: config
-          subPath: config
         - mountPath: /var/www/html/custom_apps
           name: config
           subPath: custom_apps
+          readOnly: true
         - mountPath: /var/www/html/themes
           name: config
           subPath: themes
+          readOnly: true
         - mountPath: /etc/nginx/nginx.conf
           name: nginx-conf
           subPath: nginx.conf
+        - mountPath: /tmp
+          name: tmp
         resources:
           requests:
             memory: 10Mi
@@ -79,24 +80,21 @@ spec:
         startupProbe:
           failureThreshold: 10
           periodSeconds: 1
-          timeoutSeconds: 1
           httpGet:
             path: /health
-            port: 8080
+            port: http
         livenessProbe:
           failureThreshold: 5
-          periodSeconds: 3
-          timeoutSeconds: 1
+          periodSeconds: 1
           httpGet:
             path: /health
-            port: 8080
+            port: http
         readinessProbe:
-          failureThreshold: 2
-          periodSeconds: 3
-          timeoutSeconds: 1
+          failureThreshold: 1
+          periodSeconds: 1
           httpGet:
             path: /health
-            port: 8080
+            port: http
       volumes:
       - name: entrypoint
         configMap:
@@ -110,6 +108,8 @@ spec:
       - name: config
         persistentVolumeClaim:
           claimName: config
+      - name: tmp
+        emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
