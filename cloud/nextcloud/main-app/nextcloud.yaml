@@ -8,8 +8,6 @@ spec:
   selector:
     matchLabels:
       app: nextcloud
-  strategy:
-    type: Recreate
   template:
     metadata:
       labels:
@@ -22,7 +20,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       initContainers:
       - name: wait-database-ready
-        image: busybox
+        image: docker.io/busybox:1.36
         command:
         - sh
         - -c
@@ -41,6 +39,8 @@ spec:
         - -c
         - |
           set -eu
+          trap : TERM INT
+          umask 0
           /scripts/init-webroot-links.sh /var/www/html/
           (
             set -eu
@@ -49,10 +49,10 @@ spec:
                 flock 9
             fi
             /scripts/init-webroot-mutable.sh /mnt
-          ) 9> /mnt/shared-lock/nextcloud-init-sync.lock
+          ) 9> /mnt/shared-lock/nextcloud-init-sync.lock & wait -n
         volumeMounts:
         - mountPath: /scripts
-          name: entrypoint
+          name: scripts
         - mountPath: /var/www/html
           name: webroot
         - mountPath: /mnt/config
@@ -74,6 +74,8 @@ spec:
         - -c
         - |
           set -eu
+          trap : TERM INT
+          umask 0
           (
             set -eu
             if ! flock -n 9; then
@@ -81,7 +83,9 @@ spec:
                 flock 9
             fi
             /scripts/install.sh /mnt/shared-lock/version.php
-          ) 9> /mnt/shared-lock/nextcloud-init-sync.lock
+            /scripts/setup-env.sh
+          ) 9> /mnt/shared-lock/nextcloud-init-sync.lock & wait -n
+          /scripts/init-php-conf.sh
         securityContext:
           readOnlyRootFilesystem: true
         env:
@@ -136,16 +140,10 @@ spec:
         - mountPath: /mnt/php-conf-d
           name: php-conf-d
         - mountPath: /scripts
-          name: entrypoint
+          name: scripts
         - mountPath: /docker-entrypoint-hooks.d/pre-installation/pre-install.sh
-          name: entrypoint
+          name: scripts
           subPath: pre-install.sh
-        - mountPath: /docker-entrypoint-hooks.d/before-starting/init-php-conf.sh
-          name: entrypoint
-          subPath: init-php-conf.sh
-        - mountPath: /docker-entrypoint-hooks.d/before-starting/setup-env.sh
-          name: entrypoint
-          subPath: setup-env.sh
         - mountPath: /var/www/html
           name: webroot
           readOnly: true
@@ -171,12 +169,13 @@ spec:
         ports:
         - name: php
           containerPort: 9000
+        command:
+        - /scripts/run.sh
         securityContext:
           readOnlyRootFilesystem: true
         volumeMounts:
-        - mountPath: /entrypoint.sh
-          name: entrypoint
-          subPath: run.sh
+        - name: scripts
+          mountPath: /scripts
         - mountPath: /usr/local/etc/php-fpm.d/zzz-custom.conf
           name: php-custom-conf
           subPath: custom.conf.ini
@@ -218,31 +217,15 @@ spec:
             memory: 12Mi
         securityContext:
           readOnlyRootFilesystem: true
-        startupProbe:
-          failureThreshold: 30
-          periodSeconds: 1
-          timeoutSeconds: 1
-          exec:
-            command:
-            - /usr/local/bin/php-fpm-healthcheck
         readinessProbe:
-          failureThreshold: 2
           periodSeconds: 1
-          timeoutSeconds: 1
-          exec:
-            command:
-            - /usr/local/bin/php-fpm-healthcheck
-        livenessProbe:
-          failureThreshold: 5
-          periodSeconds: 1
-          timeoutSeconds: 1
           exec:
             command:
             - /usr/local/bin/php-fpm-healthcheck
       volumes:
-      - name: entrypoint
+      - name: scripts
         configMap:
-          name: nextcloud-entrypoint
+          name: nextcloud-scripts
           defaultMode: 0555
       - name: php-custom-conf
         configMap:

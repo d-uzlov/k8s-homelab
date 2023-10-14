@@ -16,19 +16,19 @@ Set storage classes for different data types:
 ```bash
 mkdir -p ./cloud/nextcloud/pvc/env/
 cat <<EOF > ./cloud/nextcloud/pvc/env/pvc.env
+# mariadb uses ReadWriteOnce type volumes
 mariadb=block
 mariadb_size=1Gi
 mariadb_binlog=block
 mariadb_binlog_size=1Gi
 
+# userdata uses ReadWriteMany type volumes
 userdata=fast
 userdata_size=1Ti
 
-web=block
-web_size=10Gi
-
+# config uses ReadWriteMany type volumes
 config=fast
-config_size=100Mi
+config_size=1Gi
 EOF
 ```
 
@@ -135,7 +135,7 @@ You can run test commands to trigger push notifications manually:
 kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ notify_push:self-test
 # show number of connections and messages
 kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ notify_push:metrics
-# send a test notifications to used with id "admin"
+# send a test notifications to user with id "admin"
 kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ notification:test-push admin
 ```
 

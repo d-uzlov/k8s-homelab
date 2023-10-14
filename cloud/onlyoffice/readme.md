@@ -40,15 +40,16 @@ EOF
 ```bash
 kl create ns onlyoffice
 
+# wildcard ingress
+kl label ns --overwrite onlyoffice copy-wild-cert=main
+kl apply -k ./cloud/onlyoffice/ingress-wildcard/
+kl -n onlyoffice get ingress
+
 kl apply -k ./cloud/onlyoffice/pvc/
 kl -n onlyoffice get pvc
 
 kl apply -k ./cloud/onlyoffice/main-app/
-kl -n onlyoffice get pod
-
-kl label ns --overwrite onlyoffice copy-wild-cert=main
-kl apply -k ./cloud/onlyoffice/ingress-wildcard/
-kl -n onlyoffice get ingress
+kl -n onlyoffice get pod -o wide
 ```
 
 # Note on certificates
