@@ -29,9 +29,11 @@ spec:
           until nc -w 1 -z db 3306 > /dev/null
           do
             echo $(date +"%Y-%m-%dT%H:%M:%S%z") Waiting...
-            sleep 1
+            sleep 1 & wait
           done
           echo connected to db:3306 successfully!
+        securityContext:
+          readOnlyRootFilesystem: true
       - name: init-filesystem
         image: docker.io/nextcloud:27.0.2-fpm
         command:
@@ -50,6 +52,8 @@ spec:
             fi
             /scripts/init-webroot-mutable.sh /mnt
           ) 9> /mnt/shared-lock/nextcloud-init-sync.lock & wait -n
+        securityContext:
+          readOnlyRootFilesystem: true
         volumeMounts:
         - mountPath: /scripts
           name: scripts
@@ -163,6 +167,40 @@ spec:
           subPath: shared-lock
         - mountPath: /tmp
           name: tmp
+      - name: init-nginx
+        image: docker.io/nextcloud:27.0.2-fpm
+        command:
+        - bash
+        - -c
+        - |
+          set -eu
+          rsync -rlDm \
+            --prune-empty-dirs \
+            --exclude /config \
+            --exclude /lib \
+            --exclude /3rdparty \
+            --include="*/" \
+            --include '*.css' \
+            --include '*.js' \
+            --include '*.mjs' \
+            --include '*.svg' \
+            --include '*.gif' \
+            --include '*.png' \
+            --include '*.jpg' \
+            --include '*.ico' \
+            --include '*.wasm' \
+            --include '*.html' \
+            --exclude '*.js.map' \
+            --exclude '*.php' \
+            --exclude '*.sh' \
+            --exclude '*.lock' \
+            --exclude '/*' \
+            /usr/src/nextcloud/ /var/www/html && ls -la /var/www/html
+        securityContext:
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /var/www/html
+          name: nginx-webroot
       containers:
       - name: nextcloud
         image: docker.io/nextcloud:27.0.2-fpm
@@ -222,6 +260,46 @@ spec:
           exec:
             command:
             - /usr/local/bin/php-fpm-healthcheck
+      - name: nginx
+        image: docker.io/peytonyip/nginx-brotli:1.25.2
+        ports:
+        - name: http
+          containerPort: 8080
+        securityContext:
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /var/www/html
+          name: nginx-webroot
+        - mountPath: /var/www/html/custom_apps
+          name: config
+          subPath: custom_apps
+          readOnly: true
+        - mountPath: /var/www/html/themes
+          name: config
+          subPath: themes
+          readOnly: true
+        - mountPath: /etc/nginx/nginx.conf
+          name: nginx-conf
+          subPath: nginx.conf
+        - mountPath: /tmp
+          name: nginx-tmp
+        resources:
+          requests:
+            memory: 10Mi
+          limits:
+            memory: 100Mi
+        livenessProbe:
+          failureThreshold: 5
+          periodSeconds: 1
+          httpGet:
+            path: /health
+            port: http
+        readinessProbe:
+          failureThreshold: 1
+          periodSeconds: 1
+          httpGet:
+            path: /health
+            port: http
       volumes:
       - name: scripts
         configMap:
@@ -242,6 +320,13 @@ spec:
         emptyDir: {}
       - name: php-conf-d
         emptyDir: {}
+      - name: nginx-webroot
+        emptyDir: {}
+      - name: nginx-conf
+        configMap:
+          name: nginx-conf
+      - name: nginx-tmp
+        emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
@@ -254,3 +339,15 @@ spec:
   - name: php
     port: 9000
     targetPort: php
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+spec:
+  selector:
+    app: nextcloud
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
