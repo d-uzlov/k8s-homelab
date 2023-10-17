@@ -3,8 +3,8 @@
 
 Calico v1.25.0 and v1.25.1 are known to work fine.
 
-v1.26.0 doesn't work in my setup.
-For some reason cascaded resource deletion doesn't work
+- v1.26.0 doesn't work in my setup.
+- - For some reason cascaded resource deletion doesn't work
 
 Use this command to test:
 ```bash
@@ -27,7 +27,15 @@ NAME                                   DESIRED   CURRENT   READY   AGE
 replicaset.apps/echoserver-96ffcc7c8   1         1         1       8s
 ```
 
-v1.26.1 seems to work fine, but it doesn't support eBPF in Debian 12: https://github.com/projectcalico/calico/issues/8001
+- v1.26.1 seems to work fine, but it doesn't support eBPF in Debian 12: https://github.com/projectcalico/calico/issues/8001
+- v3.26.3 breaks pod connectivity. Roughly 1/4th of ingress requests either hang for 5 seconds or simply never finish
+- - Deploy `./test/ingress` and run this: `while true; do time curl https://echo-wildcard.meoe.duckdns.org; sleep 0.1; done`
+- - With the same ingress test: direct access via load balancer service work without issues
+- - Tested both with and without eBPF
+- - Note: I don't remember if `externalTrafficPolicy` affects this
+
+Apparently, v3.xx is supposed to support k8s v1.xx.
+So, v3.26 only supports k8s v1.26, and is not guaranteed to work on k8s v1.27 or v1.28.
 
 # Install operator
 
@@ -37,6 +45,7 @@ kl apply -k ./network/calico/crds --server-side=true &&
 # Deploy Calico using an operator
 kl create ns tigera-operator &&
 kl apply -k ./network/calico/operator
+kl -n tigera-operator get pod -o wide
 ```
 
 # Install standard version
@@ -45,8 +54,8 @@ kl apply -k ./network/calico/operator
 kl apply -f ./network/calico/installation-default.yaml
 
 # wait for all pods to be ready
-kl -n calico-system get pod
-kl -n calico-apiserver get pod
+kl -n calico-system get pod -o wide
+kl -n calico-apiserver get pod -o wide
 ```
 
 # Install eBPF version
@@ -60,23 +69,28 @@ EOF
 
 kl apply -k ./network/calico/cm
 # reload operator after applying cm
+kl -n tigera-operator delete pod --all
 
 kl apply -f ./network/calico/installation-ebpf.yaml
 
 # wait for all pods to be ready
-kl -n calico-system get pod
-kl -n calico-apiserver get pod
+kl -n calico-system get pod -o wide
+kl -n calico-apiserver get pod -o wide
 
 # enable Direct Server Return
 kl patch felixconfiguration default --type=merge --patch='{"spec": {"bpfExternalServiceMode": "DSR"}}'
 
 # disable kube-proxy
-kl -n kube-system patch ds kube-proxy -p '{"spec":{"template":{"spec":{"nodeSelector":{"non-calico": "true"}}}}}'
+kl -n kube-system patch ds kube-proxy -p '{"spec":{"template":{"spec":{"nodeSelector":{"enable-kube-proxy": "true"}}}}}'
 # revert rebu-proxy if something goes wrong
-kl -n kube-system patch ds kube-proxy --type=json -p='[{"op": "remove", "path": "/spec/template/spec/nodeSelector/non-calico"}]'
+kl -n kube-system patch ds kube-proxy --type=json -p='[{"op": "remove", "path": "/spec/template/spec/nodeSelector/enable-kube-proxy"}]'
 ```
 
 # Cleanup
+
+```bash
+kl delete -f ./network/calico/installation-default.yaml
+```
 
 Calico doesn't clean up anything after you uninstall it.
 Especially if you just do `kubeadm reset`,
@@ -90,11 +104,11 @@ Other CNI plugins will likely need something similar.
 sudo ipvsadm --clear &&
 sudo rm -rf /etc/cni &&
 sudo rm -rf /var/lib/cni &&
+sudo rm -rf /opt/cni &&
 sudo rm -rf /var/lib/calico &&
 sudo rm -rf /etc/calico &&
 (sudo rm -rf /var/run/calico 2> /dev/null || true) &&
 (sudo rm -rf /run/calico 2> /dev/null || true) &&
-sudo rm -rf /opt/cni &&
 sudo ip route flush proto bird &&
 ip link list | grep cali | awk '{print $2}' | cut -c 1-15 | sudo xargs -I {} ip link delete {} &&
 sudo iptables-save | grep -i cali | sudo iptables -F &&
