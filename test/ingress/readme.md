@@ -4,17 +4,21 @@
 ```bash
 kl create ns ingress-test
 
+# choose one of:
 # deploy echo server
 kl apply -f ./test/ingress/echo.yaml
 # deploy echo server for control plane
 kl apply -f ./test/ingress/echo-cp.yaml
+# deploy daemonset
+kl apply -f ./test/ingress/echo-ds.yaml
 
-kl -n ingress-test get pod
+kl -n ingress-test get pod -o wide
 
 # depoy different ingress resources
 kl label ns --overwrite ingress-test copy-wild-cert=main
 kl apply -k ./test/ingress/wildcard/
 kl apply -k ./test/ingress/http01/
+kl -n ingress-test get ingress
 
 # deploy load balancer service
 kl apply -k ./test/ingress/loadbalancer/
