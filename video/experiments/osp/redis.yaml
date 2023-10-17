@@ -1,0 +1,49 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: docker.io/redis:7.2.1
+        args:
+        - --requirepass
+        - $(REDIS_PASS)
+        ports:
+        - name: redis
+          containerPort: 6379
+        env:
+        - name: REDIS_PASS
+          valueFrom:
+            secretKeyRef:
+              name: passwords
+              key: redis_password
+        resources:
+          requests:
+            memory: 10Mi
+          limits:
+            memory: 100Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+spec:
+  selector:
+    app: redis
+  ports:
+  - name: redis
+    port: 6379
+    targetPort: redis

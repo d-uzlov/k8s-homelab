@@ -1,0 +1,84 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: celery
+  template:
+    metadata:
+      labels:
+        app: celery
+    spec:
+      terminationGracePeriodSeconds: 0
+      containers:
+      - name: celery
+        image: docker.io/deamos/osp-core:0.9.10
+        ports:
+        - name: http
+          containerPort: 80
+        command: ["/opt/osp/docker-files.d/wait-for-it.sh", "db:3306", "-t", "60", "--", "/opt/osp/docker-files.d/entrypoint.sh"]
+        env:
+        - name: OSP_SERVER_ADDRESS
+          value: osp.meoe.duckdns.org
+        - name: OSP_REDIS_HOST
+          value: redis
+        - name: OSP_REDIS_PORT
+          value: '6379'
+        - name: OSP_REDIS_PASSWORD
+          value: PEoaieSveoe5D2CxoIp7
+        - name: OSP_CORE_DB
+          value: mysql+pymysql://osp:3w41mWDYvJCLeFdsm5Tj@db/osp
+        - name: OSP_CORE_SECRETKEY
+          value: PEoaieSveoe5D2CxoIp7
+        - name: OSP_CORE_PASSWORD_SALT
+          value: PEoaieSveoe5D2CxoIp7
+        - name: OSP_CORE_ALLOWREGISTRATION
+          value: 'true'
+        - name: OSP_CORE_REQUIREEMAILREGISTRATION
+          value: 'false'
+        - name: OSP_EJABBERD_PASSWORD
+          value: ejabberdpassword
+        - name: OSP_EJABBERD_RPCHOST
+          value: ejabberd
+        - name: OSP_EJABBERD_BOSHDOMAIN
+          value: osp-ejabberd.meoe.duckdns.org
+        # - name: OSP_SMTP_SENDAS
+        #   value: osp@email.com
+        # - name: OSP_SMTP_SERVERADDRESS
+        #   value: smtp.email.com
+        # - name: OSP_SMTP_SERVERPORT
+        #   value: '25'
+        # - name: OSP_SMTP_ENCRYPTION
+        #   value: none
+        # - name: OSP_SMTP_USERNAME
+        #   value: 
+        # - name: OSP_SMTP_PASSWORD
+        #   value: 
+        - name: OSP_CORE_TYPE
+          value: celery
+        # volumes:
+        # - mountPath: /var/www
+        # - mountPath: /var/www/live
+        # - mountPath: /var/www/live-adapt
+        # - mountPath: /var/www/stream-thumb
+        resources:
+          requests:
+            memory: 2048Mi
+          limits:
+            memory: 2048Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: celery
+spec:
+  selector:
+    app: celery
+  ports:
+  - name: http
+    port: 80
+    targetPort: http

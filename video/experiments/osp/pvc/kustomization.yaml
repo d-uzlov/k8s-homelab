@@ -1,0 +1,99 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: osp
+
+resources:
+- db.yaml
+# - user-data.yaml
+# - config.yaml
+
+configMapGenerator:
+- name: nc-pvc
+  envs:
+  - env/pvc.env
+  options:
+    disableNameSuffixHash: true
+
+replacements:
+# - source:
+#     kind: ConfigMap
+#     name: nc-pvc
+#     fieldPath: data.config
+#   targets:
+#   - select:
+#       kind: PersistentVolumeClaim
+#       name: config
+#     fieldPaths:
+#     - spec.storageClassName
+# - source:
+#     kind: ConfigMap
+#     name: nc-pvc
+#     fieldPath: data.config_size
+#   targets:
+#   - select:
+#       kind: PersistentVolumeClaim
+#       name: config
+#     fieldPaths:
+#     - spec.resources.requests.storage
+- source:
+    kind: ConfigMap
+    name: nc-pvc
+    fieldPath: data.mariadb
+  targets:
+  - select:
+      kind: PersistentVolumeClaim
+      name: mariadb
+    fieldPaths:
+    - spec.storageClassName
+- source:
+    kind: ConfigMap
+    name: nc-pvc
+    fieldPath: data.mariadb_size
+  targets:
+  - select:
+      kind: PersistentVolumeClaim
+      name: mariadb
+    fieldPaths:
+    - spec.resources.requests.storage
+- source:
+    kind: ConfigMap
+    name: nc-pvc
+    fieldPath: data.mariadb_binlog
+  targets:
+  - select:
+      kind: PersistentVolumeClaim
+      name: mariadb-binlog
+    fieldPaths:
+    - spec.storageClassName
+- source:
+    kind: ConfigMap
+    name: nc-pvc
+    fieldPath: data.mariadb_binlog_size
+  targets:
+  - select:
+      kind: PersistentVolumeClaim
+      name: mariadb-binlog
+    fieldPaths:
+    - spec.resources.requests.storage
+# - source:
+#     kind: ConfigMap
+#     name: nc-pvc
+#     fieldPath: data.userdata
+#   targets:
+#   - select:
+#       kind: PersistentVolumeClaim
+#       name: user-data
+#     fieldPaths:
+#     - spec.storageClassName
+# - source:
+#     kind: ConfigMap
+#     name: nc-pvc
+#     fieldPath: data.userdata_size
+#   targets:
+#   - select:
+#       kind: PersistentVolumeClaim
+#       name: user-data
+#     fieldPaths:
+#     - spec.resources.requests.storage

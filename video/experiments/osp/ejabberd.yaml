@@ -1,0 +1,63 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ejabberd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ejabberd
+  template:
+    metadata:
+      labels:
+        app: ejabberd
+    spec:
+      terminationGracePeriodSeconds: 0
+      containers:
+      - name: ejabberd
+        image: docker.io/deamos/osp-ejabberd:0.9.10
+        ports:
+        - name: http
+          containerPort: 5280
+        - name: port2
+          containerPort: 5222
+        env:
+        - name: EJABBERD_XMLRPC_ALLOWIP
+          value: 0.0.0.0/0
+        - name: EJABBERD_PASSWORD
+          value: ejabberdpassword
+        - name: EJABBERD_DOMAIN
+          value: osp-ejabberd.meoe.duckdns.org
+        - name: OSP_API_PROTOCOL
+          value: http
+        - name: OSP_API_DOMAIN
+          value: osp.meoe.duckdns.org
+        volumeMounts:
+        # - mountPath: /opt/ejabberd/database
+        - mountPath: /opt/ejabberd/run/ejabberd.yml
+          name: config
+          subPath: ejabberd.yaml
+        resources:
+          requests:
+            memory: 256Mi
+          limits:
+            memory: 256Mi
+      volumes:
+      - name: config
+        configMap:
+          name: config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ejabberd
+spec:
+  selector:
+    app: ejabberd
+  ports:
+  - name: http
+    port: 5280
+    targetPort: http
+  - name: port2
+    port: 5222

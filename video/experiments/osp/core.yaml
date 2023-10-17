@@ -1,0 +1,90 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: core
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: core
+  template:
+    metadata:
+      labels:
+        app: core
+    spec:
+      terminationGracePeriodSeconds: 0
+      containers:
+      - name: core
+        image: docker.io/deamos/osp-core:0.9.10
+        ports:
+        - name: http
+          containerPort: 80
+        command: ["/opt/osp/docker-files.d/wait-for-it.sh", "db:3306", "-t", "60", "--", "/opt/osp/docker-files.d/entrypoint.sh"]
+        env:
+        - name: OSP_SERVER_ADDRESS
+          value: osp.meoe.duckdns.org
+        - name: OSP_REDIS_HOST
+          value: redis
+        - name: OSP_REDIS_PORT
+          value: '6379'
+        - name: OSP_REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: passwords
+              key: redis_password
+        - name: OSP_CORE_DB
+          valueFrom:
+            secretKeyRef:
+              name: passwords
+              key: db_string
+        - name: OSP_CORE_SECRETKEY
+          value: PEoaieSveoe5D2CxoIp7
+        - name: OSP_CORE_PASSWORD_SALT
+          value: PEoaieSveoe5D2CxoIp7
+        - name: OSP_CORE_ALLOWREGISTRATION
+          value: 'true'
+        - name: OSP_CORE_REQUIREEMAILREGISTRATION
+          value: 'false'
+        - name: OSP_EJABBERD_PASSWORD
+          value: ejabberdpassword
+        - name: OSP_EJABBERD_RPCHOST
+          value: ejabberd
+        - name: OSP_EJABBERD_BOSHDOMAIN
+          value: osp-ejabberd.meoe.duckdns.org
+        - name: OSP_SMTP_SENDAS
+          value: osp@example.com
+        - name: OSP_SMTP_SERVERADDRESS 
+          value: smtp.example.com
+        - name: OSP_SMTP_SERVERPORT
+          value: '25'
+        - name: OSP_SMTP_ENCRYPTION
+          value: none
+        - name: OSP_SMTP_USERNAME
+          value: ''
+        - name: OSP_SMTP_PASSWORD
+          value: ''
+        - name: OSP_RTMP_SERVER
+          value: rtmp
+        # volumes:
+        # - mountPath: /var/www
+        # - mountPath: /var/www/live
+        # - mountPath: /var/www/live-adapt
+        # - mountPath: /var/www/stream-thumb
+        resources:
+          requests:
+            memory: 2048Mi
+          limits:
+            memory: 2048Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: core
+spec:
+  selector:
+    app: core
+  ports:
+  - name: http
+    port: 80
+    targetPort: http

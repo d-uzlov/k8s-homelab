@@ -1,0 +1,43 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rtmp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rtmp
+  template:
+    metadata:
+      labels:
+        app: rtmp
+    spec:
+      terminationGracePeriodSeconds: 0
+      containers:
+      - name: rtmp
+        image: docker.io/deamos/osp-rtmp:0.9.10
+        ports:
+        - name: rtmp
+          containerPort: 1935
+        env:
+        - name: OSP_API_HOST
+          value: http://core
+        - name: OSP_RTMP_SECRETKEY
+          value: changeme
+        # resources:
+        #   requests:
+        #     memory: 256Mi
+        #   limits:
+        #     memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rtmp
+spec:
+  selector:
+    app: rtmp
+  ports:
+  - name: rtmp
+    port: 1935

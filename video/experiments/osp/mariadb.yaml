@@ -1,0 +1,139 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mariadb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mariadb
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mariadb
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+      - name: mariadb
+        image: docker.io/mariadb:11.1.2
+        args:
+        - --transaction-isolation=READ-COMMITTED
+        - --log-bin=/mnt/binlog/binlog
+        - --max-binlog-size=52428800 # 50 MiB
+        - --binlog-expire-logs-seconds=86400 # 1 day
+        - --binlog-format=MIXED
+        - --master-verify-checksum=ON
+        ports:
+        - name: mariadb
+          containerPort: 3306
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: passwords
+              key: mariadb_root_password
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: passwords
+              key: mariadb_user_password
+        - name: MYSQL_USER
+          value: osp
+        - name: MYSQL_DATABASE
+          value: osp
+        volumeMounts:
+        - mountPath: /var/lib/mysql
+          name: data
+        - mountPath: /mnt/binlog
+          name: binlog
+        startupProbe:
+          failureThreshold: 60
+          periodSeconds: 1
+          timeoutSeconds: 1
+          exec:
+            command:
+            - /bin/bash
+            - -ec
+            - |
+              healthcheck.sh --connect --innodb_initialized
+        livenessProbe:
+          failureThreshold: 5
+          periodSeconds: 10
+          timeoutSeconds: 1
+          exec:
+            command:
+            - /bin/bash
+            - -ec
+            - |
+              healthcheck.sh --connect --innodb_initialized
+        readinessProbe:
+          failureThreshold: 2
+          periodSeconds: 10
+          timeoutSeconds: 1
+          exec:
+            command:
+            - /bin/bash
+            - -ec
+            - |
+              healthcheck.sh --connect --innodb_initialized
+        resources:
+          requests:
+            memory: 250Mi
+          limits:
+            memory: 500Mi
+      - name: free-space-check
+        image: docker.io/alpine:3.17.3
+        command: ["/bin/sh", "-c", "trap : TERM INT; sleep infinity & wait"]
+        readinessProbe:
+          periodSeconds: 60
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - |
+              echo checking at $(date +"%Y-%m-%dT%H:%M:%S%z")
+              main_path=/var/lib/mysql
+              main_used=$(df -P "${main_path}" | awk 'NR == 2{print $5+0}')
+              [ "$main_used" -lt "80" ] || { echo "main mount: ${main_path}: used ${main_used}% of space"; exit 1; }
+              
+              binlog_path=/mnt/binlog
+              binlog_used=$(df -P "${binlog_path}" | awk 'NR == 2{print $5+0}')
+              [ "$binlog_used" -lt "80" ] || { echo "main mount: ${binlog_path}: used ${binlog_used}% of space"; exit 1; }
+              
+              echo space is OK
+        volumeMounts:
+        - mountPath: /var/lib/mysql
+          name: data
+        - mountPath: /mnt/binlog
+          name: binlog
+        resources:
+          requests:
+            memory: 1Mi
+          limits:
+            memory: 50Mi
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: mariadb
+      - name: binlog
+        persistentVolumeClaim:
+          claimName: mariadb-binlog
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+spec:
+  selector:
+    app: mariadb
+  ports:
+  - name: mariadb
+    port: 3306
+    targetPort: mariadb
