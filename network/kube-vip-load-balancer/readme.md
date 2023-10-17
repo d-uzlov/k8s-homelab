@@ -16,7 +16,7 @@ You don't need to do it if you are just deploying it.
 docker run \
   --network host \
   --rm \
-  ghcr.io/kube-vip/kube-vip:v0.6.2 \
+  ghcr.io/kube-vip/kube-vip:v0.6.3 \
   manifest \
   daemonset \
   --inCluster \
@@ -52,7 +52,7 @@ kl apply -k ./network/kube-vip-load-balancer/ccm/
 # configmap for ccm
 kl apply -k ./network/kube-vip-load-balancer/ccm/cm/
 
-kl -n kube-vip get pod
+kl -n kube-vip get pod -o wide
 ```
 
 # Cleanup
