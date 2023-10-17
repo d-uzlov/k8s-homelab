@@ -36,9 +36,9 @@ Cilium completely replaces kube-proxy so you need to disable it.
 
 ```bash
 # disable kube-proxy
-kl -n kube-system patch ds kube-proxy -p '{"spec":{"template":{"spec":{"nodeSelector":{"non-cilium": "true"}}}}}'
+kl -n kube-system patch ds kube-proxy -p '{"spec":{"template":{"spec":{"nodeSelector":{"enable-kube-proxy": "true"}}}}}'
 # revert if you uninstall cilium
-kl -n kube-system patch ds kube-proxy --type=json -p='[{"op": "remove", "path": "/spec/template/spec/nodeSelector/non-cilium"}]'
+kl -n kube-system patch ds kube-proxy --type=json -p='[{"op": "remove", "path": "/spec/template/spec/nodeSelector/enable-kube-proxy"}]'
 ```
 
 It's possible to make Cilium coexist with kube-proxy
@@ -50,7 +50,7 @@ if you change Cilium settings but it's more effective to replace it.
 kl create ns cilium
 kl apply -f ./network/cilium/deploy.gen.yaml --server-side=true
 # check that pods are running
-kl -n cilium get pod
+kl -n cilium get pod -o wide
 ```
 
 # Deploy with load balancer
@@ -66,10 +66,10 @@ EOF
 kl create ns cilium
 
 kl apply -f ./network/cilium/loadbalancer/deploy.gen.yaml --server-side=true
-kl -n cilium get pod
+kl -n cilium get pod -o wide
 
 kl apply -k ./network/cilium/loadbalancer/
-kl get ippools
+kl get ciliumloadbalancerippool
 kl get ciliuml2announcementpolicy
 ```
 
@@ -79,6 +79,15 @@ References:
 - https://docs.cilium.io/en/latest/network/l2-announcements/
 - https://docs.cilium.io/en/stable/network/lb-ipam/#lb-ipam
 - https://github.com/cilium/cilium/issues/26586
+
+# Cleanup
+
+```bash
+kl delete -k ./network/cilium/loadbalancer/
+kl delete -f ./network/cilium/loadbalancer/deploy.gen.yaml
+kl delete -f ./network/cilium/deploy.gen.yaml
+kl delete ns cilium
+```
 
 # Cilium CLI
 
