@@ -27,7 +27,7 @@ helm show values ingress-nginx/ingress-nginx > ./ingress/nginx/default-values.ya
 helm template \
   ingress-nginx \
   ingress-nginx/ingress-nginx \
-  --version 4.8.0 \
+  --version 4.8.2 \
   --namespace ingress-nginx \
   --values ./ingress/nginx/values.yaml \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/instance|d' -e '\|app.kubernetes.io/part-of|d' \
@@ -39,7 +39,7 @@ helm template \
 ```bash
 kl create ns ingress-nginx
 kl apply -k ./ingress/nginx/
-kl -n ingress-nginx get pod
+kl -n ingress-nginx get pod -o wide
 
 # get load balancer external ip for DNS or NAT port forwarding
 kl -n ingress-nginx get svc nginx-controller
