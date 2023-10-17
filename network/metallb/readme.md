@@ -14,13 +14,14 @@ EOF
 
 ```bash
 kl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.11/config/manifests/metallb-native.yaml
-kl -n metallb-system get pod
+kl -n metallb-system get pod -o wide
 kl apply -k ./network/metallb/
 ```
 
 # Remove
 
 ```bash
+kl delete -k ./network/metallb/
 kl delete -f https://raw.githubusercontent.com/metallb/metallb/v0.13.11/config/manifests/metallb-native.yaml
 ```
 
