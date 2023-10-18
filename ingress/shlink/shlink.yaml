@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shlink
+spec:
+  selector:
+    matchLabels:
+      app: shlink
+  template:
+    metadata:
+      labels:
+        app: shlink
+    spec:
+      # container doesn't seem to respond to signals
+      terminationGracePeriodSeconds: 0
+      containers:
+      - name: shlink
+        image: docker.io/shlinkio/shlink:3.6.4-roadrunner
+        ports:
+        - name: http
+          containerPort: 8080
+        env:
+        - name: IS_HTTPS_ENABLED
+          value: 'true'
+        - name: DEFAULT_DOMAIN
+          valueFrom:
+            configMapKeyRef:
+              name: public-domain
+              key: public_domain
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shlink
+spec:
+  selector:
+    app: shlink
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
