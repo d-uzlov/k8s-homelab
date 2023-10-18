@@ -1,0 +1,48 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: shlink
+
+resources:
+- ingress.yaml
+
+configMapGenerator:
+- name: custom-domain
+  envs:
+  - env/domain.env
+
+replacements:
+- source:
+    kind: ConfigMap
+    name: custom-domain
+    fieldPath: data.domain
+  targets:
+  - select:
+      kind: Ingress
+      name: shlink
+    fieldPaths:
+    - spec.rules.0.host
+- source:
+    kind: ConfigMap
+    name: custom-domain
+    fieldPath: data.domain
+  targets:
+  - select:
+      kind: Ingress
+      name: shlink
+    options:
+      delimiter: '-'
+      index: 0
+    fieldPaths:
+    - spec.tls.0.secretName
+- source:
+    kind: ConfigMap
+    name: custom-domain
+    fieldPath: data.domain
+  targets:
+  - select:
+      kind: Ingress
+      name: shlink
+    fieldPaths:
+    - spec.tls.0.hosts.0

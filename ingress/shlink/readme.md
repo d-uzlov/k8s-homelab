@@ -20,6 +20,26 @@ kl apply -k ./ingress/shlink/ingress-wildcard/
 kl -n shlink get ingress
 ```
 
+- LetsEncrypt ingress on a custom domain
+
+You can use a different domain (maybe you have a shorter one that isn't your main domain).
+Maybe your short domain doesn't have wildcard support.
+
+Make sure that your `letsencrypt-production` cluster issuer works without issues before deploying this.
+When in doubt, edit ingress config to use `letsencrypt-staging` instead, and test it.
+
+```bash
+mkdir -p ./ingress/shlink/ingress-custom-letsencrypt/env/
+cat <<EOF > ./ingress/shlink/ingress-custom-letsencrypt/env/domain.env
+domain=my.domain.example
+EOF
+
+kl apply -k ./ingress/shlink/ingress-custom-letsencrypt/
+kl -n shlink get ingress
+kl -n shlink get certificate
+kl -n shlink get secrets
+```
+
 # Deploy
 
 ```bash

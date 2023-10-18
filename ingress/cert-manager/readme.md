@@ -59,6 +59,8 @@ cert-manager.io/cluster-issuer: issuer-name
 
 Change issuer name accordingly.
 
+You also have to add `spec.tls.0.secretName` and `spec.tls.0.hosts.0` values to the ingress.
+
 Certificate will be automatically issued and injected into the Ingress resource.
 
 # Wildcard certificate
