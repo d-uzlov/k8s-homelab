@@ -1,0 +1,65 @@
+
+# Postgres Operator
+
+This application can automatically create and change postgres clusters in k8s.
+
+References:
+- https://github.com/zalando/postgres-operator
+- https://postgres-operator.readthedocs.io/en/latest/quickstart/
+
+# Generate config
+
+You only need to do this when updating the app.
+
+```bash
+helm repo add postgres-operator-charts https://opensource.zalando.com/postgres-operator/charts/postgres-operator
+helm repo update postgres-operator-charts
+helm search repo postgres-operator-charts/postgres-operator --versions --devel | head
+helm show values postgres-operator-charts/postgres-operator > ./storage/postgres/default-values.yaml
+```
+
+```bash
+helm template \
+  postgres-operator \
+  postgres-operator-charts/postgres-operator \
+  --version 1.10.1 \
+  --namespace postgres-operator \
+  --values ./storage/postgres/values.yaml \
+  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/instance|d' -e '\|app.kubernetes.io/part-of|d' \
+  > ./storage/postgres/postgres.gen.yaml
+```
+
+# Deploy
+
+```bash
+kl apply -k ./storage/postgres/crd
+
+kl create ns postgres-operator
+kl apply -f ./storage/postgres/postgres.gen.yaml
+kl -n postgres-operator get pod -o wide
+```
+
+# Cleanup
+
+```bash
+kl delete -f ./storage/postgres/postgres.gen.yaml
+kl delete -k ./storage/postgres/crd
+kl delete ns postgres-operator
+```
+
+# Test
+
+This test assumes that you have `block` storage class in your cluster.
+Change `spec.volume.storageClass` if you want to use something different.
+
+```bash
+kl create ns postgres-test
+kl apply -f ./storage/postgres/test-cluster.yaml
+kl -n postgres-test get postgresql
+
+kl -n postgres-test get pods -o wide -L spilo-role
+kl -n postgres-test get svc
+
+kl delete -f ./storage/postgres/test-cluster.yaml
+kl delete ns postgres-test
+```
