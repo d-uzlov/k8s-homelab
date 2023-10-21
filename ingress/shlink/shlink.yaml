@@ -16,17 +16,61 @@ spec:
       containers:
       - name: shlink
         image: docker.io/shlinkio/shlink:3.6.4-roadrunner
+        args:
+        - -vvv
         ports:
         - name: http
           containerPort: 8080
         env:
+        - name: SHELL_VERBOSITY
+          value: '3'
         - name: IS_HTTPS_ENABLED
+          # determines if generated links will use https
           value: 'true'
         - name: DEFAULT_DOMAIN
           valueFrom:
             configMapKeyRef:
               name: public-domain
               key: public_domain
+        - name: DEFAULT_SHORT_CODES_LENGTH
+          # default is 5
+          value: '5'
+        - name: SHORT_URL_TRAILING_SLASH
+          value: 'true'
+        - name: GEOLITE_LICENSE_KEY
+          value: ''
+        - name: SKIP_INITIAL_GEOLITE_DOWNLOAD
+          value: 'true'
+        - name: DEFAULT_QR_CODE_MARGIN
+          value: '5'
+        - name: DB_DRIVER
+          value: postgres
+        - name: DB_HOST
+          value: postgres
+        - name: DB_NAME
+          value: shlink
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: shlink.postgres.credentials.postgresql.acid.zalan.do
+              key: username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: shlink.postgres.credentials.postgresql.acid.zalan.do
+              key: password
+        startupProbe:
+          httpGet:
+            path: /rest/health
+            port: http
+          periodSeconds: 1
+          failureThreshold: 10
+        livenessProbe:
+          httpGet:
+            path: /rest/health
+            port: http
+          periodSeconds: 3600
+          failureThreshold: 1
 ---
 apiVersion: v1
 kind: Service
