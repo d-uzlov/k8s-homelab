@@ -6,7 +6,6 @@ References:
 - https://github.com/ONLYOFFICE/Docker-DocumentServer
 - https://github.com/ONLYOFFICE/docker-onlyoffice-nextcloud
 - https://hub.docker.com/r/onlyoffice/documentserver/
-- https://hub.docker.com/_/postgres
 - https://hub.docker.com/_/rabbitmq
 
 # Prerequisites

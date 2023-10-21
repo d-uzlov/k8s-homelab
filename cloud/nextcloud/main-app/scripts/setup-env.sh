@@ -1,14 +1,6 @@
 #!/bin/sh
 set -eu
 
-echo Set MYSQL config...
-php occ config:system:set dbtype --value mysql
-php occ config:system:set dbname --value "$MYSQL_DATABASE"
-php occ config:system:set dbhost --value "$MYSQL_HOST"
-php occ config:system:set dbuser --value "$MYSQL_USER"
-php occ config:system:set dbpassword --value "$MYSQL_PASSWORD"
-php occ config:system:set dbname --value "$MYSQL_DATABASE"
-
 echo Set redis config...
 php occ config:system:set redis host --value redis
 php occ config:system:set redis password --value "$REDIS_PASSWORD"

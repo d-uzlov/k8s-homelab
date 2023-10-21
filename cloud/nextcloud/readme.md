@@ -5,9 +5,12 @@ References:
 - https://github.com/nextcloud/docker
 - https://hub.docker.com/_/nextcloud/
 - https://github.com/aptible/supercronic
-- https://hub.docker.com/_/mariadb
 - https://hub.docker.com/_/nginx
 - https://chrismoore.ca/2018/10/finding-the-correct-pm-max-children-settings-for-php-fpm/
+
+# Prerequisites
+
+- [Postgres Operator](../../storage/postgres/readme.md)
 
 # Storage setup
 
@@ -16,12 +19,6 @@ Set storage classes for different data types:
 ```bash
 mkdir -p ./cloud/nextcloud/pvc/env/
 cat <<EOF > ./cloud/nextcloud/pvc/env/pvc.env
-# mariadb uses ReadWriteOnce type volumes
-mariadb=block
-mariadb_size=1Gi
-mariadb_binlog=block
-mariadb_binlog_size=1Gi
-
 # userdata uses ReadWriteMany type volumes
 userdata=fast
 userdata_size=1Ti
@@ -39,8 +36,6 @@ Generate passwords and set up config.
 ```bash
 mkdir -p ./cloud/nextcloud/main-app/env/
 cat <<EOF > ./cloud/nextcloud/main-app/env/passwords.env
-mariadb_root_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
-mariadb_user_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 redis_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 admin_name=admin
 admin_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
@@ -65,11 +60,13 @@ kl -n nextcloud get ingress
 nextcloud_public_domain=$(kl -n nextcloud get ingress nextcloud -o go-template --template "{{range .spec.rules}}{{.host}}{{end}}")
 kl -n nextcloud create configmap public-domain --from-literal public_domain="$nextcloud_public_domain" -o yaml --dry-run=client | kl apply -f -
 
+kl apply -f ./cloud/nextcloud/postgres.yaml
+kl -n nextcloud describe postgresqls.acid.zalan.do postgres
 kl apply -k ./cloud/nextcloud/pvc/
 kl -n nextcloud get pvc
 
 kl apply -k ./cloud/nextcloud/main-app/
-kl -n nextcloud get pod -o wide
+kl -n nextcloud get pod -o wide -L spilo-role
 ```
 
 # Uninstall
@@ -78,6 +75,7 @@ kl -n nextcloud get pod -o wide
 kl delete -k ./cloud/nextcloud/notifications/
 kl delete -k ./cloud/nextcloud/main-app/
 kl delete -k ./cloud/nextcloud/pvc/
+kl delete -f ./cloud/nextcloud/postgres.yaml
 kl delete ns nextcloud
 ```
 
@@ -159,6 +157,8 @@ kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ security:brut
 kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ user:enable <name of user>
 ```
 
+TODO: update this to use postgres.
+
 References:
 - https://docs.nextcloud.com/server/latest/admin_manual/configuration_server/occ_command.html#security
 
@@ -174,3 +174,5 @@ Potentially interesting apps:
 - Full text search (requires external setup)
 - Notes
 - Recognize
+
+Investigate `allow_local_remote_servers` option.

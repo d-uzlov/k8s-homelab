@@ -20,20 +20,39 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       initContainers:
       - name: wait-database-ready
-        image: docker.io/busybox:1.36
+        image: docker.io/postgres:15.4-alpine3.18
         command:
         - sh
         - -c
         - |
           trap : TERM INT
-          until nc -w 1 -z db 3306 > /dev/null
+          until psql -q -h$DB_HOST -p$DB_PORT -d$DB_NAME -U$DB_USER -w -XtAc '\q'
           do
             echo $(date +"%Y-%m-%dT%H:%M:%S%z") Waiting...
             sleep 1 & wait
           done
-          echo connected to db:3306 successfully!
+          echo "successfully connected to $DB_NAME @ $DB_HOST as $DB_USER"
         securityContext:
           readOnlyRootFilesystem: true
+        env:
+        - name: DB_HOST
+          value: postgres
+        - name: DB_PORT
+          value: '5432'
+        - name: DB_NAME
+          value: nextcloud
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: nextcloud.postgres.credentials.postgresql.acid.zalan.do
+              key: username
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: nextcloud.postgres.credentials.postgresql.acid.zalan.do
+              key: password
+        - name: PGCONNECT_TIMEOUT
+          value: '1'
       - name: init-filesystem
         image: docker.io/nextcloud:27.0.2-fpm
         command:
@@ -94,17 +113,20 @@ spec:
           readOnlyRootFilesystem: true
         env:
         - name: DB_TYPE
-          value: mysql
-        - name: MYSQL_HOST
-          value: db
-        - name: MYSQL_USER
-          value: nextcloud
-        - name: MYSQL_PASSWORD
+          value: postgres
+        - name: POSTGRES_HOST
+          value: postgres
+        - name: POSTGRES_USER
           valueFrom:
             secretKeyRef:
-              name: passwords
-              key: mariadb_user_password
-        - name: MYSQL_DATABASE
+              name: nextcloud.postgres.credentials.postgresql.acid.zalan.do
+              key: username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: nextcloud.postgres.credentials.postgresql.acid.zalan.do
+              key: password
+        - name: POSTGRES_DB
           value: nextcloud
         - name: NEXTCLOUD_ADMIN_USER
           valueFrom:
@@ -252,7 +274,7 @@ spec:
           requests:
             memory: 12Mi
           limits:
-            memory: 12Mi
+            memory: 50Mi
         securityContext:
           readOnlyRootFilesystem: true
         readinessProbe:
