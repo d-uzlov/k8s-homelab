@@ -13,6 +13,6 @@
     image: busybox
     command: ["sh", "-c", "chown -R 999:999 /data/demo"]
     volumeMounts:
-    - name: sec-ctx-vol
-      mountPath: /data/demo
+    - mountPath: /data/demo
+      name: sec-ctx-vol
 ```

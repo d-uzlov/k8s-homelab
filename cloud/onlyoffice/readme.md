@@ -71,8 +71,8 @@ cat /usr/bin/documentserver-generate-allfonts.sh
 
 ```yaml
         volumeMounts:
-        - name: fonts
-          mountPath: /usr/share/fonts/truetype/custom
+        - mountPath: /usr/share/fonts/truetype/custom
+          name: fonts
       volumes:
       - name: fonts
         persistentVolumeClaim:

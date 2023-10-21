@@ -22,7 +22,7 @@ helm template duckdns-webhook \
   --namespace cm-duckdns \
   ./cert-manager-webhook-duckdns/charts/cert-manager-webhook-duckdns \
   | sed -e '/helm.sh\/chart/d' -e '/# Source:/d' \
-  > ./ingress/cert-manager/duckdns/duckdns.yaml
+  > ./ingress/cert-manager/duckdns/duckdns.gen.yaml
 ```
 
 # Set up your local environment
