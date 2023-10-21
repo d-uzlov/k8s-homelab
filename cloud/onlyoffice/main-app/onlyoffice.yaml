@@ -24,33 +24,58 @@ spec:
         # docker.io/onlyoffice/documentserver requires root to run
         runAsUser: 0
       containers:
-      - name: install
-        image: docker.io/onlyoffice/documentserver:7.4.1.1
+      - name: onlyoffice
+        image: docker.io/onlyoffice/documentserver:7.5.0.1
         ports:
         - name: http
           containerPort: 80
+        command:
+        - bash
+        - -c
+        - |
+          set -eu
+          SSL_CERTIFICATE_PATH=
+          SSL_KEY_PATH=
+          LETS_ENCRYPT_DOMAIN=
+          LETS_ENCRYPT_MAIL=
+          JWT_MESSAGE=
+          
+          (
+            export PGPASSWORD=$DB_PWD
+            export PGCONNECT_TIMEOUT=1
+            until psql -q -h$DB_HOST -p$DB_PORT -d$DB_NAME -U$DB_USER -w -XtAc '\q'
+            do
+              echo $(date +"%Y-%m-%dT%H:%M:%S%z") Waiting...
+              sleep 1 & wait
+            done
+            echo "successfully connected to $DB_NAME @ $DB_HOST as $DB_USER"
+          )
+          
+          source /dev/stdin <<<"$(
+            sed \
+              -e 's/ deprecated_var/ #deprecated_var/' \
+              -e 's/ service cron start/ #service cron start/' \
+            /app/ds/run-document-server.sh
+          )"
         env:
         - name: DB_TYPE
           value: postgres
         - name: DB_HOST
-          value: db
+          value: postgres
         - name: DB_PORT
           value: '5432'
         - name: DB_USER
           valueFrom:
             secretKeyRef:
-              name: postrgesql
-              key: db_root_name
+              name: onlyoffice.postgres.credentials.postgresql.acid.zalan.do
+              key: username
         - name: DB_PWD
           valueFrom:
             secretKeyRef:
-              name: postrgesql
-              key: db_root_password
+              name: onlyoffice.postgres.credentials.postgresql.acid.zalan.do
+              key: password
         - name: DB_NAME
-          valueFrom:
-            secretKeyRef:
-              name: postrgesql
-              key: db_name
+          value: onlyoffice
         - name: AMQP_URI
           value: amqp://guest:guest@rabbitmq
         - name: JWT_ENABLED
@@ -64,6 +89,7 @@ spec:
               key: jwt_secret
         - name: JWT_IN_BODY
           value: 'true'
+          # /var/www/onlyoffice/documentserver/sdkjs/common/AllFonts.js
         - name: GENERATE_FONTS
           value: 'true'
         - name: ONLYOFFICE_HTTPS_HSTS_ENABLED
@@ -75,9 +101,6 @@ spec:
         - name: entrypoint
           mountPath: /app/ds/run-document-server.sh
           subPath: run-document-server.sh
-        # onlyoffice dockerfile declares a bunch of volumes that should be persistent when run in docker
-        # in k8s these volumes are not persistent
-        # also they pollute the list of mounted volumes
         - name: delete
           mountPath: /var/lib/postgresql
           readOnly: true
@@ -117,6 +140,9 @@ spec:
           timeoutSeconds: 1
           failureThreshold: 1
       volumes:
+      # onlyoffice dockerfile declares a bunch of volumes that should be persistent when run in docker
+      # in k8s these volumes are not persistent
+      # also they pollute the list of mounted volumes
       - name: delete
         emptyDir:
           medium: Memory

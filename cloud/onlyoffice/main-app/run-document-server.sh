@@ -61,7 +61,7 @@ CA_CERTIFICATES_PATH=${CA_CERTIFICATES_PATH:-${SSL_CERTIFICATES_DIR}/ca-certific
 SSL_DHPARAM_PATH=${SSL_DHPARAM_PATH:-${SSL_CERTIFICATES_DIR}/dhparam.pem}
 SSL_VERIFY_CLIENT=${SSL_VERIFY_CLIENT:-off}
 USE_UNAUTHORIZED_STORAGE=${USE_UNAUTHORIZED_STORAGE:-false}
-ONLYOFFICE_HTTPS_HSTS_ENABLED=${ONLYOFFICE_HTTPS_HSTS_ENABLED:-false}
+ONLYOFFICE_HTTPS_HSTS_ENABLED=${ONLYOFFICE_HTTPS_HSTS_ENABLED:-true}
 ONLYOFFICE_HTTPS_HSTS_MAXAGE=${ONLYOFFICE_HTTPS_HSTS_MAXAGE:-31536000}
 SYSCONF_TEMPLATES_DIR="/app/ds/setup/config"
 
@@ -92,6 +92,8 @@ JWT_HEADER=${JWT_HEADER:-Authorization}
 JWT_IN_BODY=${JWT_IN_BODY:-false}
 
 WOPI_ENABLED=${WOPI_ENABLED:-false}
+ALLOW_META_IP_ADDRESS=${ALLOW_META_IP_ADDRESS:-false}
+ALLOW_PRIVATE_IP_ADDRESS=${ALLOW_PRIVATE_IP_ADDRESS:-false}
 
 GENERATE_FONTS=${GENERATE_FONTS:-true}
 
@@ -344,6 +346,12 @@ update_ds_settings(){
     ${JSON} -I -e "if(this.wopi===undefined)this.wopi={}"
     ${JSON} -I -e "this.wopi.enable = true"
   fi
+
+  if [ "${ALLOW_META_IP_ADDRESS}" = "true" ] || [ "${ALLOW_PRIVATE_IP_ADDRESS}" = "true" ]; then
+    ${JSON} -I -e "if(this.services.CoAuthoring['request-filtering-agent']===undefined)this.services.CoAuthoring['request-filtering-agent']={}"
+    [ "${ALLOW_META_IP_ADDRESS}" = "true" ] && ${JSON} -I -e "this.services.CoAuthoring['request-filtering-agent'].allowMetaIPAddress = true"
+    [ "${ALLOW_PRIVATE_IP_ADDRESS}" = "true" ] && ${JSON} -I -e "this.services.CoAuthoring['request-filtering-agent'].allowPrivateIPAddress = true"
+  fi
 }
 
 create_postgresql_cluster(){
@@ -491,16 +499,6 @@ update_nginx_settings(){
   documentserver-update-securelink.sh -s ${SECURE_LINK_SECRET:-$(pwgen -s 20)} -r false
 }
 
-update_supervisor_settings(){
-  # Copy modified supervisor start script
-  cp ${SYSCONF_TEMPLATES_DIR}/supervisor/supervisor /etc/init.d/
-  # Copy modified supervisor config
-  cp ${SYSCONF_TEMPLATES_DIR}/supervisor/supervisord.conf /etc/supervisor/supervisord.conf
-  sed "s_\(password =\).*_\1 $(pwgen -s 20)_" -i /etc/supervisor/supervisord.conf
-  sed "s/COMPANY_NAME/${COMPANY_NAME}/g" -i ${SYSCONF_TEMPLATES_DIR}/supervisor/ds/*.conf
-  cp ${SYSCONF_TEMPLATES_DIR}/supervisor/ds/*.conf /etc/supervisor/conf.d/
-}
-
 update_log_settings(){
    ${JSON_LOG} -I -e "this.categories.default.level = '${DS_LOG_LEVEL}'"
 }
@@ -601,7 +599,7 @@ else
   update_welcome_page
 fi
 
-find /etc/${COMPANY_NAME} -exec chown ds:ds {} \;
+find /etc/${COMPANY_NAME} ! -path '*logrotate*' -exec chown ds:ds {} \;
 
 #start needed local services
 for i in ${LOCAL_SERVICES[@]}; do
@@ -626,14 +624,17 @@ if [ ${ONLYOFFICE_DATA_CONTAINER} != "true" ]; then
   fi
 
   update_nginx_settings
-
-  update_supervisor_settings
+  
   service supervisor start
   
   # start cron to enable log rotating
   update_logrotate_settings
   service cron start
 fi
+
+# nginx used as a proxy, and as data container status service.
+# it run in all cases.
+service nginx start
 
 if [ "${LETS_ENCRYPT_DOMAIN}" != "" -a "${LETS_ENCRYPT_MAIL}" != "" ]; then
   if [ ! -f "${SSL_CERTIFICATE_PATH}" -a ! -f "${SSL_KEY_PATH}" ]; then
@@ -647,11 +648,7 @@ if [ "${GENERATE_FONTS}" == "true" ]; then
 fi
 documentserver-static-gzip.sh ${ONLYOFFICE_DATA_CONTAINER}
 
-echo "${JWT_MESSAGE}"
-
-# nginx used as a proxy, and as data container status service.
-# it run in all cases.
-service nginx start
+echo "${JWT_MESSAGE}" 
 
 tail -f /var/log/${COMPANY_NAME}/**/*.log &
 wait $!

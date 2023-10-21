@@ -9,15 +9,9 @@ References:
 - https://hub.docker.com/_/postgres
 - https://hub.docker.com/_/rabbitmq
 
-# Storage setup
+# Prerequisites
 
-```bash
-mkdir -p ./cloud/onlyoffice/pvc/env/
-cat <<EOF > ./cloud/onlyoffice/pvc/env/pvc.env
-postgresql=block
-postgresql_size=1Gi
-EOF
-```
+- [Postgres Operator](../../storage/postgres/readme.md)
 
 # Config setup
 
@@ -25,11 +19,6 @@ Generate passwords and set up config.
 
 ```bash
 mkdir -p ./cloud/onlyoffice/main-app/env/
-cat <<EOF > ./cloud/onlyoffice/main-app/env/postrgesql.env
-db_root_name=onlyoffice
-db_root_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
-db_name=onlyoffice
-EOF
 cat <<EOF > ./cloud/onlyoffice/main-app/env/api.env
 jwt_secret=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 EOF
@@ -45,11 +34,16 @@ kl label ns --overwrite onlyoffice copy-wild-cert=main
 kl apply -k ./cloud/onlyoffice/ingress-wildcard/
 kl -n onlyoffice get ingress
 
-kl apply -k ./cloud/onlyoffice/pvc/
-kl -n onlyoffice get pvc
-
 kl apply -k ./cloud/onlyoffice/main-app/
-kl -n onlyoffice get pod -o wide
+kl -n onlyoffice describe postgresqls.acid.zalan.do postgres
+kl -n onlyoffice get pod -o wide -L spilo-role
+```
+
+# Cleanup
+
+```bash
+kl delete -k ./cloud/onlyoffice/main-app/
+kl delete ns onlyoffice
 ```
 
 # Note on certificates
@@ -97,3 +91,6 @@ spec:
     requests:
       storage: 100Mi
 ```
+
+References:
+- https://helpcenter.onlyoffice.com/installation/docs-community-install-fonts-linux.aspx
