@@ -28,7 +28,7 @@ kl apply -k ./video/ome/generic/
 # nvidia gpu
 kl apply -k ./video/ome/nvidia/
 
-kl -n ome get pod
+kl -n ome get pod -o wide
 ```
 
 # Cleanup
