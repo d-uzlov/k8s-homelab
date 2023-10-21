@@ -53,7 +53,7 @@ You need to make sure `serverTLSBootstrap` is enabled in kubelet config before d
 ```bash
 kl create ns csr-approver
 kl apply -k ./metrics/kubelet-csr-approver/
-kl -n csr-approver get pod
+kl -n csr-approver get pod -o wide
 
 # check CSRs to make sure they are aproved
 kl get csr
@@ -66,8 +66,15 @@ kl delete -k ./metrics/kubelet-csr-approver/
 kl delete ns csr-approver
 ```
 
+# Manual approval
+
+```bash
+kl certificate approve <csr-name>
+```
+
 # More docs
 
+References:
 - https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/#kubelet-serving-certs
 - https://github.com/kubernetes-sigs/metrics-server/blob/master/FAQ.md#how-to-run-metrics-server-securely
 - https://github.com/kubernetes-sigs/metrics-server#requirements
@@ -76,6 +83,7 @@ kl delete ns csr-approver
 
 # Check CSR content
 
+References:
 - https://www.base64decode.org
 - https://www.sslshopper.com/csr-decoder.html
 - https://certlogik.com/decoder/
