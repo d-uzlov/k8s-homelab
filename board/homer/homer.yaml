@@ -1,0 +1,71 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: homer
+spec:
+  selector:
+    matchLabels:
+      app: homer
+  template:
+    metadata:
+      labels:
+        app: homer
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+      - name: homer
+        image: docker.io/b4bz/homer:v23.10.1
+        ports:
+        - name: http
+          containerPort: 8080
+        command:
+        - sh
+        - -c
+        - |
+          set -eu
+
+          if [[ ! -f "/www/assets/init-done" ]]; then
+              if [[ ! -w "/www/assets/" ]]; then echo "Assets directory not writable" && exit 1; fi
+              echo Copying default assets...
+              cp -rf /www/default-assets/* /www/assets/
+              echo "If you delete this file, asset folder will be re-initialized on next restart" > /www/assets/init-done
+          fi
+
+          ln -sf /mnt/config-yaml/config.yaml /www/assets/config.yml
+
+          echo "Starting webserver"
+          exec lighttpd -D -f /lighttpd.conf
+        volumeMounts:
+        - mountPath: /www/assets
+          name: config
+        - mountPath: /mnt/config-yaml
+          name: config-yaml
+        resources:
+          requests:
+            memory: 1Mi
+          limits:
+            memory: 50Mi
+      volumes:
+      - name: config
+        persistentVolumeClaim:
+          claimName: config
+      - name: config-yaml
+        configMap:
+          name: config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: homer
+spec:
+  selector:
+    app: homer
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
