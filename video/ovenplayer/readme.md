@@ -21,7 +21,7 @@ kl apply -k ./video/ovenplayer/ingress-wildcard/
 kl -n ome-ovenplayer get ingress
 
 kl apply -k ./video/ovenplayer/
-kl -n ome-ovenplayer get pod
+kl -n ome-ovenplayer get pod -o wide
 ```
 
 # Cleanup

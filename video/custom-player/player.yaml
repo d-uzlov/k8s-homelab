@@ -1,0 +1,44 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: player
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: player
+  template:
+    metadata:
+      labels:
+        app: player
+    spec:
+      containers:
+      - name: player
+        image: docker.io/nginx:1.25.2-bookworm
+        ports:
+          - name: http
+            containerPort: 80
+        resources:
+          requests:
+            memory: 5Mi
+          # limits:
+          #   memory: 7Mi
+        volumeMounts:
+        - mountPath: /usr/share/nginx/html
+          name: content
+      volumes:
+      - name: content
+        configMap:
+          name: content
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: player
+spec:
+  selector:
+    app: player
+  ports:
+  - name: http
+    port: 80

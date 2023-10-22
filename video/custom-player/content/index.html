@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OvenPlayer</title>
+</head>
+
+<body>
+  <div class="player-wrapper">
+    <div id="player_id"></div>
+  </div>
+
+  <style>
+    body {
+      background: #252526;
+    }
+
+    .player-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/ovenplayer/dist/ovenplayer.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js"></script>
+  <script src="/get-domain.js"></script>
+
+  <script>
+    function parseHash() {
+      const hash = window.location.hash.substr(1);
+      const result = hash.split('&').reduce(function (res, item) {
+        const parts = item.split('=');
+        res[parts[0]] = parts[1];
+        return res;
+      }, {});
+      return result;
+    }
+    const args = parseHash();
+    const signalDomain = getDomain();
+    let sourceList = [];
+    if (args.sources == null) {
+      sourceList = getDefaultStreamKeys();
+    } else {
+      sourceList = args.sources.split(',');
+    }
+    console.log('sourceList', sourceList)
+    let playlist = [];
+    for (const i in sourceList) {
+      const source = sourceList[i];
+      console.log('creating playlist for', source);
+      playlist.push(
+        {
+          title: source,
+          image: 'https://' + signalDomain + '/tc/' + source + '/thumb.jpg',
+          sources: [
+            {
+              label: 'bypass',
+              type: 'webrtc',
+              file: 'wss://' + signalDomain + '/tc/' + source,
+            },
+            {
+              label: 'low-latency',
+              type: 'webrtc',
+              file: 'wss://' + signalDomain + '/tc/' + source + '/webrtc',
+            },
+            {
+              label: 'high-latency',
+              type: 'hls',
+              file: 'https://' + signalDomain + '/tc/' + source + '/hls.m3u8',
+            },
+          ],
+        },
+      );
+    }
+    playlist.push(
+      {
+        title: 'empty',
+        image: '/empty-symbol.png',
+        sources: [
+          {
+            label: 'empty',
+            type: 'webrtc',
+            file: 'wss://does-not-exist/',
+          },
+        ],
+      },
+    );
+    const player = OvenPlayer.create('player_id', {
+      // title: 'My title',
+      autoStart: true,
+      autoFallback: false,
+      mute: true,
+      playlist: playlist,
+    });
+  </script>
+</body>
+
+</html>
