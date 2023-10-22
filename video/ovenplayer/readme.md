@@ -13,15 +13,22 @@ References:
 # Deploy
 
 ```bash
-kl create ns ome-player
+kl create ns ome-ovenplayer
 
 # setup wildcard ingress
 kl label ns --overwrite ome-player copy-wild-cert=main
 kl apply -k ./video/ovenplayer/ingress-wildcard/
-kl -n ome-player get ingress
+kl -n ome-ovenplayer get ingress
 
 kl apply -k ./video/ovenplayer/
-kl -n ome-player get pod
+kl -n ome-ovenplayer get pod
+```
+
+# Cleanup
+
+```bash
+kl delete -k ./video/ovenplayer/
+kl delete ns ome-ovenplayer
 ```
 
 # Stream links
