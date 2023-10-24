@@ -16,7 +16,7 @@ References:
 kl create ns ome-ovenplayer
 
 # setup wildcard ingress
-kl label ns --overwrite ome-player copy-wild-cert=main
+kl label ns --overwrite ome-ovenplayer copy-wild-cert=main
 kl apply -k ./video/ovenplayer/ingress-wildcard/
 kl -n ome-ovenplayer get ingress
 

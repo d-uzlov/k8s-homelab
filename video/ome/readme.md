@@ -116,3 +116,12 @@ A workaround is to open the page from the WSS address as an HTTP page and accept
 
 Starting from v28 there is a built-in feature for this, but there is also a more feature-rich plugin:
 https://github.com/bozbez/win-capture-audio
+
+# Build CUDA image
+
+```bash
+docker build https://github.com/AirenSoft/OvenMediaEngine/raw/4d2e46621eeca9371de5199250b3367d37c11fb2/Dockerfile.cuda \
+    --build-arg OME_VERSION=v0.16.0 \
+    -t docker.io/example/k8s-snippets:ome-v0.16.0-cuda
+docker push docker.io/example/k8s-snippets:ome-v0.16.0-cuda
+```
