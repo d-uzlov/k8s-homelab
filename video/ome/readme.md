@@ -11,6 +11,16 @@ References:
 # Deploy
 
 ```bash
+mkdir -p ./video/ome/generic/env/
+cat <<EOF > ./video/ome/generic/env/webrtc-address.env
+# public address, resolvable from outside world
+public=meoe.duckdns.org
+# LAN address, in case you are behind NAT
+local=webrtc-ice.ome.kubelb.lan
+EOF
+```
+
+```bash
 kl create ns ome
 
 # create loadbalancer service

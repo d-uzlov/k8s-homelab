@@ -19,7 +19,7 @@ spec:
       #   - 44
       #   # /dev/dri/renderD128 has gid 104
       #   - 104
-      terminationGracePeriodSeconds: 3
+      terminationGracePeriodSeconds: 1
       containers:
       - name: ovenmediaengine
         image: docker.io/airensoft/ovenmediaengine:0.16.0
@@ -39,8 +39,16 @@ spec:
           containerPort: 10000
           protocol: UDP
         env:
-        # - name: OME_WEBRTC_CANDIDATE_IP
-        #   value: '1.2.3.4'
+        - name: OME_PUBLIC_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              name: webrtc-address
+              key: public
+        - name: OME_LOCAL_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              name: webrtc-address
+              key: local
         - name: OME_RTMP_PROV_PORT
           value: '1935'
         - name: OME_SRT_PROV_PORT
@@ -69,19 +77,14 @@ spec:
         - mountPath: /opt/ovenmediaengine/bin/origin_conf/Server.xml
           name: config
           subPath: ome-config.xml
-        - mountPath: /mnt/application-config.d/app.xml
+        - mountPath: /mnt/application-config.d/
           name: config
-          subPath: app.xml
-        - mountPath: /mnt/application-config.d/tc.xml
-          name: config
-          subPath: tc.xml
-        - mountPath: /mnt/video-config.d/tc-video-1080.xml
-          name: config
-          subPath: tc-video-1080.xml
-        - mountPath: /mnt/video-config.d/tc-video-720.xml
-          name: config
-          subPath: tc-video-720.xml
+        - mountPath: /mnt/video-config.d/
+          name: config-video
       volumes:
       - name: config
         configMap:
           name: config
+      - name: config-video
+        configMap:
+          name: config-video-generic
