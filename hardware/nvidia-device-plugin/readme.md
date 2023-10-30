@@ -34,7 +34,7 @@ helm template \
 ```bash
 kl create ns hw-nvidia
 kl apply -k ./hardware/nvidia-device-plugin/
-kl -n hw-nvidia get pod
+kl -n hw-nvidia get pod -o wide
 
 # check that node now has nvidia gpu capacity
 kl describe node | grep nvidia.com/gpu: -B 7

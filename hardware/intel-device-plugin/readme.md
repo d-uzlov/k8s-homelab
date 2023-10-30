@@ -16,7 +16,7 @@ References:
 ```bash
 kl create ns hw-intel
 kl apply -k ./hardware/intel-device-plugin/
-kl -n hw-intel get pod
+kl -n hw-intel get pod -o wide
 ```
 
 # Cleanup

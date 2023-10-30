@@ -55,7 +55,7 @@ helm template \
 ```bash
 kl create ns exdns
 kl apply -k ./ingress/dns-k8s-gateway/
-kl -n exdns get pod
+kl -n exdns get pod -o wide
 
 # get load balancer external ip
 kl -n exdns get svc exdns-k8s-gateway

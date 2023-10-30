@@ -28,13 +28,17 @@ nano /etc/kernel/cmdline
 proxmox-boot-tool refresh
 # if you are having issues, you could also try this: update-initramfs -u -k all
 reboot now
+
+# you can try to install a different kernel if you want to
+proxmox-boot-tool kernel list
+proxmox-boot-tool kernel pin 6.2.16-12-pve
 ```
 
 ```bash
 # enable automatically after reboot
 echo "devices/pci0000:00/0000:00:02.0/sriov_numvfs = 1" > /etc/sysfs.conf
 # or enable for current session
-echo 1 > /sys/devices/pci0000\:00/0000\:00\:02.0/sriov_numvfs
+echo 1 > "/sys/devices/pci0000:00/0000:00:02.0/sriov_numvfs"
 # you can set up to `i915.max_vfs` virtual devices
 ```
 
