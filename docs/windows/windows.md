@@ -46,3 +46,15 @@ References:
 
 References:
 - https://github.com/microsoft/WSL/issues/4591
+
+# Memory compression
+
+Run in an elevated PowerShell:
+
+```powershell
+# check if memory compression is currently enabled
+Get-MMAgent
+
+Disable-MMAgent -mc
+# reboot after this command
+```
