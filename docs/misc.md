@@ -2,16 +2,20 @@
 # list all resources in a namespace
 
 ```bash
-kl api-resources --verbs=list --namespaced -o name | xargs -n 1 kubectl --kubeconfig=/mnt/a/var/ubuntu-k8s/kubeadm-master-config.yaml get --show-kind --ignore-not-found -n utorrent
+# set to your calue
+namespace=cilium
+kl api-resources --verbs=list --namespaced -o name | xargs -n 1 kubectl --kubeconfig $KUBECONFIGLOCAL get --show-kind --ignore-not-found -n $namespace
 ```
 
-# misc
+# Show current mounts
 
 ```bash
-show current mounts:
 cat /proc/mounts
+```
 
-show open ports:
+# Show open ports
+
+```bash
 apt install net-tools
 netstat -tuplen
 ```
@@ -46,5 +50,5 @@ ipconfig /renew
 # Find own IP
 
 ```bash
-curl 'https://api.ipify.org'
+echo $(curl -sS https://api.ipify.org)
 ```

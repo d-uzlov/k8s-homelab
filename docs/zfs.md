@@ -164,3 +164,26 @@ As noted in the [`nopwrite`](#nopwrite) section, encryption breaks nopwrite.
     > - - Snapshot Names
     > - - Free Space
     > - - Used Space
+
+# Set limit for ARC size
+
+```bash
+# cat /etc/modprobe.d/zfs.conf
+options zfs zfs_arc_min=17179869184
+options zfs zfs_arc_max=17179869184
+
+# 16G: 17179869184
+# 8G:  8589934592
+# 4G:  4294967296
+
+# after editing /etc/modprobe.d/zfs.conf
+update-initramfs -u
+
+# 8G for current session
+echo 8589934592 >> /sys/module/zfs/parameters/zfs_arc_min
+echo 8589934592 >> /sys/module/zfs/parameters/zfs_arc_max
+
+# clear cache for current system
+echo 0 > /sys/module/zfs/parameters/zfs_arc_shrinker_limit
+echo 3 > /proc/sys/vm/drop_caches
+```

@@ -351,3 +351,12 @@ May be useful for gaming in VM.
 
 References:
 - https://forum.proxmox.com/threads/hey-proxmox-community-lets-talk-about-resources-isolation.124256/
+
+# Fill memory
+
+Can be useful to ensure that Proxmox doesn't unexpectedly kill a VM on OOM.
+
+```bash
+# will allocate 195 GiB
+head -c 195G /dev/zero | tail
+```

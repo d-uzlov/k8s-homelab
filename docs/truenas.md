@@ -118,7 +118,6 @@ force group	= nogroup
 force user = nouser
 ```
 
-
 Alternatively, you can force new files to inherit owner of the folder they are in:
 
 ```conf
@@ -135,6 +134,8 @@ directory mask = 777
 force create mode = 666
 force directory mode = 777
 ```
+
+Don't forget to restart samba service after changing the share settings.
 
 References:
 - https://man.freebsd.org/cgi/man.cgi?query=smb.conf
