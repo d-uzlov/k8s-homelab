@@ -35,6 +35,7 @@ helm template \
 kl apply -k ./storage/postgres/crd
 
 kl create ns postgres-operator
+kl apply -f ./storage/postgres/config.yaml
 kl apply -f ./storage/postgres/postgres.gen.yaml
 kl -n postgres-operator get pod -o wide
 ```
@@ -63,3 +64,34 @@ kl -n postgres-test get svc
 kl delete -f ./storage/postgres/test-cluster.yaml
 kl delete ns postgres-test
 ```
+
+# Config modification
+
+Get current config from the cluster:
+
+```bash
+kl -n postgres-operator get operatorconfigurations.acid.zalan.do postgres-operator -o yaml > ./storage/postgres/default-config.yaml
+```
+
+Config was modified in the following way:
+
+```yaml
+configuration:
+  kubernetes:
+    pod_management_policy: parallel
+```
+
+`parallel` flag fixes the following issue:
+
+- you create postgres with 2 replicas
+- you delete postgres-0
+- postgres-1 becomes the leader
+- you reboot the cluster (or do anything else for both pods to be restarted)
+- k8s creates postgres-0 and waits for it to become Ready
+- postgres-0 waits for the postgres-1
+- postgres-0 is waiting forever
+
+The issue is also described here:
+
+- https://github.com/zalando/postgres-operator/issues/1978
+- https://github.com/zalando/postgres-operator/issues/2003
