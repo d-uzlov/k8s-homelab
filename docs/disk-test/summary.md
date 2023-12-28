@@ -12,8 +12,6 @@ This folder contains raw data from various tests and instructions how to run the
 - disk writes data from cache to flash
 - - this is very slow
 
-Some disks lie about writing data to buffer.
-
 # Disk `fsync` test: Results
 
 ```log
@@ -55,19 +53,15 @@ iops: min=   74, max=  154, avg=140.96
 
 Slow vdev + Optane SLOG
 IOPS=5812
-```
 
-Likely lying:
-```log
+
 SATA TESLA 2TB 2022092T0075
 Truenas Scale
 iops: min= 2588, max= 2916, avg=2792.67
 Truenas Core
 iops: min= 2304, max= 2410, avg=2368.50
-```
 
-Maybe lying:
-```log
+
 SATA TEAM T253X2512G 500GB TPBF2206080010103840
 iops: min= 1114, max= 1172, avg=1150.89
 
