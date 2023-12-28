@@ -30,3 +30,20 @@ kl delete pods --field-selector status.phase=Succeeded --all-namespaces
 ```bash
 kl get pod -A --field-selector spec.nodeName=n100.k8s.lan
 ```
+
+# Re-initialize CNI on the node
+
+One time I [gracefully!] rebooted all nodes in my cluster,
+and after the reboot there was no cluster connectivity for unknown reason.
+
+Rebooting the nodes did nothing.
+
+Deleting CNI pods did nothing.
+
+The easy way to solve this is to completely re-initialize CNI on the node.
+
+Run on the node with network issues:
+
+```bash
+sudo rm -rf /etc/cni/ && sudo reboot
+```

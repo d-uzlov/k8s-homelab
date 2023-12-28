@@ -31,7 +31,7 @@ kl delete node n100.k8s.lan
 Then ssh into the removed node and disable kubelet:
 
 ```bash
-sudo kubeadm reset
+sudo kubeadm reset --force
 ```
 
 # Edit kubelet args
@@ -88,6 +88,18 @@ local storage will eventually become filled with garbage images.
 
 ```bash
 sudo crictl --runtime-endpoint unix:///run/containerd/containerd.sock rmi --prune
+```
+
+# crictl remove pods
+
+```bash
+# list pods
+sudo crictl --runtime-endpoint unix:///run/containerd/containerd.sock pods
+
+# list and delete
+sudo crictl --runtime-endpoint unix:///run/containerd/containerd.sock pods |
+    cut -f1 -d" " |
+    xargs -L 1 -I {} -t sudo crictl --runtime-endpoint unix:///run/containerd/containerd.sock rmp {}
 ```
 
 # Other `crictl` commands
