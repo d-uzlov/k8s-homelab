@@ -7,16 +7,16 @@ References:
 
 # L3 adoption
 
-When unify controller is not in the same L2 network,
+When unifi controller is not in the same L2 network,
 devices will not be able to find it automatically.
 
-You can set up local DNS to point `unify` address to address of the controller.
+You can set up local DNS to point `unifi` address to address of the controller.
 
 You can also set up `Settings > System > Advanced > Inform Host`
-in the controller settings to change advertised address, in case you don't want to use `unify`.
+in the controller settings to change advertised address, in case you don't want to use `unifi`.
 However, if you connect a new device, or reset current device settings,
 the device will not know the new address until it is connected,
-which means you will still need to use `unify` address for initial connection.
+which means you will still need to use `unifi` address for initial connection.
 
 References:
 - https://help.ui.com/hc/en-us/articles/204909754-UniFi-Device-Adoption-Methods-for-Remote-UniFi-Controllers
@@ -26,10 +26,15 @@ References:
 - `ssh ubnt@10.0.1.0`
 - - Replace IP with your value
 - - default password is `ubnt`
-- Run: `set-inform http://unify:8080/inform`
-- - here `unify` is a DNS record that points to the controller
+- Run: `set-inform http://unifi:8080/inform`
+- - here `unifi` is a DNS record that points to the controller
 - - replace it with another appropriate record or with IP address
 - Go to controller web-ui -> `System Log` -> `<name> is ready for adoption. Click to adopt it`
+
+You can use `unifi.ubiquiti.kubelb.lan` instead of `unifi`
+if you have deployed the [DNS k8s gateway](../../ingress/dns-k8s-gateway/readme.md).
+
+For example: `set-inform http://unifi.ubiquiti.kubelb.lan:8080/inform`.
 
 # Deploy
 
@@ -47,7 +52,7 @@ kl apply -k ./network/ubiquiti/pvc/
 kl -n ubiquiti get pvc
 
 kl apply -k ./network/ubiquiti/
-kl -n ubiquiti get pod
+kl -n ubiquiti get pod -o wide
 ```
 
 # Run temporary controller locally
