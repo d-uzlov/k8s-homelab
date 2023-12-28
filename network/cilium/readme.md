@@ -13,17 +13,17 @@ You need to regenerate the deployment if you use control plane endpoint other th
 helm repo add cilium https://helm.cilium.io/
 helm repo update cilium
 helm search repo cilium/cilium --versions --devel | head
-helm show values cilium/cilium --version 1.14.2 > ./network/cilium/default-values.yaml
+helm show values cilium/cilium --version 1.15.0-pre.3 > ./network/cilium/default-values.yaml
 
 # replace k8sServiceHost with your value
 helm template cilium cilium/cilium \
-  --version 1.14.2 \
+  --version 1.15.0-pre.3 \
   --values ./network/cilium/values.yaml \
   --namespace cilium \
   --set k8sServiceHost=cp.k8s.lan \
   > ./network/cilium/deploy.gen.yaml
 helm template cilium cilium/cilium \
-  --version 1.14.2 \
+  --version 1.15.0-pre.3 \
   --values ./network/cilium/loadbalancer/values.yaml \
   --namespace cilium \
   --set k8sServiceHost=cp.k8s.lan \
