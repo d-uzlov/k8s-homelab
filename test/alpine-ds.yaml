@@ -1,24 +1,17 @@
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: DaemonSet
 metadata:
-  name: alpine
+  name: alpine-ds
 spec:
   selector:
     matchLabels:
-      app: alpine
+      app: alpine-ds
   template:
     metadata:
       labels:
-        app: alpine
+        app: alpine-ds
     spec:
-      containers:
-      - name: alpine
-        image: docker.io/alpine:3.17.3
-        command: ["/bin/sh", "-c", "trap : TERM INT; sleep infinity & wait"]
-        resources:
-          limits:
-            memory: 50Mi
       tolerations:
       - key: node-role.kubernetes.io/master
         effect: NoSchedule
@@ -26,3 +19,10 @@ spec:
         effect: NoSchedule
       - key: node.kubernetes.io/not-ready
         effect: NoSchedule
+      containers:
+      - name: alpine
+        image: docker.io/alpine:3.17.3
+        command: ["/bin/sh", "-c", "trap : TERM INT; sleep infinity & wait"]
+        resources:
+          limits:
+            memory: 50Mi

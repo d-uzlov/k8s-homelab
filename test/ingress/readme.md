@@ -43,6 +43,7 @@ kl delete -k ./test/ingress/loadbalancer/
 
 kl delete -f ./test/ingress/echo.yaml
 kl delete -f ./test/ingress/echo-cp.yaml
+kl delete -f ./test/ingress/echo-ds.yaml
 
 kl delete ns ingress-test
 ```
