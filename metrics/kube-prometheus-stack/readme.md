@@ -25,7 +25,7 @@ helm show values prometheus-community/kube-prometheus-stack --version 51.0.3 > .
 helm template \
   kps \
   prometheus-community/kube-prometheus-stack \
-  --version 51.0.3 \
+  --version 56.6.1 \
   --values ./metrics/kube-prometheus-stack/values.yaml \
   --namespace kps \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' \
@@ -45,7 +45,7 @@ kl create ns kps
 
 kl apply -k ./metrics/kube-prometheus-stack/
 # kl apply -k ./metrics/kube-prometheus-stack/ --server-side=true
-kl -n kps get pod
+kl -n kps get pod -o wide
 
 # setup wildcard ingress
 kl label ns --overwrite kps copy-wild-cert=main
