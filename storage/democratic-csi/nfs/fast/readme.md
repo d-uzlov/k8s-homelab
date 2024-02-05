@@ -14,7 +14,7 @@ helm show values democratic-csi/democratic-csi > ./storage/democratic-csi/defaul
 helm template \
   dnfsf \
   democratic-csi/democratic-csi \
-  --version 0.14.1 \
+  --version 0.14.5 \
   --values ./storage/democratic-csi/nfs/values.yaml \
   --namespace pv-dnfsf \
   --set nameOverride=dnfsf \
@@ -68,7 +68,7 @@ kl apply -k ./storage/democratic-csi/nfs/fast/
 # make sure that all democratic-csi pods are running
 # there can be some restarts at first,
 # but eventually it should be running without restarts
-kl -n pv-dnfsf get pod
+kl -n pv-dnfsf get pod -o wide
 ```
 
 # Cleanup
