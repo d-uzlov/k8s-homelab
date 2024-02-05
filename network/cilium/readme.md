@@ -13,21 +13,33 @@ You need to regenerate the deployment if you use control plane endpoint other th
 helm repo add cilium https://helm.cilium.io/
 helm repo update cilium
 helm search repo cilium/cilium --versions --devel | head
-helm show values cilium/cilium --version 1.15.0-pre.3 > ./network/cilium/default-values.yaml
+helm show values cilium/cilium --version 1.15.0 > ./network/cilium/default-values.yaml
 
 # replace k8sServiceHost with your value
 helm template cilium cilium/cilium \
-  --version 1.15.0-pre.3 \
+  --version 1.15.0 \
   --values ./network/cilium/values.yaml \
   --namespace cilium \
   --set k8sServiceHost=cp.k8s.lan \
-  > ./network/cilium/deploy.gen.yaml
+  > ./network/cilium/cilium-tunnel.gen.yaml
 helm template cilium cilium/cilium \
-  --version 1.15.0-pre.3 \
-  --values ./network/cilium/loadbalancer/values.yaml \
+  --version 1.15.0 \
+  --values ./network/cilium/values.yaml \
   --namespace cilium \
   --set k8sServiceHost=cp.k8s.lan \
-  > ./network/cilium/loadbalancer/deploy.gen.yaml
+  --set l2announcements.enabled=true \
+  --set externalIPs.enabled=true \
+  > ./network/cilium/cilium-tunnel-l2lb.gen.yaml
+helm template cilium cilium/cilium \
+  --version 1.15.0 \
+  --values ./network/cilium/values.yaml \
+  --namespace cilium \
+  --set k8sServiceHost=cp.k8s.lan \
+  --set l2announcements.enabled=true \
+  --set externalIPs.enabled=true \
+  --set loadBalancer.mode=dsr \
+  --set bpf.masquerade=true \
+  > ./network/cilium/cilium-tunnel-l2lb-dsr.gen.yaml
 ```
 
 # Disable kube-proxy
@@ -44,16 +56,21 @@ kl -n kube-system patch ds kube-proxy --type=json -p='[{"op": "remove", "path": 
 It's possible to make Cilium coexist with kube-proxy
 if you change Cilium settings but it's more effective to replace it.
 
-# Deploy without load balancer
+# Deploy
 
 ```bash
 kl create ns cilium
-kl apply -f ./network/cilium/deploy.gen.yaml --server-side=true
+
+# choose one
+kl apply -f ./network/cilium/cilium-tunnel.gen.yaml --server-side=true
+kl apply -f ./network/cilium/cilium-tunnel-l2lb.gen.yaml --server-side=true
+kl apply -f ./network/cilium/cilium-tunnel-l2lb-dsr.gen.yaml --server-side=true
+
 # check that pods are running
 kl -n cilium get pod -o wide
 ```
 
-# Deploy with load balancer
+# Setup load balancer IPAM when using `l2lb` deployment
 
 ```bash
 mkdir -p ./network/cilium/loadbalancer/env/
@@ -63,11 +80,6 @@ EOF
 ```
 
 ```bash
-kl create ns cilium
-
-kl apply -f ./network/cilium/loadbalancer/deploy.gen.yaml --server-side=true
-kl -n cilium get pod -o wide
-
 kl apply -k ./network/cilium/loadbalancer/
 kl get ciliumloadbalancerippool
 kl get ciliuml2announcementpolicy
@@ -84,8 +96,9 @@ References:
 
 ```bash
 kl delete -k ./network/cilium/loadbalancer/
-kl delete -f ./network/cilium/loadbalancer/deploy.gen.yaml
-kl delete -f ./network/cilium/deploy.gen.yaml
+kl delete -f ./network/cilium/cilium-tunnel.gen.yaml
+kl delete -f ./network/cilium/cilium-tunnel-l2lb.gen.yaml
+kl delete -f ./network/cilium/cilium-tunnel-l2lb-dsr.gen.yaml
 kl delete ns cilium
 ```
 

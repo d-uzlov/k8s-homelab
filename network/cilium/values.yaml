@@ -12,6 +12,12 @@ encryption:
   enabled: true
   type: wireguard
 
+# -- Cilium agent update strategy
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 100%
+
 hubble:
   tls:
     auto:
@@ -19,6 +25,25 @@ hubble:
       # renew certificates automatically
       # remove certificates from generated .gen.yaml file
       method: cronJob
+
+l2announcements:
+  enabled: false
+  # -- If a lease is not renewed for X duration, the current leader is considered dead, a new leader is picked
+  leaseDuration: 15s
+  # -- The interval at which the leader will renew the lease
+  leaseRenewDeadline: 5s
+  # -- The timeout between retries if renewal fails
+  leaseRetryPeriod: 2s
+# required for l2announcements
+externalIPs:
+  enabled: false
+# default values are 5/10 which is too small for the loadbalancer leader election
+k8sClientRateLimit:
+  qps: 100
+  burst: 200
+
+# socketLB:
+#   hostNamespaceOnly: true
 
 # TODO: DRS does not work properly with tunneling:
 #   https://github.com/cilium/cilium/issues/26723#issuecomment-1628505224
@@ -28,19 +53,18 @@ hubble:
 # load balancer services will start working as expected,
 # but connections from pods to outside world will be broken
 
-# loadBalancer:
-#     # mode=snat uses SNAT for services with `externalTrafficPolicy=Cluster`
-#     # mode=dsr disables SNAT (preserve client IP) but reduces MTU
-#     # mode=hybrid disables SNAT for TCP traffic without changing MTU but disables DSR for UDP
-#   mode: dsr
-#   dsrDispatch: geneve
+loadBalancer:
+    # mode=snat uses SNAT for services with `externalTrafficPolicy=Cluster`
+    # mode=dsr disables SNAT (preserve client IP) but reduces MTU
+    # mode=hybrid disables SNAT for TCP traffic without changing MTU but disables DSR for UDP
+  mode: snat
+  dsrDispatch: geneve
 
 # required for DSR with tunneling
 tunnelProtocol: geneve
+# autoDirectNodeRoutes: true
 
-# # People suggested trying this to see it would fix load-balancer with DSR
-# # but it doesn't seem to change anything
-# bpf:
-#   masquerade: true
+bpf:
+  masquerade: false
 # enableIPv4Masquerade: false
 # enableIPv6Masquerade: false

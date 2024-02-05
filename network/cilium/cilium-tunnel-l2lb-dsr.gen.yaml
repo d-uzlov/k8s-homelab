@@ -147,6 +147,7 @@ data:
   enable-ipv4-big-tcp: "false"
   enable-ipv6-big-tcp: "false"
   enable-ipv6-masquerade: "true"
+  enable-bpf-masquerade: "true"
   enable-masquerade-to-route-source: "false"
   enable-wireguard: "true"
   wireguard-persistent-keepalive: "0s"
@@ -164,7 +165,9 @@ data:
   enable-health-check-loadbalancer-ip: "false"
   node-port-bind-protection: "true"
   enable-auto-protect-node-port-range: "true"
+  bpf-lb-mode: "dsr"
   bpf-lb-acceleration: "disabled"
+  bpf-lb-dsr-dispatch: "geneve"
   enable-svc-source-range-check: "true"
   enable-l2-neigh-discovery: "true"
   arping-refresh-period: "30s"
@@ -213,12 +216,14 @@ data:
   enable-k8s-terminating-endpoint: "true"
   enable-sctp: "false"
 
-  k8s-client-qps: "50"
-  k8s-client-burst: "80"
+  k8s-client-qps: "100"
+  k8s-client-burst: "200"
   remove-cilium-node-taints: "true"
   set-cilium-node-taints: "true"
   set-cilium-is-up-condition: "true"
   unmanaged-pod-watcher-interval: "15"
+  # default DNS proxy to transparent mode in non-chaining modes
+  dnsproxy-enable-transparent-mode: "true"
   tofqdns-dns-reject-response-code: "refused"
   tofqdns-enable-dns-compression: "true"
   tofqdns-endpoint-max-ip-per-hostname: "50"
@@ -740,13 +745,13 @@ spec:
       k8s-app: cilium
   updateStrategy:
     rollingUpdate:
-      maxUnavailable: 2
+      maxUnavailable: 100%
     type: RollingUpdate
   template:
     metadata:
       annotations:
         # ensure pods roll when configmap updates
-        cilium.io/cilium-configmap-checksum: "8eddb894d77ba944ffa078d9a7643d604bc66fb08c63e7efab65fd95d3efeddd"
+        cilium.io/cilium-configmap-checksum: "2d05830ad7cbe2823f0422b4cfefd5eb910407ef9add782446ed210dd7191998"
         # Set app AppArmor's profile to "unconfined". The value of this annotation
         # can be modified as long users know which profiles they have available
         # in AppArmor.
@@ -761,7 +766,7 @@ spec:
     spec:
       containers:
       - name: cilium-agent
-        image: "quay.io/cilium/cilium:v1.15.0-pre.3@sha256:c09d3fc906f26edbc93494cc46e6616668d7931a05470f02b9f9a266c2cfc279"
+        image: "quay.io/cilium/cilium:v1.15.0@sha256:9cfd6a0a3a964780e73a11159f93cc363e616f7d9783608f62af6cfdf3759619"
         imagePullPolicy: IfNotPresent
         command:
         - cilium-agent
@@ -847,10 +852,10 @@ spec:
                     # dependencies on anything that is part of the startup script
                     # itself, and can be safely run multiple times per node (e.g. in
                     # case of a restart).
-                    if [[ "$(iptables-save | grep -c 'AWS-SNAT-CHAIN|AWS-CONNMARK-CHAIN')" != "0" ]];
+                    if [[ "$(iptables-save | grep -E -c 'AWS-SNAT-CHAIN|AWS-CONNMARK-CHAIN')" != "0" ]];
                     then
                         echo 'Deleting iptables rules created by the AWS CNI VPC plugin'
-                        iptables-save | grep -v 'AWS-SNAT-CHAIN|AWS-CONNMARK-CHAIN' | iptables-restore
+                        iptables-save | grep -E -v 'AWS-SNAT-CHAIN|AWS-CONNMARK-CHAIN' | iptables-restore
                     fi
                     echo 'Done!'
                     
@@ -915,7 +920,7 @@ spec:
           mountPath: /tmp
       initContainers:
       - name: config
-        image: "quay.io/cilium/cilium:v1.15.0-pre.3@sha256:c09d3fc906f26edbc93494cc46e6616668d7931a05470f02b9f9a266c2cfc279"
+        image: "quay.io/cilium/cilium:v1.15.0@sha256:9cfd6a0a3a964780e73a11159f93cc363e616f7d9783608f62af6cfdf3759619"
         imagePullPolicy: IfNotPresent
         command:
         - cilium-dbg
@@ -942,7 +947,7 @@ spec:
       # Required to mount cgroup2 filesystem on the underlying Kubernetes node.
       # We use nsenter command with host's cgroup and mount namespaces enabled.
       - name: mount-cgroup
-        image: "quay.io/cilium/cilium:v1.15.0-pre.3@sha256:c09d3fc906f26edbc93494cc46e6616668d7931a05470f02b9f9a266c2cfc279"
+        image: "quay.io/cilium/cilium:v1.15.0@sha256:9cfd6a0a3a964780e73a11159f93cc363e616f7d9783608f62af6cfdf3759619"
         imagePullPolicy: IfNotPresent
         env:
         - name: CGROUP_ROOT
@@ -979,7 +984,7 @@ spec:
             drop:
               - ALL
       - name: apply-sysctl-overwrites
-        image: "quay.io/cilium/cilium:v1.15.0-pre.3@sha256:c09d3fc906f26edbc93494cc46e6616668d7931a05470f02b9f9a266c2cfc279"
+        image: "quay.io/cilium/cilium:v1.15.0@sha256:9cfd6a0a3a964780e73a11159f93cc363e616f7d9783608f62af6cfdf3759619"
         imagePullPolicy: IfNotPresent
         env:
         - name: BIN_PATH
@@ -1017,7 +1022,7 @@ spec:
       # from a privileged container because the mount propagation bidirectional
       # only works from privileged containers.
       - name: mount-bpf-fs
-        image: "quay.io/cilium/cilium:v1.15.0-pre.3@sha256:c09d3fc906f26edbc93494cc46e6616668d7931a05470f02b9f9a266c2cfc279"
+        image: "quay.io/cilium/cilium:v1.15.0@sha256:9cfd6a0a3a964780e73a11159f93cc363e616f7d9783608f62af6cfdf3759619"
         imagePullPolicy: IfNotPresent
         args:
         - 'mount | grep "/sys/fs/bpf type bpf" || mount -t bpf bpf /sys/fs/bpf'
@@ -1033,7 +1038,7 @@ spec:
           mountPath: /sys/fs/bpf
           mountPropagation: Bidirectional
       - name: clean-cilium-state
-        image: "quay.io/cilium/cilium:v1.15.0-pre.3@sha256:c09d3fc906f26edbc93494cc46e6616668d7931a05470f02b9f9a266c2cfc279"
+        image: "quay.io/cilium/cilium:v1.15.0@sha256:9cfd6a0a3a964780e73a11159f93cc363e616f7d9783608f62af6cfdf3759619"
         imagePullPolicy: IfNotPresent
         command:
         - /init-container.sh
@@ -1081,14 +1086,10 @@ spec:
           mountPath: /run/cilium/cgroupv2
           mountPropagation: HostToContainer
         - name: cilium-run
-          mountPath: /var/run/cilium
-        resources:
-          requests:
-            cpu: 100m
-            memory: 100Mi # wait-for-kube-proxy
+          mountPath: /var/run/cilium # wait-for-kube-proxy
       # Install the CNI binaries in an InitContainer so we don't have a writable host mount in the agent
       - name: install-cni-binaries
-        image: "quay.io/cilium/cilium:v1.15.0-pre.3@sha256:c09d3fc906f26edbc93494cc46e6616668d7931a05470f02b9f9a266c2cfc279"
+        image: "quay.io/cilium/cilium:v1.15.0@sha256:9cfd6a0a3a964780e73a11159f93cc363e616f7d9783608f62af6cfdf3759619"
         imagePullPolicy: IfNotPresent
         command:
           - "/install-plugin.sh"
@@ -1247,7 +1248,7 @@ spec:
     metadata:
       annotations:
         # ensure pods roll when configmap updates
-        cilium.io/cilium-configmap-checksum: "8eddb894d77ba944ffa078d9a7643d604bc66fb08c63e7efab65fd95d3efeddd"
+        cilium.io/cilium-configmap-checksum: "2d05830ad7cbe2823f0422b4cfefd5eb910407ef9add782446ed210dd7191998"
         prometheus.io/port: "9963"
         prometheus.io/scrape: "true"
       labels:
@@ -1258,7 +1259,7 @@ spec:
     spec:
       containers:
       - name: cilium-operator
-        image: "quay.io/cilium/operator-generic:v1.15.0-pre.3@sha256:01959fb5e0164fbe3f265f42da4e444d9511f716ac26210fea1080c948d4583e"
+        image: "quay.io/cilium/operator-generic:v1.15.0@sha256:e26ecd316e742e4c8aa1e302ba8b577c2d37d114583d6c4cdd2b638493546a79"
         imagePullPolicy: IfNotPresent
         command:
         - cilium-operator-generic
