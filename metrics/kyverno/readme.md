@@ -36,6 +36,9 @@ kl apply -k ./metrics/kyverno/crds/ --server-side
 kl create ns kyverno
 kl apply -k ./metrics/kyverno/
 kl -n kyverno get pod -o wide
+
+kl apply -k ./metrics/kyverno/common-policies/
+kl get clusterpolicy
 ```
 
 # Cleanup
