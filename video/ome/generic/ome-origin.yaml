@@ -1,0 +1,117 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ovenmediaengine-origin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ovenmediaengine
+      ome-type: origin
+  template:
+    metadata:
+      labels:
+        app: ovenmediaengine
+        ome-type: origin
+    spec:
+      # securityContext:
+      #   supplementalGroups:
+      #   # /dev/dri/card0 has group video, which is gid 44
+      #   - 44
+      #   # /dev/dri/renderD128 has gid 104
+      #   - 104
+      terminationGracePeriodSeconds: 1
+      containers:
+      - name: ovenmediaengine
+        image: docker.io/airensoft/ovenmediaengine:0.16.4
+        # rtmp is the main port for OBS, srt also required for OBS
+        # webrtc requires publish and turn
+        ports:
+        - name: rtmp
+          containerPort: 1935
+        - name: srt
+          containerPort: 9999
+          protocol: UDP
+        - name: publish
+          containerPort: 3333
+        - name: turn
+          containerPort: 3478
+        - name: webrtc-10000
+          containerPort: 10000
+          protocol: UDP
+        - name: origin-ovt
+          containerPort: 9000
+        env:
+        - name: OME_HOST_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: status.podIP
+        - name: OME_PUBLIC_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              name: webrtc-address
+              key: public
+        - name: OME_LOCAL_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              name: webrtc-address
+              key: local
+        - name: REDIS_SERVICE
+          value: redis
+        - name: REDIS_PORT
+          value: '6379'
+        - name: REDIS_PASS
+          valueFrom:
+            secretKeyRef:
+              name: passwords
+              key: redis_password
+        - name: OME_RTMP_PROV_PORT
+          value: '1935'
+        - name: OME_SRT_PROV_PORT
+          value: 9999/udp
+        - name: OME_LLHLS_STREAM_PORT
+          # - name: OME_MPEGTS_PROV_PORT
+          #   value: 4000/udp
+          value: '3333'
+        - name: OME_WEBRTC_SIGNALLING_PORT
+          value: '3333'
+        - name: OME_LLHLS_STREAM_TLS_PORT
+          value: '3334'
+        - name: OME_WEBRTC_SIGNALLING_TLS_PORT
+          value: '3334'
+        - name: OME_WEBRTC_TCP_RELAY_PORT
+          value: '3478'
+        - name: OME_WEBRTC_CANDIDATE_PORT
+          value: 10000/udp
+        - name: OME_ORIGIN_PORT
+          value: '9000'
+        - name: OME_720_BITRATE
+          value: '1500000'
+        - name: OME_720_PRESET
+          value: fast
+        - name: OME_1080_BITRATE
+          value: '5000000'
+        - name: OME_1080_PRESET
+          value: fast
+        resources:
+          requests:
+            memory: 1.5Gi
+            cpu: 2
+          limits: {}
+            # memory: 2Gi
+            # gpu.intel.com/i915: 1
+        volumeMounts:
+        - mountPath: /opt/ovenmediaengine/bin/origin_conf/Server.xml
+          name: config-origin
+          subPath: origin-config.xml
+        - mountPath: /mnt/application-config.d/
+          name: config
+      volumes:
+      - name: config
+        configMap:
+          name: config
+      - name: config-origin
+        configMap:
+          name: config-origin

@@ -8,6 +8,17 @@ References:
 - https://github.com/AirenSoft/OvenMediaEngine
 - https://airensoft.gitbook.io/ovenmediaengine/getting-started/getting-started-with-docker
 
+# Config setup
+
+Generate passwords and set up config.
+
+```bash
+mkdir -p ./video/ome/generic/env/
+cat <<EOF > ./video/ome/generic/env/passwords.env
+redis_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
+EOF
+```
+
 # Deploy
 
 ```bash

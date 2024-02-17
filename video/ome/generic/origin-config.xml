@@ -12,7 +12,7 @@
     This is useful when OME cannot obtain a public IP from an interface, such as AWS or docker environment. 
     If this is successful, you can use ${PublicIP} in your settings.
     -->
-    <!-- If the STUN server is not available, OME will hand for a minute at startup, therefor it may be beneficial to disable it -->
+    <!-- If the STUN server is not available, OME will hang for a minute at startup, therefor it may be beneficial to disable it -->
     <!-- <StunServer>stun.ovenmediaengine.com:13478</StunServer> -->
 
     <Modules>
@@ -134,10 +134,6 @@
     </Bind>
 
     <VirtualHosts>
-        <!--
-            You can include multiple XML files by doing the following:
-            <VirtualHost include="sites-enabled/*.xml" />
-        -->
         <VirtualHost include="VHost*.xml" />
         <VirtualHost>
             <Name>default</Name>
@@ -175,18 +171,22 @@
             </SignedPolicy>
             -->
 
-            <!--
+            <!-- In order to use OriginMap, you must enable OVT Publisher in Origin and OVT Provider in Edge. -->
             <OriginMapStore>
-                In order to use OriginMap, you must enable OVT Publisher in Origin and OVT Provider in Edge.
                 <RedisServer>
-                    <Host>192.168.0.160:6379</Host>
-                    <Auth>!@#ovenmediaengine</Auth>
+                    <Host>${env:REDIS_SERVICE:redis}:${env:REDIS_PORT:6379}</Host>
+                    <Auth>${env:REDIS_PASS}</Auth>
                 </RedisServer>
                 
-                This is only needed for the origin server and used to register the ovt address of the stream. 
-                <OriginHostName>${env:OME_HOST_IP:192.168.0.160}</OriginHostName>
+                <!-- This is only needed for the origin server and used to register the ovt address of the stream.  -->
+                <OriginHostName>${env:OME_HOST_IP}</OriginHostName>
             </OriginMapStore>
-            -->
+           
+
+            <!-- Default CORS Settings -->
+            <CrossDomains>
+                <Url>*</Url>
+            </CrossDomains>
 
             <!-- Settings for applications -->
             <Applications>

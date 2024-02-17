@@ -2,16 +2,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ovenmediaengine
+  name: ovenmediaengine-edge
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: ovenmediaengine
+      ome-type: edge
   template:
     metadata:
       labels:
         app: ovenmediaengine
+        ome-type: edge
     spec:
       # securityContext:
       #   supplementalGroups:
@@ -49,6 +51,15 @@ spec:
             configMapKeyRef:
               name: webrtc-address
               key: local
+        - name: REDIS_SERVICE
+          value: redis
+        - name: REDIS_PORT
+          value: '6379'
+        - name: REDIS_PASS
+          valueFrom:
+            secretKeyRef:
+              name: passwords
+              key: redis_password
         - name: OME_RTMP_PROV_PORT
           value: '1935'
         - name: OME_SRT_PROV_PORT
@@ -67,14 +78,6 @@ spec:
           value: '3478'
         - name: OME_WEBRTC_CANDIDATE_PORT
           value: 10000/udp
-        - name: OME_720_BITRATE
-          value: '1500000'
-        - name: OME_720_PRESET
-          value: fast
-        - name: OME_1080_BITRATE
-          value: '5000000'
-        - name: OME_1080_PRESET
-          value: fast
         resources:
           requests:
             memory: 1.5Gi
@@ -84,11 +87,14 @@ spec:
             # gpu.intel.com/i915: 1
         volumeMounts:
         - mountPath: /opt/ovenmediaengine/bin/origin_conf/Server.xml
-          name: config
-          subPath: origin-config.xml
+          name: config-edge
+          subPath: edge-config.xml
         - mountPath: /mnt/application-config.d/
           name: config
       volumes:
       - name: config
         configMap:
           name: config
+      - name: config-edge
+        configMap:
+          name: config-edge

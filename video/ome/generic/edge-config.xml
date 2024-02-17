@@ -1,9 +1,9 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8"?>
 
 <Server version="8">
     <Name>OvenMediaEngine</Name>
     <!-- Host type (origin/edge) -->
-    <Type>origin</Type>
+    <Type>edge</Type>
     <!-- Specify IP address to bind (* means all IPs) -->
     <IP>*</IP>
     <PrivacyProtection>false</PrivacyProtection>
@@ -12,7 +12,7 @@
     This is useful when OME cannot obtain a public IP from an interface, such as AWS or docker environment. 
     If this is successful, you can use ${PublicIP} in your settings.
     -->
-    <!-- If the STUN server is not available, OME will hand for a minute at startup, therefor it may be beneficial to disable it -->
+    <!-- If the STUN server is not available, OME will hang for a minute at startup, therefor it may be beneficial to disable it -->
     <!-- <StunServer>stun.ovenmediaengine.com:13478</StunServer> -->
 
     <Modules>
@@ -48,52 +48,12 @@
         -->
         <Providers>
             <!-- Pull providers -->
-            <RTSPC>
-                <WorkerCount>1</WorkerCount>
-            </RTSPC>
             <OVT>
                 <WorkerCount>1</WorkerCount>
             </OVT>
-            <!-- Push providers -->
-            <RTMP>
-                <Port>${env:OME_RTMP_PROV_PORT:1935}</Port>
-                <WorkerCount>1</WorkerCount>
-            </RTMP>
-            <SRT>
-                <Port>${env:OME_SRT_PROV_PORT:9999}</Port>
-                <WorkerCount>1</WorkerCount>
-            </SRT>
-            <!--
-            <MPEGTS>
-                    <- Listen on port 4000
-                    This is just a demonstration to show that you can configure the port in several ways ->
-                    <Port>${env:OME_MPEGTS_PROV_PORT:4000-4001,4004,4005/udp}</Port>
-                <Port>${env:OME_MPEGTS_PROV_PORT:4000-4005/udp}</Port>
-            </MPEGTS>
-            -->
-            <WebRTC>
-                <Signalling>
-                    <Port>${env:OME_WEBRTC_SIGNALLING_PORT:3333}</Port>
-                    <TLSPort>${env:OME_WEBRTC_SIGNALLING_TLS_PORT:3334}</TLSPort>
-                    <WorkerCount>1</WorkerCount>
-                </Signalling>
-                <IceCandidates>
-                    <IceCandidate>${env:PublicIP:*}:${env:OME_WEBRTC_CANDIDATE_PORT:10000/udp}</IceCandidate>
-                    <TcpRelay>${env:PublicIP:*}:${env:OME_WEBRTC_TCP_RELAY_PORT:3478}</TcpRelay>
-                    <TcpRelay>${env:OME_PUBLIC_ADDRESS:*}:${env:OME_WEBRTC_TCP_RELAY_PORT:3478}</TcpRelay>
-                    <TcpRelay>${env:OME_LOCAL_ADDRESS:*}:${env:OME_WEBRTC_TCP_RELAY_PORT:3478}</TcpRelay>
-                    <!-- <TcpForce>true</TcpForce> -->
-                    <TcpRelayWorkerCount>1</TcpRelayWorkerCount>
-                </IceCandidates>
-            </WebRTC>
         </Providers>
 
         <Publishers>
-            <!-- The OVT is protocol for ORIGIN-EDGE -->
-            <OVT>
-                <Port>${env:OME_ORIGIN_PORT:9000}</Port>
-                <WorkerCount>1</WorkerCount>
-            </OVT>
             <LLHLS>
                 <!--
                 OME only supports h2, so LLHLS works over HTTP/1.1 on non-TLS port. 
@@ -133,11 +93,14 @@
         </Publishers>
     </Bind>
 
+    <!-- P2P works only in WebRTC -->
+    <!--
+    <P2P>
+        <MaxClientPeersPerHostPeer>2</MaxClientPeersPerHostPeer>
+    </P2P>
+    -->
+
     <VirtualHosts>
-        <!--
-            You can include multiple XML files by doing the following:
-            <VirtualHost include="sites-enabled/*.xml" />
-        -->
         <VirtualHost include="VHost*.xml" />
         <VirtualHost>
             <Name>default</Name>
@@ -164,9 +127,9 @@
 
             <!-- Refer https://airensoft.gitbook.io/ovenmediaengine/signedpolicy
             <SignedPolicy>
-                <PolicyQueryKeyName>policy</PolicyQueryKeyName>
-                <SignatureQueryKeyName>signature</SignatureQueryKeyName>
-                <SecretKey>aKq#1kj</SecretKey>
+                <PolicyQueryKeyName>${env:SIGNED_POLICY_POLICY_QUERY_KEY:policy}</PolicyQueryKeyName>
+                <SignatureQueryKeyName>${env:SIGNED_POLICY_SIGNATURE_QUERY_KEY:signature}</SignatureQueryKeyName>
+                <SecretKey>${env:SIGNED_URL_CRYPTO_KEY:aKq#1kj}</SecretKey>
 
                 <Enables>
                     <Providers>rtmp,webrtc,srt</Providers>
@@ -175,22 +138,105 @@
             </SignedPolicy>
             -->
 
-            <!--
-            <OriginMapStore>
-                In order to use OriginMap, you must enable OVT Publisher in Origin and OVT Provider in Edge.
-                <RedisServer>
-                    <Host>192.168.0.160:6379</Host>
-                    <Auth>!@#ovenmediaengine</Auth>
-                </RedisServer>
-                
-                This is only needed for the origin server and used to register the ovt address of the stream. 
-                <OriginHostName>${env:OME_HOST_IP:192.168.0.160}</OriginHostName>
-            </OriginMapStore>
-            -->
+            <!-- Settings for ProxyPass (It can specify origin for each path) -->
+            <Origins>
+                <Properties>
+                    <NoInputFailoverTimeout>3000</NoInputFailoverTimeout>
+                    <UnusedStreamDeletionTimeout>60000</UnusedStreamDeletionTimeout>
+                </Properties>
+                <!--
+                    <Origin>
+                    <Location>/app/stream</Location>
+                    <Pass>
+                        <Scheme>ovt</Scheme>
+                        <Urls>
+                            <Url>origin.com:9000/app/stream_720p</Url>
+                        </Urls>
+                    </Pass>
+                </Origin>
+                <Origin>
+                    <Location>/app/</Location>
+                    <Pass>
+                        <Scheme>ovt</Scheme>
+                        <Urls>
+                            <Url>origin.com:9000/app/</Url>
+                        </Urls>
+                    </Pass>
+                </Origin>
+                -->
+                <!-- <Origin>
+                    <Location>/</Location>
+                    <Pass>
+                        <Scheme>ovt</Scheme>
+                        <Urls>
+                            <Url>${env:DEFAULT_ORIGIN_SERVER:}:${env:DEFAULT_ORIGIN_PORT:9000}/</Url>
+                        </Urls>
+                        <ForwardQueryParams>true</ForwardQueryParams>
+                    </Pass>
+                </Origin> -->
+            </Origins>
 
-            <!-- Settings for applications -->
+            <!-- When Edge tries to pull a stream, it looks first in <Origins> in local, and in OriginMapStore.  -->
+            <!-- Therefore, it is recommended to disable Origins when using OriginMapStore. -->
+            <!-- In order to use OriginMap, you must enable OVT Publisher in Origin and OVT Provider in Edge. -->
+            <OriginMapStore>
+                <RedisServer>
+                    <Host>${env:REDIS_SERVICE:redis}:${env:REDIS_PORT:6379}</Host>
+                    <Auth>${env:REDIS_PASS}</Auth>
+                </RedisServer>
+            </OriginMapStore>
+
+            <!-- Default CORS Settings -->
+            <CrossDomains>
+                <Url>*</Url>
+            </CrossDomains>
+
             <Applications>
-                <Application include="/mnt/application-config.d/*-main.xml" />
+                <Application>
+                    <!-- 
+                    Origins and OriginMapStore can dynamically create an application if no application exists 
+                    when creating a stream. They create a new application by copying the Application configuration 
+                    where <Name> is *. 
+                    In other words, an application with <Name> as * serves as a dynamic application template.
+                    -->
+                    <Name>*</Name>
+                    <Type>live</Type>
+                    <OutputProfiles>
+                        <OutputProfile>
+                            <Name>passthrough</Name>
+                            <OutputStreamName>${OriginStreamName}</OutputStreamName>
+                            <Encodes>
+                                <Video>
+                                    <Bypass>true</Bypass>
+                                </Video>
+                                <Audio>
+                                    <Bypass>true</Bypass>
+                                </Audio>
+                            </Encodes>
+                        </OutputProfile>
+                    </OutputProfiles>
+                    <Providers>
+                        <OVT />
+                    </Providers>
+                    <Publishers>
+                        <AppWorkerCount>1</AppWorkerCount>
+                        <StreamWorkerCount>8</StreamWorkerCount>
+                        <WebRTC>
+                            <Timeout>30000</Timeout>
+                            <Rtx>false</Rtx>
+                            <Ulpfec>false</Ulpfec>
+                            <JitterBuffer>false</JitterBuffer>
+                        </WebRTC>
+                        <LLHLS>
+                            <ChunkDuration>0.5</ChunkDuration>
+                            <SegmentDuration>6</SegmentDuration>
+                            <SegmentCount>10</SegmentCount>
+                            <CrossDomains>
+                                <Url>*</Url>
+                            </CrossDomains>
+                        </LLHLS>
+                    </Publishers>
+                </Application>
             </Applications>
         </VirtualHost>
     </VirtualHosts>
