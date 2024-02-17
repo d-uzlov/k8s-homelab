@@ -23,9 +23,7 @@ EOF
 ```bash
 kl create ns ome
 
-# create loadbalancer service
 kl apply -k ./video/ome/loadbalancer/
-# get assigned IP to set up DNS or NAT port-forwarding
 kl -n ome get svc
 
 # setup wildcard ingress
@@ -66,11 +64,12 @@ kl -n ome get svc provide webrtc-ice
 
 If you are behind NAT you need to set up port forwarding.
 
-You can skip Provide service if you don't want to stream from outside of LAN.
+You can skip port forwarding for Provide service if you don't want to stream from outside of LAN.
 
-You can skip WebRTC if you don't plan on using WebRTC for watching video.
+You can skip port forwarding for WebRTC if you don't plan on using WebRTC for watching video.
 
-WebRTC forwarded ports must match ports of the service itself.
+WebRTC forwarded ports must match ports of the service itself and configuration of OME server
+(clients get advertisement for ports based on server configuration).
 
 WebRTC determines host IP automatically, and clients try to connect to it.
 If your service IP does not match the IP that the server can detect using "show my IP" external services,
@@ -80,11 +79,11 @@ you need to set `OME_WEBRTC_CANDIDATE_IP` environment variable to point to corre
 
 - [optional] Set up local DNS to point to `provide_ip`
 - Set up OBS
-- - This is info from quickstart: https://airensoft.gitbook.io/ovenmediaengine/quick-start
 - - Go to `Settings -> Stream`
 - - Set server: `rtmp://<provide_ip or DNS>:1935/app`
 - - Set stream key: an arbitrary string
 - - `/app` corresponds to `<Name>app</Name>` in `ome-config.xml`, and can be changed by editing the config.
+- - Reference: [OME quickstart docs](https://airensoft.gitbook.io/ovenmediaengine/quick-start)
 
 # Playback
 
@@ -93,8 +92,11 @@ you need to set `OME_WEBRTC_CANDIDATE_IP` environment variable to point to corre
 
 # Playback with WebRTC (sub-second latency)
 
-- Streaming via HTTP: `ws://<ingress_ip or DNS>:3333/app/<stream-key>`
 - Streaming via HTTPS: `wss://<ingress_public_domain>/app/<stream-key>`
+- It's possible to stream via HTTP by connecting to `svc/publish` directly
+or if your ingress doesn't enforce HTTPS
+but config in this folder doesn't allow this.
+You will need to modify the config if you want to use HTTP.
 - `/app` and `<stream-key>` must match OSB settings
 - WebSockets forbid mixed content.
 - - If you open OvenPlayer via HTTPS Ingress,
@@ -103,7 +105,6 @@ you need to set `OME_WEBRTC_CANDIDATE_IP` environment variable to point to corre
 
 # LLHLS playback (latency 1-3 seconds)
 
-- Streaming via HTTP: `http://<ingress_ip or DNS>:3333/app/<stream-key>/llhls.m3u8`
 - Streaming via HTTPS: `https://<ingress_public_domain>/app/<stream-key>/llhls.m3u8`
 
 # Extract config from image
@@ -130,8 +131,16 @@ https://github.com/bozbez/win-capture-audio
 # Build CUDA image
 
 ```bash
-docker build https://github.com/AirenSoft/OvenMediaEngine/raw/4d2e46621eeca9371de5199250b3367d37c11fb2/Dockerfile.cuda \
-    --build-arg OME_VERSION=v0.16.0 \
-    -t docker.io/example/k8s-snippets:ome-v0.16.0-cuda
-docker push docker.io/example/k8s-snippets:ome-v0.16.0-cuda
+docker_username=
+docker_repo=
+
+docker build https://github.com/AirenSoft/OvenMediaEngine/raw/v0.16.4/Dockerfile.cuda \
+    --build-arg OME_VERSION=v0.16.3 \
+    -t docker.io/$docker_username/$docker_repo:ome-official-v0.16.3-cuda11
+docker push docker.io/$docker_username/$docker_repo:ome-official-v0.16.3-cuda11
+
+docker build https://github.com/AirenSoft/OvenMediaEngine/raw/v0.16.4/Dockerfile.cuda \
+    --build-arg OME_VERSION=v0.16.4 \
+    -t docker.io/$docker_username/$docker_repo:ome-official-v0.16.4-cuda11
+docker push docker.io/$docker_username/$docker_repo:ome-official-v0.16.4-cuda11
 ```

@@ -10,11 +10,30 @@ spec:
     spec:
       containers:
       - name: ovenmediaengine
-        image: docker.io/daniluzlov/k8s-snippets:ome-v0.16.0-cuda
+        imagePullPolicy: Always
+        # official image v1.16.4 still doesn't support cuda
+        # working one
+        # image: docker.io/daniluzlov/k8s-snippets:ome-v0.16.0-cuda
+        # :: Invalid output format yuvj420p for hwframe download
+        # error can be avoided by disabling preview generation
+        image: docker.io/daniluzlov/k8s-snippets:ome-official-v0.16.3-cuda11
+        # libnppig.so.12 missing
+        # image: docker.io/daniluzlov/k8s-snippets:ome-official-v0.16.4-cuda12g
+        # command:
+        # - /bin/sh
+        # - -c
+        # - |
+        #   trap : TERM INT; sleep infinity & wait
+        env:
+        - name: NVIDIA_DRIVER_CAPABILITIES
+          # value: video
+          # value: compute,utility,video,compat32,graphics
+          # value: utility
+          value: all
+        - name: OME_720_PRESET
+          value: slower
+        - name: OME_1080_PRESET
+          value: slower
         resources:
           limits:
             nvidia.com/gpu: 1
-      volumes:
-      - name: config-video
-        configMap:
-          name: config-video-nvidia
