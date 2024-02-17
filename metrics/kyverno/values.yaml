@@ -1,0 +1,246 @@
+
+# -- (string) Override the name of the chart
+nameOverride: ~
+
+# -- (string) Override the expanded name of the chart
+fullnameOverride: ~
+
+# -- (string) Override the namespace the chart deploys to
+namespaceOverride: ~
+
+crds:
+  install: false
+
+# Configuration
+config:
+  # -- Create the configmap.
+  create: true
+
+  # -- (string) The configmap name (required if `create` is `false`).
+  name: ~
+
+  # -- Enable registry mutation for container images. Enabled by default.
+  enableDefaultRegistryMutation: true
+
+  # -- The registry hostname used for the image mutation.
+  defaultRegistry: docker.io
+
+  # -- Exclude groups
+  excludeGroups:
+    - system:nodes
+
+  # -- Defines the `namespaceSelector` in the webhook configurations.
+  # Note that it takes a list of `namespaceSelector` and/or `objectSelector` in the JSON format, and only the first element
+  # will be forwarded to the webhook configurations.
+  # The Kyverno namespace is excluded if `excludeKyvernoNamespace` is `true` (default)
+  webhooks: []
+    # Exclude namespaces
+    # - namespaceSelector:
+    #     matchExpressions:
+    #     - key: kubernetes.io/metadata.name
+    #       operator: NotIn
+    #       values:
+    #         - kube-system
+    #         - kyverno
+    # Exclude objects
+    # - objectSelector:
+    #     matchExpressions:
+    #     - key: webhooks.kyverno.io/exclude
+    #       operator: DoesNotExist
+
+  # -- Defines annotations to set on webhook configurations.
+  webhookAnnotations: {}
+    # Example to disable admission enforcer on AKS:
+    # 'admissions.enforcer/disabled': 'true'
+
+  # -- Defines match conditions to set on webhook configurations (requires Kubernetes 1.27+).
+  matchConditions: []
+
+# Metrics configuration
+metricsConfig:
+  # -- Create the configmap.
+  create: true
+
+webhooksCleanup:
+  # -- Create a helm pre-delete hook to cleanup webhooks.
+  enabled: false
+
+policyReportsCleanup:
+  # -- Create a helm post-upgrade hook to cleanup the old policy reports.
+  enabled: false
+
+grafana:
+  # -- Enable grafana dashboard creation.
+  enabled: false
+
+  # -- Configmap name template.
+  configMapName: '{{ include "kyverno.fullname" . }}-grafana'
+
+  # -- (string) Namespace to create the grafana dashboard configmap.
+  # If not set, it will be created in the same namespace where the chart is deployed.
+  namespace: ~
+
+  # -- Grafana dashboard configmap annotations.
+  annotations: {}
+
+  # -- Grafana dashboard configmap labels
+  labels:
+    grafana_dashboard: "1"
+
+  # -- create GrafanaDashboard custom resource referencing to the configMap.
+  # according to https://grafana-operator.github.io/grafana-operator/docs/examples/dashboard_from_configmap/readme/
+  grafanaDashboard:
+    create: false
+    matchLabels:
+      dashboards: "grafana"
+
+# Features configuration
+features:
+  admissionReports:
+    # -- Enables the feature
+    enabled: true
+  aggregateReports:
+    # -- Enables the feature
+    enabled: true
+  policyReports:
+    # -- Enables the feature
+    enabled: true
+  validatingAdmissionPolicyReports:
+    # -- Enables the feature
+    enabled: false
+  autoUpdateWebhooks:
+    # -- Enables the feature
+    enabled: true
+  backgroundScan:
+    # -- Enables the feature
+    enabled: true
+    # -- Number of background scan workers
+    backgroundScanWorkers: 2
+    # -- Background scan interval
+    backgroundScanInterval: 1h
+    # -- Skips resource filters in background scan
+    skipResourceFilters: true
+  configMapCaching:
+    # -- Enables the feature
+    enabled: true
+  deferredLoading:
+    # -- Enables the feature
+    enabled: true
+  dumpPayload:
+    # -- Enables the feature
+    enabled: false
+  forceFailurePolicyIgnore:
+    # -- Enables the feature
+    enabled: false
+  generateValidatingAdmissionPolicy:
+    # -- Enables the feature
+    enabled: false
+  logging:
+    # -- Logging format
+    format: text
+    # -- Logging verbosity
+    verbosity: 2
+  omitEvents:
+    # -- Events which should not be emitted (possible values `PolicyViolation`, `PolicyApplied`, `PolicyError`, and `PolicySkipped`)
+    eventTypes: []
+      # - PolicyViolation
+      # - PolicyApplied
+      # - PolicyError
+      # - PolicySkipped
+  policyExceptions:
+    # -- Enables the feature
+    enabled: true
+    # -- Restrict policy exceptions to a single namespace
+    namespace: ''
+  protectManagedResources:
+    # -- Enables the feature
+    enabled: false
+
+# Cleanup cronjobs to prevent internal resources from stacking up in the cluster
+cleanupJobs:
+  admissionReports:
+    # -- Enable cleanup cronjob
+    enabled: true
+
+  clusterAdmissionReports:
+    # -- Enable cleanup cronjob
+    enabled: true
+
+# Admission controller configuration
+admissionController:
+  # -- Create self-signed certificates at deployment time.
+  # The certificates won't be automatically renewed if this is set to `true`.
+  createSelfSignedCert: false
+
+  # -- (int) Desired number of pods
+  replicas: ~
+
+  # -- Node labels for pod assignment
+  nodeSelector: {}
+
+  # -- List of node taints to tolerate
+  tolerations: []
+
+  antiAffinity:
+    # -- Pod antiAffinities toggle.
+    # Enabled by default but can be disabled if you want to schedule pods to the same node.
+    enabled: true
+
+  container:
+    resources:
+      # -- Pod resource limits
+      limits:
+        memory: 384Mi
+      # -- Pod resource requests
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+  service:
+    # -- Service port.
+    port: 443
+    # -- Service type.
+    type: ClusterIP
+    # -- Service node port.
+    # Only used if `type` is `NodePort`.
+    nodePort:
+    # -- Service annotations.
+    annotations: {}
+
+  metricsService:
+    # -- Create service.
+    create: true
+    # -- Service port.
+    # Kyverno's metrics server will be exposed at this port.
+    port: 8000
+    # -- Service type.
+    type: ClusterIP
+    # -- Service node port.
+    # Only used if `type` is `NodePort`.
+    nodePort:
+    # -- Service annotations.
+    annotations: {}
+
+backgroundController:
+  enabled: false
+
+cleanupController:
+  enabled: false
+
+reportsController:
+  enabled: false
+
+# Tests configuration
+test:
+
+  image:
+    # -- (string) Image registry
+    registry: ~
+    # -- Image repository
+    repository: busybox
+    # -- Image tag
+    # Defaults to `latest` if omitted
+    tag: '1.34'
+    # -- (string) Image pull policy
+    # Defaults to image.pullPolicy if omitted
+    pullPolicy: ~

@@ -1,0 +1,988 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kyverno-admission-controller
+  namespace: kyverno
+  labels:
+    app.kubernetes.io/component: admission-controller
+    app.kubernetes.io/part-of: kyverno
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kyverno-cleanup-jobs
+  namespace: kyverno
+  labels:
+    app.kubernetes.io/part-of: kyverno
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kyverno
+  namespace: kyverno
+  labels:
+    app.kubernetes.io/component: config
+    app.kubernetes.io/part-of: kyverno
+data:
+  enableDefaultRegistryMutation: "true"
+  defaultRegistry: "docker.io"
+  generateSuccessEvents: "false"
+  excludeGroups: "system:nodes"
+  resourceFilters: >-
+    [*/*,kyverno,*]
+    [Event,*,*]
+    [*/*,kube-system,*]
+    [*/*,kube-public,*]
+    [*/*,kube-node-lease,*]
+    [Node,*,*]
+    [Node/*,*,*]
+    [APIService,*,*]
+    [APIService/*,*,*]
+    [TokenReview,*,*]
+    [SubjectAccessReview,*,*]
+    [SelfSubjectAccessReview,*,*]
+    [Binding,*,*]
+    [Pod/binding,*,*]
+    [ReplicaSet,*,*]
+    [ReplicaSet/*,*,*]
+    [AdmissionReport,*,*]
+    [AdmissionReport/*,*,*]
+    [ClusterAdmissionReport,*,*]
+    [ClusterAdmissionReport/*,*,*]
+    [BackgroundScanReport,*,*]
+    [BackgroundScanReport/*,*,*]
+    [ClusterBackgroundScanReport,*,*]
+    [ClusterBackgroundScanReport/*,*,*]
+    [ClusterRole,*,kyverno:admission-controller]
+    [ClusterRole,*,kyverno:admission-controller:core]
+    [ClusterRole,*,kyverno:admission-controller:additional]
+    [ClusterRole,*,kyverno:background-controller]
+    [ClusterRole,*,kyverno:background-controller:core]
+    [ClusterRole,*,kyverno:background-controller:additional]
+    [ClusterRole,*,kyverno:cleanup-controller]
+    [ClusterRole,*,kyverno:cleanup-controller:core]
+    [ClusterRole,*,kyverno:cleanup-controller:additional]
+    [ClusterRole,*,kyverno:reports-controller]
+    [ClusterRole,*,kyverno:reports-controller:core]
+    [ClusterRole,*,kyverno:reports-controller:additional]
+    [ClusterRoleBinding,*,kyverno:admission-controller]
+    [ClusterRoleBinding,*,kyverno:background-controller]
+    [ClusterRoleBinding,*,kyverno:cleanup-controller]
+    [ClusterRoleBinding,*,kyverno:reports-controller]
+    [ServiceAccount,kyverno,kyverno-admission-controller]
+    [ServiceAccount/*,kyverno,kyverno-admission-controller]
+    [ServiceAccount,kyverno,kyverno-background-controller]
+    [ServiceAccount/*,kyverno,kyverno-background-controller]
+    [ServiceAccount,kyverno,kyverno-cleanup-controller]
+    [ServiceAccount/*,kyverno,kyverno-cleanup-controller]
+    [ServiceAccount,kyverno,kyverno-reports-controller]
+    [ServiceAccount/*,kyverno,kyverno-reports-controller]
+    [Role,kyverno,kyverno:admission-controller]
+    [Role,kyverno,kyverno:background-controller]
+    [Role,kyverno,kyverno:cleanup-controller]
+    [Role,kyverno,kyverno:reports-controller]
+    [RoleBinding,kyverno,kyverno:admission-controller]
+    [RoleBinding,kyverno,kyverno:background-controller]
+    [RoleBinding,kyverno,kyverno:cleanup-controller]
+    [RoleBinding,kyverno,kyverno:reports-controller]
+    [ConfigMap,kyverno,kyverno]
+    [ConfigMap,kyverno,kyverno-metrics]
+    [Deployment,kyverno,kyverno-admission-controller]
+    [Deployment/*,kyverno,kyverno-admission-controller]
+    [Deployment,kyverno,kyverno-background-controller]
+    [Deployment/*,kyverno,kyverno-background-controller]
+    [Deployment,kyverno,kyverno-cleanup-controller]
+    [Deployment/*,kyverno,kyverno-cleanup-controller]
+    [Deployment,kyverno,kyverno-reports-controller]
+    [Deployment/*,kyverno,kyverno-reports-controller]
+    [Pod,kyverno,kyverno-admission-controller-*]
+    [Pod/*,kyverno,kyverno-admission-controller-*]
+    [Pod,kyverno,kyverno-background-controller-*]
+    [Pod/*,kyverno,kyverno-background-controller-*]
+    [Pod,kyverno,kyverno-cleanup-controller-*]
+    [Pod/*,kyverno,kyverno-cleanup-controller-*]
+    [Pod,kyverno,kyverno-reports-controller-*]
+    [Pod/*,kyverno,kyverno-reports-controller-*]
+    [Job,kyverno,kyverno-hook-pre-delete]
+    [Job/*,kyverno,kyverno-hook-pre-delete]
+    [NetworkPolicy,kyverno,kyverno-admission-controller]
+    [NetworkPolicy/*,kyverno,kyverno-admission-controller]
+    [NetworkPolicy,kyverno,kyverno-background-controller]
+    [NetworkPolicy/*,kyverno,kyverno-background-controller]
+    [NetworkPolicy,kyverno,kyverno-cleanup-controller]
+    [NetworkPolicy/*,kyverno,kyverno-cleanup-controller]
+    [NetworkPolicy,kyverno,kyverno-reports-controller]
+    [NetworkPolicy/*,kyverno,kyverno-reports-controller]
+    [PodDisruptionBudget,kyverno,kyverno-admission-controller]
+    [PodDisruptionBudget/*,kyverno,kyverno-admission-controller]
+    [PodDisruptionBudget,kyverno,kyverno-background-controller]
+    [PodDisruptionBudget/*,kyverno,kyverno-background-controller]
+    [PodDisruptionBudget,kyverno,kyverno-cleanup-controller]
+    [PodDisruptionBudget/*,kyverno,kyverno-cleanup-controller]
+    [PodDisruptionBudget,kyverno,kyverno-reports-controller]
+    [PodDisruptionBudget/*,kyverno,kyverno-reports-controller]
+    [Service,kyverno,kyverno-svc]
+    [Service/*,kyverno,kyverno-svc]
+    [Service,kyverno,kyverno-svc-metrics]
+    [Service/*,kyverno,kyverno-svc-metrics]
+    [Service,kyverno,kyverno-background-controller-metrics]
+    [Service/*,kyverno,kyverno-background-controller-metrics]
+    [Service,kyverno,kyverno-cleanup-controller]
+    [Service/*,kyverno,kyverno-cleanup-controller]
+    [Service,kyverno,kyverno-cleanup-controller-metrics]
+    [Service/*,kyverno,kyverno-cleanup-controller-metrics]
+    [Service,kyverno,kyverno-reports-controller-metrics]
+    [Service/*,kyverno,kyverno-reports-controller-metrics]
+    [ServiceMonitor,kyverno,kyverno-admission-controller]
+    [ServiceMonitor,kyverno,kyverno-background-controller]
+    [ServiceMonitor,kyverno,kyverno-cleanup-controller]
+    [ServiceMonitor,kyverno,kyverno-reports-controller]
+    [Secret,kyverno,kyverno-svc.kyverno.svc.*]
+    [Secret,kyverno,kyverno-cleanup-controller.kyverno.svc.*]
+  webhooks: '[{"namespaceSelector": {"matchExpressions": [{"key":"kubernetes.io/metadata.name","operator":"NotIn","values":["kyverno"]}]}}]'
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kyverno-metrics
+  namespace: kyverno
+  labels:
+    app.kubernetes.io/component: config
+    app.kubernetes.io/part-of: kyverno
+data:
+  namespaces: "{\"exclude\":[],\"include\":[]}"
+  bucketBoundaries: "0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 15, 20, 25, 30"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kyverno:admission-controller
+  labels:
+    app.kubernetes.io/component: admission-controller
+    app.kubernetes.io/part-of: kyverno
+aggregationRule:
+  clusterRoleSelectors:
+    - matchLabels:
+        app.kubernetes.io/component: admission-controller
+        app.kubernetes.io/part-of: kyverno
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kyverno:admission-controller:core
+  labels:
+    app.kubernetes.io/component: admission-controller
+    app.kubernetes.io/part-of: kyverno
+rules:
+  - apiGroups:
+      - admissionregistration.k8s.io
+    resources:
+      - mutatingwebhookconfigurations
+      - validatingwebhookconfigurations
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+      - deletecollection
+  - apiGroups:
+      - rbac.authorization.k8s.io
+    resources:
+      - roles
+      - clusterroles
+      - rolebindings
+      - clusterrolebindings
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - kyverno.io
+    resources:
+      - policies
+      - policies/status
+      - clusterpolicies
+      - clusterpolicies/status
+      - updaterequests
+      - updaterequests/status
+      - admissionreports
+      - clusteradmissionreports
+      - backgroundscanreports
+      - clusterbackgroundscanreports
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+      - deletecollection
+  - apiGroups:
+      - wgpolicyk8s.io
+    resources:
+      - policyreports
+      - policyreports/status
+      - clusterpolicyreports
+      - clusterpolicyreports/status
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+      - deletecollection
+  - apiGroups:
+      - ''
+      - events.k8s.io
+    resources:
+      - events
+    verbs:
+      - create
+      - update
+      - patch
+  - apiGroups:
+      - authorization.k8s.io
+    resources:
+      - subjectaccessreviews
+    verbs:
+      - create
+  - apiGroups:
+      - '*'
+    resources:
+      - '*'
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kyverno-cleanup-jobs
+  labels:
+    app.kubernetes.io/part-of: kyverno
+rules:
+  - apiGroups:
+      - kyverno.io
+    resources:
+      - admissionreports
+      - clusteradmissionreports
+    verbs:
+      - list
+      - deletecollection
+      - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kyverno:rbac:admin:policies
+  labels:
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/part-of: kyverno
+    rbac.authorization.k8s.io/aggregate-to-admin: "true"
+rules:
+  - apiGroups:
+      - kyverno.io
+    resources:
+      - cleanuppolicies
+      - clustercleanuppolicies
+      - policies
+      - clusterpolicies
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kyverno:rbac:view:policies
+  labels:
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/part-of: kyverno
+    rbac.authorization.k8s.io/aggregate-to-view: "true"
+rules:
+  - apiGroups:
+      - kyverno.io
+    resources:
+      - cleanuppolicies
+      - clustercleanuppolicies
+      - policies
+      - clusterpolicies
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kyverno:rbac:admin:policyreports
+  labels:
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/part-of: kyverno
+    rbac.authorization.k8s.io/aggregate-to-admin: "true"
+rules:
+  - apiGroups:
+      - wgpolicyk8s.io
+    resources:
+      - policyreports
+      - clusterpolicyreports
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kyverno:rbac:view:policyreports
+  labels:
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/part-of: kyverno
+    rbac.authorization.k8s.io/aggregate-to-view: "true"
+rules:
+  - apiGroups:
+      - wgpolicyk8s.io
+    resources:
+      - policyreports
+      - clusterpolicyreports
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kyverno:rbac:admin:reports
+  labels:
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/part-of: kyverno
+    rbac.authorization.k8s.io/aggregate-to-admin: "true"
+rules:
+  - apiGroups:
+      - kyverno.io
+    resources:
+      - admissionreports
+      - clusteradmissionreports
+      - backgroundscanreports
+      - clusterbackgroundscanreports
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kyverno:rbac:view:reports
+  labels:
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/part-of: kyverno
+    rbac.authorization.k8s.io/aggregate-to-view: "true"
+rules:
+  - apiGroups:
+      - kyverno.io
+    resources:
+      - admissionreports
+      - clusteradmissionreports
+      - backgroundscanreports
+      - clusterbackgroundscanreports
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kyverno:rbac:admin:updaterequests
+  labels:
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/part-of: kyverno
+    rbac.authorization.k8s.io/aggregate-to-admin: "true"
+rules:
+  - apiGroups:
+      - kyverno.io
+    resources:
+      - updaterequests
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kyverno:rbac:view:updaterequests
+  labels:
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/part-of: kyverno
+    rbac.authorization.k8s.io/aggregate-to-view: "true"
+rules:
+  - apiGroups:
+      - kyverno.io
+    resources:
+      - updaterequests
+    verbs:
+      - get
+      - list
+      - watch
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kyverno:admission-controller
+  labels:
+    app.kubernetes.io/component: admission-controller
+    app.kubernetes.io/part-of: kyverno
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kyverno:admission-controller
+subjects:
+  - kind: ServiceAccount
+    name: kyverno-admission-controller
+    namespace: kyverno
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kyverno-cleanup-jobs
+  labels:
+    app.kubernetes.io/part-of: kyverno
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kyverno-cleanup-jobs
+subjects:
+  - kind: ServiceAccount
+    name: kyverno-cleanup-jobs
+    namespace: kyverno
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kyverno:admission-controller
+  namespace: kyverno
+  labels:
+    app.kubernetes.io/component: admission-controller
+    app.kubernetes.io/part-of: kyverno
+rules:
+  - apiGroups:
+      - ''
+    resources:
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - delete
+  - apiGroups:
+      - ''
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
+    resourceNames:
+      - kyverno
+      - kyverno-metrics
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - create
+      - delete
+      - get
+      - patch
+      - update
+  # Allow update of Kyverno deployment annotations
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+    verbs:
+      - get
+      - list
+      - watch
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kyverno:admission-controller
+  namespace: kyverno
+  labels:
+    app.kubernetes.io/component: admission-controller
+    app.kubernetes.io/part-of: kyverno
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kyverno:admission-controller
+subjects:
+  - kind: ServiceAccount
+    name: kyverno-admission-controller
+    namespace: kyverno
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kyverno-svc
+  namespace: kyverno
+  labels:
+    app.kubernetes.io/component: admission-controller
+    app.kubernetes.io/part-of: kyverno
+spec:
+  ports:
+  - port: 443
+    targetPort: https
+    protocol: TCP
+    name: https
+  selector:
+    app.kubernetes.io/component: admission-controller
+    app.kubernetes.io/part-of: kyverno
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kyverno-svc-metrics
+  namespace: kyverno
+  labels:
+    app.kubernetes.io/component: admission-controller
+    app.kubernetes.io/part-of: kyverno
+spec:
+  ports:
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
+    name: metrics-port
+  selector:
+    app.kubernetes.io/component: admission-controller
+    app.kubernetes.io/part-of: kyverno
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kyverno-admission-controller
+  namespace: kyverno
+  labels:
+    app.kubernetes.io/component: admission-controller
+    app.kubernetes.io/part-of: kyverno
+spec:
+  replicas: 
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 40%
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: admission-controller
+      app.kubernetes.io/part-of: kyverno
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: admission-controller
+        app.kubernetes.io/part-of: kyverno
+    spec:
+      dnsPolicy: ClusterFirst
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/component
+                  operator: In
+                  values:
+                  - admission-controller
+              topologyKey: kubernetes.io/hostname
+            weight: 1
+      serviceAccountName: kyverno-admission-controller
+      initContainers:
+        - name: kyverno-pre
+          image: "ghcr.io/kyverno/kyvernopre:v1.11.4"
+          imagePullPolicy: IfNotPresent
+          args:
+            - --loggingFormat=text
+            - --v=2
+          resources:
+            limits:
+              cpu: 100m
+              memory: 256Mi
+            requests:
+              cpu: 10m
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          env:
+          - name: KYVERNO_SERVICEACCOUNT_NAME
+            value: kyverno-admission-controller
+          - name: INIT_CONFIG
+            value: kyverno
+          - name: METRICS_CONFIG
+            value: kyverno-metrics
+          - name: KYVERNO_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: KYVERNO_POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: KYVERNO_DEPLOYMENT
+            value: kyverno-admission-controller
+          - name: KYVERNO_SVC
+            value: kyverno-svc
+      containers:
+        - name: kyverno
+          image: "ghcr.io/kyverno/kyverno:v1.11.4"
+          imagePullPolicy: IfNotPresent
+          args:
+            - --caSecretName=kyverno-svc.kyverno.svc.kyverno-tls-ca
+            - --tlsSecretName=kyverno-svc.kyverno.svc.kyverno-tls-pair
+            - --backgroundServiceAccountName=system:serviceaccount:kyverno:kyverno-background-controller
+            - --servicePort=443
+            - --disableMetrics=false
+            - --otelConfig=prometheus
+            - --metricsPort=8000
+            - --admissionReports=true
+            - --autoUpdateWebhooks=true
+            - --enableConfigMapCaching=true
+            - --enableDeferredLoading=true
+            - --dumpPayload=false
+            - --forceFailurePolicyIgnore=false
+            - --generateValidatingAdmissionPolicy=false
+            - --loggingFormat=text
+            - --v=2
+            - --enablePolicyException=true
+            - --protectManagedResources=false
+            - --allowInsecureRegistry=false
+            - --registryCredentialHelpers=default,google,amazon,azure,github
+          resources:
+            limits:
+              memory: 384Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          ports:
+          - containerPort: 9443
+            name: https
+            protocol: TCP
+          - containerPort: 8000
+            name: metrics-port
+            protocol: TCP
+          env:
+          - name: INIT_CONFIG
+            value: kyverno
+          - name: METRICS_CONFIG
+            value: kyverno-metrics
+          - name: KYVERNO_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: KYVERNO_POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: KYVERNO_SERVICEACCOUNT_NAME
+            value: kyverno-admission-controller
+          - name: KYVERNO_SVC
+            value: kyverno-svc
+          - name: TUF_ROOT
+            value: /.sigstore
+          - name: KYVERNO_DEPLOYMENT
+            value: kyverno-admission-controller
+          startupProbe:
+            failureThreshold: 20
+            httpGet:
+              path: /health/liveness
+              port: 9443
+              scheme: HTTPS
+            initialDelaySeconds: 2
+            periodSeconds: 6
+          livenessProbe:
+            failureThreshold: 2
+            httpGet:
+              path: /health/liveness
+              port: 9443
+              scheme: HTTPS
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 5
+          readinessProbe:
+            failureThreshold: 6
+            httpGet:
+              path: /health/readiness
+              port: 9443
+              scheme: HTTPS
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          volumeMounts:
+            - mountPath: /.sigstore
+              name: sigstore
+      volumes:
+      - name: sigstore
+        emptyDir: {}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: kyverno-cleanup-admission-reports
+  namespace: kyverno
+  labels:
+    app.kubernetes.io/component: cleanup
+    app.kubernetes.io/part-of: kyverno
+spec:
+  schedule: "*/10 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+        spec:
+          serviceAccountName: kyverno-cleanup-jobs
+          containers:
+          - name: cleanup
+            image: "bitnami/kubectl:1.28.5"
+            imagePullPolicy: 
+            command:
+            - /bin/sh
+            - -c
+            - |
+              COUNT=$(kubectl get admissionreports.kyverno.io -A | wc -l)
+              if [ "$COUNT" -gt 10000 ]; then
+                echo "too many reports found ($COUNT), cleaning up..."
+                kubectl delete admissionreports.kyverno.io -A -l='!audit.kyverno.io/report.aggregate'
+              else
+                echo "($COUNT) reports found, no clean up needed"
+              fi
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+              privileged: false
+              readOnlyRootFilesystem: true
+              runAsNonRoot: true
+              seccompProfile:
+                type: RuntimeDefault
+          restartPolicy: OnFailure
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: kyverno-cleanup-cluster-admission-reports
+  namespace: kyverno
+  labels:
+    app.kubernetes.io/component: cleanup
+    app.kubernetes.io/part-of: kyverno
+spec:
+  schedule: "*/10 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+        spec:
+          serviceAccountName: kyverno-cleanup-jobs
+          containers:
+          - name: cleanup
+            image: "bitnami/kubectl:1.28.5"
+            imagePullPolicy: 
+            command:
+            - /bin/sh
+            - -c
+            - |
+              COUNT=$(kubectl get clusteradmissionreports.kyverno.io -A | wc -l)
+              if [ "$COUNT" -gt 10000 ]; then
+                echo "too many reports found ($COUNT), cleaning up..."
+                kubectl delete clusteradmissionreports.kyverno.io -A -l='!audit.kyverno.io/report.aggregate'
+              else
+                echo "($COUNT) reports found, no clean up needed"
+              fi
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+              privileged: false
+              readOnlyRootFilesystem: true
+              runAsNonRoot: true
+              seccompProfile:
+                type: RuntimeDefault
+          restartPolicy: OnFailure
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kyverno-admission-controller-liveness
+  namespace: kyverno
+  labels:
+    app.kubernetes.io/component: test
+    app.kubernetes.io/part-of: kyverno
+  annotations:
+    helm.sh/hook: test
+spec:
+  restartPolicy: Never
+  containers:
+    - name: test
+      image: busybox:1.34
+      imagePullPolicy: IfNotPresent
+      resources:
+        limits:
+          cpu: 100m
+          memory: 256Mi
+        requests:
+          cpu: 10m
+          memory: 64Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+          - ALL
+        privileged: false
+        readOnlyRootFilesystem: true
+        runAsGroup: 65534
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      command:
+        - /bin/sh
+        - -c
+        - sleep 20 ; wget -O- -S --no-check-certificate https://kyverno-svc.kyverno:443/health/liveness
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kyverno-admission-controller-metrics
+  namespace: kyverno
+  labels:
+    app.kubernetes.io/component: test
+    app.kubernetes.io/part-of: kyverno
+  annotations:
+    helm.sh/hook: test
+spec:
+  restartPolicy: Never
+  containers:
+    - name: test
+      image: busybox:1.34
+      imagePullPolicy: IfNotPresent
+      resources:
+        limits:
+          cpu: 100m
+          memory: 256Mi
+        requests:
+          cpu: 10m
+          memory: 64Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+          - ALL
+        privileged: false
+        readOnlyRootFilesystem: true
+        runAsGroup: 65534
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      command:
+        - /bin/sh
+        - -c
+        - sleep 20 ; wget -O- -S --no-check-certificate http://kyverno-svc-metrics.kyverno:8000/metrics
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kyverno-admission-controller-readiness
+  namespace: kyverno
+  labels:
+    app.kubernetes.io/component: test
+    app.kubernetes.io/part-of: kyverno
+  annotations:
+    helm.sh/hook: test
+spec:
+  restartPolicy: Never
+  containers:
+    - name: test
+      image: busybox:1.34
+      imagePullPolicy: IfNotPresent
+      resources:
+        limits:
+          cpu: 100m
+          memory: 256Mi
+        requests:
+          cpu: 10m
+          memory: 64Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+          - ALL
+        privileged: false
+        readOnlyRootFilesystem: true
+        runAsGroup: 65534
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      command:
+        - /bin/sh
+        - -c
+        - sleep 20 ; wget -O- -S --no-check-certificate https://kyverno-svc.kyverno:443/health/readiness
