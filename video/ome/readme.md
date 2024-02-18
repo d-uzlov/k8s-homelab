@@ -46,7 +46,7 @@ kl apply -k ./video/ome/redis/
 
 # Choose one to use as standalone deployment, with only a single replica.
 # Alternatively, you can set up both, or scale standalone deployment,
-# and add Edge deployment to manage access to stream.
+# and add Edge deployment to properly manage access for viewers.
 #       cpu re-encoding
 kl apply -k ./video/ome/origin-cpu/
 #       nvidia gpu re-encoding
@@ -57,7 +57,7 @@ kl apply -k ./video/ome/edge/
 # svc-edge configures viewer services to point to edge deployment
 kl apply -k ./video/ome/svc-edge/
 # Edge should not be scaled!
-# If you have 2 replicas, and control plane connection (`publish` svc via ingress)
+# If you have 2 replicas, and control plane connection (`viewer` svc via ingress)
 # and data plane connection (`webrtc` svc) connect to different instances, issues are very likely.
 # Scaling is only possible if you create a different deployment, with separate ingress and webrtc svc.
 
@@ -137,10 +137,10 @@ Just `streamer` will connect to a random available OME origin instance.
 # Playback with WebRTC (sub-second latency)
 
 - Streaming via HTTPS: `wss://<ingress_public_domain>/app/<stream-key>`
-- It's possible to stream via HTTP by connecting to `svc/publish` directly
+- It's possible to stream via HTTP by connecting to `svc/viewer` directly
 or if your ingress doesn't enforce HTTPS
 but config in this folder doesn't allow this.
-You will need to modify the config if you want to use HTTP.
+You will need to modify the config if you want to use plain HTTP.
 - `/app` and `<stream-key>` must match OSB settings
 - WebSockets forbid mixed content.
 - - If you open OvenPlayer via HTTPS Ingress,
