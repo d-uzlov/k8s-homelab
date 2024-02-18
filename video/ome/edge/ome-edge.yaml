@@ -2,25 +2,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ovenmediaengine-origin
+  name: ome-edge
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: ovenmediaengine
-      ome-type: origin
+      ome-type: edge
   template:
     metadata:
       labels:
         app: ovenmediaengine
-        ome-type: origin
+        ome-type: edge
     spec:
-      # securityContext:
-      #   supplementalGroups:
-      #   # /dev/dri/card0 has group video, which is gid 44
-      #   - 44
-      #   # /dev/dri/renderD128 has gid 104
-      #   - 104
       terminationGracePeriodSeconds: 1
       containers:
       - name: ovenmediaengine
@@ -40,14 +34,7 @@ spec:
         - name: webrtc-10000
           containerPort: 10000
           protocol: UDP
-        - name: origin-ovt
-          containerPort: 9000
         env:
-        - name: OME_HOST_IP
-          valueFrom:
-            fieldRef:
-              apiVersion: v1
-              fieldPath: status.podIP
         - name: OME_PUBLIC_ADDRESS
           valueFrom:
             configMapKeyRef:
@@ -85,33 +72,16 @@ spec:
           value: '3478'
         - name: OME_WEBRTC_CANDIDATE_PORT
           value: 10000/udp
-        - name: OME_ORIGIN_PORT
-          value: '9000'
-        - name: OME_720_BITRATE
-          value: '1500000'
-        - name: OME_720_PRESET
-          value: fast
-        - name: OME_1080_BITRATE
-          value: '5000000'
-        - name: OME_1080_PRESET
-          value: fast
         resources:
           requests:
-            memory: 1.5Gi
-            cpu: 2
+            memory: 500Mi
+            cpu: 300m
           limits: {}
-            # memory: 2Gi
-            # gpu.intel.com/i915: 1
         volumeMounts:
         - mountPath: /opt/ovenmediaengine/bin/origin_conf/Server.xml
-          name: config-origin
-          subPath: origin-config.xml
-        - mountPath: /mnt/application-config.d/
-          name: config
+          name: config-edge
+          subPath: edge-config.xml
       volumes:
-      - name: config
+      - name: config-edge
         configMap:
-          name: config
-      - name: config-origin
-        configMap:
-          name: config-origin
+          name: config-edge

@@ -13,19 +13,13 @@ References:
 Generate passwords and set up config.
 
 ```bash
-mkdir -p ./video/ome/generic/env/
-cat <<EOF > ./video/ome/generic/env/passwords.env
+mkdir -p ./video/ome/common-env/env/
+cat <<EOF > ./video/ome/common-env/env/passwords.env
 redis_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 EOF
-```
-
-# Deploy
-
-```bash
-mkdir -p ./video/ome/generic/env/
-cat <<EOF > ./video/ome/generic/env/webrtc-address.env
+cat <<EOF > ./video/ome/common-env/env/webrtc-address.env
 # public address, resolvable from outside world
-public=meoe.duckdns.org
+public=example.duckdns.org
 # LAN address, in case you are behind NAT
 local=webrtc-ice.ome.kubelb.lan
 EOF
@@ -34,7 +28,13 @@ EOF
 ```bash
 kl create ns ome
 
-kl apply -k ./video/ome/loadbalancer/
+# create generic 'provide' service for streamer side
+# points to any origin instance
+kl apply -k ./video/ome/svc-provide/
+# Create viewer services that can point to any OME instance.
+# Use only when running a single origin instance, else watching won't work.
+kl apply -k ./video/ome/svc-indifferent/
+
 kl -n ome get svc
 
 # setup wildcard ingress
@@ -42,10 +42,24 @@ kl label ns --overwrite ome copy-wild-cert=main
 kl apply -k ./video/ome/ingress-wildcard/
 kl -n ome get ingress
 
-# cpu-only
-kl apply -k ./video/ome/generic/
-# nvidia gpu
-kl apply -k ./video/ome/nvidia/
+kl apply -k ./video/ome/redis/
+
+# Choose one to use as standalone deployment, with only a single replica.
+# Alternatively, you can set up both, or scale standalone deployment,
+# and add Edge deployment to manage access to stream.
+#       cpu re-encoding
+kl apply -k ./video/ome/origin-cpu/
+#       nvidia gpu re-encoding
+kl apply -k ./video/ome/origin-nvidia/
+
+# Required when using several Origin instances
+kl apply -k ./video/ome/edge/
+# svc-edge configures viewer services to point to edge deployment
+kl apply -k ./video/ome/svc-edge/
+# Edge should not be scaled!
+# If you have 2 replicas, and control plane connection (`publish` svc via ingress)
+# and data plane connection (`webrtc` svc) connect to different instances, issues are very likely.
+# Scaling is only possible if you create a different deployment, with separate ingress and webrtc svc.
 
 kl -n ome get pod -o wide
 ```
@@ -53,8 +67,23 @@ kl -n ome get pod -o wide
 # Cleanup
 
 ```bash
-kl delete -k ./video/ome/generic/
+kl delete -k ./video/ome/origin-cpu/
+kl delete -k ./video/ome/origin-nvidia/
+kl delete -k ./video/ome/edge/
+kl delete -k ./video/ome/redis/
+kl delete -k ./video/ome/svc-provide/
+kl delete -k ./video/ome/svc-indifferent/
 kl delete ns ome
+```
+
+# Edge debug
+
+First of all, restart the stream. Sometimes stream just doesn't get registered, and restart helps.
+
+```bash
+# check that redis contains a record for your stream
+redis_pass=$(kl -n ome get secret -l ome=passwords --template "{{range .items}}{{.data.redis_password}}{{end}}" | base64 --decode)
+kl -n ome exec deployments/redis -- redis-cli -a "$redis_pass" keys "*"
 ```
 
 # Hardware acceleration on NVidia GPUs
@@ -70,7 +99,7 @@ There are 2 load balancer services:
 
 You can get their external IPs:
 ```bash
-kl -n ome get svc provide webrtc-ice
+kl -n ome get svc
 ```
 
 If you are behind NAT you need to set up port forwarding.
@@ -95,6 +124,10 @@ you need to set `OME_WEBRTC_CANDIDATE_IP` environment variable to point to corre
 - - Set stream key: an arbitrary string
 - - `/app` corresponds to `<Name>app</Name>` in `ome-config.xml`, and can be changed by editing the config.
 - - Reference: [OME quickstart docs](https://airensoft.gitbook.io/ovenmediaengine/quick-start)
+
+You can see several `provide` services depending on your setup.
+Just `provide` will connect to a random available OME origin instance.
+`provide-<something>` will connect to instance with certain capabilities.
 
 # Playback
 
