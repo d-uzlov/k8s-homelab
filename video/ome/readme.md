@@ -28,9 +28,9 @@ EOF
 ```bash
 kl create ns ome
 
-# create generic 'provide' service for streamer side
+# create generic 'streamer' service for streamer side
 # points to any origin instance
-kl apply -k ./video/ome/svc-provide/
+kl apply -k ./video/ome/svc-streamer/
 # Create viewer services that can point to any OME instance.
 # Use only when running a single origin instance, else watching won't work.
 kl apply -k ./video/ome/svc-indifferent/
@@ -71,7 +71,7 @@ kl delete -k ./video/ome/origin-cpu/
 kl delete -k ./video/ome/origin-nvidia/
 kl delete -k ./video/ome/edge/
 kl delete -k ./video/ome/redis/
-kl delete -k ./video/ome/svc-provide/
+kl delete -k ./video/ome/svc-streamer/
 kl delete -k ./video/ome/svc-indifferent/
 kl delete ns ome
 ```
@@ -94,7 +94,7 @@ Prerequisites:
 # Load balancer services
 
 There are 2 load balancer services:
-- Provide: for streaming from source to server
+- Streamer: for streaming from source to server
 - WebRTC: for streaming from server to client
 
 You can get their external IPs:
@@ -104,7 +104,7 @@ kl -n ome get svc
 
 If you are behind NAT you need to set up port forwarding.
 
-You can skip port forwarding for Provide service if you don't want to stream from outside of LAN.
+You can skip port forwarding for Streamer service if you don't want to stream from outside of LAN.
 
 You can skip port forwarding for WebRTC if you don't plan on using WebRTC for watching video.
 
@@ -125,9 +125,9 @@ you need to set `OME_WEBRTC_CANDIDATE_IP` environment variable to point to corre
 - - `/app` corresponds to `<Name>app</Name>` in `ome-config.xml`, and can be changed by editing the config.
 - - Reference: [OME quickstart docs](https://airensoft.gitbook.io/ovenmediaengine/quick-start)
 
-You can see several `provide` services depending on your setup.
-Just `provide` will connect to a random available OME origin instance.
-`provide-<something>` will connect to instance with certain capabilities.
+You can see several `streamer` services depending on your setup.
+Just `streamer` will connect to a random available OME origin instance.
+`streamer-<something>` will connect to instance with certain capabilities.
 
 # Playback
 
