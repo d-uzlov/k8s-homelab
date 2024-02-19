@@ -51,6 +51,7 @@ kl apply -k ./video/ome/redis/
 kl apply -k ./video/ome/origin-cpu/
 #       nvidia gpu re-encoding
 kl apply -k ./video/ome/origin-nvidia/
+kl apply -k ./video/ome/origin-intel/
 
 # Required when using several Origin instances
 kl apply -k ./video/ome/edge/
@@ -178,13 +179,8 @@ https://github.com/bozbez/win-capture-audio
 docker_username=
 docker_repo=
 
-docker build https://github.com/AirenSoft/OvenMediaEngine/raw/v0.16.4/Dockerfile.cuda \
-    --build-arg OME_VERSION=v0.16.3 \
-    -t docker.io/$docker_username/$docker_repo:ome-official-v0.16.3-cuda11
-docker push docker.io/$docker_username/$docker_repo:ome-official-v0.16.3-cuda11
-
-docker build https://github.com/AirenSoft/OvenMediaEngine/raw/v0.16.4/Dockerfile.cuda \
+docker build https://github.com/AirenSoft/OvenMediaEngine/raw/4b297cc97fbc8e9ff76d71bf08a0394d90723a49/Dockerfile.cuda \
     --build-arg OME_VERSION=v0.16.4 \
-    -t docker.io/$docker_username/$docker_repo:ome-official-v0.16.4-cuda11
-docker push docker.io/$docker_username/$docker_repo:ome-official-v0.16.4-cuda11
+    -t docker.io/$docker_username/$docker_repo:ome-official-v0.16.4-fixed
+docker push docker.io/$docker_username/$docker_repo:ome-official-v0.16.4-fixed
 ```
