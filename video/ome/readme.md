@@ -47,9 +47,7 @@ kl apply -k ./video/ome/redis/
 # Choose one to use as standalone deployment, with only a single replica.
 # Alternatively, you can set up both, or scale standalone deployment,
 # and add Edge deployment to properly manage access for viewers.
-#       cpu re-encoding
 kl apply -k ./video/ome/origin-cpu/
-#       nvidia gpu re-encoding
 kl apply -k ./video/ome/origin-nvidia/
 kl apply -k ./video/ome/origin-intel/
 
@@ -83,7 +81,7 @@ First of all, restart the stream. Sometimes stream just doesn't get registered, 
 
 ```bash
 # check that redis contains a record for your stream
-redis_pass=$(kl -n ome get secret -l ome=passwords --template "{{range .items}}{{.data.redis_password}}{{end}}" | base64 --decode)
+redis_pass=$(kl -n ome get secret redis-password --template "{{.data.redis_password}}" | base64 --decode)
 kl -n ome exec deployments/redis -- redis-cli -a "$redis_pass" keys "*"
 ```
 
