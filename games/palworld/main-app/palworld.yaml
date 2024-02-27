@@ -1,0 +1,150 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: palworld
+spec:
+  selector:
+    matchLabels:
+      app: palworld
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: palworld
+    spec:
+      tolerations:
+      - effect: NoSchedule
+        key: dedicated-palworld
+        operator: Exists
+      nodeSelector:
+        dedicated-palworld: ''
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+      - name: palworld
+        # image: docker.io/thijsvanloef/palworld-server-docker:dev
+        image: docker.io/thijsvanloef/palworld-server-docker@sha256:401c2f2de22ecbad2bcca538ac468c718e34741656bb7ab3db5a28e670190937
+        ports:
+        - name: palworld
+          protocol: UDP
+          containerPort: 8211
+        - name: steamquery
+          protocol: UDP
+          containerPort: 27015
+        - name: rcon
+          containerPort: 25575
+        env:
+        - name: PORT
+          value: '8211'
+        - name: PLAYERS
+          value: '16'
+        - name: SERVER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: palworld-passwords
+              key: server_password
+        - name: MULTITHREADING
+          value: 'true'
+        - name: DISABLE_GENERATE_ENGINE
+          value: 'false'
+        - name: DISABLE_GENERATE_SETTINGS
+          value: 'false'
+        - name: UPDATE_ON_BOOT
+          valueFrom:
+            configMapKeyRef:
+              name: palworld-settings
+              key: autoupdate
+        - name: AUTO_UPDATE_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: palworld-settings
+              key: autoupdate
+        - name: AUTO_REBOOT_ENABLED
+          value: 'false'
+        - name: RCON_ENABLED
+          value: 'true'
+        - name: RCON_PORT
+          value: '25575'
+        - name: QUERY_PORT
+          value: '27015'
+        - name: ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: palworld-passwords
+              key: admin_password
+        - name: BACKUP_ENABLED
+          value: 'true'
+        - name: DELETE_OLD_BACKUPS
+          value: 'true'
+        - name: OLD_BACKUP_DAYS
+          value: '30'
+        - name: COMMUNITY
+          valueFrom:
+            configMapKeyRef:
+              name: palworld-settings
+              key: use_community
+        - name: SERVER_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: palworld-settings
+              key: server_name
+        - name: SERVER_DESCRIPTION
+          valueFrom:
+            configMapKeyRef:
+              name: palworld-settings
+              key: server_description
+        - name: DIFFICULTY
+          valueFrom:
+            configMapKeyRef:
+              name: palworld-settings
+              key: difficulty
+        - name: ENABLE_PLAYER_TO_PLAYER_DAMAGE
+          valueFrom:
+            configMapKeyRef:
+              name: palworld-settings
+              key: friendly_fire
+        - name: ENABLE_FRIENDLY_FIRE
+          valueFrom:
+            configMapKeyRef:
+              name: palworld-settings
+              key: friendly_fire
+        - name: BASE_CAMP_WORKER_MAX_NUM
+          valueFrom:
+            configMapKeyRef:
+              name: palworld-settings
+              key: max_base_workers
+        - name: DEATH_PENALTY
+          valueFrom:
+            configMapKeyRef:
+              name: palworld-settings
+              key: death_penalty
+        - name: DROP_ITEM_ALIVE_MAX_HOURS
+          valueFrom:
+            configMapKeyRef:
+              name: palworld-settings
+              key: drop_items_timeout_hours
+        resources:
+          requests:
+            cpu: 4
+            memory: 12Gi
+        volumeMounts:
+        - mountPath: /palworld
+          name: data
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - |
+                rcon-cli save
+                backup
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: data
