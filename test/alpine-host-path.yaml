@@ -1,0 +1,29 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alpine-host-path
+spec:
+  selector:
+    matchLabels:
+      app: alpine-host-path
+  template:
+    metadata:
+      labels:
+        app: alpine-host-path
+    spec:
+      containers:
+      - name: alpine
+        image: docker.io/alpine:3.17.3
+        command: ["/bin/sh", "-c", "trap : TERM INT; sleep infinity & wait"]
+        resources:
+          limits:
+            memory: 50Mi
+        volumeMounts:
+        - mountPath: /mnt/host-root
+          name: host-root
+      volumes:
+      - name: host-root
+        hostPath:
+          path: /
+          type: Directory

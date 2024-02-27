@@ -33,6 +33,8 @@ helm template \
 
 ```bash
 kl apply -k ./storage/postgres/crd
+kl apply -f ./storage/postgres/user-role-edit.yaml
+kl apply -f ./storage/postgres/user-role-view.yaml
 
 kl create ns postgres-operator
 kl apply -f ./storage/postgres/config.yaml
@@ -44,6 +46,8 @@ kl -n postgres-operator get pod -o wide
 
 ```bash
 kl delete -f ./storage/postgres/postgres.gen.yaml
+kl delete -f ./storage/postgres/user-role-edit.yaml
+kl delete -f ./storage/postgres/user-role-view.yaml
 kl delete -k ./storage/postgres/crd
 kl delete ns postgres-operator
 ```
