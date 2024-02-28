@@ -27,6 +27,7 @@ EOF
 
 ```bash
 kl create ns ome
+kl label ns ome pod-security.kubernetes.io/enforce=baseline
 
 # create generic 'streamer' service for streamer side
 # points to any origin instance

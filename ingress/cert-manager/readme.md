@@ -29,6 +29,7 @@ helm template \
 
 ```bash
 kl create ns cert-manager
+kl label ns cert-manager pod-security.kubernetes.io/enforce=baseline
 kl apply -k ./ingress/cert-manager/
 kl -n cert-manager get pod
 ```
@@ -46,6 +47,7 @@ TODO
 
 - https://www.cloudns.net
 - https://github.com/ixoncloud/cert-manager-webhook-cloudns
+- https://desec.io/
 
 # Ingress with single-domain certificates
 

@@ -32,6 +32,7 @@ helm template \
 
 ```bash
 kl create ns replicator
+kl label ns replicator pod-security.kubernetes.io/enforce=baseline
 kl apply -k ./ingress/replicator/
 kl -n replicator get pod
 ```

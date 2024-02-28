@@ -14,6 +14,7 @@ References:
 
 ```bash
 kl create ns ome-ovenplayer
+kl label ns ome-ovenplayer pod-security.kubernetes.io/enforce=baseline
 
 # setup wildcard ingress
 kl label ns --overwrite ome-ovenplayer copy-wild-cert=main

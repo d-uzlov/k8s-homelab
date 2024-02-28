@@ -38,6 +38,7 @@ helm template \
 
 ```bash
 kl create ns ingress-nginx
+kl label ns ingress-nginx pod-security.kubernetes.io/enforce=baseline
 kl apply -k ./ingress/nginx/
 kl -n ingress-nginx get pod -o wide
 

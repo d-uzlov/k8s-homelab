@@ -28,7 +28,7 @@ kl apply -k ./ingress/cert-manager/letsencrypt/
 Staging issuer has some unspecified high limits.
 
 Production issuer has the following limits:
-- Certificates per Registered Domain: 50 per week
+- Certificates per Registered Name: 50 per week
   - Registered Domain is a `<subdomains>.<registered-name>.<register-domain>`.
   - `<register-domain>` is a parent domain, like `com`, `net`, `co.uk`, etc.
   - Fortunately, `duckdns.org` is in the list of register domains,

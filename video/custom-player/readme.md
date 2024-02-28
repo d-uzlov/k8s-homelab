@@ -21,6 +21,7 @@ If you don't want to use default keys, make the file empty.
 
 ```bash
 kl create ns ome-player
+kl label ns ome-player pod-security.kubernetes.io/enforce=baseline
 
 # setup wildcard ingress
 kl label ns --overwrite ome-player copy-wild-cert=main

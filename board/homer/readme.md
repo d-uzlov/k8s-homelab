@@ -10,6 +10,7 @@ References:
 
 ```bash
 kl create ns homer
+kl label ns homer pod-security.kubernetes.io/enforce=baseline
 
 # ingress with wildcard certificate
 kl label ns --overwrite homer copy-wild-cert=main

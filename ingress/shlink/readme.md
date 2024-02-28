@@ -17,6 +17,7 @@ After you create the namespace, [#setup the ingress](#setup-ingress).
 
 ```bash
 kl create ns shlink
+kl label ns shlink pod-security.kubernetes.io/enforce=baseline
 
 # setup ingress before this
 kl -n shlink get ingress

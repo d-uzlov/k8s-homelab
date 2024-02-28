@@ -79,6 +79,7 @@ EOF
 
 ```bash
 kl create ns bt-qbittorrent
+kl label ns bt-qbittorrent pod-security.kubernetes.io/enforce=baseline
 
 # create loadbalancer service
 kl apply -k ./torrents/qbittorrent/loadbalancer/

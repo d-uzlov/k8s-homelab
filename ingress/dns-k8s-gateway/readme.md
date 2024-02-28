@@ -54,6 +54,7 @@ helm template \
 
 ```bash
 kl create ns exdns
+kl label ns exdns pod-security.kubernetes.io/enforce=baseline
 kl apply -k ./ingress/dns-k8s-gateway/
 kl -n exdns get pod -o wide
 

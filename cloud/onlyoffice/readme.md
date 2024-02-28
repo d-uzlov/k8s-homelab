@@ -27,6 +27,7 @@ EOF
 
 ```bash
 kl create ns onlyoffice
+kl label ns onlyoffice pod-security.kubernetes.io/enforce=baseline
 
 # wildcard ingress
 kl label ns --overwrite onlyoffice copy-wild-cert=main

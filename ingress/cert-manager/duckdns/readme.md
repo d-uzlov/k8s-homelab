@@ -46,6 +46,7 @@ EOF
 
 ```bash
 kl create ns cm-duckdns
+kl label ns cm-duckdns pod-security.kubernetes.io/enforce=baseline
 kl apply -k ./ingress/cert-manager/duckdns/
 kl -n cm-duckdns get pod
 ```

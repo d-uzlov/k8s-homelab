@@ -50,6 +50,7 @@ EOF
 
 ```bash
 kl create ns nextcloud
+kl label ns nextcloud pod-security.kubernetes.io/enforce=baseline
 
 # ingress with wildcard certificate
 kl label ns --overwrite nextcloud copy-wild-cert=main
