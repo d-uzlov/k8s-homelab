@@ -1,13 +1,13 @@
 
 # ECC memory
 
-ECC memory is advised for anything, without exception.
+ECC memory is advised for anything, without exception. It's not required but strongly advised, when possible.
 
 # Support
 
-- Old intel i3 CPUs support ECC.
-- AM4 Ryzen support ECC
-- Everything server CPU supports registered ECC
+- Old intel i3 CPUs support ECC but i5/i7 doesn't
+- AM4 Ryzen support ECC UDIMM (unbuffered / unregistered)
+- All server CPUs support registered ECC
 
 # Check ECC
 
@@ -15,6 +15,7 @@ You need to run these commands on the host machine.
 You will not get correct results from a VM.
 
 ```bash
+apt-get install -y lshw
 lshw -class memory | grep ecc
 #   capabilities: ecc
 #   configuration: errordetection=multi-bit-ecc

@@ -187,3 +187,45 @@ echo 8589934592 >> /sys/module/zfs/parameters/zfs_arc_max
 echo 0 > /sys/module/zfs/parameters/zfs_arc_shrinker_limit
 echo 3 > /proc/sys/vm/drop_caches
 ```
+
+# L2ARC
+
+L2ARC creates some RAM overhead.
+However, despite popular beliefs, this overhead is very small.
+
+The overhead is roughly `70 bytes * number_of_records`.
+
+In my experience, while primarily using records of size 1M,
+L2ARC of size `~100 GiB` creates overhead of `~5 MiB`, according to arc statistics tool.
+
+References:
+- https://www.reddit.com/r/zfs/comments/ud1djk/l2arc_overhead_confusion/
+- - > The issue of indexing L2ARC consuming too much system RAM
+    > was largely mitigated several years ago, when the L2ARC header
+    > (the part for each cached record that must be stored in RAM)
+    > was reduced from 180 bytes to 70 bytes.
+    > For a 1TiB L2ARC, servicing only datasets with the default 128KiB recordsize,
+    > this works out to 640MiB of RAM consumed to index the L2ARC
+- https://www.reddit.com/r/zfs/comments/sql872/why_you_need_at_least_64gb_of_ram_before/
+
+Some useful commands:
+
+```bash
+# disable l2 caching for the special metadata device
+echo 1 | sudo tee /sys/module/zfs/parameters/l2arc_exclude_special
+# set max write speed of l2arc device
+echo 209715200 | sudo tee /sys/module/zfs/parameters/l2arc_write_boost
+echo 209715200 | sudo tee /sys/module/zfs/parameters/l2arc_write_max
+
+# print statistics
+sudo arc_summary
+# for ARC only
+sudo arc_summary | head -n 97
+# for l2arc only
+sudo arc_summary | grep L2ARC -A 7 -B 1
+# print l2arc tunables
+sudo arc_summary | grep l2arc
+
+cat /proc/spl/kstat/zfs/arcstats
+arcstat -f read,hits,miss,hit%,miss%,arcsz,c,l2read,l2hits,l2miss,l2hit%,l2miss%,arcsz,l2size 2
+```

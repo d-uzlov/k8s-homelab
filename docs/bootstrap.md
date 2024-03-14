@@ -45,7 +45,7 @@ if you use a different distro,
 or even use an alternative k8s provider, like k3s, microk8s, kops, etc.
 
 References:
-- [proxmox](./proxmox.md)
+- [proxmox](./proxmox/proxmox-host.md)
 - [truenas](./truenas.md)
 - [ubuntu](./ubuntu.md)
 - [debian](./debian.md)

@@ -52,3 +52,10 @@ ipconfig /renew
 ```bash
 echo $(curl -sS https://api.ipify.org)
 ```
+
+# mount NFS
+
+```bash
+sudo mkdir /mnt/bulk
+sudo mount -t nfs truenas.lan:/mnt/main/prox/nn /mnt/bulk
+```
