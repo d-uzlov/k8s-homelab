@@ -23,8 +23,35 @@ To fix this:
 netstat -r
 ```
 
+# Show full network config
+
+```powershell
+ipconfig /all
+```
+
 # Flush DNS cache
 
 ```powershell
 ipconfig /flushdns
+```
+
+# Reset DHCP lease
+
+```powershell
+# renew connects to previously used DHCP server
+ipconfig /renew
+
+# release resets fully DHCP config
+# if your DHCP server changed, call release+renew
+ipconfig /release
+ipconfig /renew
+```
+
+# ARP cache
+
+```powershell
+# show current ARP cache
+arp -a
+# reset APR cache
+arp -d *
 ```

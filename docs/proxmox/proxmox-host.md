@@ -45,7 +45,15 @@ ip -d link | grep maxmtu -B 1
 
 Set desired MTU in `<node-name> -> System -> Network / <device-name>`.
 
-Don't forget to set network device MTU to 1 in VM hardware settings
+Don't forget to set network device MTU to 1 in VM hardware settings.
+
+```bash
+# check if your desired MTU is currently allowed in the network
+ping -M do 10.2.0.2 -c 1 -s $((9216 - 28))
+
+# you can set MTU manually for testing
+sudo ip link set dev ln_storage mtu 9200
+```
 
 # PCI-e passthrough
 
@@ -88,6 +96,71 @@ References:
 ```bash
 /lib64/ld-linux-x86-64.so.2 --help | grep x86
 ```
+
+# LACP status
+
+```bash
+cat /proc/net/bonding/bond0
+```
+
+# Mellanox ConnectX-3 VLANs
+
+Mellanox ConnectX-3 only supports 126 VLANs.
+
+If you set "VLAN aware" on a bridge in proxmox, proxmox will try to enable VLANs 2-4094,
+which is a lot more than 126.
+You will see an error like this:
+
+```bash
+failed to set vid `{ 127, 128 ... 4093, 4094}`
+cmd '/sbin/bridge -force -batch - [vlan add vid 127-4094 dev enp65s0 ]'
+failed: No space left on device
+```
+
+There are several workarounds:
+
+- Limit VLANs to 2-126
+- - Edit bridge in /etc/network/interfaces
+```bash
+auto vmbr0
+iface vmbr0 inet static
+  ...
+  bridge-vlan-aware yes
+  bridge-vids 2-126
+```
+- Set VLANs you need manually, instead of using a long list
+- - Edit bridge in /etc/network/interfaces
+```bash
+auto vmbr0
+iface vmbr0 inet static
+  ...
+  bridge-vlan-aware yes
+  bridge-vids 2 10 50 228 1999
+```
+- Don't use VLAN aware bridges
+- - You can create a separate bridge for a specific VLAN
+- - Technically this is similar to defining VLANs you need manually
+- - When using Proxmox SDN it already creates special bridges, so just don't set VLAN aware checkbox
+- Disable VLAN hardware offloading
+- - This may or may not work depending on driver capabilities
+- - Edit physical interface in /etc/network/interfaces
+```bash
+iface enp129s0 inet manual
+  rx-vlan-filter off
+```
+
+Note that when using VLAN aware bridges VM guests
+will receive traffic from all VLANs
+which can be a security issue,
+and you probably don't want it for most of your VMs.
+
+As mentioned earlier, you can still use VLAN traffic
+when using a separate VLAN interface, even without VLAN aware bridge.
+
+References:
+- https://forum.proxmox.com/threads/vlan-with-tag-above-126-problem.46072/page-2
+- https://forum.proxmox.com/threads/vlan-issues.124714/
+- https://www.reddit.com/r/homelab/comments/114ieep/proxmox_bridgevids_option_host_itself_in_vlan/
 
 # email notifications
 

@@ -33,3 +33,10 @@ echo 'PATH="$PATH:/usr/local/sbin"' >> ~/.bashrc
 ```bash
 sudo dhclient -r; sudo dhclient
 ```
+
+# Show DNS information
+
+```bash
+cat /etc/resolv.conf
+resolvectl
+```

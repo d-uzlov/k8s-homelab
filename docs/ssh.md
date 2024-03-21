@@ -34,7 +34,7 @@ echo $(cat "$public_key")
 # generate a new one
 output_file=~/.ssh/proxmox
 # first check that key with this name doesn't exist yet
-ls -l "$output_file"*
+! ls -l "$output_file"*
 ssh-keygen -b 4096 -f "$output_file"
 echo $(cat "$output_file".pub)
 ```
