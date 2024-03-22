@@ -81,6 +81,11 @@ EOF
 kl create ns bt-qbittorrent
 kl label ns bt-qbittorrent pod-security.kubernetes.io/enforce=baseline
 
+# set up storage, avoid deleting it
+kl apply -k ./torrents/qbittorrent/pvc/
+# make sure that PVCs are successfulyl provisioned
+kl -n bt-qbittorrent get pvc
+
 # create loadbalancer service
 kl apply -k ./torrents/qbittorrent/loadbalancer/
 # get assigned IP to set up DNS or NAT port-forwarding
@@ -88,20 +93,15 @@ kl -n bt-qbittorrent get svc
 # Make sure that local port and external port match.
 # Peers will try to connect to the port that qbittorrent is using locally.
 
-# set up storage, avoid deleting it
-kl apply -k ./torrents/qbittorrent/pvc/
-# make sure that PVCs are successfulyl provisioned
-kl -n bt-qbittorrent get pvc
-
-# deploy main app
-kl apply -k ./torrents/qbittorrent/main-app/
-# make sure the pod is running
-kl -n bt-qbittorrent get pod
-
 # setup wildcard ingress
 kl label ns --overwrite bt-qbittorrent copy-wild-cert=main
 kl apply -k ./torrents/qbittorrent/ingress-wildcard/
 kl -n bt-qbittorrent get ingress
+
+# deploy main app
+kl apply -k ./torrents/qbittorrent/main-app/
+# make sure the pod is running
+kl -n bt-qbittorrent get pod -o wide
 ```
 
 # Cleanup
