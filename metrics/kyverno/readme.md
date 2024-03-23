@@ -5,6 +5,10 @@ Kyverno is a "policy engine" for k8s.
 Which basically means it can validate and modify k8s resources
 based on set of rules defined by cluster admin.
 
+References:
+- https://kyverno.io/docs/
+- https://github.com/kyverno/kyverno
+
 # Generate config
 
 You only need to do this if you change `values.yaml` file.
