@@ -81,25 +81,78 @@ sudo systemctl daemon-reload && sudo systemctl restart kubelet
 References:
 - Https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/
 
+# crictl setup
+
+```bash
+sudo crictl config --set runtime-endpoint=unix:///run/containerd/containerd.sock --set image-endpoint=unix:///run/containerd/containerd.sock
+```
+
+This way you won't have to add `--runtime-endpoint unix:///run/containerd/containerd.sock` to each and every `crictl` command.
+
+# Update cluster config
+
+```bash
+# list all phases
+kubeadm init --help
+# if you changed list of SANs
+sudo rm /etc/kubernetes/pki/*.crt
+sudo rm /etc/kubernetes/pki/*.key
+sudo kubeadm init phase certs all --config ./kconf.yaml
+sudo kubeadm init phase kubeconfig all --config ./kconf.yaml
+
+sudo kubeadm certs renew all
+
+# update manifests
+sudo kubeadm init phase control-plane all --config ./kconf.yaml
+sudo kubeadm init phase etcd local --config ./kconf.yaml
+sudo kubeadm init phase upload-certs --upload-certs --config ./kconf.yaml
+
+# if you changed master node IP address, you may need to also manually edit kubeconfig files
+sudo nano /etc/kubernetes/controller-manager.conf
+sudo nano /etc/kubernetes/scheduler.conf
+
+sudo systemctl restart kubelet
+
+journalctl -xeu kubelet.service
+```
+
 # Clear space on disk
 
 If you run many different images in k8s,
 local storage will eventually become filled with garbage images.
 
 ```bash
-sudo crictl --runtime-endpoint unix:///run/containerd/containerd.sock rmi --prune
+sudo crictl rmi --prune
+```
+
+# crictl containers
+
+```bash
+sudo crictl ps
+sudo crictl ps -a
+sudo crictl logs container_id
+
+sudo crictl ps -s exited |
+    cut -f1 -d" " |
+    xargs -L 1 -I {} -t sudo crictl rm {}
+
+sudo crictl pods
 ```
 
 # crictl remove pods
 
 ```bash
 # list pods
-sudo crictl --runtime-endpoint unix:///run/containerd/containerd.sock pods
+sudo crictl pods
 
-# list and delete
-sudo crictl --runtime-endpoint unix:///run/containerd/containerd.sock pods |
+# list and stop
+sudo crictl pods |
     cut -f1 -d" " |
-    xargs -L 1 -I {} -t sudo crictl --runtime-endpoint unix:///run/containerd/containerd.sock rmp {}
+    xargs -L 1 -I {} -t sudo crictl stopp {}
+# list and delete, requires pods to be stopped
+sudo crictl pods |
+    cut -f1 -d" " |
+    xargs -L 1 -I {} -t sudo crictl rmp {}
 ```
 
 # Other `crictl` commands

@@ -48,7 +48,8 @@ ssh "$cp_node1" \
 Copy config to the first master node:
 
 ```bash
-sed -e "s/REPLACE_ME_CONTROL_PLANE_ENDPOINT/$control_plane_endpoint/" ./docs/k8s/kconf.yaml | ssh "$cp_node1" "cat > kconf.yaml"
+sed -e "s/REPLACE_ME_CONTROL_PLANE_ENDPOINT/$control_plane_endpoint/" ./docs/k8s/kconf.yaml > ./docs/k8s/env/kconf.yaml
+cat ./docs/k8s/env/kconf.yaml | ssh "$cp_node1" "cat > kconf.yaml"
 ```
 
 Note that this config uses `serverTLSBootstrap: true`,
@@ -118,15 +119,15 @@ sudo kubeadm reset --force
 # Kubelet logs
 
 ```bash
-sudo systemctl status kubelet.service
+sudo systemctl status kubelet
 
 # show full logs
-journalctl -xu kubelet
+journalctl -x --unit kubelet
+journalctl -x -n 15 --unit kubelet
 
 # it is advised to clear logs before kubelet restart, if you want to read them
 # WARNING: this will delete all logs, not only from kubelet
-sudo journalctl --rotate
-sudo journalctl -m --vacuum-time=1s
+sudo journalctl --rotate && sudo journalctl -m --vacuum-time=1s
 ```
 
 # Install kubectl locally
