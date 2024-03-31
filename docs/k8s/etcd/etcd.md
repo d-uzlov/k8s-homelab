@@ -31,47 +31,6 @@ wget -q --show-progress "https://github.com/etcd-io/etcd/releases/download/${ETC
 tar zxf "etcd-${ETCD_VER}-linux-amd64.tar.gz"
 mv "etcd-${ETCD_VER}-linux-amd64"/etcd* /usr/local/bin/
 rm -rf etcd*
-
-echo '
-[Unit]
-Description=etcd3
-Documentation=https://github.com/etcd-io/etcd
-Conflicts=etcd2.service
-
-[Service]
-Type=notify
-Restart=always
-RestartSec=5s
-LimitNOFILE=40000
-TimeoutStartSec=0
-EnvironmentFile=/etc/etcd.conf
-
-ExecStart=/usr/local/bin/etcd \
-  --heartbeat-interval=500 \
-  --election-timeout=5000 \
-  --data-dir=/var/lib/etcd \
-  --auto-compaction-retention=20000 \
-  --auto-compaction-mode=revision \
-  --peer-client-cert-auth \
-  --peer-trusted-ca-file=/etc/etcd/pki/ca.pem \
-  --peer-cert-file=/etc/etcd/pki/etcd-peer.pem \
-  --peer-key-file=/etc/etcd/pki/etcd-peer-key.pem \
-  --client-cert-auth \
-  --trusted-ca-file=/etc/etcd/pki/ca.pem \
-  --cert-file=/etc/etcd/pki/etcd-client.pem \
-  --key-file=/etc/etcd/pki/etcd-client-key.pem \
-  --initial-cluster-state=new \
-  --initial-cluster-token=${CLUSTER_TOKEN} \
-  --name=${NODE_NAME} \
-  --initial-advertise-peer-urls=${NODE_ADDRESS} \
-  --initial-cluster=${CLUSTER_NODES} \
-  --advertise-client-urls=${NODE_ADDRESS} \
-  --listen-client-urls=https://0.0.0.0:${CLIENT_PORT} \
-  --listen-peer-urls=https://0.0.0.0:${PEERS_PORT}
-
-[Install]
-WantedBy=multi-user.target
-' > /etc/systemd/system/etcd3.service
 ```
 
 Later we will create a unique config file for each node, to create a cluster.
@@ -158,14 +117,15 @@ peers_port=2380
 cluster_token=$(LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 20)
 
 cluster_nodes=
-for node in $node1 $node2 $node3
+nodes="$node1 $node2 $node3"
+for node in $nodes; do
 do
   cluster_nodes=$cluster_nodes,$node=https://$node:$peers_port
 done
 cluster_nodes="${cluster_nodes:1}"
 
 mkdir -p ./docs/k8s/etcd/env/
-for node in $node1 $node2 $node3
+for node in $nodes; do
 do
   cat << EOF > ./docs/k8s/etcd/env/$node.conf
 NODE_ADDRESS=https://$node:$peers_port
@@ -185,7 +145,13 @@ For example:
 
 ```bash
 etcd_username=root
-for node in $node1 $node2 $node3; do
+nodes="$node1 $node2 $node3"
+for node in $nodes; do
+  scp \
+    ./docs/k8s/etcd/systemd-service.conf \
+    $etcd_username@$node:/etc/systemd/system/etcd3.service
+done
+for node in $nodes; do
   ssh $etcd_username@$node mkdir -p /etc/etcd/pki/
   scp \
     ./docs/k8s/etcd/env/ca.pem \
@@ -195,18 +161,21 @@ for node in $node1 $node2 $node3; do
     ./docs/k8s/etcd/env/etcd-client-key.pem \
     $etcd_username@$node:/etc/etcd/pki/
 done
-for node in $node1 $node2 $node3; do
+for node in $nodes; do
   scp \
     ./docs/k8s/etcd/env/$node.conf \
     $etcd_username@$node:/etc/etcd.conf
 done
-for node in $node1 $node2 $node3; do
+for node in $nodes; do
   ssh $etcd_username@$node systemctl daemon-reload
   ssh $etcd_username@$node systemctl enable etcd3
   ssh $etcd_username@$node systemctl restart etcd3
 done
+```
 
-# in case etcd doesn't start, look at logs
+In case etcd doesn't start, look at logs:
+
+```bash
 journalctl -xeu etcd3.service
 # if there are too many logs, delete old logs and restart etcd
 sudo journalctl --rotate && sudo journalctl -m --vacuum-time=1s
@@ -228,7 +197,7 @@ alias etcdctl="ETCDCTL_API=3 /usr/local/bin/etcdctl \
   --cacert=./docs/k8s/etcd/env/ca.pem \
   --cert=./docs/k8s/etcd/env/etcd-client.pem \
   --key=./docs/k8s/etcd/env/etcd-client-key.pem"
-etcdctl member list
+etcdctl member list -w table
 etcdctl endpoint status -w table
 etcdctl endpoint health -w table
 ```

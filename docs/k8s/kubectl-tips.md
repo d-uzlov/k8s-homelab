@@ -3,27 +3,36 @@
 
 This file describes various useful kubectl commands.
 
+# Install kubectl locally
+
+Usually you don't use kubectl on your server
+so you only need to run this on your local machine.
+
+```bash
+sudo mkdir -p /etc/apt/keyrings &&
+curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg &&
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+apt-cache policy kubectl | head
+```
+
+kubectl version should match version of kubelet.
+It's ok if minor version doesn't match.
+Major version can differ by ±1.
+
+Bigger version skew can work
+(I successfully used kubectl v1.27 with cluster v1.22)
+but this is not tested and not supported by the Kubernetes team.
+
+```bash
+sudo apt-get update
+sudo apt-get install -y kubectl=1.28.1-00 --allow-downgrades --allow-change-held-packages
+sudo apt-mark hold kubectl
+```
+
 # Bash completion
 
 References:
 - [kubectl bash completion](../bash.md#kubectl-completion)
-
-# Delete failed pods
-
-During graceful shutdown k8s likes to create a myriad of pods in a `Failed` state,
-that couldn't run because the node was shutting down. Duh.
-
-These pods remain in the list even after cluster has rebooted and all working pods are scheduled.
-
-```bash
-# show pods
-kl get pods --field-selector status.phase=Failed --all-namespaces
-kl get pods --field-selector status.phase=Succeeded --all-namespaces
-
-# delete pods
-kl delete pods --field-selector status.phase=Failed --all-namespaces
-kl delete pods --field-selector status.phase=Succeeded --all-namespaces
-```
 
 # Show pods from a certain node
 
@@ -47,3 +56,21 @@ Run on the node with network issues:
 ```bash
 sudo rm -rf /etc/cni/ && sudo reboot
 ```
+
+# Taint nodes if necessary
+
+```bash
+kl taint nodes nodename key=value:type
+kl label node nodename key=value
+# value is optional
+# for example
+kl taint nodes --overwrite n100.k8s.lan weak-node=:PreferNoSchedule
+kl label node --overwrite n100.k8s.lan weak-node=
+```
+
+Key and value can be whatever.
+
+Allowed types are:
+- `NoExecute`
+- `NoSchedule`
+- `PreferNoSchedule`

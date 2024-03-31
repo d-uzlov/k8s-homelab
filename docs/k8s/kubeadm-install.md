@@ -47,11 +47,11 @@ References:
 # Setup shutdown commands for k8s
 
 ```bash
-sudo rm /usr/sbin/shutdown && sudo tee /usr/sbin/shutdown <<EOF && sudo chmod 755 /usr/sbin/shutdown
+sudo rm /usr/sbin/shutdown && sudo tee /usr/sbin/shutdown << EOF && sudo chmod 755 /usr/sbin/shutdown
 #!/bin/bash
 exec systemctl poweroff
 EOF
-sudo rm /usr/sbin/reboot && sudo tee /usr/sbin/reboot <<EOF && sudo chmod 755 /usr/sbin/reboot
+sudo rm /usr/sbin/reboot && sudo tee /usr/sbin/reboot << EOF && sudo chmod 755 /usr/sbin/reboot
 #!/bin/bash
 exec systemctl reboot
 EOF

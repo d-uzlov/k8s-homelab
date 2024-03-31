@@ -129,29 +129,3 @@ journalctl -x -n 15 --unit kubelet
 # WARNING: this will delete all logs, not only from kubelet
 sudo journalctl --rotate && sudo journalctl -m --vacuum-time=1s
 ```
-
-# Install kubectl locally
-
-Usually you don't use kubectl on your server
-so you only need to run this on your local machine.
-
-```bash
-sudo mkdir -p /etc/apt/keyrings &&
-curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg &&
-echo "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
-apt-cache policy kubectl | head
-```
-
-kubectl version should match version of kubelet.
-It's ok if minor version doesn't match.
-Major version can differ by ±1.
-
-Bigger version skew can work
-(I successfully used kubectl v1.27 with cluster v1.22)
-but this is not tested and not supported by the Kubernetes team.
-
-```bash
-sudo apt-get update
-sudo apt-get install -y kubectl=1.28.1-00 --allow-downgrades --allow-change-held-packages
-sudo apt-mark hold kubectl
-```
