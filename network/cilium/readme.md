@@ -3,7 +3,8 @@
 
 Cilium is an alternative CNI, with the main feature of being eBPF-only.
 
-DSR is broken in 1.14.1 and 1.14.2.
+References:
+- https://github.com/cilium/cilium
 
 # Generate deployment
 
@@ -13,28 +14,29 @@ You need to regenerate the deployment if you use control plane endpoint other th
 helm repo add cilium https://helm.cilium.io/
 helm repo update cilium
 helm search repo cilium/cilium --versions --devel | head
-helm show values cilium/cilium --version 1.15.0 > ./network/cilium/default-values.yaml
+helm show values cilium/cilium --version 1.15.3 > ./network/cilium/default-values.yaml
 
-# replace k8sServiceHost with your value
+# replace with your value
+control_plane_endpoint=cp.k8s.lan
 helm template cilium cilium/cilium \
-  --version 1.15.0 \
+  --version 1.15.3 \
   --values ./network/cilium/values.yaml \
   --namespace cilium \
-  --set k8sServiceHost=cp.k8s.lan \
+  --set k8sServiceHost=$control_plane_endpoint \
   > ./network/cilium/cilium-tunnel.gen.yaml
 helm template cilium cilium/cilium \
-  --version 1.15.0 \
+  --version 1.15.3 \
   --values ./network/cilium/values.yaml \
   --namespace cilium \
-  --set k8sServiceHost=cp.k8s.lan \
+  --set k8sServiceHost=$control_plane_endpoint \
   --set l2announcements.enabled=true \
   --set externalIPs.enabled=true \
   > ./network/cilium/cilium-tunnel-l2lb.gen.yaml
 helm template cilium cilium/cilium \
-  --version 1.15.0 \
+  --version 1.15.3 \
   --values ./network/cilium/values.yaml \
   --namespace cilium \
-  --set k8sServiceHost=cp.k8s.lan \
+  --set k8sServiceHost=$control_plane_endpoint \
   --set l2announcements.enabled=true \
   --set externalIPs.enabled=true \
   --set loadBalancer.mode=dsr \
