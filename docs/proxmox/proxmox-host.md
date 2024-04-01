@@ -49,7 +49,7 @@ Don't forget to set network device MTU to 1 in VM hardware settings.
 
 ```bash
 # check if your desired MTU is currently allowed in the network
-ping -M do 10.2.0.2 -c 1 -s $((9216 - 28))
+ping -M do -i 0.002 -c 1 -s $((9198 - 28)) 10.0.0.2
 
 # you can set MTU manually for testing
 sudo ip link set dev ln_storage mtu 9200

@@ -27,13 +27,34 @@ Create / join:
 sudo /usr/sbin/corosync-cfgtool -s
 
 systemctl status corosync
-sudo systemctl restart corosync
+systemctl status pve-cluster
+systemctl status pvedaemon
+systemctl status pveproxy
 sudo journalctl -b -u corosync
+sudo journalctl -b -u pve-cluster
 # show logs between 2 dates
 sudo journalctl -S '2024-03-15 17:35:18' -U '2024-03-15 17:35:21'
 
 sudo pvecm status
+
+sudo pvecm updatecerts
+sudo systemctl restart corosync
+sudo systemctl restart pve-cluster pvedaemon pveproxy
 ```
+
+# `permission denied - invalid PVE ticket (401)`
+
+```bash
+# first check cluster status
+# pvecm status should be OK, corosync should be working, cluster should have quorum
+sudo pvecm status
+
+sudo pvecm updatecerts
+sudo systemctl restart pvedaemon pveproxy
+```
+
+References:
+- https://forum.proxmox.com/threads/3-node-cluster-permission-denied-invalid-pve-ticket-401.56038/
 
 # Updating corosync configuration
 
@@ -57,10 +78,10 @@ journalctl -b -u corosync
 # Shows cluster names/list
 ls -la /etc/pve/nodes/
 # this one only shows active nodes
-pvecm nodes
+sudo pvecm nodes
 # Remove node
-pvecm delnode NODE_NAME
-rm -rf /etc/pve/nodes/NODE_NAME
+sudo pvecm delnode NODE_NAME
+sudo rm -rf /etc/pve/nodes/NODE_NAME
 ```
 
 # Force destroy cluster

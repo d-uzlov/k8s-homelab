@@ -26,15 +26,14 @@ sudo systemctl start qemu-guest-agent
 `virtio block` has better performance than `scsi` (aka `virtio scsi`)
 but apparently each `virtio block` device consumes a pcie address,
 which are apparently limited.
+Also, `virtio block` doesn't support live disk resize.
 
 SATA and IDE virtual drives should not be used unless you have compatibility concerns.
 
 References:
 - https://forum.proxmox.com/threads/virtio-vs-scsi.52893/
 
-# Enable CPU hot-plug in VMs
-
-Inside Linux VM:
+# Enable CPU hot-plug for Linux VMs
 
 ```bash
 sudo tee /lib/udev/rules.d/80-hotplug-cpu.rules << EOF
@@ -45,6 +44,9 @@ EOF
 # should fix issues if changes don't apply without reboot
 sudo udevadm control --reload-rules && sudo udevadm trigger
 ```
+
+In VM config set `sockets` and `cores` to maximum allowed values,
+and then instead use `vCPUs` for real number of available cores.
 
 References:
 - [Proxmox documentation about Hot-Plug](https://pve.proxmox.com/wiki/Hotplug_(qemu_disk,nic,cpu,memory)#CPU_and_Memory_Hotplug)
@@ -60,13 +62,13 @@ References:
 - - Debian: https://cloud.debian.org/images/cloud/
 - - For example:
 ```bash
-wget https://cloud.debian.org/images/cloud/bookworm/20230802-1460/debian-12-generic-amd64-20230802-1460.tar.xz
-tar -xvf debian-12-generic-amd64-20230802-1460.tar.xz
+wget https://cloud.debian.org/images/cloud/bookworm/20240211-1654/debian-12-generic-amd64-20240211-1654.tar.xz
+tar -xvf debian-12-generic-amd64-20240211-1654.tar.xz
 ```
-- Install `virt-customize`: `apt install -y libguestfs-tools`
+- Install `virt-customize`: `sudo apt install -y libguestfs-tools`
 - Pre-install required tools into VM image
 ```bash
-virt-customize -a disk.raw \
+sudo virt-customize -a disk.raw \
     --update \
     --install qemu-guest-agent \
     --install ca-certificates,apt-transport-https,gnupg,ipvsadm,open-iscsi,nfs-common,cachefilesd \
@@ -79,6 +81,9 @@ EOF' \
     --run-command 'sudo rm /usr/sbin/reboot && sudo tee /usr/sbin/reboot << EOF && sudo chmod 755 /usr/sbin/reboot
 #!/bin/bash
 exec systemctl reboot
+EOF' \
+    --run-command 'sudo tee /lib/udev/rules.d/80-hotplug-cpu.rules << EOF
+SUBSYSTEM=="cpu", ACTION=="add", TEST=="online", ATTR{online}=="0", ATTR{online}="1"
 EOF' \
     --truncate /etc/machine-id
 ```
