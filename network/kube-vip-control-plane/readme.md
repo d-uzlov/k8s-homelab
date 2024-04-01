@@ -27,14 +27,16 @@ docker run \
 
 # Deploy static pods
 
-Static pods should not be deployed on worker nodes.
+Run this for the first master node just before `kubeadm init`.
+Run this for other master nodes after `kubeadm join`.
+Don't run this for worker nodes.
 
 ```bash
 cp_node1=m1.k8s.lan
 # any free IP in lan
-VIP=10.3.1.0
+VIP=10.3.0.255
 # corresponding interface of the node
-INTERFACE=eth2
+INTERFACE=eth1
 
 mkdir -p ./network/kube-vip-control-plane/env/
 sed -e "s/REPLACE_ME_VIP/'$VIP'/" \
@@ -44,7 +46,3 @@ sed -e "s/REPLACE_ME_VIP/'$VIP'/" \
 ssh "$cp_node1" sudo mkdir -p /etc/kubernetes/manifests/
 ssh "$cp_node1" sudo tee /etc/kubernetes/manifests/kube-vip.yaml '>' /dev/null < ./network/kube-vip-control-plane/env/$cp_node1.yaml
 ```
-
-Kube-vip documentation says that on other control plane nodes
-static pods should be created after `kubeadm init`.
-I didn't check it.
