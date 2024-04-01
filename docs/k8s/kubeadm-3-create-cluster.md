@@ -39,12 +39,20 @@ ssh "$cp_node1" sudo kubeadm config print join-defaults >> ./docs/k8s/kconf-defa
 
 control_plane_endpoint=cp.k8s.lan
 serverTLSBootstrap=true
-# local or external
+# one of: local, external
 etcd_type=external
+# only relevant when using external etcd
+etcd_endpoint1=https://k8s1-etcd1.k8s.lan:2379
+etcd_endpoint2=https://k8s1-etcd2.k8s.lan:2379
+etcd_endpoint3=https://k8s1-etcd3.k8s.lan:2379
 sed -e "s/REPLACE_ME_CONTROL_PLANE_ENDPOINT/$control_plane_endpoint/" \
   -e "s/REPLACE_ME_SERVER_TLS_BOOTSTRAP/$serverTLSBootstrap/" \
   -e "/remove when using $etcd_type etcd/,/remove when using $etcd_type etcd/d" \
+  -e "s|REPLACE_ME_ETCD_ENDPOINT1|$etcd_endpoint1|" \
+  -e "s|REPLACE_ME_ETCD_ENDPOINT2|$etcd_endpoint2|" \
+  -e "s|REPLACE_ME_ETCD_ENDPOINT3|$etcd_endpoint3|" \
   ./docs/k8s/kconf.yaml > ./docs/k8s/env/kconf.yaml
+# review kconf.yaml before copying it to make sure everything is OK
 scp ./docs/k8s/env/kconf.yaml $cp_node1:kconf.yaml
 ```
 
@@ -60,6 +68,12 @@ ssh $cp_node1 sudo tee /etc/etcd/pki/ca.pem '>' /dev/null < ./docs/k8s/etcd/env/
 ssh $cp_node1 sudo tee /etc/etcd/pki/etcd-client.pem '>' /dev/null < ./docs/k8s/etcd/env/etcd-client.pem
 ssh $cp_node1 sudo tee /etc/etcd/pki/etcd-client-key.pem '>' /dev/null < ./docs/k8s/etcd/env/etcd-client-key.pem
 
+# if using kube-vip for control plane, you should switch to its commands at this point
+# also, run this after copying the kube-vip manifest
+# this is only required for the first node of the cluster
+ssh $cp_node1 sudo sed -i '"s#path: /etc/kubernetes/admin.conf#path: /etc/kubernetes/super-admin.conf#"' /etc/kubernetes/manifests/kube-vip.yaml
+# see details here: https://github.com/kube-vip/kube-vip/issues/684
+
 # init remotely
 ssh $cp_node1 sudo kubeadm init \
   --config ./kconf.yaml \
@@ -72,6 +86,9 @@ sudo kubeadm init \
   --node-name "$(hostname --fqdn)" \
   --skip-phases show-join-command
 
+# when using kube-vip for control plane, also run this, only on the first node of the cluster
+ssh $cp_node1 sudo sed -i '"s#path: /etc/kubernetes/super-admin.conf#path: /etc/kubernetes/admin.conf#"' /etc/kubernetes/manifests/kube-vip.yaml
+
 # check cluster state in place
 ssh $cp_node1 sudo kubectl --kubeconfig /etc/kubernetes/admin.conf -n kube-system get node -o wide
 ssh $cp_node1 sudo kubectl --kubeconfig /etc/kubernetes/admin.conf -n kube-system get pod -A -o wide
@@ -81,14 +98,28 @@ ssh $cp_node1 sudo kubectl --kubeconfig /etc/kubernetes/admin.conf -n kube-syste
 ssh $cp_node1 sudo kubectl --kubeconfig /etc/kubernetes/admin.conf -n kube-system logs -l component=kube-apiserver
 
 # fetch admin kubeconfig
-ssh $cp_node1 sudo cat /etc/kubernetes/admin.conf ./_env/"$control_plane_endpoint".yaml
-
-# show command to join
-ssh $cp_node1 bash -s - < ./docs/k8s/print-join.sh worker
-ssh $cp_node1 bash -s - < ./docs/k8s/print-join.sh master
-# run printed command on additional nodes
-# one join command can join any number of nodes but will expire in 2 hours
+ssh $cp_node1 sudo cat /etc/kubernetes/admin.conf > ./_env/"$control_plane_endpoint".yaml
 ```
+
+# Join additional nodes
+
+Show command to join:
+
+```bash
+# worker join can be generated on any master node
+ssh $cp_node1 bash -s - < ./docs/k8s/print-join.sh worker
+# master join requires kconf.yaml to be presetn, copy it into the node if needed
+ssh $cp_node1 bash -s - < ./docs/k8s/print-join.sh master
+```
+
+Run printed command on additional nodes to join the cluster.
+Commands will expire in 2 hours. Until then you can join however many nodes you want.
+
+For master nodes remember:
+- They should have static IP
+- When using local etcd, deploy 1, 3, or 5 master nodes for proper HA
+- With external etcd it's fine to have 2 master nodes, for example
+- Don't forget about kube-vip if you are using it
 
 # Next actions
 

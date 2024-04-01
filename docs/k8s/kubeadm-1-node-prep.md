@@ -15,9 +15,10 @@ sudo apt-get install -y qemu-guest-agent ncat net-tools bash-completion iperf3 n
 # https://github.com/containerd/containerd/blob/main/docs/getting-started.md
 # Check new versions here:
 # https://github.com/containerd/containerd/releases
-containerd_version=2.0.0-rc.0
+containerd_version=1.7.14
 wget https://github.com/containerd/containerd/releases/download/v$containerd_version/containerd-$containerd_version-linux-amd64.tar.gz &&
 sudo tar Czxvf /usr/local containerd-$containerd_version-linux-amd64.tar.gz &&
+rm containerd-$containerd_version-linux-amd64.tar.gz &&
 containerd --version &&
 
 wget https://github.com/containerd/containerd/raw/v$containerd_version/containerd.service &&
@@ -30,6 +31,7 @@ sudo systemctl enable containerd &&
 runc_version=1.1.12
 wget https://github.com/opencontainers/runc/releases/download/v$runc_version/runc.amd64 &&
 sudo install -m 755 runc.amd64 /usr/local/sbin/runc &&
+rm runc.amd64 &&
 sudo runc --version &&
 
 sudo tee /etc/modules-load.d/containerd.conf <<EOF &&
