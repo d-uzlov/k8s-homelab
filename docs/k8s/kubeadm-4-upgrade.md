@@ -1,7 +1,10 @@
 
-# kubeadm maintenance
+# kubeadm upgrade
 
-This file describes various maintenance commands for kubeadm-based cluster.
+TODO remove this, everything is described in k8s docs.
+
+References:
+- https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/
 
 # Edit kubelet args
 
@@ -76,8 +79,3 @@ sudo systemctl restart kubelet
 
 journalctl -xeu kubelet.service
 ```
-
-# Misc
-
-References:
-- K8s hangs when deleting pod with failed NFS mount: https://github.com/kubernetes/kubernetes/issues/101622

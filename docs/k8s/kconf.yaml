@@ -8,7 +8,9 @@ nodeRegistration:
     # terminated-pod-gc-threshold: '1'
     housekeeping-interval: 5s
 localAPIEndpoint:
-  # ¿ this seems to also be a bind address ?
+  # Advertized for inter-master communication
+  # kube-apiserver forces this to be a raw IP
+  # By default value is taken from the default interface
   advertiseAddress: 0.0.0.0
   bindPort: 6443
 ---
@@ -17,23 +19,26 @@ apiVersion: kubeadm.k8s.io/v1beta3
 kind: ClusterConfiguration
 controlPlaneEndpoint: REPLACE_ME_CONTROL_PLANE_ENDPOINT
 clusterName: kubernetes
-kubernetesVersion: 1.28.2
+kubernetesVersion: 1.29.3
 networking:
   dnsDomain: cluster.local
   podSubnet: 10.201.0.0/16
   serviceSubnet: 10.202.0.0/16
 apiServer:
   # Default names are:
-  # node main IP
-  # node hostname
-  # <controlPlaneEndpoint>
-  # And also a bunch of names for communication inside cluster.
+  # - controlPlaneEndpoint
+  # - node-name
+  # - kubernetes.default.svc.cluster.local and derivatives
+  # - advertiseAddress
+  # - cluster local IP from serviceSubnet
   # If you need anything else, add it into this list.
   certSANs:
   - 127.0.0.1
   extraArgs:
-    advertise-address: 0.0.0.0
-    etcd-servers: https://127.0.0.1:2379
+    bind-address: 0.0.0.0
+    # different prefix values allow you to run several k8s instances off of one etcd cluster
+    # the default value in /registry
+    etcd-prefix: /registry
 controllerManager:
   extraArgs:
     # required for prometheus metrics gathering
@@ -43,16 +48,23 @@ scheduler:
     # required for prometheus metrics gathering
     bind-address: 0.0.0.0
 etcd:
+# vvvvv - remove when using external etcd - vvvvv
   local:
     extraArgs:
-      # advertise-client-urls: https://127.0.0.1:2379
       listen-client-urls: https://0.0.0.0:2379
       listen-metrics-urls: https://127.0.0.1:2381
       listen-peer-urls: https://0.0.0.0:2380
-    # serverCertSANs:
-    # - 0.0.0.0
-    # peerCertSANs:
-    # - 0.0.0.0
+# ^^^^^ - remove when using external etcd - ^^^^^
+# vvvvv - remove when using local etcd - vvvvv
+  external:
+    endpoints:
+    - https://k8s1-etcd1.k8s.lan:2379
+    - https://k8s1-etcd2.k8s.lan:2379
+    - https://k8s1-etcd3.k8s.lan:2379
+    caFile: /etc/etcd/pki/ca.pem
+    certFile: /etc/etcd/pki/etcd-client.pem
+    keyFile: /etc/etcd/pki/etcd-client-key.pem
+# ^^^^^ - remove when using local etcd - ^^^^^
 ---
 # https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/
 apiVersion: kubelet.config.k8s.io/v1beta1
@@ -65,7 +77,8 @@ staticPodPath: /etc/kubernetes/manifests
 # reduce time of config map synchronization at expense of increased apiserver load
 # default value is 60s
 syncFrequency: 10s
-serverTLSBootstrap: true
+serverTLSBootstrap: REPLACE_ME_SERVER_TLS_BOOTSTRAP
+cgroupDriver: systemd
 ---
 apiVersion: kubeproxy.config.k8s.io/v1alpha1
 kind: KubeProxyConfiguration
