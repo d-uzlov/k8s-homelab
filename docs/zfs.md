@@ -1,13 +1,4 @@
 
-# Increase max ARC size
-
-```bash
-sudo nano /etc/modprobe.d/zfs.conf
-options zfs zfs_arc_max=<memory_size_in_bytes>
-sudo update-initramfs -u
-reboot
-```
-
 # Checksums
 
 Summary:
@@ -111,15 +102,18 @@ zfs --version
 dd if=/dev/zero of=/tmp/test-zfs-file bs=100M count=1
 sudo zpool create tank /tmp/test-zfs-file
 sudo zfs create tank/test
+# use sha256 chechsum to enable nopwrite
 sudo zfs set checksum=sha256 tank/test
 sudo zfs set compression=lz4 tank/test
 sudo chmod 777 -R /tank
 
+# create a file, check used space
 dd if=/dev/urandom of=/tmp/test-random-file bs=1M count=1
 cp /tmp/test-random-file /tank/test/
 zfs list -t all -r tank/test
 # 1M used, 39M available
 
+# create snapshot, rewrite file, sheck used space
 sudo zfs snapshot tank/test@1
 cp /tmp/test-random-file /tank/test/
 zfs list -t all -r tank/test
@@ -137,7 +131,7 @@ References:
 
 # Encryption
 
-Any dataset can be encrypted on not encrypted.
+Any dataset can be encrypted or not encrypted.
 ZFS doesn't prevent you from creating an non-encrypted dataset inside encrypted one.
 
 However, Truenas UI has its own opinion about this. It will give you an error if you try.
@@ -168,24 +162,23 @@ As noted in the [`nopwrite`](#nopwrite) section, encryption breaks nopwrite.
 # Set limit for ARC size
 
 ```bash
-# cat /etc/modprobe.d/zfs.conf
-options zfs zfs_arc_min=17179869184
-options zfs zfs_arc_max=17179869184
-
+# set 8G for current session
+echo 4294967296 >> /sys/module/zfs/parameters/zfs_arc_min
+echo 4294967296 >> /sys/module/zfs/parameters/zfs_arc_max
 # 16G: 17179869184
 # 8G:  8589934592
 # 4G:  4294967296
 
-# after editing /etc/modprobe.d/zfs.conf
-update-initramfs -u
+# set ARC size automatically after boot
+cat << EOF | sudo tee /etc/modprobe.d/zfs_arc_size.conf
+options zfs zfs_arc_min=4294967296
+options zfs zfs_arc_max=4294967296
+EOF
+sudo update-initramfs -u
 
-# 8G for current session
-echo 8589934592 >> /sys/module/zfs/parameters/zfs_arc_min
-echo 8589934592 >> /sys/module/zfs/parameters/zfs_arc_max
-
-# clear cache for current system
-echo 0 > /sys/module/zfs/parameters/zfs_arc_shrinker_limit
-echo 3 > /proc/sys/vm/drop_caches
+# clear cache for current system (useful if yolu want to reduce ARC size)
+echo 0 | sudo tee /sys/module/zfs/parameters/zfs_arc_shrinker_limit
+echo 3 | sudo tee /proc/sys/vm/drop_caches
 ```
 
 # L2ARC
@@ -193,10 +186,12 @@ echo 3 > /proc/sys/vm/drop_caches
 L2ARC creates some RAM overhead.
 However, despite popular beliefs, this overhead is very small.
 
-The overhead is roughly `70 bytes * number_of_records`.
+The overhead is roughly 70 bytes per record in L2ARC.
+This depends on your record size, and file sizes.
 
-In my experience, while primarily using records of size 1M,
-L2ARC of size `~100 GiB` creates overhead of `~5 MiB`, according to arc statistics tool.
+Here is my experience with L2ARC RAM overhead, according to arc statistics tool:
+- L2ARC size `~100 GiB`, overhead `~5 MiB`
+- L2ARC size `~380 GiB`, overhead `~24 MiB`
 
 References:
 - https://www.reddit.com/r/zfs/comments/ud1djk/l2arc_overhead_confusion/
@@ -208,15 +203,20 @@ References:
     > this works out to 640MiB of RAM consumed to index the L2ARC
 - https://www.reddit.com/r/zfs/comments/sql872/why_you_need_at_least_64gb_of_ram_before/
 
-Some useful commands:
+# # L2ARC tuning
 
 ```bash
 # disable l2 caching for the special metadata device
 echo 1 | sudo tee /sys/module/zfs/parameters/l2arc_exclude_special
 # set max write speed of l2arc device
+# the default speed is just a few MB/s
 echo 209715200 | sudo tee /sys/module/zfs/parameters/l2arc_write_boost
 echo 209715200 | sudo tee /sys/module/zfs/parameters/l2arc_write_max
+```
 
+# ZFS ARC statistics
+
+```bash
 # print statistics
 sudo arc_summary
 # for ARC only

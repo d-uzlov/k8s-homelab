@@ -1,20 +1,5 @@
 #!/bin/bash
 
-# Increase to 360 hours (1296000 seconds):
-#   https://tomschlick.com/blog/2022/06/28/extend-truenas-web-ui-session-timeout/
-#   https://www.reddit.com/r/truenas/comments/vn1tu7/extend_truenas_web_ui_session_timeout/
-if [ "$(uname)" = "Linux" ]; then
-  sed -i 's/auth.generate_token",\[300/auth.generate_token",\[1296000/g' /usr/share/truenas/webui/*.js
-  # doesn't work
-  # sed -i 's/lifetime: 300/lifetime: 1296000/g' /usr/share/truenas/webui/*.js.map
-  # doesn't work. there is something wrong with the regexp, it hangs, and then file is littered with preferences.lifetime || 1296000 instead of real data
-  # sed -i 's/preferences.lifetime \|\| 300/preferences.lifetime \|\| 1296000/g' /usr/share/truenas/webui/*.js.map
-  # doesn't work, breaks web UI
-  # sed -i 's/self.webpackChunktruenas_scale_ui||\[]).push(\[\[300/self.webpackChunktruenas_scale_ui||\[]).push(\[\[1296000/g' /usr/share/truenas/webui/*.js
-elif [ "$(uname)" = "FreeBSD" ]; then
-  sed -i '' 's/auth.generate_token",\[300/auth.generate_token",\[1296000/g' /usr/local/www/webui/*.js
-fi
-
 midclt call system.advanced.update '{"motd": ""}'
 
 # Disable stupid swap on data drives
@@ -45,8 +30,17 @@ function set_erc() (
   smartctl -l scterc "$1" | grep "SCT\|Write\|Read"
 )
 
-( for drive in $(list_smart_drives); do
-set_erc "$drive";
-done; )
+# enable ERC for all drives that support it
+for drive in $(list_smart_drives); do
+  ( set_erc "$drive" )
+done
 
 ####################
+
+echo "Enable DHCP for all network interfaces..."
+for netint in $(ls /sys/class/net); do
+  if [ "$netint" = "lo" ]; then continue; fi
+  echo "enabling DHCP for $netint"
+  sudo dhclient "$netint"
+done
+echo "Done with DHCP."

@@ -5,25 +5,31 @@ This file describes how to create k8s cluster when you already have ready-to-use
 
 # Prerequisites
 
-1. Each master node must have a static IP. Many things will break if IP changes.
-
-When a master node joins the cluster, it registers with its current `advertise-address`,
-which is currently enforced to be direct IP. Also, this IP is baked into node certificate.
-Even though you can re-configure kube-apiserver locally,
-it will have troubles connecting to the rest of the cluster, or to etcd.
+1. Each master node must have a static IP.
 
 If you want to change master node IP, join a second node and remove the first one.
 
 Worker nodes seems to work fine with dynamic IPs.
 
+Etcd IP is baked into many things. It can be solved by using external etcd.
+
+Master nodes are registered with IP (aka `advertise-address`).
+When this IP changes, it's as if you join a different node with the same name,
+which causes collisions, and some things break.
+
+It's possible to re-program the node to update the certificate to include new IP,
+and change apiserver pod to work with whatever IP it has,
+but kubelet has a lot of errors in its logs, and node CSRs don't work properly,
+and there are likely other issues.
+
 References:
 - https://github.com/kubernetes/kubeadm/issues/338
 
-2. DNS address for control plane endpoint.
+2. Create a stable DNS address for control plane endpoint.
 
 If you only want 1 master node, it can point to this node.
 If you have several master nodes, it needs to point to some common virtual IP, or a load balancer.
-If for now you have 1 but later you'll want to add more, you can just configure this DNS address.
+If for now you have 1 but later you'll want to add more, you can just re-configure this DNS address.
 
 This address must be available before you create the cluster, or kubelet will fail to start.
 
@@ -33,8 +39,9 @@ For example: [kube-vip for control plane](../../network/kube-vip-control-plane/r
 
 ```bash
 cp_node1=m1.k8s.lan
-# you can print the default config just for reference
+# you can print the default config, just for reference, you don't really need it
 ssh "$cp_node1" sudo kubeadm config print init-defaults --component-configs KubeletConfiguration,KubeProxyConfiguration > ./docs/k8s/kconf-default.yaml
+echo --- >> ./docs/k8s/kconf-default.yaml
 ssh "$cp_node1" sudo kubeadm config print join-defaults >> ./docs/k8s/kconf-default.yaml
 
 control_plane_endpoint=cp.k8s.lan
@@ -64,9 +71,9 @@ ssh $cp_node1 kubeadm config validate --config ./kconf.yaml
 
 # if you are using external etcd, copy etcd certs
 ssh $cp_node1 sudo mkdir -p /etc/etcd/pki/
-ssh $cp_node1 sudo tee /etc/etcd/pki/ca.pem '>' /dev/null < ./docs/k8s/etcd/env/ca.pem
-ssh $cp_node1 sudo tee /etc/etcd/pki/etcd-client.pem '>' /dev/null < ./docs/k8s/etcd/env/etcd-client.pem
-ssh $cp_node1 sudo tee /etc/etcd/pki/etcd-client-key.pem '>' /dev/null < ./docs/k8s/etcd/env/etcd-client-key.pem
+ssh $cp_node1 sudo tee '>' /dev/null /etc/etcd/pki/ca.pem              < ./docs/k8s/etcd/env/ca.pem
+ssh $cp_node1 sudo tee '>' /dev/null /etc/etcd/pki/etcd-client.pem     < ./docs/k8s/etcd/env/etcd-client.pem
+ssh $cp_node1 sudo tee '>' /dev/null /etc/etcd/pki/etcd-client-key.pem < ./docs/k8s/etcd/env/etcd-client-key.pem
 
 # if using kube-vip for control plane, you should switch to its commands at this point
 # also, run this after copying the kube-vip manifest
@@ -144,7 +151,7 @@ sudo rm -rf /var/lib/kubelet/
 sudo reboot
 ```
 
-When using local etcd, master node removal requires additional configuration:
+When using local etcd, master node removal requires additional configuration.
 For example: https://paranoiaque.fr/en/2020/04/19/remove-master-node-from-ha-kubernetes/
 
 # Kubelet logs

@@ -5,7 +5,7 @@ ECC memory is advised for anything, without exception. It's not required but str
 
 # Support
 
-- Old intel i3 CPUs support ECC but i5/i7 doesn't
+- Old intel i3 CPUs support ECC but i5/i7 CPUs don't
 - AM4 Ryzen support ECC UDIMM (unbuffered / unregistered)
 - All server CPUs support registered ECC
 
@@ -15,22 +15,26 @@ You need to run these commands on the host machine.
 You will not get correct results from a VM.
 
 ```bash
-apt-get install -y lshw
-lshw -class memory | grep ecc
+sudo apt-get install -y lshw
+sudo lshw -class memory | grep ecc
 #   capabilities: ecc
 #   configuration: errordetection=multi-bit-ecc
 
-dmidecode -t memory | grep "Error Correction Type"
-#   Error Correction Type: Multi-bit ECC
+sudo dmidecode -t memory | grep "Error Correction Type"
+# bad:  Error Correction Type: None
+# good: Error Correction Type: Multi-bit ECC
 
-dmidecode -t memory | grep "Total Width" -A 1
+sudo dmidecode -t memory | grep -e "Total Width" -e "Data Width"
+# bad:
+#   Total Width: 64 bits
+#   Data Width: 64 bits
+# good:
 #   Total Width: 72 bits
 #   Data Width: 64 bits
-# 
-# On some AM4 boards this instead shows:
+# also good:
 #   Total Width: 128 bits
 #   Data Width: 64 bits
-# This seems to be a BIOS bug.
+# This seems to be a BIOS bug on some AM4 motherboards.
 ```
 
 References:
@@ -41,18 +45,23 @@ References:
 # Enable error gathering
 
 ```bash
-sudo apt install rasdaemon
+sudo apt install -y rasdaemon
 ```
 
 # Error checks
 
 ```bash
-sudo dmesg | grep -e mce -e "Hardware Error" -e rasdaemon -e "Memory failure" -e EDAC -e edac -e "DRAM ECC error" --color=always
-sudo dmesg | grep EDAC
-sudo ras-mc-ctl --summary
-sudo ras-mc-ctl --errors
+# full output
+sudo dmesg --color=always | grep -e mce -e "Hardware Error" -e rasdaemon -e "Memory failure" -e EDAC -e edac -e "DRAM ECC error"
+# shorter
+sudo dmesg --color=always | grep -e rasdaemon -e "Memory failure" -e EDAC -e edac -e "DRAM ECC error"
+# only errors
+sudo dmesg --color=always | grep "EDAC"
 sudo ras-mc-ctl --error-count
 sudo ras-mc-ctl --layout
+# --summary and --errors usually don't have anything
+sudo ras-mc-ctl --summary
+sudo ras-mc-ctl --errors
 ```
 
 Example of error in dmesg:

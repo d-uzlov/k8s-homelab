@@ -11,7 +11,7 @@ but it vaguely implies that you at least need to use `systemd` to run services.
 
 There are several unintuitive issues that can prevent graceful shutdown:
 
-**1. Kubelet may silently fail to register shutdown delay hook**
+# 1. Kubelet may silently fail to register shutdown delay hook
 
 First, check the list of `systemd` hooks to see if kubelet at least registered itself for graceful shutdown.
 
@@ -42,7 +42,7 @@ Uninstall `unattended-upgrades` to fix it.
 References:
 - https://github.com/kubernetes/kubernetes/issues/107043
 
-**2. You must use proper shutdown method**
+# 2. You must use proper shutdown method
 
 `/usr/sbin/shutdown` and `/usr/sbin/reboot` are aliases to `/bin/systemctl`.
 
@@ -73,7 +73,7 @@ References:
 - https://github.com/kubernetes/website/pull/26963#issuecomment-794920869
 - https://github.com/systemd/systemd/issues/949
 
-**3. Systemd did not respect shutdown lock in older versions**
+# 3. Systemd did not respect shutdown lock in older versions
 
 Apparently, you need version `248` or newer.
 I didn't test to find out real minimum version.
@@ -86,12 +86,16 @@ References:
 - https://github.com/systemd/systemd/pull/9356
 - https://github.com/systemd/systemd/commit/8885fed4e3a52cf1bf105e42043203c485ed9d92
 
-# Graceful node shutdown doesn't delete pods
+# Graceful node shutdown doesn't delete some pods
+
+Even when it works, it works poorly.
 
 References:
 - https://github.com/kubernetes/kubernetes/pull/108941
 - https://github.com/kubernetes/kubernetes/issues/113278
 - https://github.com/kubernetes/kubernetes/issues/113278#issuecomment-1406294874
+- https://github.com/kubernetes/kubernetes/issues/102818
+- https://github.com/kubernetes/kubernetes/issues/112443
 - https://stackoverflow.com/a/75761843
 - https://stackoverflow.com/questions/40296056/kubernetes-delete-all-the-pods-from-the-node-before-reboot-or-shutdown-using-k
 - https://kubernetes.io/docs/concepts/architecture/garbage-collection/

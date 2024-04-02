@@ -12,13 +12,14 @@ References:
 # Generate template
 
 ```bash
+# VIP_STUB and INTERFACE_STUB will ba replaced later, using sed
 docker run \
   --network host \
   --rm ghcr.io/kube-vip/kube-vip:v0.7.2 \
   manifest \
   pod \
-  --address REPLACE_ME_VIP \
-  --interface REPLACE_ME_INTERFACE \
+  --address VIP_STUB \
+  --interface INTERFACE_STUB \
   --controlplane \
   --arp \
   | sed -e '\|creationTimestamp|d' \
@@ -35,12 +36,12 @@ Don't run this for worker nodes.
 cp_node1=m1.k8s.lan
 # any free IP in lan
 VIP=10.3.0.255
-# corresponding interface of the node
+# corresponding interface of the node, can be different on different nodes
 INTERFACE=eth1
 
 mkdir -p ./network/kube-vip-control-plane/env/
-sed -e "s/REPLACE_ME_VIP/'$VIP'/" \
-  -e "s/REPLACE_ME_INTERFACE/$INTERFACE/" \
+sed -e "s/VIP_STUB/'$VIP'/" \
+  -e "s/INTERFACE_STUB/$INTERFACE/" \
   ./network/kube-vip-control-plane/static-pod-template.gen.yaml \
   > ./network/kube-vip-control-plane/env/$cp_node1.yaml
 ssh "$cp_node1" sudo mkdir -p /etc/kubernetes/manifests/

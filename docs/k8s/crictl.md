@@ -9,10 +9,8 @@ This way you won't have to add `--runtime-endpoint unix:///run/containerd/contai
 
 # Clear space on disk
 
-If you run many different images in k8s,
-local storage will eventually become filled with garbage images.
-
 ```bash
+# remove all currently unused images
 sudo crictl rmi --prune
 ```
 
