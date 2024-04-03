@@ -85,6 +85,13 @@ EOF' \
     --run-command 'sudo tee /lib/udev/rules.d/80-hotplug-cpu.rules << EOF
 SUBSYSTEM=="cpu", ACTION=="add", TEST=="online", ATTR{online}=="0", ATTR{online}="1"
 EOF' \
+    --run-command 'sudo tee /etc/cloud/cloud.cfg.d/99_dnsfix.cfg << EOF
+runcmd:
+- '/usr/sbin/dhclient'
+EOF' \
+    --run-command 'sudo cloud-init clean' \
+    --run-command 'sudo journalctl --rotate && sudo journalctl -m --vacuum-time=1s' \
+    --truncate /etc/hostname \
     --truncate /etc/machine-id
 ```
 - Add disk to VM
@@ -101,6 +108,37 @@ References:
 - https://bugzilla.redhat.com/show_bug.cgi?id=1554546
 - https://technotim.live/posts/cloud-init-cloud-image/
 - https://www.reddit.com/r/Proxmox/comments/1058ko7/installing_tools_into_a_cloudinit_image/
+
+# Cloud-init DHCP hostname
+
+Cloud-init expects to get the hostname via the network,
+so it first initializes the network, then sets the hostname.
+
+If you are using DHCP, DHCP will get the old hostname.
+This is inconvenient, and may cause issues with automatic DNS.
+
+```bash
+# force cloud-init to renew the DHCP lease after hostname is updated
+sudo tee /etc/cloud/cloud.cfg.d/99_dnsfix.cfg << EOF
+runcmd:
+- '/usr/sbin/dhclient'
+EOF
+```
+
+References:
+- https://forum.proxmox.com/threads/cloud-init-registering-dns-with-template-name.106726/
+- https://bugs.launchpad.net/cloud-init/+bug/1739516
+
+# Prepare existing VM to become a template
+
+Just before the last shutdown of the VM clear all identifiers:
+
+```bash
+sudo cloud-init clean &&
+sudo journalctl --rotate && sudo journalctl -m --vacuum-time=1s &&
+echo | sudo tee /etc/hostname | sudo tee /etc/machine-id &&
+sudo shutdown
+```
 
 # Perfect resource isolation
 

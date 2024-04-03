@@ -83,6 +83,14 @@ EOF
 sudo sysctl --system
 ```
 
+# Registry cache (optional)
+
+You can configure containerd to use local proxy registry,
+so that each node doesn't have to pull image over the internet.
+
+References:
+- [Containerd setup for Harbor proxy](./harbor/containerd-proxy.md)
+
 # Misc
 
 References:
