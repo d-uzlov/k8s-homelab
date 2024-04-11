@@ -53,7 +53,7 @@ kl delete ns hw-nvidia
 
 ```bash
 kl apply -f ./hardware/nvidia-device-plugin/test.yaml
-kl get pod
+kl get pod -o wide
 kl logs pods/gpu-pod
 
 kl delete -f ./hardware/nvidia-device-plugin/test.yaml

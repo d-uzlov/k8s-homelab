@@ -28,7 +28,7 @@ kl label ns --overwrite ome-player copy-wild-cert=main
 kl apply -k ./video/custom-player/ingress-wildcard/
 kl -n ome-player get ingress
 
-ome_public_domain=$(kl -n ome get ingress signal -o go-template --template "{{range .spec.rules}}{{.host}}{{end}}")
+ome_public_domain=$(kl -n ome get ingress signal -o go-template --template "{{ (index .spec.rules 0).host}}")
 sed \
     -e "s/AUTOREPLACE_SIGNAL_DOMAIN/$ome_public_domain/" \
     -e "s/AUTOREPLACE_DEFAULT_STREAM_KEYS/$(cat ./video/custom-player/content/env/key.list)/" \

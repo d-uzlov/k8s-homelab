@@ -58,7 +58,7 @@ kl apply -k ./cloud/nextcloud/ingress-wildcard/
 kl -n nextcloud get ingress
 
 # tell nextcloud to allow connections via ingress domain address
-nextcloud_public_domain=$(kl -n nextcloud get ingress nextcloud -o go-template --template "{{range .spec.rules}}{{.host}}{{end}}")
+nextcloud_public_domain=$(kl -n nextcloud get ingress nextcloud -o go-template --template "{{ (index .spec.rules 0).host}}")
 kl -n nextcloud create configmap public-domain --from-literal public_domain="$nextcloud_public_domain" -o yaml --dry-run=client | kl apply -f -
 
 kl apply -f ./cloud/nextcloud/postgres.yaml
@@ -91,7 +91,7 @@ both for downloading the app and for running the cron job.
 
 ```bash
 onlyoffice_jwt_secret=$(kl -n onlyoffice get secret onlyoffice-api --template {{.data.jwt_secret}} | base64 --decode)
-onlyoffice_public_domain=$(kl -n onlyoffice get ingress onlyoffice -o go-template --template="{{range .spec.rules}}{{.host}}{{end}}")
+onlyoffice_public_domain=$(kl -n onlyoffice get ingress onlyoffice -o go-template "{{ (index .spec.rules 0).host}}")
 kl -n nextcloud exec deployments/nextcloud -c nextcloud -i -- bash - << EOF
 set -eu
 php occ app:enable onlyoffice
@@ -120,7 +120,7 @@ kl label ns --overwrite nextcloud copy-wild-cert=main
 kl apply -k ./cloud/nextcloud/notifications/ingress-wildcard/
 kl -n nextcloud get ingress
 
-nextcloud_push_domain=$(kl -n nextcloud get ingress push-notifications -o go-template --template="{{range .spec.rules}}{{.host}}{{end}}")
+nextcloud_push_domain=$(kl -n nextcloud get ingress push-notifications -o go-template "{{ (index .spec.rules 0).host}}")
 kl -n nextcloud create configmap push --from-literal push_address="https://${nextcloud_push_domain}" -o yaml --dry-run=client | kl apply -f -
 
 kl apply -k ./cloud/nextcloud/notifications/
@@ -150,7 +150,7 @@ You can reset this:
 
 ```bash
 # list throttled ips
-db_password=$(kl -n nextcloud get secret -l nextcloud=passwords --template "{{range .items}}{{.data.mariadb_user_password}}{{end}}" | base64 --decode)
+db_password=$(kl -n nextcloud get secret -l nextcloud=passwords --template "{{ (index .items 0).data.mariadb_user_password}}" | base64 --decode)
 kl -n nextcloud exec deployments/mariadb -c mariadb -- mysql -u nextcloud -p"$db_password" --database nextcloud -e "select * from oc_bruteforce_attempts;"
 # unblock an ip-address
 kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ security:bruteforce:reset <ip-address>

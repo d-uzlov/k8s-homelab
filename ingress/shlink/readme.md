@@ -21,7 +21,7 @@ kl label ns shlink pod-security.kubernetes.io/enforce=baseline
 
 # setup ingress before this
 kl -n shlink get ingress
-shlink_public_domain=$(kl -n shlink get ingress shlink -o go-template --template "{{range .spec.rules}}{{.host}}{{end}}")
+shlink_public_domain=$(kl -n shlink get ingress shlink -o go-template --template "{{ (index .spec.rules 0).host}}")
 kl -n shlink create configmap public-domain --from-literal public_domain="$shlink_public_domain" -o yaml --dry-run=client | kl apply -f -
 
 # note: this uses `block` storage class

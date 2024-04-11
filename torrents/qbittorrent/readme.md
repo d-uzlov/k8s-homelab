@@ -4,6 +4,7 @@
 References:
 - https://github.com/qbittorrent/docker-qbittorrent-nox/
 - https://github.com/qbittorrent/qBittorrent/wiki/WebUI-API-(qBittorrent-4.1)
+- https://hub.docker.com/r/qbittorrentofficial/qbittorrent-nox
 
 # Storage setup
 
@@ -117,7 +118,7 @@ kl delete ns bt-qbittorrent
 # Fix tags on existing torrents
 
 ```bash
-qbt_domain=$(kl -n bt-qbittorrent get ingress qbittorrent -o go-template --template "{{range .spec.rules}}{{.host}}{{end}}")
+qbt_domain=$(kl -n bt-qbittorrent get ingress qbittorrent -o go-template --template "{{ (index .spec.rules 0).host}}")
 ./torrents/qbittorrent/fix-tags.sh "$qbt_domain" /mnt/finished
 ```
 
