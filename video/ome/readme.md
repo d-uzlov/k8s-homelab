@@ -129,6 +129,14 @@ You can see several `streamer` services depending on your setup.
 Just `streamer` will connect to a random available OME origin instance.
 `streamer-<something>` will connect to instance with certain capabilities.
 
+# SRT streaming
+
+You need to change stream URL in OBS:
+
+- Generic: `srt://{domain:port}/?streamid=srt://{domain:port}/{app}/{stream_key}&latency={microseconds}`
+- `domain:port` can be omitted: `srt://{domain:port}/?streamid=srt://0/{app}/{stream_key}&latency={microseconds}`
+- For example: `srt://10.0.2.4:9999/?streamid=srt://0/tc/danil&latency=15000`
+
 # Playback
 
 - Deploy [OvenPlayer](../ovenplayer/readme.md)
