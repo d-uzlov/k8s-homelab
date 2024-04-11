@@ -1,0 +1,43 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iperf3
+  namespace: iperf3
+  labels:
+    app: iperf3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: iperf3
+  template:
+    metadata:
+      labels:
+        app: iperf3
+        iperf3: server
+    spec:
+      containers:
+      - name: iperf3
+        image: docker.io/networkstatic/iperf3
+        args:
+        - -s
+        ports:
+        - name: iperf3
+          containerPort: 5201
+        resources: {}
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: iperf3
+  namespace: iperf3
+spec:
+  type: ClusterIP
+  selector:
+    iperf3: server
+  ports:
+  - name: iperf3
+    protocol: TCP
+    port: 5201
+    targetPort: iperf3

@@ -1,0 +1,32 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iperf3-client
+  namespace: iperf3
+  labels:
+    app: iperf3-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: iperf3-client
+  template:
+    metadata:
+      labels:
+        app: iperf3-client
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: iperf3
+              topologyKey: kubernetes.io/hostname
+      containers:
+      - name: iperf3
+        image: docker.io/networkstatic/iperf3
+        command: ["/bin/sh", "-c", "trap : TERM INT; sleep infinity & wait"]
+        resources: {}
