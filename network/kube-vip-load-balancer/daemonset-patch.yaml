@@ -1,9 +1,15 @@
+---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: kube-vip-ds
   namespace: kube-system
 spec:
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 100%
+      maxSurge: 0
   selector:
     matchLabels:
       app.kubernetes.io/name: kube-vip-ds
@@ -11,8 +17,10 @@ spec:
     spec:
       containers:
       - name: kube-vip
+        env:
+        - name: vip_loglevel
+          value: '5'
       tolerations:
-      - effect: NoSchedule
-        key: node-role.kubernetes.io/control-plane
+      - key: node-role.kubernetes.io/control-plane
+        effect: NoSchedule
         operator: Exists
-

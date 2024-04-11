@@ -129,3 +129,16 @@ https://docs.tigera.io/calico/latest/networking/configuring/advertise-service-ip
 
 In eBPF mode disables SNAT even for `externalTrafficPolicy: Cluster`,
 and apparently it works fine even in tunneling mode.
+
+# LoxiLB
+
+References:
+- https://www.loxilb.io/
+
+Seems to be a new software load-balancer, as of 2024.
+
+Uses eBPF, designed for high speed networking.
+Prefers to be deployed separately from workloads, and transfer traffic to other nodes.
+
+Also, apparently eBPF requires exclusive access to a cluster. So you can't use loxilb with cilium, for example.
+But you can create a separate node for loxilb, and redirect traffic to cilium cluster.

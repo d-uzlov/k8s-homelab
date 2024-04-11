@@ -4,7 +4,9 @@
 This is a load balancer for both control plane and services in the cluster.
 
 References:
+- https://kube-vip.io
 - https://github.com/kube-vip/kube-vip
+- https://github.com/kube-vip/kube-vip-cloud-provider
 
 # Create config
 
@@ -16,15 +18,17 @@ You don't need to do it if you are just deploying it.
 docker run \
   --network host \
   --rm \
-  ghcr.io/kube-vip/kube-vip:v0.6.3 \
+  docker.io/daniluzlov/k8s-snippets:kube-vip-0.7.2-nodename2 \
   manifest \
   daemonset \
+  --log 5 \
   --inCluster \
   --services \
   --arp \
   --servicesElection \
   --prometheusHTTPServer :2113 \
   | sed -e '/creationTimestamp/d' \
+  -e "s|image: .*|image: docker.io/daniluzlov/k8s-snippets:kube-vip-0.7.2-nodename3|" \
   > ./network/kube-vip-load-balancer/daemonset.gen.yaml
 ```
 
@@ -45,22 +49,18 @@ EOF
 ```bash
 kl create ns kube-vip
 
-# main app
 kl apply -k ./network/kube-vip-load-balancer/
-# cloud controller manager, required to assign external IPs to services
-kl apply -k ./network/kube-vip-load-balancer/ccm/
-# configmap for ccm
-kl apply -k ./network/kube-vip-load-balancer/ccm/cm/
+kl apply -k ./network/kube-vip-load-balancer/ip-pool-config
 
 kl -n kube-vip get pod -o wide
+kl -n kube-vip logs ds/kube-vip-ds
 ```
 
 # Cleanup
 
 ```bash
 kl delete -k ./network/kube-vip-load-balancer/
-kl delete -k ./network/kube-vip-load-balancer/ccm/cm/
-kl delete -k ./network/kube-vip-load-balancer/ccm/
+kl delete -k ./network/kube-vip-load-balancer/ip-pool-config
 kl delete ns kube-vip
 ```
 

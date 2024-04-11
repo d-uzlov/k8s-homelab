@@ -12,10 +12,10 @@ References:
 # Generate template
 
 ```bash
-# VIP_STUB and INTERFACE_STUB will ba replaced later, using sed
+# VIP_STUB and INTERFACE_STUB will be replaced later, using sed
 docker run \
   --network host \
-  --rm ghcr.io/kube-vip/kube-vip:v0.7.2 \
+  docker.io/daniluzlov/k8s-snippets:kube-vip-0.7.2-nodename2 \
   manifest \
   pod \
   --address VIP_STUB \
@@ -23,6 +23,7 @@ docker run \
   --controlplane \
   --arp \
   | sed -e '\|creationTimestamp|d' \
+  -e "s|image: .*|image: docker.io/daniluzlov/k8s-snippets:kube-vip-0.7.2-nodename3|" \
   > ./network/kube-vip-control-plane/static-pod-template.gen.yaml
 ```
 
@@ -33,7 +34,7 @@ Run this for other master nodes after `kubeadm join`.
 Don't run this for worker nodes.
 
 ```bash
-cp_node1=m1.k8s.lan
+cp_node1=m2.k8s.lan
 # any free IP in lan
 VIP=10.3.0.255
 # corresponding interface of the node, can be different on different nodes
