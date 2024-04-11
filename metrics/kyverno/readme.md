@@ -38,6 +38,8 @@ helm template \
 kl apply -k ./metrics/kyverno/crds/ --server-side
 
 kl create ns kyverno
+kl label ns kyverno pod-security.kubernetes.io/enforce=baseline
+
 kl apply -k ./metrics/kyverno/
 kl -n kyverno get pod -o wide
 
