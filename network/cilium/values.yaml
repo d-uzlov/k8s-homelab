@@ -9,14 +9,26 @@ ipam:
   operator:
     clusterPoolIPv4PodCIDRList: 10.201.0.0/16
 encryption:
-  enabled: true
+  enabled: false
+  # https://github.com/cilium/cilium/issues/28413
+  # also see test/iperf3 folder in this repo
   type: wireguard
+# automatic MTU detection seems to be working fine for me
+# MTU: 1500
 
 # -- Cilium agent update strategy
 updateStrategy:
   type: RollingUpdate
   rollingUpdate:
     maxUnavailable: 100%
+
+# native or tunnel
+routingMode: native
+ipv4NativeRoutingCIDR: 10.3.0.0/16
+autoDirectNodeRoutes: true
+# geneve or vxlan
+# vxlan doesn't support DSR
+tunnelProtocol: geneve
 
 hubble:
   tls:
@@ -34,37 +46,40 @@ l2announcements:
   leaseRenewDeadline: 5s
   # -- The timeout between retries if renewal fails
   leaseRetryPeriod: 2s
-# required for l2announcements
-externalIPs:
-  enabled: false
+
 # default values are 5/10 which is too small for the loadbalancer leader election
+# QPS = #services * (1 / leaseRenewDeadline) + 10
 k8sClientRateLimit:
+  # default is 10
   qps: 100
   burst: 200
 
-# socketLB:
-#   hostNamespaceOnly: true
+l2podAnnouncements:
+  enabled: false
+  interface: "eth0"
 
-# TODO: DRS does not work properly with tunneling:
-#   https://github.com/cilium/cilium/issues/26723#issuecomment-1628505224
-#   https://github.com/cilium/cilium/issues/27731
-#   https://github.com/cilium/cilium/issues/26407
-# if you enable loadBalancer, bpf, enableIPv4Masquerade, enableIPv6Masquerade entries,
-# load balancer services will start working as expected,
-# but connections from pods to outside world will be broken
+pmtuDiscovery:
+  enabled: true
+
+# -- Clean all eBPF datapath state from the initContainer of the cilium-agent
+# DaemonSet.
+cleanBpfState: false
+# -- Clean all local Cilium state from the initContainer of the cilium-agent
+# DaemonSet. Implies cleanBpfState: true.
+cleanState: false
+
+# required for l2announcements for .spec.externalIPs
+externalIPs:
+  enabled: true
 
 loadBalancer:
-    # mode=snat uses SNAT for services with `externalTrafficPolicy=Cluster`
-    # mode=dsr disables SNAT (preserve client IP) but reduces MTU
-    # mode=hybrid disables SNAT for TCP traffic without changing MTU but disables DSR for UDP
-  mode: snat
-  dsrDispatch: geneve
-
-# required for DSR with tunneling
-tunnelProtocol: geneve
-# autoDirectNodeRoutes: true
+  # mode=snat uses SNAT for services with `externalTrafficPolicy=Cluster`
+  # mode=dsr disables SNAT (preserve client IP) but reduces MTU
+  # mode=hybrid disables SNAT for TCP traffic without changing MTU but disables DSR for UDP
+  mode: dsr
+  # opt, ipip, geneve, default opt
+  dsrDispatch: opt
+  # acceleration: best-effort
 
 bpf:
-  masquerade: false
-# enableIPv4Masquerade: false
-# enableIPv6Masquerade: false
+  masquerade: true

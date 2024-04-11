@@ -23,25 +23,23 @@ helm template cilium cilium/cilium \
   --values ./network/cilium/values.yaml \
   --namespace cilium \
   --set k8sServiceHost=$control_plane_endpoint \
+  > ./network/cilium/cilium-native.gen.yaml
+helm template cilium cilium/cilium \
+  --version 1.15.3 \
+  --values ./network/cilium/values.yaml \
+  --namespace cilium \
+  --set k8sServiceHost=$control_plane_endpoint \
+  --set l2announcements.enable=true \
+  > ./network/cilium/cilium-native-l2lb.gen.yaml
+helm template cilium cilium/cilium \
+  --version 1.15.3 \
+  --values ./network/cilium/values.yaml \
+  --namespace cilium \
+  --set k8sServiceHost=$control_plane_endpoint \
+  --set routingMode=tunnel \
+  --set autoDirectNodeRoutes=false \
+  --set loadBalancer.dsrDispatch=geneve \
   > ./network/cilium/cilium-tunnel.gen.yaml
-helm template cilium cilium/cilium \
-  --version 1.15.3 \
-  --values ./network/cilium/values.yaml \
-  --namespace cilium \
-  --set k8sServiceHost=$control_plane_endpoint \
-  --set l2announcements.enabled=true \
-  --set externalIPs.enabled=true \
-  > ./network/cilium/cilium-tunnel-l2lb.gen.yaml
-helm template cilium cilium/cilium \
-  --version 1.15.3 \
-  --values ./network/cilium/values.yaml \
-  --namespace cilium \
-  --set k8sServiceHost=$control_plane_endpoint \
-  --set l2announcements.enabled=true \
-  --set externalIPs.enabled=true \
-  --set loadBalancer.mode=dsr \
-  --set bpf.masquerade=true \
-  > ./network/cilium/cilium-tunnel-l2lb-dsr.gen.yaml
 ```
 
 # Disable kube-proxy
@@ -57,22 +55,31 @@ kl -n kube-system patch ds kube-proxy --type=json -p='[{"op": "remove", "path": 
 
 It's possible to make Cilium coexist with kube-proxy
 if you change Cilium settings but it's more effective to replace it.
+Also, `l2lb` doesn't work without kube-proxy replacement.
 
 # Deploy
 
 ```bash
 kl create ns cilium
 
-# choose one
+# choose one of the deployment options:
+# - choose native when using a single L2 segment
+kl apply -f ./network/cilium/cilium-native.gen.yaml --server-side=true
+# - also enable L2 announcements, when not using any other load balancer provider
+kl apply -f ./network/cilium/cilium-native-l2lb.gen.yaml --server-side=true
+# - choose tunnel when nodes are in different L2 segments
+#   tunnel has worse performance than native,
+#   see test/iperf folder for details
 kl apply -f ./network/cilium/cilium-tunnel.gen.yaml --server-side=true
-kl apply -f ./network/cilium/cilium-tunnel-l2lb.gen.yaml --server-side=true
-kl apply -f ./network/cilium/cilium-tunnel-l2lb-dsr.gen.yaml --server-side=true
 
 # check that pods are running
 kl -n cilium get pod -o wide
 ```
 
-# Setup load balancer IPAM when using `l2lb` deployment
+# Setup load balancer IPAM for load balancer services
+
+Cilium picks up services without load balancer class specified,
+and services with class `io.cilium/l2-announcer`.
 
 ```bash
 mkdir -p ./network/cilium/loadbalancer/env/
@@ -85,6 +92,7 @@ EOF
 kl apply -k ./network/cilium/loadbalancer/
 kl get ciliumloadbalancerippool
 kl get ciliuml2announcementpolicy
+kl -n cilium get lease
 ```
 
 Test: [ingress example](../../test/ingress/readme.md)

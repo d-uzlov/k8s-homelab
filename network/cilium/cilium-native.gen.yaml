@@ -133,9 +133,7 @@ data:
   #   - disabled
   #   - vxlan (default)
   #   - geneve
-  # Default case
-  routing-mode: "tunnel"
-  tunnel-protocol: "vxlan"
+  routing-mode: "native"
   tunnel-protocol: "geneve"
   service-no-backend-response: "reject"
 
@@ -149,14 +147,13 @@ data:
   enable-ipv6-masquerade: "true"
   enable-bpf-masquerade: "true"
   enable-masquerade-to-route-source: "false"
-  enable-wireguard: "true"
-  wireguard-persistent-keepalive: "0s"
 
   enable-xt-socket-fallback: "true"
   install-no-conntrack-iptables-rules: "false"
 
-  auto-direct-node-routes: "false"
+  auto-direct-node-routes: "true"
   enable-local-redirect-policy: "false"
+  ipv4-native-routing-cidr: 10.3.0.0/16
 
   kube-proxy-replacement: "strict"
   kube-proxy-replacement-healthz-bind-address: ""
@@ -167,7 +164,7 @@ data:
   enable-auto-protect-node-port-range: "true"
   bpf-lb-mode: "dsr"
   bpf-lb-acceleration: "disabled"
-  bpf-lb-dsr-dispatch: "geneve"
+  bpf-lb-dsr-dispatch: "opt"
   enable-svc-source-range-check: "true"
   enable-l2-neigh-discovery: "true"
   arping-refresh-period: "30s"
@@ -204,12 +201,8 @@ data:
   vtep-cidr: ""
   vtep-mask: ""
   vtep-mac: ""
-  # Enable L2 announcements
-  enable-l2-announcements: "true"
-  l2-announcements-lease-duration: "15s"
-  l2-announcements-renew-deadline: "5s"
-  l2-announcements-retry-period: "2s"
   enable-bgp-control-plane: "false"
+  enable-pmtu-discovery: "true"
   procfs: "/host/proc"
   bpf-root: "/sys/fs/bpf"
   cgroup-root: "/run/cilium/cgroupv2"
@@ -283,16 +276,6 @@ rules:
   - get
   - list
   - watch
-- apiGroups:
-  - coordination.k8s.io
-  resources:
-  - leases
-  verbs:
-  - create
-  - get
-  - update
-  - list
-  - delete
 - apiGroups:
   - apiextensions.k8s.io
   resources:
@@ -751,7 +734,7 @@ spec:
     metadata:
       annotations:
         # ensure pods roll when configmap updates
-        cilium.io/cilium-configmap-checksum: "2d05830ad7cbe2823f0422b4cfefd5eb910407ef9add782446ed210dd7191998"
+        cilium.io/cilium-configmap-checksum: "6feea7cd7f06b8c39a6d3030d9772e424c0ef734284e5b2dcc5b8bfdc68cbd1d"
         # Set app AppArmor's profile to "unconfined". The value of this annotation
         # can be modified as long users know which profiles they have available
         # in AppArmor.
@@ -1249,7 +1232,7 @@ spec:
     metadata:
       annotations:
         # ensure pods roll when configmap updates
-        cilium.io/cilium-configmap-checksum: "2d05830ad7cbe2823f0422b4cfefd5eb910407ef9add782446ed210dd7191998"
+        cilium.io/cilium-configmap-checksum: "6feea7cd7f06b8c39a6d3030d9772e424c0ef734284e5b2dcc5b8bfdc68cbd1d"
         prometheus.io/port: "9963"
         prometheus.io/scrape: "true"
       labels:
