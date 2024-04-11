@@ -58,9 +58,9 @@ sed -e "s/REPLACE_ME_CONTROL_PLANE_ENDPOINT/$control_plane_endpoint/" \
   -e "s|REPLACE_ME_ETCD_ENDPOINT1|$etcd_endpoint1|" \
   -e "s|REPLACE_ME_ETCD_ENDPOINT2|$etcd_endpoint2|" \
   -e "s|REPLACE_ME_ETCD_ENDPOINT3|$etcd_endpoint3|" \
-  ./docs/k8s/kconf.yaml > ./docs/k8s/env/kconf.yaml
+  ./docs/k8s/kconf.yaml > ./docs/k8s/env/kconf-$control_plane_endpoint.yaml
 # review kconf.yaml before copying it to make sure everything is OK
-scp ./docs/k8s/env/kconf.yaml $cp_node1:kconf.yaml
+scp ./docs/k8s/env/kconf-$control_plane_endpoint.yaml $cp_node1:kconf.yaml
 ```
 
 # Setup cluster
