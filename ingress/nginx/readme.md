@@ -12,6 +12,14 @@ Beware of changes between versions.
 References:
 - https://github.com/kubernetes/ingress-nginx
 
+Prerequisites:
+- [cert-manager](../cert-manager/readme.md)
+- - [optional] letsencrypt provider (deploy it only after ingress-nginx setup)
+- - [optional] duckdns provider
+- [wildcard certificate](../manual-wildcard/readme.md)
+- [local DNS](../dns-k8s-gateway/readme.md)
+- - Also set up DNS forwarding for you main DNS zone
+
 # Generate config
 
 You only need to do this when updating the app.
@@ -27,10 +35,10 @@ helm show values ingress-nginx/ingress-nginx > ./ingress/nginx/default-values.ya
 helm template \
   ingress-nginx \
   ingress-nginx/ingress-nginx \
-  --version 4.8.2 \
+  --version 4.10.0 \
   --namespace ingress-nginx \
   --values ./ingress/nginx/values.yaml \
-  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/instance|d' -e '\|app.kubernetes.io/part-of|d' \
+  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/instance|d' -e '\|app.kubernetes.io/part-of|d' -e '\|app.kubernetes.io/version|d' \
   > ./ingress/nginx/nginx.gen.yaml
 ```
 
@@ -39,12 +47,15 @@ helm template \
 ```bash
 kl create ns ingress-nginx
 kl label ns ingress-nginx pod-security.kubernetes.io/enforce=baseline
+
 kl apply -k ./ingress/nginx/
 kl -n ingress-nginx get pod -o wide
 
 # get load balancer external ip for DNS or NAT port forwarding
 kl -n ingress-nginx get svc nginx-controller
 ```
+
+Don't forget to enable NAT port forwarding if needed.
 
 # Cleanup
 
