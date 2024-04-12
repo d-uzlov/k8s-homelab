@@ -36,17 +36,17 @@ You only need to do this when updating the app.
 helm repo add k8s_gateway https://ori-edge.github.io/k8s_gateway/
 helm repo update k8s_gateway
 helm search repo k8s_gateway/k8s-gateway --versions --devel | head
-helm show values k8s_gateway/k8s-gateway > ./ingress/dns-k8s-gateway/default-values.yaml
+helm show values k8s_gateway/k8s-gateway --version 2.4.0 > ./ingress/dns-k8s-gateway/default-values.yaml
 ```
 
 ```bash
 helm template \
   exdns \
   k8s_gateway/k8s-gateway \
-  --version 2.0.4 \
+  --version 2.4.0 \
   --namespace exdns \
   --values ./ingress/dns-k8s-gateway/values.yaml \
-  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/instance|d' -e '\|app.kubernetes.io/part-of|d' \
+  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/instance|d' -e '\|app.kubernetes.io/part-of|d' -e '\|app.kubernetes.io/version|d' \
   > ./ingress/dns-k8s-gateway/exdns.gen.yaml
 ```
 
@@ -55,6 +55,7 @@ helm template \
 ```bash
 kl create ns exdns
 kl label ns exdns pod-security.kubernetes.io/enforce=baseline
+
 kl apply -k ./ingress/dns-k8s-gateway/
 kl -n exdns get pod -o wide
 
@@ -69,16 +70,23 @@ kl delete -k ./ingress/dns-k8s-gateway/
 kl delete ns exdns
 ```
 
-# DNS re-routing setup
+# DNS re-routing setup in OPNSense Unbound DNS
 
-I use OPNSense with Unbound DNS plugin.
-
-There you can go to `Query Forwarding`
-and add all the domains you are interested in to the list,
+- Go to `Services -> Unbound DNS -> Query Forwarding`.
+- Add all the domains you are interested in to the list,
 pointing to load balancer address of `exdns-k8s-gateway` service.
 
-If you add `example.com` then all `*.example.com` requests
+If you add `example.duckdns.org` then all `*.example.duckdns.org` requests
 will be redirected to this deployment.
+
+# DNS re-routing setup in Technitium DNS server
+
+- Go to `Zones -> Add Zone`.
+- Type Zone name (like `example.duckdns.org`).
+- Select `Conditional Forwarding Zone`
+- Select `DNS-over-UDP`
+- Set `Forwarder` to your `exdns-k8s-gateway` service IP
+- [optional] You may also need to disable network proxy for this zone
 
 # Coredns setup for ingress loopback
 
