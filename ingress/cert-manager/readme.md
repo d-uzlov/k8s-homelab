@@ -12,16 +12,16 @@ You only need to do this when updating the app.
 helm repo add jetstack https://charts.jetstack.io
 helm repo update jetstack
 helm search repo jetstack/cert-manager --versions --devel | head
-helm show values jetstack/cert-manager > ./ingress/cert-manager/default-values.yaml
+helm show values jetstack/cert-manager --version v1.14.4 > ./ingress/cert-manager/default-values.yaml
 ```
 
 ```bash
 helm template \
   cert-manager jetstack/cert-manager \
   --values ./ingress/cert-manager/values.yaml \
-  --version v1.13.0 \
+  --version v1.14.4 \
   --namespace cert-manager \
-  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' \
+  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/version|d' \
   > ./ingress/cert-manager/cert-manager.gen.yaml
 ```
 
@@ -30,6 +30,7 @@ helm template \
 ```bash
 kl create ns cert-manager
 kl label ns cert-manager pod-security.kubernetes.io/enforce=baseline
+
 kl apply -k ./ingress/cert-manager/
 kl -n cert-manager get pod
 ```
