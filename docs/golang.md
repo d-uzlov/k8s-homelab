@@ -1,4 +1,15 @@
 
+# Install
+
+```bash
+curl -OL https://golang.org/dl/go1.22.2.linux-amd64.tar.gz &&
+rm -rf /usr/local/go &&
+sudo tar -C /usr/local -xzf go1.22.2.linux-amd64.tar.gz
+
+# if you don't have it already in path
+export PATH=$PATH:/usr/local/go/bin
+```
+
 # Enable logs in NSM
 
 ```go

@@ -36,7 +36,7 @@ so you won't lock yourself out of letsencrypt on accident.
 ```bash
 kl create ns cm-manual
 
-kl apply -k ./ingress/manual-wildcard/staging
+kl apply -k ./ingress/manual-wildcard/staging/
 
 # you can check the following resources to see if everything goes as expected
 kl -n cm-manual get certificate
@@ -46,7 +46,7 @@ kl -n cm-manual get orders.acme.cert-manager.io
 # Note that it can take LetsEncrypt several minutes to verify DNS-01 challenge and give you the certificate.
 
 # delete staging certificate after it is was successfully issued
-kl delete -k ./ingress/manual-wildcard/staging
+kl delete -k ./ingress/manual-wildcard/staging/
 # if we don't delete secret, then when we re-deploy the certificate,
 # cert-manager will see that secret already exists and skip re-issuing the certificate
 kl -n cm-manual delete secrets main-wildcard
