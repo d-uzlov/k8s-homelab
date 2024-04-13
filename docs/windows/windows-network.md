@@ -15,12 +15,13 @@ To fix this:
 - Go to IPv4 settings
 - Click Advanced
 - Uncheck `Automatic metric`
-- Set metric manually, where 0 is the highest priority
+- Set metric manually, where 1 is the highest priority and 9999 is the lowest
 
 # Show routes
 
 ```powershell
 netstat -r
+route print
 ```
 
 # Show full network config
@@ -55,3 +56,44 @@ arp -a
 # reset APR cache
 arp -d *
 ```
+
+# VLANs
+
+References:
+- https://taeffner.net/2022/04/multiple-vlans-windows-10-11-onboard-tools-hyper-v/
+- https://learn.microsoft.com/en-us/windows-server/virtualization/hyper-v/get-started/create-a-virtual-switch-for-hyper-v-virtual-machines?tabs=powershell
+
+```powershell
+# find NetAdapterName (first column)
+Get-NetAdapter
+
+New-VMSwitch -name VLAN-vSwitch -NetAdapterName "Ethernet 5" -AllowManagementOS $true
+# in case something goes wrong you can simply delete vSwitch to undo changes
+Remove-VMSwitch VLAN-vSwitch
+
+# remove native VLAN port in case you don't need it
+# skip it if you are using native VLAN
+Remove-VMNetworkAdapter -ManagementOS -Name VLAN-vSwitch
+
+# name can be arbitrary, we only use vlan prefix for convenience
+Add-VMNetworkAdapter -ManagementOS -Name VLAN2-storage -SwitchName VLAN-vSwitch -Passthru
+Set-VMNetworkAdapterVlan -ManagementOS -VMNetworkAdapterName VLAN2-storage -Access -VlanId 2
+
+Add-VMNetworkAdapter -ManagementOS -Name VLAN3-k8s -SwitchName VLAN-vSwitch -Passthru
+Set-VMNetworkAdapterVlan -ManagementOS -VMNetworkAdapterName VLAN3-k8s -Access -VlanId 3
+
+Add-VMNetworkAdapter -ManagementOS -Name VLAN5-guest -SwitchName VLAN-vSwitch -Passthru
+Set-VMNetworkAdapterVlan -ManagementOS -VMNetworkAdapterName VLAN5-guest -Access -VlanId 5
+
+# check results
+Get-NetAdapter
+```
+
+In automatic setup I encountered MTU issues preventing anything from working.
+
+In native connection `ping 10.0.0.1 -l 1462` was working fine.
+In hyper-v vSwitch setup at most `ping 10.0.0.1 -l 1458` worked.
+
+I found 2 solutions:
+- Set `Encapsulation overhead` on the parent interface to at least 32 (the lowest possible value aside from 0)
+- Increate MTU on the parent interface
