@@ -23,6 +23,7 @@ helm template cilium cilium/cilium \
   --values ./network/cilium/values.yaml \
   --namespace cilium \
   --set k8sServiceHost=$control_plane_endpoint \
+  --api-versions gateway.networking.k8s.io/v1/GatewayClass \
   > ./network/cilium/cilium-native.gen.yaml
 helm template cilium cilium/cilium \
   --version 1.15.3 \
@@ -30,6 +31,7 @@ helm template cilium cilium/cilium \
   --namespace cilium \
   --set k8sServiceHost=$control_plane_endpoint \
   --set l2announcements.enable=true \
+  --api-versions gateway.networking.k8s.io/v1/GatewayClass \
   > ./network/cilium/cilium-native-l2lb.gen.yaml
 helm template cilium cilium/cilium \
   --version 1.15.3 \
@@ -39,6 +41,7 @@ helm template cilium cilium/cilium \
   --set routingMode=tunnel \
   --set autoDirectNodeRoutes=false \
   --set loadBalancer.dsrDispatch=geneve \
+  --api-versions gateway.networking.k8s.io/v1/GatewayClass \
   > ./network/cilium/cilium-tunnel.gen.yaml
 ```
 
@@ -60,7 +63,7 @@ Also, `l2lb` doesn't work without kube-proxy replacement.
 # Deploy
 
 ```bash
-kl create ns cilium
+kl create ns cilium cilium-secrets
 
 # choose one of the deployment options:
 # - choose native when using a single L2 segment
@@ -101,6 +104,17 @@ References:
 - https://docs.cilium.io/en/latest/network/l2-announcements/
 - https://docs.cilium.io/en/stable/network/lb-ipam/#lb-ipam
 - https://github.com/cilium/cilium/issues/26586
+
+# Set up gateway
+
+Make sure to deploy reference grant
+for the main wildcard certificate before deploying the gateway.
+
+```bash
+kl create ns gateways
+kl apply -f ./network/cilium/gateway.yaml
+kl -n gateways describe gateway main
+```
 
 # Cleanup
 

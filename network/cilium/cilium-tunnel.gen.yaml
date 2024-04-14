@@ -62,6 +62,10 @@ data:
   # is scheduled.
   operator-prometheus-serve-addr: ":9963"
   enable-metrics: "true"
+  enable-envoy-config: "true"
+  enable-gateway-api: "true"
+  enable-gateway-api-secrets-sync: "true"
+  gateway-api-secrets-namespace: "cilium-secrets"
 
   # Enable IPv4 addressing. If enabled, all endpoints are allocated an IPv4
   # address.
@@ -410,6 +414,7 @@ rules:
   resources:
   # to check apiserver connectivity
   - namespaces
+  - secrets
   verbs:
   - get
   - list
@@ -424,6 +429,10 @@ rules:
   - get
   - list
   - watch
+  - create
+  - update
+  - delete
+  - patch
 - apiGroups:
   - cilium.io
   resources:
@@ -574,6 +583,31 @@ rules:
   - create
   - get
   - update
+- apiGroups:
+  - gateway.networking.k8s.io
+  resources:
+  - gatewayclasses
+  - gateways
+  - tlsroutes
+  - httproutes
+  - grpcroutes
+  - referencegrants
+  - referencepolicies
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - gateway.networking.k8s.io
+  resources:
+  - gatewayclasses/status
+  - gateways/status
+  - httproutes/status
+  - grpcroutes/status
+  - tlsroutes/status
+  verbs:
+  - update
+  - patch
 ---
 # Source: cilium/templates/hubble/tls-cronjob/clusterrole.yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -675,6 +709,43 @@ rules:
   - list
   - watch
 ---
+# Source: cilium/templates/cilium-agent/role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: cilium-gateway-secrets
+  namespace: "cilium-secrets"
+  labels:
+    app.kubernetes.io/part-of: cilium
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+---
+# Source: cilium/templates/cilium-operator/role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: cilium-operator-gateway-secrets
+  namespace: "cilium-secrets"
+  labels:
+    app.kubernetes.io/part-of: cilium
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - delete
+  - update
+  - patch
+---
 # Source: cilium/templates/cilium-agent/rolebinding.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -691,6 +762,40 @@ subjects:
   - kind: ServiceAccount
     name: "cilium"
     namespace: cilium
+---
+# Source: cilium/templates/cilium-agent/rolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cilium-gateway-secrets
+  namespace: "cilium-secrets"
+  labels:
+    app.kubernetes.io/part-of: cilium
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: cilium-gateway-secrets
+subjects:
+- kind: ServiceAccount
+  name: "cilium"
+  namespace: cilium
+---
+# Source: cilium/templates/cilium-operator/rolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cilium-operator-gateway-secrets
+  namespace: "cilium-secrets"
+  labels:
+    app.kubernetes.io/part-of: cilium
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: cilium-operator-gateway-secrets
+subjects:
+- kind: ServiceAccount
+  name: "cilium-operator"
+  namespace: cilium
 ---
 # Source: cilium/templates/hubble/peer-service.yaml
 apiVersion: v1
@@ -734,7 +839,7 @@ spec:
     metadata:
       annotations:
         # ensure pods roll when configmap updates
-        cilium.io/cilium-configmap-checksum: "20f400a0352f2983fd31e83004b784f36aa76f4a2a38632f8ee5818c1b94b981"
+        cilium.io/cilium-configmap-checksum: "d0cb5a1ecc541a0a816197af683c2a485623e7aa3ce70a7a090b5f7d7da24017"
         # Set app AppArmor's profile to "unconfined". The value of this annotation
         # can be modified as long users know which profiles they have available
         # in AppArmor.
@@ -1232,7 +1337,7 @@ spec:
     metadata:
       annotations:
         # ensure pods roll when configmap updates
-        cilium.io/cilium-configmap-checksum: "20f400a0352f2983fd31e83004b784f36aa76f4a2a38632f8ee5818c1b94b981"
+        cilium.io/cilium-configmap-checksum: "d0cb5a1ecc541a0a816197af683c2a485623e7aa3ce70a7a090b5f7d7da24017"
         prometheus.io/port: "9963"
         prometheus.io/scrape: "true"
       labels:
@@ -1368,6 +1473,14 @@ spec:
           restartPolicy: OnFailure
           affinity:
       ttlSecondsAfterFinished: 1800
+---
+# Source: cilium/templates/cilium-gateway-api-class.yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: cilium
+spec:
+  controllerName: io.cilium/gateway-controller
 ---
 # Source: cilium/templates/hubble/tls-cronjob/job.yaml
 apiVersion: batch/v1

@@ -80,6 +80,8 @@ kl create ns cm-manual
 kl apply -k ./ingress/manual-wildcard/production/
 
 kl -n cm-manual get certificate
+
+kl apply -n cm-manual -f ./ingress/manual-wildcard/reference-grant.yaml
 ```
 
 # Avoid re-creating production certificate when re-creating cluster
