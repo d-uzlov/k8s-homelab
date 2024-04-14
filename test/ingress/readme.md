@@ -36,11 +36,19 @@ kl -n ingress-test get svc echo-lb-cluster echo-lb-local
 curl $(kl -n ingress-test get svc echo-lb-cluster -o go-template --template "{{ (index .status.loadBalancer.ingress 0).ip}}")
 curl $(kl -n ingress-test get svc echo-lb-local -o go-template --template "{{ (index .status.loadBalancer.ingress 0).ip}}")
 kl -n ingress-test logs deployments/echo
+
+kl apply -k ./test/ingress/httproute/
+kl -n ingress-test get httproute echo
+kl -n ingress-test describe httproute echo
+test_domain=$(kl -n ingress-test get httproute echo -o go-template --template "{{ (index .spec.hostnames 0) }}")
+curl "$test_domain"
+curl "https://$test_domain/" && ! curl -s -D- "https://$test_domain/" | grep strict-transport-security
 ```
 
 # Cleanup
 
 ```bash
+kl delete -k ./test/ingress/httproute/
 kl delete -k ./test/ingress/wildcard
 kl delete -k ./test/ingress/http01/
 kl delete -k ./test/ingress/loadbalancer/
