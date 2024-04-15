@@ -5,10 +5,19 @@ References:
 - https://github.com/openspeedtest/Docker-Image
 - https://hub.docker.com/r/openspeedtest/latest
 
+Issues:
+
+- For ingress it shows unlimited upload speed
+- For gateway it show very slow upload speed
+
+Apparently, it could be fixed by using HTTP 1.1 instead of HTTP 2.0.
+But it's impossible to disable http2 for a single ingress.
+
 # Deploy
 
 ```bash
 kl create ns openspeedtest
+kl label ns openspeedtest pod-security.kubernetes.io/enforce=baseline
 
 # setup wildcard ingress
 kl label ns --overwrite openspeedtest copy-wild-cert=main
@@ -19,16 +28,20 @@ kl -n openspeedtest get ingress
 kl apply -k ./test/speedtest/openspeedtest/loadbalancer/
 kl -n openspeedtest get svc lb
 
+kl apply -k ./test/speedtest/openspeedtest/httproute/
+kl -n openspeedtest get httproute openspeedtest
+kl -n openspeedtest describe httproute openspeedtest
+
 kl apply -k ./test/speedtest/openspeedtest/
-kl -n openspeedtest get pod
+kl -n openspeedtest get pod -o wide
 ```
 
-# Issues
+# Cleanup
 
-This test seems to show unlimited upload speed for some reason.
-For example: DL 950, UL 120000, while the physical network is 1 GBit/s.
-
-Also it seems to automatically upload results to `openspeedtest.com`.
-
-Apparently this is caused by http2, but it's impossible to disable http2 for one ingress only,
-it needs to be disabled globally for the whole ingress controller.
+```bash
+kl delete -k ./test/speedtest/openspeedtest/
+kl delete -k ./test/speedtest/openspeedtest/ingress-wildcard/
+kl delete -k ./test/speedtest/openspeedtest/httproute/
+kl delete -k ./test/speedtest/openspeedtest/loadbalancer/
+kl delete ns openspeedtest
+```
