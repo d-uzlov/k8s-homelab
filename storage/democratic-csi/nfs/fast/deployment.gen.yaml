@@ -198,7 +198,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/configmap: 27a704d0d20dc7d0736b456ef4bc5b9f0761aa3e33aaf5363df05c8725dfab65
+        checksum/configmap: 984814d7e70a122f6ae2951271ca1f1f1a3040c53e5c87ef2e02846fcd86cd5f
       labels:
         app.kubernetes.io/name: dnfsf
         app.kubernetes.io/csi-role: "node"
@@ -213,7 +213,8 @@ spec:
       hostPID: false
       containers:
       - name: csi-driver
-        image: docker.io/democraticcsi/democratic-csi:latest
+        image: docker.io/democraticcsi/democratic-csi:v1.9.0
+        imagePullPolicy: IfNotPresent
         args:
         - --csi-version=1.5.0
         - --csi-name=org.democratic-csi.nfs.fast
@@ -282,7 +283,7 @@ spec:
         - name: extra-ca-certs
           mountPath: /tmp/certs
       - name: csi-proxy
-        image: docker.io/democraticcsi/csi-grpc-proxy:v0.5.3
+        image: docker.io/democraticcsi/csi-grpc-proxy:v0.5.6
         resources:
           limits:
             memory: 22Mi
@@ -298,7 +299,7 @@ spec:
         - mountPath: /csi-data
           name: socket-dir
       - name: driver-registrar
-        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.8.0
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.9.0
         args:
         - --v=5
         - --csi-address=/csi-data/csi.sock
@@ -338,7 +339,6 @@ spec:
           - "-c"
           - "--"
         args: [ "while true; do sleep 2; done;" ]
-
         lifecycle:
           # note this runs *before* other containers are terminated
           preStop:
@@ -423,7 +423,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/configmap: 27a704d0d20dc7d0736b456ef4bc5b9f0761aa3e33aaf5363df05c8725dfab65
+        checksum/configmap: 984814d7e70a122f6ae2951271ca1f1f1a3040c53e5c87ef2e02846fcd86cd5f
       labels:
         app.kubernetes.io/name: dnfsf
         app.kubernetes.io/csi-role: "controller"
@@ -436,7 +436,7 @@ spec:
       containers:
       # https://github.com/kubernetes-csi/external-attacher
       - name: external-attacher
-        image: registry.k8s.io/sig-storage/csi-attacher:v4.3.0
+        image: registry.k8s.io/sig-storage/csi-attacher:v4.4.0
         args:
         - --v=5
         - --leader-election
@@ -454,7 +454,7 @@ spec:
           name: socket-dir
       # https://github.com/kubernetes-csi/external-provisioner
       - name: external-provisioner
-        image: registry.k8s.io/sig-storage/csi-provisioner:v3.5.0
+        image: registry.k8s.io/sig-storage/csi-provisioner:v3.6.0
         args:
         - --v=5
         - --leader-election
@@ -489,7 +489,7 @@ spec:
               fieldPath: metadata.name
       # https://github.com/kubernetes-csi/external-resizer
       - name: external-resizer
-        image: registry.k8s.io/sig-storage/csi-resizer:v1.8.0
+        image: registry.k8s.io/sig-storage/csi-resizer:v1.9.0
         args:
         - --v=5
         - --leader-election
@@ -526,7 +526,7 @@ spec:
       #  - https://github.com/rook/rook/issues/4178
       #  - https://github.com/kubernetes-csi/external-snapshotter/issues/147#issuecomment-513664310
       - name: external-snapshotter
-        image: registry.k8s.io/sig-storage/csi-snapshotter:v6.2.2
+        image: registry.k8s.io/sig-storage/csi-snapshotter:v6.3.0
         args:
         - --v=5
         - --leader-election
@@ -559,7 +559,8 @@ spec:
               apiVersion: v1
               fieldPath: metadata.name
       - name: csi-driver
-        image: docker.io/democraticcsi/democratic-csi:latest
+        image: docker.io/democraticcsi/democratic-csi:v1.9.0
+        imagePullPolicy: IfNotPresent
         args:
         - --csi-version=1.5.0
         - --csi-name=org.democratic-csi.nfs.fast
@@ -594,7 +595,7 @@ spec:
         - name: extra-ca-certs
           mountPath: /tmp/certs
       - name: csi-proxy
-        image: docker.io/democraticcsi/csi-grpc-proxy:v0.5.3
+        image: docker.io/democraticcsi/csi-grpc-proxy:v0.5.6
         resources:
           limits:
             memory: 22Mi
@@ -640,6 +641,7 @@ metadata:
 spec:
   attachRequired: true
   podInfoOnMount: true
+  # https://kubernetes.io/blog/2020/12/14/kubernetes-release-1.20-fsgroupchangepolicy-fsgrouppolicy/
   #  added in Kubernetes 1.16
   #  volumeLifecycleModes:
   #  - Persistent

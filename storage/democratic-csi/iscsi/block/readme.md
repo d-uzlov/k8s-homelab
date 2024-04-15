@@ -7,14 +7,14 @@ You only need to do this if you change `values.yaml` file.
 helm repo add democratic-csi https://democratic-csi.github.io/charts/
 helm repo update democratic-csi
 helm search repo democratic-csi/democratic-csi --versions --devel | head
-helm show values democratic-csi/democratic-csi > ./storage/democratic-csi/default-values.yaml
+helm show values democratic-csi/democratic-csi --version 0.14.6 > ./storage/democratic-csi/default-values.yaml
 ```
 
 ```bash
 helm template \
   discsi \
   democratic-csi/democratic-csi \
-  --version 0.14.1 \
+  --version 0.14.6 \
   --values ./storage/democratic-csi/iscsi/values.yaml \
   --namespace pv-discsi \
   --set nameOverride=discsi \
@@ -64,11 +64,13 @@ sed \
 
 ```bash
 kl create ns pv-discsi
+kl label ns pv-discsi pod-security.kubernetes.io/enforce=privileged
+
 kl apply -k ./storage/democratic-csi/iscsi/block/
 # make sure that all democratic-csi pods are running
 # there can be some restarts at first,
 # but eventually it should be running without restarts
-kl -n pv-discsi get pod
+kl -n pv-discsi get pod -o wide
 ```
 
 # Cleanup
@@ -85,27 +87,19 @@ kl apply -f ./storage/democratic-csi/iscsi/block/test.yaml
 # make sure that PVCs are provisioned
 kl get pvc
 # make sure that test pod is running
-kl get pod
+kl get pod -o wide
 
 # if there are issues, you can try to check logs
 kl describe pvc test-iscsi-block
 kl -n pv-discsi logs deployments/discsi-controller csi-driver --tail 20
+kl describe pod -l app=test-iscsi-block
 
-# check contents of mounted folder, create a test file
+# check mounted file system
+kl exec deployments/test-iscsi-block -- mount | grep /mnt/data
+kl exec deployments/test-iscsi-block -- df -h /mnt/data
 kl exec deployments/test-iscsi-block -- touch /mnt/data/test-file
 kl exec deployments/test-iscsi-block -- ls -laF /mnt/data
-kl exec deployments/test-iscsi-block -- mount | grep /mnt/data
+
 # cleanup resources
 kl delete -f ./storage/democratic-csi/iscsi/block/test.yaml
 ```
-
-Sometimes you can get a strange error
-"volume has already been created with a different size: -".
-Obviously, volume is not created, and volume can't have size `-`.
-
-I observer this error when I deployed controller
-while there were config issues on Truenas side, and controller was failing to start,
-then I fixed the issues, controller successfully started,
-but it failed to provision PVCs with the error as above.
-
-This error can be fixed by deleting controller pod.

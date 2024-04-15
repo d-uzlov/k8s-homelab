@@ -10,6 +10,9 @@ Democratic-CSI requires you to create a separate controller for each storage loc
 All deployments here assume that you are using Truenas Scale for storage.
 Democratic-CSI supports other storage providers but there are no configs for them here.
 
+References:
+- https://github.com/democratic-csi/democratic-csi
+
 # Guides
 
 References:
