@@ -14,19 +14,19 @@ You need to regenerate the deployment if you use control plane endpoint other th
 helm repo add cilium https://helm.cilium.io/
 helm repo update cilium
 helm search repo cilium/cilium --versions --devel | head
-helm show values cilium/cilium --version 1.15.3 > ./network/cilium/default-values.yaml
+helm show values cilium/cilium --version 1.15.4 > ./network/cilium/default-values.yaml
 
 # replace with your value
 control_plane_endpoint=cp.k8s.lan
 helm template cilium cilium/cilium \
-  --version 1.15.3 \
+  --version 1.15.4 \
   --values ./network/cilium/values.yaml \
   --namespace cilium \
   --set k8sServiceHost=$control_plane_endpoint \
   --api-versions gateway.networking.k8s.io/v1/GatewayClass \
   > ./network/cilium/cilium-native.gen.yaml
 helm template cilium cilium/cilium \
-  --version 1.15.3 \
+  --version 1.15.4 \
   --values ./network/cilium/values.yaml \
   --namespace cilium \
   --set k8sServiceHost=$control_plane_endpoint \
@@ -34,7 +34,7 @@ helm template cilium cilium/cilium \
   --api-versions gateway.networking.k8s.io/v1/GatewayClass \
   > ./network/cilium/cilium-native-l2lb.gen.yaml
 helm template cilium cilium/cilium \
-  --version 1.15.3 \
+  --version 1.15.4 \
   --values ./network/cilium/values.yaml \
   --namespace cilium \
   --set k8sServiceHost=$control_plane_endpoint \
@@ -161,6 +161,7 @@ function cilium() {
 }
 # check that the tool works
 cilium status
+cilium version
 
 cilium connectivity test
 ```
