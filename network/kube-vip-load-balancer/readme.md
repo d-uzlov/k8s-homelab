@@ -79,6 +79,26 @@ References:
 - https://github.com/kube-vip/kube-vip/issues/282
 - https://github.com/kubernetes/client-go/blob/v0.27.2/tools/leaderelection/leaderelection.go#L111
 
+# Lease delay
+
+If you prefer that some nodes don't advertise IPs you can annotate
+these nodes to add delay to service leader election.
+Nodes with higher delay are less likely to get the lease,
+and therefore less likely to advertise service IP.
+
+This does not disable services on this node.
+If this node is the only one that has local endpoints,
+and service specifies `externalTrafficPolicy: Local`,
+this node will still get the lease, and will advertise the load balancer address.
+
+This is a custom patch to kube-vip, it is not available in the official images.
+
+```bash
+kl annotate node m1.k8s.lan --overwrite kube-vip.io/ElectionDelayMs=200
+
+kl get node -o custom-columns='NAME:metadata.name,ELECTION DELAY:metadata.annotations.kube-vip\.io/ElectionDelayMs'
+```
+
 # DHCP and UPnP
 
 Kube-vip supports allocating IPs for LoadBalancer services from DHCP server.
