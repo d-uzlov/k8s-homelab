@@ -112,9 +112,15 @@ for the main wildcard certificate before deploying the gateway.
 
 ```bash
 kl create ns gateways
+
 kl apply -f ./network/cilium/gateway.yaml
 kl -n gateways describe gateway main
+
+kl -n gateways get gateway
 ```
+
+References:
+- https://docs.cilium.io/en/stable/network/servicemesh/gateway-api/gateway-api/
 
 # Cleanup
 

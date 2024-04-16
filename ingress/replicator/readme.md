@@ -4,6 +4,7 @@
 This app can automatically copy secrets and config maps between namespaces based on annotations.
 
 References:
+- https://github.com/mittwald/kubernetes-replicator
 - https://github.com/mittwald/kubernetes-replicator#push-based-replication
 
 # Generate config

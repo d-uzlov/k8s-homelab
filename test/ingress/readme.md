@@ -4,6 +4,8 @@
 ```bash
 kl create ns ingress-test
 kl label ns ingress-test pod-security.kubernetes.io/enforce=baseline
+kl -n ingress-test apply -f ./network/default-network-policies.yaml
+kl apply -f ./test/ingress/network-policy.yaml
 
 # choose one of:
 # deploy echo server
@@ -40,8 +42,9 @@ kl -n ingress-test logs deployments/echo
 kl apply -k ./test/ingress/httproute/
 kl -n ingress-test get httproute echo
 kl -n ingress-test describe httproute echo
+
 test_domain=$(kl -n ingress-test get httproute echo -o go-template --template "{{ (index .spec.hostnames 0) }}")
-curl "$test_domain"
+curl -v "$test_domain"
 curl "https://$test_domain/" && ! curl -s -D- "https://$test_domain/" | grep strict-transport-security
 ```
 
