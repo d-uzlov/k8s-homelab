@@ -22,13 +22,21 @@ If you don't want to use default keys, make the file empty.
 ```bash
 kl create ns ome-player
 kl label ns ome-player pod-security.kubernetes.io/enforce=baseline
+kl -n ome-player apply -f ./network/default-network-policies.yaml
+kl apply -f ./video/custom-player/network-policy.yaml
 
 # setup wildcard ingress
 kl label ns --overwrite ome-player copy-wild-cert=main
 kl apply -k ./video/custom-player/ingress-wildcard/
 kl -n ome-player get ingress
 
+kl apply -k ./video/custom-player/ingress-route/
+kl -n ome-player describe httproute
+kl -n ome-player get httproute
+
+# choose one depending on what you used for the main OME app
 ome_public_domain=$(kl -n ome get ingress signal -o go-template --template "{{ (index .spec.rules 0).host}}")
+ome_public_domain=$(kl -n ome get httproute signal -o go-template --template "{{ (index .spec.hostnames 0)}}")
 sed \
     -e "s/AUTOREPLACE_SIGNAL_DOMAIN/$ome_public_domain/" \
     -e "s/AUTOREPLACE_DEFAULT_STREAM_KEYS/$(cat ./video/custom-player/content/env/key.list)/" \
