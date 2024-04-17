@@ -41,6 +41,7 @@ helm template cilium cilium/cilium \
   --set routingMode=tunnel \
   --set autoDirectNodeRoutes=false \
   --set loadBalancer.dsrDispatch=geneve \
+  --set ipv4NativeRoutingCIDR= \
   --api-versions gateway.networking.k8s.io/v1/GatewayClass \
   > ./network/cilium/cilium-tunnel.gen.yaml
 ```

@@ -1,45 +1,28 @@
 
 kubeProxyReplacement: true
 k8sServicePort: 6443
-rollOutCiliumPods: true
-operator:
-  rollOutPods: true
+
+# native or tunnel
+routingMode: native
+tunnelProtocol: geneve
+# https://docs.cilium.io/en/latest/network/concepts/masquerading/
+ipv4NativeRoutingCIDR: 10.201.0.0/16
+autoDirectNodeRoutes: true
+# geneve or vxlan
+# vxlan doesn't support DSR
 ipam:
   mode: cluster-pool
   operator:
     clusterPoolIPv4PodCIDRList: 10.201.0.0/16
+# automatic MTU detection seems to be working fine for me
+# MTU: 1500
+bpf:
+  masquerade: true
 encryption:
   enabled: false
   # https://github.com/cilium/cilium/issues/28413
   # also see test/iperf3 folder in this repo
   type: wireguard
-# automatic MTU detection seems to be working fine for me
-# MTU: 1500
-
-# -- Cilium agent update strategy
-updateStrategy:
-  type: RollingUpdate
-  rollingUpdate:
-    maxUnavailable: 100%
-
-# native or tunnel
-routingMode: native
-ipv4NativeRoutingCIDR: 10.3.0.0/16
-autoDirectNodeRoutes: true
-# geneve or vxlan
-# vxlan doesn't support DSR
-tunnelProtocol: geneve
-
-envoy:
-  enabled: true
-
-hubble:
-  tls:
-    auto:
-      enabled: true
-      # renew certificates automatically
-      # remove certificates from generated .gen.yaml file
-      method: cronJob
 
 l2announcements:
   enabled: false
@@ -57,35 +40,25 @@ k8sClientRateLimit:
   qps: 100
   burst: 200
 
+envoy:
+  enabled: false
 l2podAnnouncements:
   enabled: false
   interface: "eth0"
-
 pmtuDiscovery:
   enabled: true
-
-# -- Clean all eBPF datapath state from the initContainer of the cilium-agent
-# DaemonSet.
-cleanBpfState: false
-# -- Clean all local Cilium state from the initContainer of the cilium-agent
-# DaemonSet. Implies cleanBpfState: true.
-cleanState: false
-
 # required for l2announcements for .spec.externalIPs
 externalIPs:
   enabled: true
 
 loadBalancer:
   # mode=snat uses SNAT for services with `externalTrafficPolicy=Cluster`
-  # mode=dsr disables SNAT (preserve client IP) but reduces MTU
-  # mode=hybrid disables SNAT for TCP traffic without changing MTU but disables DSR for UDP
+  # mode=dsr disables SNAT (preserves client IP) but reduces MTU for UDP traffic
+  # mode=hybrid disables SNAT for TCP but keeps it for UDP
   mode: dsr
   # opt, ipip, geneve, default opt
   dsrDispatch: opt
   # acceleration: best-effort
-
-bpf:
-  masquerade: true
 
 gatewayAPI:
   # This will automatically set enable-envoy-config as well.
@@ -97,3 +70,20 @@ gatewayAPI:
     # -- Enable secret sync, which will make sure all TLS secrets used by Ingress are synced to secretsNamespace.name.
     # If disabled, TLS secrets must be maintained externally.
     sync: true
+
+hubble:
+  tls:
+    auto:
+      enabled: true
+      # renew certificates automatically
+      # remove certificates from generated .gen.yaml file
+      method: cronJob
+
+rollOutCiliumPods: true
+operator:
+  rollOutPods: true
+# -- Cilium agent update strategy
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 100%
