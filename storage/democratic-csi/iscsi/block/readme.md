@@ -65,6 +65,7 @@ sed \
 ```bash
 kl create ns pv-discsi
 kl label ns pv-discsi pod-security.kubernetes.io/enforce=privileged
+kl -n pv-discsi apply -f ./network/default-network-policies.yaml
 
 kl apply -k ./storage/democratic-csi/iscsi/block/
 # make sure that all democratic-csi pods are running

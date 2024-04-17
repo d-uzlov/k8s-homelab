@@ -65,6 +65,7 @@ sed \
 ```bash
 kl create ns pv-dnfsf
 kl label ns pv-dnfsf pod-security.kubernetes.io/enforce=privileged
+kl -n pv-dnfsf apply -f ./network/default-network-policies.yaml
 
 kl apply -k ./storage/democratic-csi/nfs/fast/
 # make sure that all democratic-csi pods are running
