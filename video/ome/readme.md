@@ -28,6 +28,12 @@ EOF
 ```bash
 kl create ns ome
 kl label ns ome pod-security.kubernetes.io/enforce=baseline
+kl -n ome apply -f ./network/default-network-policies.yaml
+kl apply -f ./video/ome/network-policies/allow-streamer.yaml
+# if you are using edge server
+kl apply -f ./video/ome/network-policies/allow-viewer-edge.yaml
+# if you don't use edge server
+kl apply -f ./video/ome/network-policies/allow-viewer-origin.yaml
 
 # create generic 'streamer' service for streamer side
 # points to any origin instance
@@ -42,6 +48,10 @@ kl -n ome get svc
 kl label ns --overwrite ome copy-wild-cert=main
 kl apply -k ./video/ome/ingress-wildcard/
 kl -n ome get ingress
+
+kl apply -k ./video/ome/ingress-route/
+kl -n ome describe httproute
+kl -n ome get httproute
 
 kl apply -k ./video/ome/redis/
 
@@ -78,12 +88,13 @@ kl delete ns ome
 
 # Edge debug
 
-First of all, restart the stream. Sometimes stream just doesn't get registered, and restart helps.
-
 ```bash
+# First of all, restart the stream. Sometimes stream just doesn't get registered, and restart helps.
 # check that redis contains a record for your stream
 redis_pass=$(kl -n ome get secret redis-password --template "{{.data.redis_password}}" | base64 --decode)
 kl -n ome exec deployments/redis -- redis-cli -a "$redis_pass" keys "*"
+
+kl -n ome logs deployments/ome-edge
 ```
 
 # Hardware acceleration on NVidia GPUs
