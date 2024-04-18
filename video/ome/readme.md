@@ -8,7 +8,7 @@ References:
 - https://github.com/AirenSoft/OvenMediaEngine
 - https://airensoft.gitbook.io/ovenmediaengine/getting-started/getting-started-with-docker
 
-# Config setup
+# Deploy
 
 Generate passwords and set up config.
 
@@ -28,61 +28,58 @@ EOF
 ```bash
 kl create ns ome
 kl label ns ome pod-security.kubernetes.io/enforce=baseline
-kl -n ome apply -f ./network/default-network-policies.yaml
-kl apply -f ./video/ome/network-policies/allow-streamer.yaml
-# if you are using edge server
-kl apply -f ./video/ome/network-policies/allow-viewer-edge.yaml
-# if you don't use edge server
-kl apply -f ./video/ome/network-policies/allow-viewer-origin.yaml
 
-# create generic 'streamer' service for streamer side
-# points to any origin instance
+kl -n ome apply -f ./network/network-policies/deny-ingress.yaml
+kl -n ome apply -f ./network/network-policies/allow-same-namespace.yaml
+
+# for any deployment
 kl apply -k ./video/ome/svc-streamer/
-# Create viewer services that can point to any OME instance.
-# Use only when running a single origin instance, else watching won't work.
-kl apply -k ./video/ome/svc-indifferent/
 
-kl -n ome get svc
-
-# setup wildcard ingress
-kl label ns --overwrite ome copy-wild-cert=main
-kl apply -k ./video/ome/ingress-wildcard/
-kl -n ome get ingress
-
-kl apply -k ./video/ome/ingress-route/
-kl -n ome describe httproute
-kl -n ome get httproute
-
-kl apply -k ./video/ome/redis/
-
-# Choose one to use as standalone deployment, with only a single replica.
-# Alternatively, you can set up both, or scale standalone deployment,
-# and add Edge deployment to properly manage access for viewers.
+# origin deployment
+# choose one configuration, or deploy several configs
 kl apply -k ./video/ome/origin-cpu/
 kl apply -k ./video/ome/origin-nvidia/
-kl apply -k ./video/ome/origin-intel/
 
-# Required when using several Origin instances
+# only works with a single origin instance
+kl apply -k ./video/ome/svc-viewer-origin/
+
+# works with any amount of origins but more complex
 kl apply -k ./video/ome/edge/
-# svc-edge configures viewer services to point to edge deployment
-kl apply -k ./video/ome/svc-edge/
+kl apply -k ./video/ome/svc-viewer-edge/
+kl apply -k ./video/ome/redis/
+# restart origin servers, or they won't connect to redis
+kl -n ome delete pod -l app=ovenmediaengine,ome-type=origin
 # Edge should not be scaled!
 # If you have 2 replicas, and control plane connection (`viewer` svc via ingress)
 # and data plane connection (`webrtc` svc) connect to different instances, issues are very likely.
 # Scaling is only possible if you create a different deployment, with separate ingress and webrtc svc.
 
+# if you are using ingress
+kl label ns --overwrite ome copy-wild-cert=main
+kl apply -k ./video/ome/ingress-wildcard/
+kl -n ome get ingress
+
+# if you are using gateway api
+kl apply -k ./video/ome/ingress-route/
+kl -n ome describe httproute
+kl -n ome get httproute
+
 kl -n ome get pod -o wide
+kl -n ome get svc
 ```
 
 # Cleanup
 
 ```bash
-kl delete -k ./video/ome/origin-cpu/
-kl delete -k ./video/ome/origin-nvidia/
 kl delete -k ./video/ome/edge/
 kl delete -k ./video/ome/redis/
+kl delete -k ./video/ome/origin-cpu/
+kl delete -k ./video/ome/origin-nvidia/
+kl delete -k ./video/ome/ingress-wildcard/
+kl delete -k ./video/ome/ingress-route/
+kl delete -k ./video/ome/svc-viewer-origin/
+kl delete -k ./video/ome/svc-viewer-edge/
 kl delete -k ./video/ome/svc-streamer/
-kl delete -k ./video/ome/svc-indifferent/
 kl delete ns ome
 ```
 
