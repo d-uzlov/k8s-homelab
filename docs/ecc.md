@@ -1,7 +1,8 @@
 
 # ECC memory
 
-ECC memory is advised for anything, without exception. It's not required but strongly advised, when possible.
+ECC memory is _strongly advised_ for anything and everything, without exception.
+It's not required, though, despite what Truenas forum will tell you.
 
 # Support
 
@@ -16,25 +17,27 @@ You will not get correct results from a VM.
 
 ```bash
 sudo apt-get install -y lshw
-sudo lshw -class memory | grep ecc
-#   capabilities: ecc
-#   configuration: errordetection=multi-bit-ecc
+sudo lshw -class memory | grep "description: System Memory" -A 5
+#      description: System Memory
+#      physical id: f
+#      slot: System board or motherboard
+#      size: 96GiB
+# >>>> capabilities: ecc
+# >>>> configuration: errordetection=multi-bit-ecc
 
-sudo dmidecode -t memory | grep "Error Correction Type"
-# bad:  Error Correction Type: None
-# good: Error Correction Type: Multi-bit ECC
-
-sudo dmidecode -t memory | grep -e "Total Width" -e "Data Width"
+sudo dmidecode -t memory | grep -e "Error Correction Type" -e "Total Width" -e "Data Width"
 # bad:
+#   Error Correction Type: None
 #   Total Width: 64 bits
 #   Data Width: 64 bits
 # good:
+#   Error Correction Type: Multi-bit ECC
 #   Total Width: 72 bits
 #   Data Width: 64 bits
-# also good:
+# also good: (this seems to be a BIOS bug on some AM4 motherboards)
+#   Error Correction Type: Multi-bit ECC
 #   Total Width: 128 bits
 #   Data Width: 64 bits
-# This seems to be a BIOS bug on some AM4 motherboards.
 ```
 
 References:
@@ -51,20 +54,33 @@ sudo apt install -y rasdaemon
 # Error checks
 
 ```bash
-# full output
-sudo dmesg --color=always | grep -e mce -e "Hardware Error" -e rasdaemon -e "Memory failure" -e EDAC -e edac -e "DRAM ECC error"
-# shorter
-sudo dmesg --color=always | grep -e rasdaemon -e "Memory failure" -e EDAC -e edac -e "DRAM ECC error"
-# only errors
-sudo dmesg --color=always | grep "EDAC"
+# show errors
+sudo dmesg --color=always | grep -e EDAC
+# more error info
+sudo dmesg --color=always | grep -e EDAC -e rasdaemon -e "Memory failure" -e edac -e "DRAM ECC error"
+sudo dmesg --color=always | grep -e EDAC -e rasdaemon -e "Memory failure" -e edac -e "DRAM ECC error" -e "Hardware Error" -e mce
+# show error summary
 sudo ras-mc-ctl --error-count
 sudo ras-mc-ctl --layout
-# --summary and --errors usually don't have anything
-sudo ras-mc-ctl --summary
-sudo ras-mc-ctl --errors
+# commands below usually don't have anything
+# sudo ras-mc-ctl --summary
+# sudo ras-mc-ctl --errors
 ```
 
-Example of error in dmesg:
+Example of a corrected error in `dmesg`:
+
+```bash
+[  333.236610] mce: [Hardware Error]: Machine check events logged
+[  333.239325] [Hardware Error]: Corrected error, no action required.
+[  333.241526] [Hardware Error]: CPU:0 (17:1:1) MC15_STATUS[Over|CE|MiscV|AddrV|-|-|SyndV|CECC|-|-|-]: 0xdc2040000000011b
+[  333.243792] [Hardware Error]: Error Addr: 0x0000000065aa27c0
+[  333.245899] [Hardware Error]: IPID: 0x0000009600050f00, Syndrome: 0x000040200a401000
+[  333.248064] [Hardware Error]: Unified Memory Controller Ext. Error Code: 0
+[  333.273479] EDAC MC0: 1 CE on mc#0csrow#0channel#0 (csrow:0 channel:0 page:0x10b544 offset:0xfc0 grain:64 syndrome:0x4020)
+[  333.277746] [Hardware Error]: cache level: L3/GEN, tx: GEN, mem-tx: RD
+```
+
+Example of a fatal error in `dmesg`:
 
 ```bash
 [74536.938995] [Hardware Error]: Deferred error, no action required.
@@ -85,3 +101,9 @@ Example of error in dmesg:
 [74536.942039] Memory failure: 0x79d6c8: recovery action for unsplit thp: Ignored
 [74536.942055] mce: Memory error not recovered
 ```
+
+# Determine defective DRAM module
+
+References:
+- https://s905060.gitbooks.io/site-reliability-engineer-handbook/content/how_to_solve_edac_dimm_ce_error.html
+- https://support.siliconmechanics.com/portal/en/kb/articles/identify-bad-dimm-from-edac
