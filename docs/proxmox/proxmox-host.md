@@ -36,6 +36,18 @@ but don't disable root login, it is required by many proxmox functions.
 References:
 - https://www.hungred.com/how-to/list-of-proxmox-important-configuration-files-directory/
 
+Fix console resolution:
+
+```bash
+sudo dpkg-reconfigure console-setup
+# `fixed` fond doesn't have high resolutions
+# choose VGA or Terminus font to be able to pick a better resolution
+```
+
+Alternatives for console resolution / font selection:
+- https://forum.proxmox.com/threads/changing-host-console-resolution.12408/
+- https://forum.proxmox.com/threads/console-video-resolution-whats-the-right-way.142733/
+
 # Network: custom MTU
 
 ```bash

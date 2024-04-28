@@ -36,21 +36,30 @@ sudo journalctl -b -u pve-cluster
 sudo journalctl -S '2024-03-15 17:35:18' -U '2024-03-15 17:35:21'
 
 sudo pvecm status
-
-sudo pvecm updatecerts
-sudo systemctl restart corosync
-sudo systemctl restart pve-cluster pvedaemon pveproxy
 ```
 
 # `permission denied - invalid PVE ticket (401)`
 
 ```bash
-# first check cluster status
+# check cluster status
 # pvecm status should be OK, corosync should be working, cluster should have quorum
 sudo pvecm status
 
+# check that time is the same on all machines
+timedatectl
+
+# in case time is off
+sudo timedatectl set-ntp false
+# copy from machine with correct time, you can tolerate plus-minus a few minutes
+sudo timedatectl set-time "2024-04-24 06:00:00"
+sudo timedatectl set-ntp true
+# wait a bit until "System clock synchronized: yes"
+timedatectl
+
+# in case time is alright (or was fixed) but you are still having issues
 sudo pvecm updatecerts
-sudo systemctl restart pvedaemon pveproxy
+sudo systemctl restart corosync
+sudo systemctl restart pve-cluster pvedaemon pveproxy
 ```
 
 References:
@@ -67,9 +76,9 @@ nano /etc/pve/corosync.conf
 
 # you may need to restart corosync to apply config changes
 # you may need to do it on one affected node or on all nodes
-systemctl restart corosync
+sudo systemctl restart corosync
 systemctl status corosync
-journalctl -b -u corosync
+sudo journalctl -b -u corosync
 ```
 
 # Remove node
@@ -111,10 +120,13 @@ References:
 
 # Error: Host key verification failed
 
+`Error: Host key verification failed` can happen even if all keys and configs are correct.
+
 ```bash
-# this succeeds
+# determine that you are facing the correct issue
+#     this succeeds
 /usr/bin/ssh -e none -o 'BatchMode=yes'                            root@node.ip /bin/true
-# this fails
+#     this fails
 /usr/bin/ssh -e none -o 'BatchMode=yes' -o 'HostKeyAlias=nodename' root@node.ip /bin/true
 
 # run this on the target node to fix
