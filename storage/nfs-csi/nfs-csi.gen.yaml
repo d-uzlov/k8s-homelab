@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/instance: "csi-nfs"
     app.kubernetes.io/managed-by: "Helm"
     app.kubernetes.io/name: "csi-nfs"
-    app.kubernetes.io/version: "v4.4.0"
+    app.kubernetes.io/version: "v4.7.0"
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -19,7 +19,7 @@ metadata:
     app.kubernetes.io/instance: "csi-nfs"
     app.kubernetes.io/managed-by: "Helm"
     app.kubernetes.io/name: "csi-nfs"
-    app.kubernetes.io/version: "v4.4.0"
+    app.kubernetes.io/version: "v4.7.0"
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
@@ -29,7 +29,7 @@ metadata:
     app.kubernetes.io/instance: "csi-nfs"
     app.kubernetes.io/managed-by: "Helm"
     app.kubernetes.io/name: "csi-nfs"
-    app.kubernetes.io/version: "v4.4.0"
+    app.kubernetes.io/version: "v4.7.0"
 rules:
   - apiGroups: [""]
     resources: ["persistentvolumes"]
@@ -40,6 +40,15 @@ rules:
   - apiGroups: ["storage.k8s.io"]
     resources: ["storageclasses"]
     verbs: ["get", "list", "watch"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshotclasses", "volumesnapshots"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshotcontents"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: ["snapshot.storage.k8s.io"]
+    resources: ["volumesnapshotcontents/status"]
+    verbs: ["get", "update", "patch"]
   - apiGroups: [""]
     resources: ["events"]
     verbs: ["get", "list", "watch", "create", "update", "patch"]
@@ -64,7 +73,7 @@ metadata:
     app.kubernetes.io/instance: "csi-nfs"
     app.kubernetes.io/managed-by: "Helm"
     app.kubernetes.io/name: "csi-nfs"
-    app.kubernetes.io/version: "v4.4.0"
+    app.kubernetes.io/version: "v4.7.0"
 subjects:
   - kind: ServiceAccount
     name: csi-nfs-controller-sa
@@ -83,7 +92,7 @@ metadata:
     app.kubernetes.io/instance: "csi-nfs"
     app.kubernetes.io/managed-by: "Helm"
     app.kubernetes.io/name: "csi-nfs"
-    app.kubernetes.io/version: "v4.4.0"
+    app.kubernetes.io/version: "v4.7.0"
 spec:
   updateStrategy:
     rollingUpdate:
@@ -98,7 +107,7 @@ spec:
         app.kubernetes.io/instance: "csi-nfs"
         app.kubernetes.io/managed-by: "Helm"
         app.kubernetes.io/name: "csi-nfs"
-        app.kubernetes.io/version: "v4.4.0"
+        app.kubernetes.io/version: "v4.7.0"
         app: csi-nfs-node
     spec:
       hostNetwork: true # original nfs connection would be broken without hostNetwork setting
@@ -114,11 +123,11 @@ spec:
         - operator: Exists
       containers:
         - name: liveness-probe
-          image: "registry.k8s.io/sig-storage/livenessprobe:v2.10.0"
+          image: "registry.k8s.io/sig-storage/livenessprobe:v2.12.0"
           args:
             - --csi-address=/csi/csi.sock
             - --probe-timeout=3s
-            - --health-port=29653
+            - --http-endpoint=localhost:29653
             - --v=2
           imagePullPolicy: IfNotPresent
           volumeMounts:
@@ -133,7 +142,7 @@ spec:
           securityContext:
             readOnlyRootFilesystem: true
         - name: node-driver-registrar
-          image: "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.8.0"
+          image: "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.10.0"
           livenessProbe:
             exec:
               command:
@@ -172,7 +181,7 @@ spec:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
             readOnlyRootFilesystem: true
-          image: "registry.k8s.io/sig-storage/nfsplugin:v4.4.0"
+          image: "registry.k8s.io/sig-storage/nfsplugin:v4.7.0"
           args :
             - "--v=5"
             - "--nodeid=$(NODE_ID)"
@@ -186,15 +195,12 @@ spec:
                   fieldPath: spec.nodeName
             - name: CSI_ENDPOINT
               value: unix:///csi/csi.sock
-          ports:
-            - containerPort: 29653
-              name: healthz
-              protocol: TCP
           livenessProbe:
             failureThreshold: 5
             httpGet:
+              host: localhost
               path: /healthz
-              port: healthz
+              port: 29653
             initialDelaySeconds: 30
             timeoutSeconds: 10
             periodSeconds: 30
@@ -234,7 +240,7 @@ metadata:
     app.kubernetes.io/instance: "csi-nfs"
     app.kubernetes.io/managed-by: "Helm"
     app.kubernetes.io/name: "csi-nfs"
-    app.kubernetes.io/version: "v4.4.0"
+    app.kubernetes.io/version: "v4.7.0"
 spec:
   replicas: 1
   selector:
@@ -248,7 +254,7 @@ spec:
         app.kubernetes.io/instance: "csi-nfs"
         app.kubernetes.io/managed-by: "Helm"
         app.kubernetes.io/name: "csi-nfs"
-        app.kubernetes.io/version: "v4.4.0"
+        app.kubernetes.io/version: "v4.7.0"
         app: csi-nfs-controller
     spec:
       hostNetwork: true  # controller also needs to mount nfs to create dir
@@ -272,13 +278,14 @@ spec:
           operator: Exists
       containers:
         - name: csi-provisioner
-          image: "registry.k8s.io/sig-storage/csi-provisioner:v3.5.0"
+          image: "registry.k8s.io/sig-storage/csi-provisioner:v4.0.0"
           args:
             - "-v=2"
             - "--csi-address=$(ADDRESS)"
             - "--leader-election"
             - "--leader-election-namespace=pv-nfs"
             - "--extra-create-metadata=true"
+            - "--timeout=1200s"
           env:
             - name: ADDRESS
               value: /csi/csi.sock
@@ -295,12 +302,13 @@ spec:
           securityContext:
             readOnlyRootFilesystem: true
         - name: csi-snapshotter
-          image: "registry.k8s.io/sig-storage/csi-snapshotter:v6.2.2"
+          image: "registry.k8s.io/sig-storage/csi-snapshotter:v6.3.3"
           args:
             - "--v=2"
             - "--csi-address=$(ADDRESS)"
             - "--leader-election-namespace=pv-nfs"
             - "--leader-election"
+            - "--timeout=1200s"
           env:
             - name: ADDRESS
               value: /csi/csi.sock
@@ -315,11 +323,11 @@ spec:
             - name: socket-dir
               mountPath: /csi
         - name: liveness-probe
-          image: "registry.k8s.io/sig-storage/livenessprobe:v2.10.0"
+          image: "registry.k8s.io/sig-storage/livenessprobe:v2.12.0"
           args:
             - --csi-address=/csi/csi.sock
             - --probe-timeout=3s
-            - --health-port=29652
+            - --http-endpoint=localhost:29652
             - --v=2
           imagePullPolicy: IfNotPresent
           volumeMounts:
@@ -334,7 +342,7 @@ spec:
           securityContext:
             readOnlyRootFilesystem: true
         - name: nfs
-          image: "registry.k8s.io/sig-storage/nfsplugin:v4.4.0"
+          image: "registry.k8s.io/sig-storage/nfsplugin:v4.7.0"
           securityContext:
             privileged: true
             capabilities:
@@ -357,15 +365,12 @@ spec:
                   fieldPath: spec.nodeName
             - name: CSI_ENDPOINT
               value: unix:///csi/csi.sock
-          ports:
-            - containerPort: 29652
-              name: healthz
-              protocol: TCP
           livenessProbe:
             failureThreshold: 5
             httpGet:
+              host: localhost
               path: /healthz
-              port: healthz
+              port: 29652
             initialDelaySeconds: 30
             timeoutSeconds: 10
             periodSeconds: 30

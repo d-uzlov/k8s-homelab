@@ -36,10 +36,13 @@ kl apply -f ./storage/nfs-csi/storage-classes/fast/test.yaml
 kl get pvc
 # make sure that test pod is running
 kl get pod
+
 # check contents of mounted folder
+kl exec deployments/test-nfs-fast -- mount | grep /mnt/data
+kl exec deployments/test-nfs-fast -- df -h /mnt/data
 kl exec deployments/test-nfs-fast -- touch /mnt/data/test-file
 kl exec deployments/test-nfs-fast -- ls -laF /mnt/data
-kl exec deployments/test-nfs-fast -- mount | grep /mnt/data
+
 # cleanup resources
 kl delete -f ./storage/nfs-csi/storage-classes/fast/test.yaml
 ```

@@ -36,10 +36,13 @@ kl apply -f ./storage/nfs-csi/storage-classes/bulk/test.yaml
 kl get pvc
 # make sure that test pod is running
 kl get pod
+
 # check contents of mounted folder
+kl exec deployments/test-nfs-bulk -- mount | grep /mnt/data
+kl exec deployments/test-nfs-bulk -- df -h /mnt/data
 kl exec deployments/test-nfs-bulk -- touch /mnt/data/test-file
 kl exec deployments/test-nfs-bulk -- ls -laF /mnt/data
-kl exec deployments/test-nfs-bulk -- mount | grep /mnt/data
+
 # cleanup resources
 kl delete -f ./storage/nfs-csi/storage-classes/bulk/test.yaml
 ```
