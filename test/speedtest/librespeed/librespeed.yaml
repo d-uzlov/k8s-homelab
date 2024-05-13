@@ -12,26 +12,80 @@ spec:
       labels:
         app: librespeed
     spec:
+      securityContext:
+        fsGroup: 1000
+      terminationGracePeriodSeconds: 0
       containers:
       - name: librespeed
-        image: docker.io/linuxserver/librespeed:5.3.0
+        # linuxserver uses nginx without disabling disk cache, so your test speed is limited by your disk speed
+        # image: docker.io/linuxserver/librespeed:5.3.0
+        # the official image doesn't have any tags except `latest`
+        # a3bb86cb4bf1d895a94da78eae238dc162903a96ac3831df7c3c84775934bb27 seems to be v5.3.1
+        image: ghcr.io/librespeed/speedtest@sha256:a3bb86cb4bf1d895a94da78eae238dc162903a96ac3831df7c3c84775934bb27
         ports:
         - name: http
-          containerPort: 80
-        env: []
+          containerPort: 8080
+        env:
+        # WEBPORT env doesn't work with readOnlyRootFilesystem
         # - name: WEBPORT
         #   value: '8080'
-        # - name: TELEMETRY
-        #   value: 'true'
-        # - name: PASSWORD
-        #   value: 'pass'
-        # - name: EMAIL
-        #   value: 'example@example.com'
+        - name: TELEMETRY
+          value: 'true'
+        - name: ENABLE_ID_OBFUSCATION
+          value: 'false'
+        - name: REDACT_IP_ADDRESSES
+          value: 'false'
+        - name: PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: passwords
+              key: results_password
+        - name: EMAIL
+          value: 'example@example.com'
+        securityContext:
+          # readOnlyRootFilesystem somehow breaks result saving despite all the tmp mounts
+          readOnlyRootFilesystem: false
+          runAsUser: 33
+          runAsGroup: 33
         resources:
           requests:
             memory: 10Mi
           limits:
             memory: 1000Mi
+        volumeMounts:
+        - mountPath: /tmp/
+          name: tmp
+          subPath: tmp
+        - mountPath: /var/www/html/
+          name: tmp
+          subPath: html
+        - mountPath: /var/run/
+          name: tmp
+          subPath: run
+        # make this a PVC if you want the results to survive pod restart
+        - mountPath: /database/
+          name: tmp
+          subPath: database
+        - mountPath: /etc/apache2/ports.conf
+          name: apache2-config
+          subPath: apache2-ports.conf
+        - mountPath: /etc/apache2/sites-available/000-default.conf
+          name: apache2-config
+          subPath: apache2-sites-available-000-default.conf
+        - mountPath: /entrypoint.sh
+          name: entrypoint
+          subPath: entrypoint.sh
+      volumes:
+      - name: tmp
+        emptyDir:
+          medium: Memory
+      - name: apache2-config
+        configMap:
+          name: apache2-config
+      - name: entrypoint
+        configMap:
+          name: entrypoint
+          defaultMode: 0555
 ---
 apiVersion: v1
 kind: Service

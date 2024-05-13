@@ -9,6 +9,13 @@ References:
 # Deploy
 
 ```bash
+mkdir -p ./test/speedtest/librespeed/env/
+cat <<EOF > ./test/speedtest/librespeed/env/passwords.env
+results_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
+EOF
+```
+
+```bash
 kl create ns librespeed
 kl label ns librespeed pod-security.kubernetes.io/enforce=baseline
 
@@ -29,8 +36,7 @@ kl apply -k ./test/speedtest/librespeed/
 kl -n librespeed get pod -o wide
 ```
 
-List of results can be found here:
-https://librespeed.example.duckdns.org/results/stats.php?op=id&id=
+List of results can be found at `/results/stats.php` of the server address.
 
 # Cleanup
 
