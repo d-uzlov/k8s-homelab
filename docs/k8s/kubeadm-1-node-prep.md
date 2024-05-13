@@ -6,7 +6,7 @@ This file describes how to prepare Linux nodes for kubeadm.
 # Install required or useful dependencies
 
 ```bash
-sudo apt-get install -y qemu-guest-agent ncat net-tools bash-completion iperf3 nfs-common fio ca-certificates curl apt-transport-https gnupg htop open-iscsi cachefilesd dnsutils ipvsadm
+sudo apt-get install -y qemu-guest-agent ncat net-tools bash-completion iperf3 nfs-common fio ca-certificates curl apt-transport-https gnupg htop open-iscsi cachefilesd dnsutils ipvsadm iotop
 ```
 
 # Install containerd

@@ -1,25 +1,10 @@
 ---
-# https://kubernetes.io/docs/reference/config-api/kubeadm-config.v1beta3/#kubeadm-k8s-io-v1beta3-InitConfiguration
-apiVersion: kubeadm.k8s.io/v1beta3
-kind: InitConfiguration
-nodeRegistration:
-  kubeletExtraArgs:
-    # automatically delete orphaned pods
-    # terminated-pod-gc-threshold: '1'
-    housekeeping-interval: 5s
-localAPIEndpoint:
-  # Advertized for inter-master communication
-  # kube-apiserver forces this to be a raw IP
-  # By default value is taken from the default interface
-  advertiseAddress: 0.0.0.0
-  bindPort: 6443
----
 # https://kubernetes.io/docs/reference/config-api/kubeadm-config.v1beta3/#kubeadm-k8s-io-v1beta3-ClusterConfiguration
 apiVersion: kubeadm.k8s.io/v1beta3
 kind: ClusterConfiguration
 controlPlaneEndpoint: REPLACE_ME_CONTROL_PLANE_ENDPOINT
 clusterName: kubernetes
-kubernetesVersion: 1.29.3
+kubernetesVersion: 1.30.0
 networking:
   dnsDomain: cluster.local
   podSubnet: 10.201.0.0/16
@@ -66,23 +51,3 @@ etcd:
     certFile: /etc/etcd/pki/etcd-client.pem
     keyFile: /etc/etcd/pki/etcd-client-key.pem
 # ^^^^^ - remove when using local etcd - ^^^^^
----
-# https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/
-apiVersion: kubelet.config.k8s.io/v1beta1
-kind: KubeletConfiguration
-clusterDomain: cluster.local
-resolvConf: /run/systemd/resolve/resolv.conf
-shutdownGracePeriod: 60s
-shutdownGracePeriodCriticalPods: 20s
-staticPodPath: /etc/kubernetes/manifests
-# reduce time of config map synchronization at expense of increased apiserver load
-# default value is 60s
-syncFrequency: 10s
-serverTLSBootstrap: REPLACE_ME_SERVER_TLS_BOOTSTRAP
-cgroupDriver: systemd
----
-apiVersion: kubeproxy.config.k8s.io/v1alpha1
-kind: KubeProxyConfiguration
-# bindAddress: 0.0.0.0
-# hostnameOverride: ""
-metricsBindAddress: 0.0.0.0

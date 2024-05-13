@@ -40,9 +40,9 @@ For example: [kube-vip for control plane](../../network/kube-vip-control-plane/r
 ```bash
 cp_node1=m1.k8s.lan
 # you can print the default config, just for reference, you don't really need it
-ssh "$cp_node1" sudo kubeadm config print init-defaults --component-configs KubeletConfiguration,KubeProxyConfiguration > ./docs/k8s/kconf-default.yaml
-echo --- >> ./docs/k8s/kconf-default.yaml
-ssh "$cp_node1" sudo kubeadm config print join-defaults >> ./docs/k8s/kconf-default.yaml
+ssh "$cp_node1" sudo kubeadm config print init-defaults --component-configs KubeletConfiguration,KubeProxyConfiguration > ./docs/k8s/env/kconf-default.yaml
+echo --- >> ./docs/k8s/env/kconf-default.yaml
+ssh "$cp_node1" sudo kubeadm config print join-defaults >> ./docs/k8s/env/kconf-default.yaml
 
 control_plane_endpoint=cp.k8s.lan
 serverTLSBootstrap=true
@@ -58,7 +58,11 @@ sed -e "s/REPLACE_ME_CONTROL_PLANE_ENDPOINT/$control_plane_endpoint/" \
   -e "s|REPLACE_ME_ETCD_ENDPOINT1|$etcd_endpoint1|" \
   -e "s|REPLACE_ME_ETCD_ENDPOINT2|$etcd_endpoint2|" \
   -e "s|REPLACE_ME_ETCD_ENDPOINT3|$etcd_endpoint3|" \
-  ./docs/k8s/kconf.yaml > ./docs/k8s/env/kconf-$control_plane_endpoint.yaml
+  ./docs/k8s/kubeadm-config/init.yaml \
+  ./docs/k8s/kubeadm-config/cluster.yaml \
+  ./docs/k8s/kubeadm-config/kubelet.yaml \
+  ./docs/k8s/kubeadm-config/kube-proxy.yaml \
+  > ./docs/k8s/env/kconf-$control_plane_endpoint.yaml
 # review kconf.yaml before copying it to make sure everything is OK
 scp ./docs/k8s/env/kconf-$control_plane_endpoint.yaml $cp_node1:kconf.yaml
 ```
