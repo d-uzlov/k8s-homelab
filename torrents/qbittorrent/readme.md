@@ -67,11 +67,11 @@ trusted_proxies=10.201.0.0/16
 # that can open the web-ui without password.
 # For example: 10.0.0.0/16,1.2.3.4/32
 #
-# At the very least it should contain k8s pod network, to allow k8s to perform liveness check
+# At the very least it should contain k8s node network, to allow kubelet to perform liveness check
 # or else k8s will constantly restart the app, and ingress will be unavailable.
 #
 # Set to your LAN CIDR for passwordless access in LAN.
-# Set to your public IP for passwordless access via NAT loopback.
+# Set to your public IP for passwordless access via NAT loopback (if it uses public address as source IP).
 auth_whitelist=10.201.0.0/16
 EOF
 ```
@@ -87,17 +87,22 @@ kl apply -k ./torrents/qbittorrent/pvc/
 # make sure that PVCs are successfulyl provisioned
 kl -n bt-qbittorrent get pvc
 
-# create loadbalancer service
+# loadbalancer service
 kl apply -k ./torrents/qbittorrent/loadbalancer/
 # get assigned IP to set up DNS or NAT port-forwarding
 kl -n bt-qbittorrent get svc
 # Make sure that local port and external port match.
 # Peers will try to connect to the port that qbittorrent is using locally.
 
-# setup wildcard ingress
+# wildcard ingress
 kl label ns --overwrite bt-qbittorrent copy-wild-cert=main
 kl apply -k ./torrents/qbittorrent/ingress-wildcard/
 kl -n bt-qbittorrent get ingress
+
+# private gateway
+kl apply -k ./torrents/qbittorrent/httproute/
+kl -n bt-qbittorrent get httproute qbittorrent
+kl -n bt-qbittorrent describe httproute qbittorrent
 
 # deploy main app
 kl apply -k ./torrents/qbittorrent/main-app/
