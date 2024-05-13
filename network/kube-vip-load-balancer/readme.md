@@ -18,7 +18,7 @@ You don't need to do it if you are just deploying it.
 docker run \
   --network host \
   --rm \
-  docker.io/daniluzlov/k8s-snippets:kube-vip-0.7.2-nodename2 \
+  ghcr.io/kube-vip/kube-vip:v0.8.0 \
   manifest \
   daemonset \
   --log 5 \
@@ -28,7 +28,6 @@ docker run \
   --servicesElection \
   --prometheusHTTPServer :2113 \
   | sed -e '/creationTimestamp/d' \
-  -e "s|image: .*|image: docker.io/daniluzlov/k8s-snippets:kube-vip-0.7.2-nodename3|" \
   > ./network/kube-vip-load-balancer/daemonset.gen.yaml
 ```
 
@@ -50,7 +49,7 @@ EOF
 kl create ns kube-vip
 
 kl apply -k ./network/kube-vip-load-balancer/
-kl apply -k ./network/kube-vip-load-balancer/ip-pool-config
+kl apply -k ./network/kube-vip-load-balancer/ip-pool-config/
 
 kl -n kube-vip get pod -o wide
 kl -n kube-vip logs ds/kube-vip-ds
