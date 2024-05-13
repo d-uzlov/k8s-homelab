@@ -72,7 +72,7 @@ sudo virt-customize -a disk.raw \
     --update \
     --install qemu-guest-agent \
     --install ca-certificates,apt-transport-https,gnupg,ipvsadm,open-iscsi,nfs-common,cachefilesd \
-    --install bash-completion,ncat,net-tools,iperf3,fio,curl,htop,dnsutils \
+    --install bash-completion,ncat,net-tools,iperf3,fio,curl,htop,dnsutils,iotop \
     --uninstall unattended-upgrades \
     --run-command 'sudo rm /usr/sbin/shutdown && sudo tee /usr/sbin/shutdown << EOF && sudo chmod 755 /usr/sbin/shutdown
 #!/bin/bash

@@ -23,18 +23,14 @@ Install useful tools:
 
 ```bash
 apt install -y sudo
-sudo apt install -y iperf3 htop
+sudo apt install -y iperf3 htop pipx
+pipx install install s-tui
 ```
 
 Add your user for SSH access: [SSH docs](../ssh.md).
 
-**Note**: you can (and should) disable SSH password login
+**Note**: when configuring SSH, you can (and should) disable SSH password login
 but don't disable root login, it is required by many proxmox functions.
-
-# Config dir list
-
-References:
-- https://www.hungred.com/how-to/list-of-proxmox-important-configuration-files-directory/
 
 Fix console resolution:
 
@@ -47,6 +43,11 @@ sudo dpkg-reconfigure console-setup
 Alternatives for console resolution / font selection:
 - https://forum.proxmox.com/threads/changing-host-console-resolution.12408/
 - https://forum.proxmox.com/threads/console-video-resolution-whats-the-right-way.142733/
+
+# Config dir list
+
+References:
+- https://www.hungred.com/how-to/list-of-proxmox-important-configuration-files-directory/
 
 # Network: custom MTU
 
@@ -70,7 +71,7 @@ sudo ip link set dev ln_storage mtu 9200
 # PCI-e passthrough
 
 Summary:
-- Edit kernel args using `sudo nano /etc/kernel/cmdline`
+- Kernel args can be edited by `sudo nano /etc/kernel/cmdline`
 - - After editing update kernel params: `sudo proxmox-boot-tool refresh`
 - - This assumes you selected ZFS when installing proxmox
 - On intel CPUs you have to add special kernel arg
@@ -83,7 +84,8 @@ you may need to apply a hack to disable safety features:
 - Sometimes device driver doesn't unbind, and you need to disable device initialization:
 - - > - pass the device IDs to the options of the vfio-pci modules by adding
     > - - `options vfio-pci ids=1234:5678,4321:8765`
-    > - to a .conf file in `/etc/modprobe.d/` where `1234:5678` and `4321:8765` are the vendor and device IDs obtained by:
+    > - to a .conf file in `/etc/modprobe.d/`
+    > - where `1234:5678` and `4321:8765` are `vendor_id:device_id`, obtained by:
     > - - `lspci -nn`
 - - Don't forget to update initramfs: `update-initramfs -u -k all`
 - - Check which driver is currently in use:
@@ -91,7 +93,7 @@ you may need to apply a hack to disable safety features:
 - - Apparently, even if you blacklist the driver, `lspci -nnk` still shows that it is used,
     but the device is not available.
 - Sometimes issues with passthrough can be fixed by disabling PCIe power management
-- - Add `pcie_port_pm=off` to kernel params
+- - Try to add `pcie_port_pm=off` to kernel params if you are having issues despite correct settings
 
 References:
 - https://pve.proxmox.com/pve-docs/pve-admin-guide.html#qm_pci_passthrough
@@ -258,6 +260,33 @@ systemctl start amd-disable-c6.service
 
 References:
 - https://github.com/joakimkistowski/amd-disable-c6
+
+# UEFI settings
+
+Run on the target system:
+
+```bash
+# install dependencies
+curl https://sh.rustup.rs -sSf | sh
+# reload env
+cargo install uefisettings
+```
+
+Run on your local PC:
+
+```bash
+mkdir -p ./docs/proxmox/env/
+
+node=ryzen.pve.lan
+ssh $node sudo -S /home/danil-lojdls97ov/.cargo/bin/uefisettings hii list-questions --json > ./docs/proxmox/env/$node-uefi-questinos.tmp.json
+jq . ./docs/proxmox/env/$node-uefi-questinos.tmp.json > ./docs/proxmox/env/$node-uefi-questinos.json
+ssh $node sudo -S /home/danil-lojdls97ov/.cargo/bin/uefisettings hii show-ifr > ./docs/proxmox/env/$node-uefi-forms.log
+```
+
+References:
+- https://github.com/linuxboot/uefisettings
+- It seems like currently you can't change any important settings (in 2024Q2):
+- - https://github.com/linuxboot/uefisettings/issues/2
 
 # TODO
 
