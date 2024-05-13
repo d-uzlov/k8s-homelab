@@ -1,0 +1,25 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: cilium
+
+resources:
+- httproute.yaml
+- ../../../ingress/manual-wildcard/domain-info
+- hubble-allow-ingress.yaml
+
+replacements:
+- source:
+    kind: ConfigMap
+    name: main-domain
+    fieldPath: data.subdomain
+  targets:
+  - select:
+      kind: HTTPRoute
+      name: hubble
+    options:
+      delimiter: .
+      index: 1
+    fieldPaths:
+    - spec.hostnames.0

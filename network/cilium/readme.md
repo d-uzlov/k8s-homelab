@@ -76,8 +76,11 @@ kl apply -f ./network/cilium/cilium-native-l2lb.gen.yaml --server-side=true
 #   see test/iperf folder for details
 kl apply -f ./network/cilium/cilium-tunnel.gen.yaml --server-side=true
 
-# check that pods are running
 kl -n cilium get pod -o wide
+
+kl apply -k ./network/cilium/hubble-ingress-route/
+kl -n cilium describe httproute hubble
+kl -n cilium get httproute hubble
 ```
 
 # Setup load balancer IPAM for load balancer services
