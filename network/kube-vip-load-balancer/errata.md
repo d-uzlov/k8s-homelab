@@ -12,9 +12,7 @@ These version don't have this issue:
 - v0.6.2
 - v0.7.2
 
-# externalTrafficPolicy: Local is broken
-
-Requires servicesElection to be broken.
+# `externalTrafficPolicy: Local` is broken when `servicesElection` is enabled
 
 Broken on versions:
 - v0.5.12
@@ -27,5 +25,7 @@ Broken on versions:
 
 I didn't test versions below v0.5.12.
 
+Fixed in v0.8.0.
+
 References:
-- https://github.com/kube-vip/kube-vip/issues/608
+- https://github.com/kube-vip/kube-vip/issues/810

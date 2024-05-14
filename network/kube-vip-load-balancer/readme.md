@@ -96,6 +96,7 @@ This is a custom patch to kube-vip, it is not available in the official images.
 kl annotate node m1.k8s.lan --overwrite kube-vip.io/ElectionDelayMs=200
 
 kl get node -o custom-columns='NAME:metadata.name,ELECTION DELAY:metadata.annotations.kube-vip\.io/ElectionDelayMs'
+./logs.sh kube-vip kube-vip-ds | grep delay
 ```
 
 # DHCP and UPnP
