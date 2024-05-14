@@ -66,6 +66,9 @@ Also, `l2lb` doesn't work without kube-proxy replacement.
 ```bash
 kl create ns cilium cilium-secrets
 
+kl -n cilium apply -f ./network/network-policies/deny-ingress.yaml
+kl -n cilium apply -f ./network/network-policies/allow-same-namespace.yaml
+
 # choose one of the deployment options:
 # - choose native when using a single L2 segment
 kl apply -f ./network/cilium/cilium-native.gen.yaml --server-side=true
