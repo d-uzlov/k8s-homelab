@@ -22,80 +22,59 @@ helm show values prometheus-community/kube-prometheus-stack --version 58.6.0 > .
 ```
 
 ```bash
-chart_version=58.6.0
-helm template \
-  kps \
-  prometheus-community/kube-prometheus-stack \
-  --version $chart_version \
-  --values ./metrics/kube-prometheus-stack/values.yaml \
-  --set defaultRules.create=true \
-  > ./metrics/kube-prometheus-stack/prometheus-rules.gen.yaml
-helm template \
-  kps \
-  prometheus-community/kube-prometheus-stack \
-  --version $chart_version \
-  --values ./metrics/kube-prometheus-stack/values.yaml \
-  --set alertmanager.enabled=true \
-  > ./metrics/kube-prometheus-stack/alertmanager.gen.yaml
-helm template \
-  kps \
-  prometheus-community/kube-prometheus-stack \
-  --version $chart_version \
-  --values ./metrics/kube-prometheus-stack/values.yaml \
-  --set grafana.enabled=true \
-  > ./metrics/kube-prometheus-stack/grafana.gen.yaml
-helm template \
-  kps \
-  prometheus-community/kube-prometheus-stack \
-  --version $chart_version \
-  --values ./metrics/kube-prometheus-stack/values.yaml \
-  --set kubeApiServer.enabled=true \
-  --set kubelet.enabled=true \
-  --set kubeControllerManager.enabled=true \
-  --set coreDns.enabled=true \
-  --set kubeEtcd.enabled=true \
-  --set kubeScheduler.enabled=true \
-  --set kube-state-metrics.enabled=true \
-  > ./metrics/kube-prometheus-stack/service-monitors.gen.yaml
-helm template \
-  kps \
-  prometheus-community/kube-prometheus-stack \
-  --version $chart_version \
-  --values ./metrics/kube-prometheus-stack/values.yaml \
-  --set kubeStateMetrics.enabled=true \
-  > ./metrics/kube-prometheus-stack/kubeStateMetrics.gen.yaml
-helm template \
-  kps \
-  prometheus-community/kube-prometheus-stack \
-  --version $chart_version \
-  --values ./metrics/kube-prometheus-stack/values.yaml \
-  --set nodeExporter.enabled=true \
-  > ./metrics/kube-prometheus-stack/nodeExporter.gen.yaml
-helm template \
-  kps \
-  prometheus-community/kube-prometheus-stack \
-  --version $chart_version \
-  --values ./metrics/kube-prometheus-stack/values.yaml \
-  --set prometheusOperator.enabled=true \
-  > ./metrics/kube-prometheus-stack/prometheusOperator.gen.yaml
-helm template \
-  kps \
-  prometheus-community/kube-prometheus-stack \
-  --version $chart_version \
-  --values ./metrics/kube-prometheus-stack/values.yaml \
-  --set prometheus.enabled=true \
-  > ./metrics/kube-prometheus-stack/prometheus.gen.yaml
+function remove_helm_junk() {
+  sed \
+    -e '\|helm.sh/chart|d' \
+    -e '\|# Source:|d' \
+    -e '\|app.kubernetes.io/managed-by:|d' \
+    -e '\|app.kubernetes.io/instance:|d' \
+    -e '\|app.kubernetes.io/version|d' \
+    -e '\|app.kubernetes.io/part-of|d' \
+    -e '\|58.6.0|d' \
+    -e '/^ *$/d' \
+    -e '\|heritage\:|d' \
+    -e '\|httpHeaders\:$|d'
+}
+function generateDeployment() {
+  args=
+  for arg in $*; do
+    args="$args --set $arg"
+  done
+  helm template \
+    kps \
+    prometheus-community/kube-prometheus-stack \
+    --version 58.6.0 \
+    --values ./metrics/kube-prometheus-stack/values.yaml \
+    $args \
+    | remove_helm_junk
+}
 
-sed -i \
-  -e '\|helm.sh/chart|d' \
-  -e '\|# Source:|d' \
-  -e '\|app.kubernetes.io/managed-by: Helm|d' \
-  -e '\|app.kubernetes.io/instance:|d' \
-  -e '/^ *$/d' \
-  -e '\|app.kubernetes.io/version|d' \
-  -e '\|58.6.0|d' \
-  -e '\|httpHeaders\:$|d' \
-  ./metrics/kube-prometheus-stack/*.gen.yaml
+generateDeployment grafana.enabled=true             > ./metrics/kube-prometheus-stack/grafana/grafana.gen.yaml
+generateDeployment grafana.defaultDashboardsEnabled=true \
+                   grafana.forceDeployDashboards=true \
+                                                    > ./metrics/kube-prometheus-stack/grafana/grafana-default-dashboards.gen.yaml
+
+generateDeployment kubeApiServer.enabled=true \
+                   kubelet.enabled=true \
+                   kubeControllerManager.enabled=true \
+                   coreDns.enabled=true \
+                   kubeEtcd.enabled=true \
+                   kubeScheduler.enabled=true       > ./metrics/kube-prometheus-stack/service-monitors.gen.yaml
+
+generateDeployment kubeStateMetrics.enabled=true    > ./metrics/kube-prometheus-stack/kube-state-metrics/kubeStateMetrics.gen.yaml
+
+generateDeployment nodeExporter.enabled=true        > ./metrics/kube-prometheus-stack/node-exporter/nodeExporter.gen.yaml
+
+generateDeployment prometheusOperator.enabled=true \
+                   prometheusOperator.admissionWebhooks.certManager.enabled=true \
+                   namespaceOverride=kps-operator   > ./metrics/kube-prometheus-stack/prometheus-operator/prometheusOperator.gen.yaml
+
+generateDeployment defaultRules.create=true \
+                   namespaceOverride=kps-default-rules \
+                                                    > ./metrics/kube-prometheus-stack/prometheus-default-rules/rules.gen.yaml
+generateDeployment alertmanager.enabled=true        > ./metrics/kube-prometheus-stack/prometheus/alertmanager.gen.yaml
+generateDeployment prometheus.enabled=true          > ./metrics/kube-prometheus-stack/prometheus/prometheus.gen.yaml
+
   # | sed -e 's/"interval":"1m"/"interval":"10s"/g'  \
 ```
 
@@ -105,16 +84,35 @@ References:
 # Deploy
 
 ```bash
-kl create ns kps
-kl create ns kps-grafana
 kl create ns kps-ksm
-kl create ns kps-node-exporter
-
-kl apply -k ./metrics/kube-prometheus-stack/ --server-side --force-conflicts
-kl -n kps get pod -o wide
-kl -n kps-grafana get pod -o wide
+kl apply -k ./metrics/kube-prometheus-stack/kube-state-metrics/ --server-side
 kl -n kps-ksm get pod -o wide
+
+kl create ns kps-node-exporter
+kl apply -k ./metrics/kube-prometheus-stack/node-exporter/ --server-side
 kl -n kps-node-exporter get pod -o wide
+
+kl create ns kps-grafana
+kl apply -k ./metrics/kube-prometheus-stack/grafana/ --server-side
+kl -n kps-grafana get pod -o wide
+
+kl create ns kps-operator
+kl apply -k ./metrics/kube-prometheus-stack/prometheus-operator/ --server-side
+kl -n kps-operator get pod -o wide
+
+kl create ns kps
+kl apply -k ./metrics/kube-prometheus-stack/ --server-side
+kl apply -k ./metrics/kube-prometheus-stack/prometheus/ --server-side
+kl -n kps get pod -o wide
+
+kl create ns kps-default-rules
+kl apply -k ./metrics/kube-prometheus-stack/prometheus-default-rules/ --server-side
+kl -n kps-default-rules get prometheusrule
+
+kl get prometheusrule -A
+kl get servicemonitor -A
+kl get podmonitor -A
+kl get probe -A
 
 # wildcard ingress
 kl label ns --overwrite kps copy-wild-cert=main
@@ -130,13 +128,24 @@ kl -n kps get httproute prometheus
 kl -n kps describe httproute prometheus
 ```
 
-Default username/password is `admin` / `prom-operator`.
+Default username/password is `admin` / `admin`.
 
 # Cleanup
 
 ```bash
+kl delete -k ./metrics/kube-prometheus-stack/kube-state-metrics/
+kl delete -k ./metrics/kube-prometheus-stack/node-exporter/
+kl delete -k ./metrics/kube-prometheus-stack/grafana/
+kl delete -k ./metrics/kube-prometheus-stack/prometheus-default-rules/
+kl delete -k ./metrics/kube-prometheus-stack/prometheus-operator/
+kl delete -k ./metrics/kube-prometheus-stack/prometheus/
 kl delete -k ./metrics/kube-prometheus-stack/
+kl delete ns kps-default-rules
+kl delete ns kps-grafana
 kl delete ns kps
+kl delete ns kps-operator
+kl delete ns kps-ksm
+kl delete ns kps-node-exporter
 ```
 
 # kube-controller-manager and kube-scheduler metrics

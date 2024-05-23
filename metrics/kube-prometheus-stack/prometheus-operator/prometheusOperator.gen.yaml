@@ -3,11 +3,9 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: prometheus-operator
-  namespace: kps
+  namespace: kps-operator
   labels:
-    app.kubernetes.io/part-of: kps
     release: "kps"
-    heritage: "Helm"
     app: kps-operator
     app.kubernetes.io/name: kps-prometheus-operator
     app.kubernetes.io/component: prometheus-operator
@@ -18,9 +16,7 @@ kind: ClusterRole
 metadata:
   name: prometheus-operator
   labels:
-    app.kubernetes.io/part-of: kps
     release: "kps"
-    heritage: "Helm"
     app: kps-operator
     app.kubernetes.io/name: kps-prometheus-operator
     app.kubernetes.io/component: prometheus-operator
@@ -121,9 +117,7 @@ kind: ClusterRoleBinding
 metadata:
   name: prometheus-operator
   labels:
-    app.kubernetes.io/part-of: kps
     release: "kps"
-    heritage: "Helm"
     app: kps-operator
     app.kubernetes.io/name: kps-prometheus-operator
     app.kubernetes.io/component: prometheus-operator
@@ -134,17 +128,15 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: prometheus-operator
-  namespace: kps
+  namespace: kps-operator
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: prometheus-operator
-  namespace: kps
+  namespace: kps-operator
   labels:
-    app.kubernetes.io/part-of: kps
     release: "kps"
-    heritage: "Helm"
     app: kps-operator
     app.kubernetes.io/name: kps-prometheus-operator
     app.kubernetes.io/component: prometheus-operator
@@ -162,11 +154,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: prometheus-operator
-  namespace: kps
+  namespace: kps-operator
   labels:
-    app.kubernetes.io/part-of: kps
     release: "kps"
-    heritage: "Helm"
     app: kps-operator
     app.kubernetes.io/name: kps-prometheus-operator
     app.kubernetes.io/component: prometheus-operator
@@ -180,9 +170,7 @@ spec:
   template:
     metadata:
       labels:
-        app.kubernetes.io/part-of: kps
         release: "kps"
-        heritage: "Helm"
         app: kps-operator
         app.kubernetes.io/name: kps-prometheus-operator
         app.kubernetes.io/component: prometheus-operator
@@ -202,8 +190,8 @@ spec:
             - --thanos-default-base-image=quay.io/thanos/thanos:v0.35.0
             - --secret-field-selector=type!=kubernetes.io/dockercfg,type!=kubernetes.io/service-account-token,type!=helm.sh/release.v1
             - --web.enable-tls=true
-            - --web.cert-file=/cert/cert
-            - --web.key-file=/cert/key
+            - --web.cert-file=/cert/tls.crt
+            - --web.key-file=/cert/tls.key
             - --web.listen-address=:10250
             - --web.tls-min-version=VersionTLS13
           ports:
@@ -239,15 +227,65 @@ spec:
       serviceAccountName: prometheus-operator
       automountServiceAccountToken: true
 ---
+# Generate a CA Certificate used to sign certificates for the webhook
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: kps-root-cert
+  namespace: kps-operator
+spec:
+  secretName: kps-root-cert
+  duration: "43800h0m0s"
+  issuerRef:
+    name: kps-self-signed-issuer
+  commonName: "ca.webhook.kube-prometheus-stack"
+  isCA: true
+---
+# generate a server certificate for the apiservices to use
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: kps-admission
+  namespace: kps-operator
+spec:
+  secretName: kps-admission
+  duration: "8760h0m0s"
+  issuerRef:
+    name: kps-root-issuer
+  dnsNames:
+    - prometheus-operator
+    - prometheus-operator.kps-operator.svc
+---
+# Create a selfsigned Issuer, in order to create a root CA certificate for
+# signing webhook serving certificates
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: kps-self-signed-issuer
+  namespace: kps-operator
+spec:
+  selfSigned: {}
+---
+# Create an Issuer that uses the above generated CA certificate to issue certs
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: kps-root-issuer
+  namespace: kps-operator
+spec:
+  ca:
+    secretName: kps-root-cert
+---
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
   name:  kps-admission
+  annotations:
+    certmanager.k8s.io/inject-ca-from: "kps-operator/kps-admission"
+    cert-manager.io/inject-ca-from: "kps-operator/kps-admission"
   labels:
     app: kps-admission
-    app.kubernetes.io/part-of: kps
     release: "kps"
-    heritage: "Helm"
     app.kubernetes.io/name: kps-prometheus-operator
     app.kubernetes.io/component: prometheus-operator-webhook
 webhooks:
@@ -265,7 +303,7 @@ webhooks:
           - UPDATE
     clientConfig:
       service:
-        namespace: kps
+        namespace: kps-operator
         name: prometheus-operator
         path: /admission-prometheusrules/mutate
     timeoutSeconds: 10
@@ -276,11 +314,9 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: prometheus-operator
-  namespace: kps
+  namespace: kps-operator
   labels:
-    app.kubernetes.io/part-of: kps
     release: "kps"
-    heritage: "Helm"
     app: kps-operator
     app.kubernetes.io/name: kps-prometheus-operator
     app.kubernetes.io/component: prometheus-operator
@@ -293,7 +329,7 @@ spec:
       ca:
         secret:
           name: kps-admission
-          key: ca
+          key: ca.crt
           optional: false
     honorLabels: true
     relabelings:
@@ -310,17 +346,18 @@ spec:
       release: "kps"
   namespaceSelector:
     matchNames:
-      - "kps"
+      - "kps-operator"
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
   name:  kps-admission
+  annotations:
+    certmanager.k8s.io/inject-ca-from: "kps-operator/kps-admission"
+    cert-manager.io/inject-ca-from: "kps-operator/kps-admission"
   labels:
     app: kps-admission
-    app.kubernetes.io/part-of: kps
     release: "kps"
-    heritage: "Helm"
     app.kubernetes.io/name: kps-prometheus-operator
     app.kubernetes.io/component: prometheus-operator-webhook
 webhooks:
@@ -338,229 +375,9 @@ webhooks:
           - UPDATE
     clientConfig:
       service:
-        namespace: kps
+        namespace: kps-operator
         name: prometheus-operator
         path: /admission-prometheusrules/validate
     timeoutSeconds: 10
     admissionReviewVersions: ["v1", "v1beta1"]
     sideEffects: None
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name:  kps-admission
-  namespace: kps
-  annotations:
-    "helm.sh/hook": pre-install,pre-upgrade,post-install,post-upgrade
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
-  labels:
-    app: kps-admission
-    app.kubernetes.io/part-of: kps
-    release: "kps"
-    heritage: "Helm"
-    app.kubernetes.io/name: kps-prometheus-operator
-    app.kubernetes.io/component: prometheus-operator-webhook
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name:  kps-admission
-  annotations:
-    "helm.sh/hook": pre-install,pre-upgrade,post-install,post-upgrade
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
-  labels:
-    app: kps-admission
-    app.kubernetes.io/part-of: kps
-    release: "kps"
-    heritage: "Helm"
-    app.kubernetes.io/name: kps-prometheus-operator
-    app.kubernetes.io/component: prometheus-operator-webhook
-rules:
-  - apiGroups:
-      - admissionregistration.k8s.io
-    resources:
-      - validatingwebhookconfigurations
-      - mutatingwebhookconfigurations
-    verbs:
-      - get
-      - update
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name:  kps-admission
-  annotations:
-    "helm.sh/hook": pre-install,pre-upgrade,post-install,post-upgrade
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
-  labels:
-    app: kps-admission
-    app.kubernetes.io/part-of: kps
-    release: "kps"
-    heritage: "Helm"
-    app.kubernetes.io/name: kps-prometheus-operator
-    app.kubernetes.io/component: prometheus-operator-webhook
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: kps-admission
-subjects:
-  - kind: ServiceAccount
-    name: kps-admission
-    namespace: kps
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name:  kps-admission
-  namespace: kps
-  annotations:
-    "helm.sh/hook": pre-install,pre-upgrade,post-install,post-upgrade
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
-  labels:
-    app: kps-admission
-    app.kubernetes.io/part-of: kps
-    release: "kps"
-    heritage: "Helm"
-    app.kubernetes.io/name: kps-prometheus-operator
-    app.kubernetes.io/component: prometheus-operator-webhook
-rules:
-  - apiGroups:
-      - ""
-    resources:
-      - secrets
-    verbs:
-      - get
-      - create
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name:  kps-admission
-  namespace: kps
-  annotations:
-    "helm.sh/hook": pre-install,pre-upgrade,post-install,post-upgrade
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
-  labels:
-    app: kps-admission
-    app.kubernetes.io/part-of: kps
-    release: "kps"
-    heritage: "Helm"
-    app.kubernetes.io/name: kps-prometheus-operator
-    app.kubernetes.io/component: prometheus-operator-webhook
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: kps-admission
-subjects:
-  - kind: ServiceAccount
-    name: kps-admission
-    namespace: kps
----
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name:  kps-admission-create
-  namespace: kps
-  annotations:
-    "helm.sh/hook": pre-install,pre-upgrade
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
-  labels:
-    app: kps-admission-create
-    app.kubernetes.io/part-of: kps
-    release: "kps"
-    heritage: "Helm"
-    app.kubernetes.io/name: kps-prometheus-operator
-    app.kubernetes.io/component: prometheus-operator-webhook
-spec:
-  ttlSecondsAfterFinished: 60
-  template:
-    metadata:
-      name:  kps-admission-create
-      labels:
-        app: kps-admission-create
-        app.kubernetes.io/part-of: kps
-        release: "kps"
-        heritage: "Helm"
-        app.kubernetes.io/name: kps-prometheus-operator
-        app.kubernetes.io/component: prometheus-operator-webhook
-    spec:
-      containers:
-        - name: create
-          image: registry.k8s.io/ingress-nginx/kube-webhook-certgen:v20221220-controller-v1.5.1-58-g787ea74b6
-          imagePullPolicy: IfNotPresent
-          args:
-            - create
-            - --host=prometheus-operator,prometheus-operator.kps.svc
-            - --namespace=kps
-            - --secret-name=kps-admission
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-              - ALL
-            readOnlyRootFilesystem: true
-          resources:
-            {}
-      restartPolicy: OnFailure
-      serviceAccountName: kps-admission
-      securityContext:
-        runAsGroup: 2000
-        runAsNonRoot: true
-        runAsUser: 2000
-        seccompProfile:
-          type: RuntimeDefault
----
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name:  kps-admission-patch
-  namespace: kps
-  annotations:
-    "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
-  labels:
-    app: kps-admission-patch
-    app.kubernetes.io/part-of: kps
-    release: "kps"
-    heritage: "Helm"
-    app.kubernetes.io/name: kps-prometheus-operator
-    app.kubernetes.io/component: prometheus-operator-webhook
-spec:
-  ttlSecondsAfterFinished: 60
-  template:
-    metadata:
-      name:  kps-admission-patch
-      labels:
-        app: kps-admission-patch
-        app.kubernetes.io/part-of: kps
-        release: "kps"
-        heritage: "Helm"
-        app.kubernetes.io/name: kps-prometheus-operator
-        app.kubernetes.io/component: prometheus-operator-webhook
-    spec:
-      containers:
-        - name: patch
-          image: registry.k8s.io/ingress-nginx/kube-webhook-certgen:v20221220-controller-v1.5.1-58-g787ea74b6
-          imagePullPolicy: IfNotPresent
-          args:
-            - patch
-            - --webhook-name=kps-admission
-            - --namespace=kps
-            - --secret-name=kps-admission
-            - --patch-failure-policy=
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-              - ALL
-            readOnlyRootFilesystem: true
-          resources:
-            {}
-      restartPolicy: OnFailure
-      serviceAccountName: kps-admission
-      securityContext:
-        runAsGroup: 2000
-        runAsNonRoot: true
-        runAsUser: 2000
-        seccompProfile:
-          type: RuntimeDefault

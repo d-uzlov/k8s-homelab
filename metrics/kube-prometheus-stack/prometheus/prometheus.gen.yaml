@@ -8,9 +8,7 @@ metadata:
     app: kps-prometheus
     app.kubernetes.io/name: kps-prometheus
     app.kubernetes.io/component: prometheus
-    app.kubernetes.io/part-of: kps
     release: "kps"
-    heritage: "Helm"
 automountServiceAccountToken: true
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -19,9 +17,7 @@ metadata:
   name: kps-prometheus
   labels:
     app: kps-prometheus
-    app.kubernetes.io/part-of: kps
     release: "kps"
-    heritage: "Helm"
 rules:
 # This permission are not in the kube-prometheus repo
 # they're grabbed from https://github.com/prometheus/prometheus/blob/master/documentation/examples/rbac-setup.yml
@@ -47,9 +43,7 @@ metadata:
   name: kps-prometheus
   labels:
     app: kps-prometheus
-    app.kubernetes.io/part-of: kps
     release: "kps"
-    heritage: "Helm"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -67,9 +61,7 @@ metadata:
   labels:
     app: kps-prometheus
     self-monitor: "true"
-    app.kubernetes.io/part-of: kps
     release: "kps"
-    heritage: "Helm"
 spec:
   ports:
   - name: http-web
@@ -82,20 +74,18 @@ spec:
   publishNotReadyAddresses: false
   selector:
     app.kubernetes.io/name: prometheus
-    operator.prometheus.io/name: kps-prometheus
+    operator.prometheus.io/name: kps
   sessionAffinity: None
   type: "ClusterIP"
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: Prometheus
 metadata:
-  name: kps-prometheus
+  name: kps
   namespace: kps
   labels:
     app: kps-prometheus
-    app.kubernetes.io/part-of: kps
     release: "kps"
-    heritage: "Helm"
 spec:
   image: "quay.io/prometheus/prometheus:v2.52.0"
   version: v2.52.0
@@ -145,6 +135,8 @@ spec:
   scrapeConfigNamespaceSelector: {}
   storage:
     volumeClaimTemplate:
+      metadata:
+        name: db
       spec:
         accessModes:
         - ReadWriteOnce
@@ -162,9 +154,7 @@ metadata:
   namespace: kps
   labels:
     app: kps-prometheus
-    app.kubernetes.io/part-of: kps
     release: "kps"
-    heritage: "Helm"
 spec:
   selector:
     matchLabels:

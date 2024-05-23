@@ -1,0 +1,447 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+automountServiceAccountToken: true
+metadata:
+  labels:
+    app.kubernetes.io/name: grafana
+  name: kps-grafana
+  namespace: kps-grafana
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kps-grafana
+  namespace: kps-grafana
+  labels:
+    app.kubernetes.io/name: grafana
+type: Opaque
+data:
+  admin-user: "YWRtaW4="
+  admin-password: "YWRtaW4="
+  ldap-toml: ""
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/name: grafana
+  name: kps-grafana-config-dashboards
+  namespace: kps-grafana
+data:
+  provider.yaml: |-
+    apiVersion: 1
+    providers:
+      - name: 'sidecarProvider'
+        orgId: 1
+        folder: ''
+        type: file
+        disableDeletion: false
+        allowUiUpdates: false
+        updateIntervalSeconds: 30
+        options:
+          foldersFromFilesStructure: false
+          path: /tmp/dashboards
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kps-grafana
+  namespace: kps-grafana
+  labels:
+    app.kubernetes.io/name: grafana
+data:
+  grafana.ini: |
+    [analytics]
+    check_for_updates = true
+    [grafana_net]
+    url = https://grafana.net
+    [log]
+    mode = console
+    [paths]
+    data = /var/lib/grafana/
+    logs = /var/log/grafana
+    plugins = /var/lib/grafana/plugins
+    provisioning = /etc/grafana/provisioning
+    [server]
+    domain = ''
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kps-grafana-datasource
+  namespace: kps-grafana
+  labels:
+    grafana_datasource: "1"
+    app: kps-grafana
+    release: "kps"
+data:
+  datasource.yaml: |-
+    apiVersion: 1
+    datasources:
+    - name: Prometheus
+      type: prometheus
+      uid: prometheus
+      url: http://kps-prometheus.kps:9090/
+      access: proxy
+      isDefault: true
+      jsonData:
+        httpMethod: POST
+        timeInterval: 5s
+    - name: Alertmanager
+      type: alertmanager
+      uid: alertmanager
+      url: http://kps-alertmanager.kps:9093/
+      access: proxy
+      jsonData:
+        handleGrafanaManagedAlerts: false
+        implementation: prometheus
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  labels:
+    app.kubernetes.io/name: grafana
+  name: kps-grafana-clusterrole
+rules:
+  - apiGroups: [""] # "" indicates the core API group
+    resources: ["configmaps", "secrets"]
+    verbs: ["get", "watch", "list"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kps-grafana-clusterrolebinding
+  labels:
+    app.kubernetes.io/name: grafana
+subjects:
+  - kind: ServiceAccount
+    name: kps-grafana
+    namespace: kps-grafana
+roleRef:
+  kind: ClusterRole
+  name: kps-grafana-clusterrole
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kps-grafana
+  namespace: kps-grafana
+  labels:
+    app.kubernetes.io/name: grafana
+rules: []
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kps-grafana
+  namespace: kps-grafana
+  labels:
+    app.kubernetes.io/name: grafana
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kps-grafana
+subjects:
+- kind: ServiceAccount
+  name: kps-grafana
+  namespace: kps-grafana
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kps-grafana
+  namespace: kps-grafana
+  labels:
+    app.kubernetes.io/name: grafana
+spec:
+  type: ClusterIP
+  ports:
+    - name: http-web
+      port: 80
+      protocol: TCP
+      targetPort: 3000
+  selector:
+    app.kubernetes.io/name: grafana
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kps-grafana
+  namespace: kps-grafana
+  labels:
+    app.kubernetes.io/name: grafana
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: grafana
+      annotations:
+        checksum/config: 0e9cbd0ea8e24e32f7dfca5bab17a2ba05652642f0a09a4882833ae88e4cc4a3
+        checksum/sc-dashboard-provider-config: 593c0a8778b83f11fe80ccb21dfb20bc46705e2be3178df1dc4c89d164c8cd9c
+        checksum/secret: bed677784356b2af7fb0d87455db21f077853059b594101a4f6532bfbd962a7f
+        kubectl.kubernetes.io/default-container: grafana
+    spec:
+      serviceAccountName: kps-grafana
+      automountServiceAccountToken: true
+      securityContext:
+        fsGroup: 472
+        runAsGroup: 472
+        runAsNonRoot: true
+        runAsUser: 472
+      enableServiceLinks: true
+      containers:
+        - name: grafana-sc-dashboard
+          image: "quay.io/kiwigrid/k8s-sidecar:1.26.1"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: METHOD
+              value: WATCH
+            - name: LABEL
+              value: "grafana_dashboard"
+            - name: LABEL_VALUE
+              value: "1"
+            - name: FOLDER
+              value: "/tmp/dashboards"
+            - name: RESOURCE
+              value: "both"
+            - name: NAMESPACE
+              value: "ALL"
+            - name: REQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: kps-grafana
+                  key: admin-user
+            - name: REQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kps-grafana
+                  key: admin-password
+            - name: REQ_URL
+              value: http://localhost:3000/api/admin/provisioning/dashboards/reload
+            - name: REQ_METHOD
+              value: POST
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: sc-dashboard-volume
+              mountPath: "/tmp/dashboards"
+        - name: grafana-sc-datasources
+          image: "quay.io/kiwigrid/k8s-sidecar:1.26.1"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: METHOD
+              value: WATCH
+            - name: LABEL
+              value: "grafana_datasource"
+            - name: LABEL_VALUE
+              value: "1"
+            - name: FOLDER
+              value: "/etc/grafana/provisioning/datasources"
+            - name: RESOURCE
+              value: "both"
+            - name: REQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: kps-grafana
+                  key: admin-user
+            - name: REQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kps-grafana
+                  key: admin-password
+            - name: REQ_URL
+              value: http://localhost:3000/api/admin/provisioning/datasources/reload
+            - name: REQ_METHOD
+              value: POST
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: sc-datasources-volume
+              mountPath: "/etc/grafana/provisioning/datasources"
+        - name: grafana
+          image: "docker.io/grafana/grafana:10.4.1"
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: config
+              mountPath: "/etc/grafana/grafana.ini"
+              subPath: grafana.ini
+            - name: storage
+              mountPath: "/var/lib/grafana"
+            - name: sc-dashboard-volume
+              mountPath: "/tmp/dashboards"
+            - name: sc-dashboard-provider
+              mountPath: "/etc/grafana/provisioning/dashboards/sc-dashboardproviders.yaml"
+              subPath: provider.yaml
+            - name: sc-datasources-volume
+              mountPath: "/etc/grafana/provisioning/datasources"
+          ports:
+            - name: grafana
+              containerPort: 3000
+              protocol: TCP
+            - name: gossip-tcp
+              containerPort: 9094
+              protocol: TCP
+            - name: gossip-udp
+              containerPort: 9094
+              protocol: UDP
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: GF_SECURITY_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: kps-grafana
+                  key: admin-user
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kps-grafana
+                  key: admin-password
+            - name: GF_PATHS_DATA
+              value: /var/lib/grafana/
+            - name: GF_PATHS_LOGS
+              value: /var/log/grafana
+            - name: GF_PATHS_PLUGINS
+              value: /var/lib/grafana/plugins
+            - name: GF_PATHS_PROVISIONING
+              value: /etc/grafana/provisioning
+          livenessProbe:
+            failureThreshold: 10
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 60
+            timeoutSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+      volumes:
+        - name: config
+          configMap:
+            name: kps-grafana
+        - name: storage
+          emptyDir: {}
+        - name: sc-dashboard-volume
+          emptyDir:
+            {}
+        - name: sc-dashboard-provider
+          configMap:
+            name: kps-grafana-config-dashboards
+        - name: sc-datasources-volume
+          emptyDir:
+            {}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kps-grafana
+  namespace: kps-grafana
+  labels:
+    app.kubernetes.io/name: grafana
+spec:
+  endpoints:
+  - port: http-web
+    scrapeTimeout: 30s
+    honorLabels: true
+    path: /metrics
+    scheme: http
+    relabelings:
+      - action: replace
+        regex: ^(.*)$
+        replacement: $1
+        separator: ;
+        sourceLabels:
+        - __meta_kubernetes_pod_node_name
+        targetLabel: nodename
+  jobLabel: "kps"
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+  namespaceSelector:
+    matchNames:
+      - kps-grafana
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/name: grafana
+  name: kps-grafana-test
+  namespace: kps-grafana
+  annotations:
+    "helm.sh/hook": test-success
+    "helm.sh/hook-delete-policy": "before-hook-creation,hook-succeeded"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kps-grafana-test
+  namespace: kps-grafana
+  annotations:
+    "helm.sh/hook": test-success
+    "helm.sh/hook-delete-policy": "before-hook-creation,hook-succeeded"
+  labels:
+    app.kubernetes.io/name: grafana
+data:
+  run.sh: |-
+    @test "Test Health" {
+      url="http://kps-grafana/api/health"
+      code=$(wget --server-response --spider --timeout 90 --tries 10 ${url} 2>&1 | awk '/^  HTTP/{print $2}')
+      [ "$code" == "200" ]
+    }
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kps-grafana-test
+  labels:
+    app.kubernetes.io/name: grafana
+  annotations:
+    "helm.sh/hook": test-success
+    "helm.sh/hook-delete-policy": "before-hook-creation,hook-succeeded"
+  namespace: kps-grafana
+spec:
+  serviceAccountName: kps-grafana-test
+  containers:
+    - name: kps-test
+      image: "docker.io/bats/bats:v1.4.1"
+      imagePullPolicy: "IfNotPresent"
+      command: ["/opt/bats/bin/bats", "-t", "/tests/run.sh"]
+      volumeMounts:
+        - mountPath: /tests
+          name: tests
+          readOnly: true
+  volumes:
+    - name: tests
+      configMap:
+        name: kps-grafana-test
+  restartPolicy: Never

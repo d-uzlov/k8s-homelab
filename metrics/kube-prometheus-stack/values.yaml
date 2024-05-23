@@ -4,6 +4,8 @@ nameOverride: kps
 fullnameOverride: kps
 namespaceOverride: kps
 
+cleanPrometheusOperatorObjectNames: true
+
 crds:
   enabled: false
 
@@ -55,13 +57,11 @@ alertmanager:
 grafana:
   enabled: false
   namespaceOverride: kps-grafana
-  # defaultDashboardsEnabled: true
+  defaultDashboardsEnabled: false
+  forceDeployDashboards: false
   defaultDashboardsTimezone: browser
   forceDeployDatasources: false
-  # admin:
-  #   existingSecret: grafana-admin-credentials
-  #   userKey: admin-user
-  #   passwordKey: admin-password
+  adminPassword: admin
   serviceMonitor:
     relabelings:
     - sourceLabels: [__meta_kubernetes_pod_node_name]
@@ -240,6 +240,10 @@ prometheus-node-exporter:
 prometheusOperator:
   enabled: false
   fullnameOverride: prometheus-operator
+  admissionWebhooks:
+    enabled: true
+    certManager:
+      enabled: false
   serviceMonitor:
     relabelings:
     - sourceLabels: [__meta_kubernetes_pod_node_name]
@@ -260,6 +264,8 @@ prometheus:
     secrets: ['etcd-client-cert']
     storageSpec:
       volumeClaimTemplate:
+        metadata:
+          name: db # https://github.com/prometheus-community/helm-charts/issues/4523
         spec:
           storageClassName: fast
           accessModes: ["ReadWriteOnce"]
