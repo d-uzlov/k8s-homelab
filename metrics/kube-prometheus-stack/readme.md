@@ -18,19 +18,85 @@ You only need to do this if you change `values.yaml` file.
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update prometheus-community
 helm search repo prometheus-community/kube-prometheus-stack --versions --devel | head
-helm show values prometheus-community/kube-prometheus-stack --version 51.0.3 > ./metrics/kube-prometheus-stack/default-values.yaml
+helm show values prometheus-community/kube-prometheus-stack --version 58.6.0 > ./metrics/kube-prometheus-stack/default-values.yaml
 ```
 
 ```bash
+chart_version=58.6.0
 helm template \
   kps \
   prometheus-community/kube-prometheus-stack \
-  --version 56.6.1 \
+  --version $chart_version \
   --values ./metrics/kube-prometheus-stack/values.yaml \
-  --namespace kps \
-  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' \
-  | sed -e 's/"interval":"1m"/"interval":"10s"/g'  \
-  > ./metrics/kube-prometheus-stack/deployment.gen.yaml
+  --set defaultRules.create=true \
+  > ./metrics/kube-prometheus-stack/prometheus-rules.gen.yaml
+helm template \
+  kps \
+  prometheus-community/kube-prometheus-stack \
+  --version $chart_version \
+  --values ./metrics/kube-prometheus-stack/values.yaml \
+  --set alertmanager.enabled=true \
+  > ./metrics/kube-prometheus-stack/alertmanager.gen.yaml
+helm template \
+  kps \
+  prometheus-community/kube-prometheus-stack \
+  --version $chart_version \
+  --values ./metrics/kube-prometheus-stack/values.yaml \
+  --set grafana.enabled=true \
+  > ./metrics/kube-prometheus-stack/grafana.gen.yaml
+helm template \
+  kps \
+  prometheus-community/kube-prometheus-stack \
+  --version $chart_version \
+  --values ./metrics/kube-prometheus-stack/values.yaml \
+  --set kubeApiServer.enabled=true \
+  --set kubelet.enabled=true \
+  --set kubeControllerManager.enabled=true \
+  --set coreDns.enabled=true \
+  --set kubeEtcd.enabled=true \
+  --set kubeScheduler.enabled=true \
+  --set kube-state-metrics.enabled=true \
+  > ./metrics/kube-prometheus-stack/service-monitors.gen.yaml
+helm template \
+  kps \
+  prometheus-community/kube-prometheus-stack \
+  --version $chart_version \
+  --values ./metrics/kube-prometheus-stack/values.yaml \
+  --set kubeStateMetrics.enabled=true \
+  > ./metrics/kube-prometheus-stack/kubeStateMetrics.gen.yaml
+helm template \
+  kps \
+  prometheus-community/kube-prometheus-stack \
+  --version $chart_version \
+  --values ./metrics/kube-prometheus-stack/values.yaml \
+  --set nodeExporter.enabled=true \
+  > ./metrics/kube-prometheus-stack/nodeExporter.gen.yaml
+helm template \
+  kps \
+  prometheus-community/kube-prometheus-stack \
+  --version $chart_version \
+  --values ./metrics/kube-prometheus-stack/values.yaml \
+  --set prometheusOperator.enabled=true \
+  > ./metrics/kube-prometheus-stack/prometheusOperator.gen.yaml
+helm template \
+  kps \
+  prometheus-community/kube-prometheus-stack \
+  --version $chart_version \
+  --values ./metrics/kube-prometheus-stack/values.yaml \
+  --set prometheus.enabled=true \
+  > ./metrics/kube-prometheus-stack/prometheus.gen.yaml
+
+sed -i \
+  -e '\|helm.sh/chart|d' \
+  -e '\|# Source:|d' \
+  -e '\|app.kubernetes.io/managed-by: Helm|d' \
+  -e '\|app.kubernetes.io/instance:|d' \
+  -e '/^ *$/d' \
+  -e '\|app.kubernetes.io/version|d' \
+  -e '\|58.6.0|d' \
+  -e '\|httpHeaders\:$|d' \
+  ./metrics/kube-prometheus-stack/*.gen.yaml
+  # | sed -e 's/"interval":"1m"/"interval":"10s"/g'  \
 ```
 
 References:
@@ -39,18 +105,29 @@ References:
 # Deploy
 
 ```bash
-kl apply -k ./metrics/kube-prometheus-stack/crd/ --server-side
-
 kl create ns kps
+kl create ns kps-grafana
+kl create ns kps-ksm
+kl create ns kps-node-exporter
 
-kl apply -k ./metrics/kube-prometheus-stack/
-# kl apply -k ./metrics/kube-prometheus-stack/ --server-side=true
+kl apply -k ./metrics/kube-prometheus-stack/ --server-side --force-conflicts
 kl -n kps get pod -o wide
+kl -n kps-grafana get pod -o wide
+kl -n kps-ksm get pod -o wide
+kl -n kps-node-exporter get pod -o wide
 
-# setup wildcard ingress
+# wildcard ingress
 kl label ns --overwrite kps copy-wild-cert=main
-kl apply -k ./metrics/kube-prometheus-stack/ingress-wildcard/
+kl apply -k ./metrics/kube-prometheus-stack/grafana-ingress-wildcard/
 kl -n kps get ingress
+
+# private gateway
+kl apply -k ./metrics/kube-prometheus-stack/grafana-httproute/
+kl -n kps-grafana get httproute grafana
+kl -n kps-grafana describe httproute grafana
+kl apply -k ./metrics/kube-prometheus-stack/prometheus-httproute/
+kl -n kps get httproute prometheus
+kl -n kps describe httproute prometheus
 ```
 
 Default username/password is `admin` / `prom-operator`.
@@ -60,7 +137,6 @@ Default username/password is `admin` / `prom-operator`.
 ```bash
 kl delete -k ./metrics/kube-prometheus-stack/
 kl delete ns kps
-kl delete -k ./metrics/kube-prometheus-stack/crd/
 ```
 
 # kube-controller-manager and kube-scheduler metrics

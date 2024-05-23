@@ -1,0 +1,197 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kps-prometheus
+  namespace: kps
+  labels:
+    app: kps-prometheus
+    app.kubernetes.io/name: kps-prometheus
+    app.kubernetes.io/component: prometheus
+    app.kubernetes.io/part-of: kps
+    release: "kps"
+    heritage: "Helm"
+automountServiceAccountToken: true
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kps-prometheus
+  labels:
+    app: kps-prometheus
+    app.kubernetes.io/part-of: kps
+    release: "kps"
+    heritage: "Helm"
+rules:
+# This permission are not in the kube-prometheus repo
+# they're grabbed from https://github.com/prometheus/prometheus/blob/master/documentation/examples/rbac-setup.yml
+- apiGroups: [""]
+  resources:
+  - nodes
+  - nodes/metrics
+  - services
+  - endpoints
+  - pods
+  verbs: ["get", "list", "watch"]
+- apiGroups:
+  - "networking.k8s.io"
+  resources:
+  - ingresses
+  verbs: ["get", "list", "watch"]
+- nonResourceURLs: ["/metrics", "/metrics/cadvisor"]
+  verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kps-prometheus
+  labels:
+    app: kps-prometheus
+    app.kubernetes.io/part-of: kps
+    release: "kps"
+    heritage: "Helm"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kps-prometheus
+subjects:
+  - kind: ServiceAccount
+    name: kps-prometheus
+    namespace: kps
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kps-prometheus
+  namespace: kps
+  labels:
+    app: kps-prometheus
+    self-monitor: "true"
+    app.kubernetes.io/part-of: kps
+    release: "kps"
+    heritage: "Helm"
+spec:
+  ports:
+  - name: http-web
+    port: 9090
+    targetPort: 9090
+  - name: reloader-web
+    appProtocol: http
+    port: 8080
+    targetPort: reloader-web
+  publishNotReadyAddresses: false
+  selector:
+    app.kubernetes.io/name: prometheus
+    operator.prometheus.io/name: kps-prometheus
+  sessionAffinity: None
+  type: "ClusterIP"
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: kps-prometheus
+  namespace: kps
+  labels:
+    app: kps-prometheus
+    app.kubernetes.io/part-of: kps
+    release: "kps"
+    heritage: "Helm"
+spec:
+  image: "quay.io/prometheus/prometheus:v2.52.0"
+  version: v2.52.0
+  externalUrl: http://kps-prometheus.kps:9090
+  paused: false
+  replicas: 1
+  shards: 1
+  logLevel:  info
+  logFormat:  logfmt
+  listenLocal: false
+  enableAdminAPI: true
+  scrapeInterval: 5s
+  retention: "10y"
+  tsdb:
+    outOfOrderTimeWindow: 0s
+  walCompression: true
+  routePrefix: "/"
+  secrets:
+    - etcd-client-cert
+  serviceAccountName: kps-prometheus
+  serviceMonitorSelector:
+    matchLabels:
+      release: "kps"
+  serviceMonitorNamespaceSelector: {}
+  podMonitorSelector:
+    matchLabels:
+      release: "kps"
+  podMonitorNamespaceSelector: {}
+  probeSelector:
+    matchLabels:
+      release: "kps"
+  probeNamespaceSelector: {}
+  securityContext:
+    fsGroup: 2000
+    runAsGroup: 2000
+    runAsNonRoot: true
+    runAsUser: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  ruleNamespaceSelector: {}
+  ruleSelector:
+    matchLabels:
+      release: "kps"
+  scrapeConfigSelector:
+    matchLabels:
+      release: "kps"
+  scrapeConfigNamespaceSelector: {}
+  storage:
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 50Gi
+        storageClassName: fast
+  portName: http-web
+  hostNetwork: false
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kps-prometheus
+  namespace: kps
+  labels:
+    app: kps-prometheus
+    app.kubernetes.io/part-of: kps
+    release: "kps"
+    heritage: "Helm"
+spec:
+  selector:
+    matchLabels:
+      app: kps-prometheus
+      release: "kps"
+      self-monitor: "true"
+  namespaceSelector:
+    matchNames:
+      - "kps"
+  endpoints:
+  - port: http-web
+    path: "/metrics"
+    relabelings:
+      - action: replace
+        regex: ^(.*)$
+        replacement: $1
+        separator: ;
+        sourceLabels:
+        - __meta_kubernetes_pod_node_name
+        targetLabel: nodename
+  - port: reloader-web
+    path: "/metrics"
+    relabelings:
+      - action: replace
+        regex: ^(.*)$
+        replacement: $1
+        separator: ;
+        sourceLabels:
+        - __meta_kubernetes_pod_node_name
+        targetLabel: nodename

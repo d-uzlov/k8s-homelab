@@ -2,12 +2,13 @@
 
 nameOverride: kps
 fullnameOverride: kps
+namespaceOverride: kps
 
 crds:
-  enabled: true
+  enabled: false
 
 defaultRules:
-  create: true
+  create: false
   rules:
     alertmanager: true
     etcd: true
@@ -39,7 +40,7 @@ defaultRules:
     windows: true
 
 alertmanager:
-  enabled: true
+  enabled: false
   ingress:
     enabled: false
   serviceMonitor:
@@ -52,9 +53,11 @@ alertmanager:
       action: replace
 
 grafana:
-  enabled: true
+  enabled: false
+  namespaceOverride: kps-grafana
   # defaultDashboardsEnabled: true
   defaultDashboardsTimezone: browser
+  forceDeployDatasources: false
   # admin:
   #   existingSecret: grafana-admin-credentials
   #   userKey: admin-user
@@ -69,7 +72,7 @@ grafana:
       action: replace
 
 kubeApiServer:
-  enabled: true
+  enabled: false
   tlsConfig:
     serverName: kubernetes
     insecureSkipVerify: false
@@ -85,7 +88,7 @@ kubeApiServer:
       replacement: kubernetes.default.svc:443
 
 kubelet:
-  enabled: true
+  enabled: false
   serviceMonitor:
     metricRelabelings:
     cAdvisorRelabelings:
@@ -130,7 +133,7 @@ kubelet:
       action: replace
 
 kubeControllerManager:
-  enabled: true
+  enabled: false
   serviceMonitor:
     relabelings:
     - sourceLabels: [__meta_kubernetes_pod_node_name]
@@ -141,7 +144,7 @@ kubeControllerManager:
       action: replace
 
 coreDns:
-  enabled: true
+  enabled: false
   serviceMonitor:
     relabelings:
     - sourceLabels: [__meta_kubernetes_pod_node_name]
@@ -155,7 +158,7 @@ kubeDns:
   enabled: false
 
 kubeEtcd:
-  enabled: true
+  enabled: false
   service:
     enabled: true
     port: 2379
@@ -176,7 +179,7 @@ kubeEtcd:
       action: replace
 
 kubeScheduler:
-  enabled: true
+  enabled: false
   serviceMonitor:
     relabelings:
     - sourceLabels: [__meta_kubernetes_pod_node_name]
@@ -187,13 +190,14 @@ kubeScheduler:
       action: replace
 
 kubeProxy:
-  enabled: true
+  enabled: false
 
 kubeStateMetrics:
-  enabled: true
+  enabled: false
 
 kube-state-metrics:
-  enabled: true
+  enabled: false
+  namespaceOverride: kps-ksm
   fullnameOverride: kube-state-metrics
   selfMonitor:
     enabled: true
@@ -209,9 +213,11 @@ kube-state-metrics:
         action: replace
 
 nodeExporter:
-  enabled: true
+  enabled: false
+  forceDeployDashboards: true
 
 prometheus-node-exporter:
+  namespaceOverride: kps-node-exporter
   # fullnameOverride: node-exporter
   # podLabels:
   #   jobLabel: node-exporter
@@ -224,15 +230,16 @@ prometheus-node-exporter:
     monitor:
       enabled: true
       relabelings:
-      - sourceLabels: [__meta_kubernetes_pod_node_name]
+      - sourceLabels: [__meta_kubernetes_endpoint_node_name]
         separator: ;
         regex: ^(.*)$
-        targetLabel: nodename
+        targetLabel: instance
         replacement: $1
         action: replace
 
 prometheusOperator:
-  enabled: true
+  enabled: false
+  fullnameOverride: prometheus-operator
   serviceMonitor:
     relabelings:
     - sourceLabels: [__meta_kubernetes_pod_node_name]
@@ -243,7 +250,7 @@ prometheusOperator:
       action: replace
 
 prometheus:
-  enabled: true
+  enabled: false
   prometheusSpec:
     scrapeInterval: 5s
     disableCompaction: false
