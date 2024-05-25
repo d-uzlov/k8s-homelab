@@ -44,34 +44,37 @@ Choose what you need:
 - DNS-01
 - - [DuckDNS](./duckdns/readme.md)
 
-TODO
+# Ingress with automatic certificates
 
-- https://www.cloudns.net
-- https://github.com/ixoncloud/cert-manager-webhook-cloudns
-- https://desec.io/
+Cert-manager supports automatic certificate injection for ingress resources.
+A separate certificate will be created for each resource.
 
-# Ingress with single-domain certificates
+- Add an annotation (choose one depending on your issuer type)
+- - `cert-manager.io/cluster-issuer: issuer-name`
+- - `cert-manager.io/issuer: issuer-name`
+- Set `spec.tls.0.secretName`
+- [Optional] Adjust `spec.tls.0.hosts` array, in case the domain is not detected automatically
 
-Add an annotation to the ingress:
-```yaml
-# for namespaced issuers
-cert-manager.io/issuer: issuer-name
-# for cluster-wide issuers
-cert-manager.io/cluster-issuer: issuer-name
-```
+# Ingress with manual certificate
 
-Change issuer name accordingly.
+If you have a secret with a domain certificate, you can use it in ingress.
 
-You also have to add `spec.tls.0.secretName` and `spec.tls.0.hosts.0` values to the ingress.
+You can create a secret by uploading it manually,
+or by creating a `Certificate` resource in the target namespace.
 
-Certificate will be automatically issued and injected into the Ingress resource.
+You can also copy a secret from another namespace, to use a shared certificate
+(this is the recommended approach for wildcard certificates).
+
+- Create a secret
+- - For example, here is a [shared "main" certificate](../manual-wildcard/readme.md)
+- - The "main" certificate also has instructions for Replicator
+- Deploy [Replicator](../replicator/readme.md)
+- Mark target namespace with appropriate label
+- Set `spec.tls.0.secretName` to a name of the copied secret
 
 # Wildcard certificate
 
-You need to deploy the following resources:
 - [DuckDNS webhook](./duckdns/readme.md)
-- [Replicator](../replicator/readme.md)
-- [Manually create a certificate](../manual-wildcard/readme.md)
 
 Manual certificate deployment also has instructions on how to use the certificate.
 
@@ -92,25 +95,3 @@ Even if you update the certificate on the server side, the client won't see it.
 
 You need to clear browser cache to pick up the new certificate.
 You may also need to restart the browser after clearing the cache.
-
-# List of AMCE providers
-
-* LetsEncrypt
-  * Rate limits described above
-  * Can issue wildcard certificates via a DNS01 challenge.
-* ZeroSSL
-  * Website: https://zerossl.com
-  * Doesn't declare any rate limits,
-    but recently they have been added, and are apparently very severe.
-    There is no official documentation at the moment of writing this.
-    https://github.com/cert-manager/cert-manager/issues/5867
-  * Doesn't work with `.ru` zone
-    https://habr.com/ru/companies/itsumma/news/571368/#comment_24421522
-  * Allegedly can issue wildcard certificates.
-  * The official limit is 3 certs per free account, but it doesn't seem to apply to ACME.
-* Buypass-Go-SSL
-  * Doesn't work from Russia
-* SSL.com
-  * Website: SSL.com
-  * Guide: https://habr.com/ru/companies/itsumma/news/571368/
-  * Needs manual registration
