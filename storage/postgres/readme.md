@@ -15,14 +15,14 @@ You only need to do this when updating the app.
 helm repo add postgres-operator-charts https://opensource.zalando.com/postgres-operator/charts/postgres-operator
 helm repo update postgres-operator-charts
 helm search repo postgres-operator-charts/postgres-operator --versions --devel | head
-helm show values postgres-operator-charts/postgres-operator > ./storage/postgres/default-values.yaml
+helm show values postgres-operator-charts/postgres-operator --version 1.11.0 > ./storage/postgres/default-values.yaml
 ```
 
 ```bash
 helm template \
   postgres-operator \
   postgres-operator-charts/postgres-operator \
-  --version 1.10.1 \
+  --version 1.11.0 \
   --namespace postgres-operator \
   --values ./storage/postgres/values.yaml \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/instance|d' -e '\|app.kubernetes.io/part-of|d' \
@@ -32,9 +32,8 @@ helm template \
 # Deploy
 
 ```bash
-kl apply -k ./storage/postgres/crd
-kl apply -f ./storage/postgres/user-role-edit.yaml
-kl apply -f ./storage/postgres/user-role-view.yaml
+kl apply -k ./storage/postgres/crd/ --server-side
+kl apply -f ./storage/postgres/roles/
 
 kl create ns postgres-operator
 kl apply -f ./storage/postgres/config.yaml
@@ -46,10 +45,15 @@ kl -n postgres-operator get pod -o wide
 
 ```bash
 kl delete -f ./storage/postgres/postgres.gen.yaml
-kl delete -f ./storage/postgres/user-role-edit.yaml
-kl delete -f ./storage/postgres/user-role-view.yaml
-kl delete -k ./storage/postgres/crd
+kl delete -f ./storage/postgres/roles/
 kl delete ns postgres-operator
+kl delete -k ./storage/postgres/crd/
+```
+
+Get current config from the cluster:
+
+```bash
+kl -n postgres-operator get operatorconfiguration postgres-operator -o yaml > ./storage/postgres/current-config.yaml
 ```
 
 # Test
@@ -63,21 +67,16 @@ kl apply -f ./storage/postgres/test-cluster.yaml
 kl -n postgres-test get postgresql
 
 kl -n postgres-test get pods -o wide -L spilo-role
+kl -n postgres-test get pvc
 kl -n postgres-test get svc
 
 kl delete -f ./storage/postgres/test-cluster.yaml
 kl delete ns postgres-test
 ```
 
-# Config modification
+# Possible deadlock
 
-Get current config from the cluster:
-
-```bash
-kl -n postgres-operator get operatorconfigurations.acid.zalan.do postgres-operator -o yaml > ./storage/postgres/default-config.yaml
-```
-
-Config was modified in the following way:
+Don't forget to set:
 
 ```yaml
 configuration:
