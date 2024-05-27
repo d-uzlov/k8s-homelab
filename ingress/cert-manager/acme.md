@@ -44,3 +44,35 @@ Production issuer has the following limits:
 An account is registered by cert-manager when you create a new Issuer or a ClusterIssuer
 https://cert-manager.io/docs/configuration/acme/
 It's possible to reuse the old account if you have its key.
+
+# List of public DNS suffixes
+
+Also known as "Register domains" as per Letsencrypt.
+
+References:
+- https://github.com/publicsuffix/list/blob/master/public_suffix_list.dat
+
+# ACME delegation for DNS01
+
+References:
+- https://letsencrypt.org/docs/challenge-types/
+- https://community.letsencrypt.org/t/help-me-understand-acme-dns/58892/24
+
+When doing DNS01 challenge, Letsencrypt queries
+`_acme-challenge.example.domain` for TXT records.
+You can delegate this domain for a separate DNS server.
+
+You can create roughly the following to do the delegation:
+
+```dns
+_acme-challenge.example.com CNAME a2f7df8a-e3d6-4225-a130-5ed56a1db8f3.acme.example.com
+acme.example.com NS ns1.acme.example.com
+ns1.acme.example.com A 1.2.3.4
+```
+
+Letsencrypt will find the `_acme-challenge` CNAME redirect,
+follow it through the corresponding NS record,
+resolve the NS record via the corresponding A record,
+and finally query the corresponding DNS server via the resolved IP.
+
+NS and the corresponding A records are optional.

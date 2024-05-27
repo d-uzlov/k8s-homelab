@@ -46,6 +46,7 @@ Link: https://www.cloudns.net/
 - [?] Several parent domains available
 - [+] Allows custom entries
 - [+] All parent domains are public domain suffixes in 2024: https://github.com/publicsuffix/list/blob/f781a9a41c45c1438be97543c8e2d31530ad3429/public_suffix_list.dat#L12453-L12472
+- [-] You are limited by 50 records in total, including any A, NS, CNAME, etc.
 
 # deSEC
 
@@ -95,3 +96,15 @@ Link: https://freemyip.com/
 - [+] DNS01 is available (theoretically)
 - - Via TXT edits only
 - [-] No custom entries: only main and wildcard are available
+
+# eu.org
+
+Link: https://nic.eu.org/
+
+- [-] Effectively, registration is broken
+- - Domains are approved manually by a single person,
+approvals were always long, but at the moment of writing this
+that person seems to stopped responding for several months
+- - Seems to be non-operational since around mid-2023
+- - https://www.reddit.com/r/selfhosted/comments/1av6awf/euorg_validation_speed/
+- [+] Seems to be a proper 4th level domain which can be delegated

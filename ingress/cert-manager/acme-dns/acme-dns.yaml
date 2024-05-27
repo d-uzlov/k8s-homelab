@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: acme-dns
+  namespace: cm-acme-dns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: acme-dns
+  template:
+    metadata:
+      labels:
+        app: acme-dns
+    spec:
+      containers:
+      - name: acme-dns
+        image: joohoi/acme-dns:v1.0
+        command:
+        - /entrypoint.sh
+        ports:
+        - name: dns-udp
+          containerPort: 53
+          protocol: UDP
+        - name: dns-tcp
+          containerPort: 53
+          protocol: TCP
+        - name: http
+          containerPort: 80
+          protocol: TCP
+        - name: https
+          containerPort: 443
+          protocol: TCP
+        env:
+        - name: ACME_DNS_POSTGRESS_USER
+          valueFrom:
+            secretKeyRef:
+              name: acme-dns.postgres.credentials.postgresql.acid.zalan.do
+              key: username
+        - name: ACME_DNS_POSTGRESS_PASS
+          valueFrom:
+            secretKeyRef:
+              name: acme-dns.postgres.credentials.postgresql.acid.zalan.do
+              key: password
+        - name: ACME_DNS_POSTGRESS_HOST
+          value: postgres
+        - name: ACME_DNS_POSTGRESS_DB_NAME
+          value: acmedns
+        - name: ACME_DNS_DOMAIN
+          valueFrom:
+            configMapKeyRef:
+              name: env-config
+              key: domain_suffix
+        - name: ACME_DNS_NS_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: env-config
+              key: ns_name
+        - name: ACME_DNS_ADMIN_EMAIL
+          valueFrom:
+            configMapKeyRef:
+              name: env-config
+              key: admin_email
+        startupProbe:
+          httpGet:
+            path: /health
+            port: http
+            scheme: HTTP
+          periodSeconds: 2
+          timeoutSeconds: 1
+          failureThreshold: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+            scheme: HTTP
+          periodSeconds: 2
+          timeoutSeconds: 1
+          failureThreshold: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+            scheme: HTTP
+          periodSeconds: 2
+          timeoutSeconds: 1
+          failureThreshold: 1
+        volumeMounts:
+        - mountPath: /etc/acme-dns-config
+          name: config
+        - mountPath: /etc/acme-dns
+          name: tmp
+        - mountPath: /entrypoint.sh
+          name: entrypoint
+          subPath: entrypoint.sh
+        resources:
+          requests:
+            memory: 128Mi
+          limits:
+            memory: 128Mi
+      volumes:
+      - name: config
+        configMap:
+          name: config
+      - name: tmp
+        emptyDir: {}
+      - name: entrypoint
+        configMap:
+          name: entrypoint
+          defaultMode: 0555
