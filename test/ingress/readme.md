@@ -44,8 +44,12 @@ kl -n ingress-test get httproute echo
 kl -n ingress-test describe httproute echo
 
 test_domain=$(kl -n ingress-test get httproute echo -o go-template --template "{{ (index .spec.hostnames 0) }}")
+# should show "301 Moved Permanently"
 curl -v "$test_domain"
-curl "https://$test_domain/" && ! curl -s -D- "https://$test_domain/" | grep strict-transport-security
+curl "https://$test_domain/"
+! curl -s -D- "https://$test_domain/" | grep strict-transport-security
+# debug info in case there are any errors
+curl -v -i "https://$test_domain/"
 ```
 
 # Cleanup
