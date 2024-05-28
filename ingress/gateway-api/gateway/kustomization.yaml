@@ -11,7 +11,24 @@ resources:
 - ./public-redirect.yaml
 - ../../../ingress/manual-wildcard/domain-info
 
+configMapGenerator:
+- name: gateway-class-info
+  envs:
+  - ./env/gateway-class.env
+  options:
+    disableNameSuffixHash: true
+
 replacements:
+- source:
+    kind: ConfigMap
+    name: gateway-class-info
+    fieldPath: data.gateway_class
+  targets:
+  - select:
+      kind: Gateway
+      name: main-public
+    fieldPaths:
+    - spec.gatewayClassName
 - source:
     kind: ConfigMap
     name: main-domain-info
@@ -32,6 +49,16 @@ replacements:
       name: main-public
     fieldPaths:
     - spec.listeners.2.tls.certificateRefs.0.name
+- source:
+    kind: ConfigMap
+    name: gateway-class-info
+    fieldPath: data.gateway_class
+  targets:
+  - select:
+      kind: Gateway
+      name: main-private
+    fieldPaths:
+    - spec.gatewayClassName
 - source:
     kind: ConfigMap
     name: main-domain-info

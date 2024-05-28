@@ -112,27 +112,6 @@ References:
 - https://docs.cilium.io/en/stable/network/lb-ipam/#lb-ipam
 - https://github.com/cilium/cilium/issues/26586
 
-# Set up gateway
-
-Make sure to deploy reference grant
-for the main wildcard certificate before deploying the gateway.
-
-```bash
-kl create ns gateways
-
-kl apply -k ./network/cilium/gateway/
-kl -n gateways describe gateway main-private
-kl -n gateways describe gateway main-public
-
-kl -n gateways describe httproute http-redirect-public
-kl -n gateways describe httproute http-redirect-private
-
-kl -n gateways get gateway
-```
-
-References:
-- https://docs.cilium.io/en/stable/network/servicemesh/gateway-api/gateway-api/
-
 # Cleanup
 
 ```bash
