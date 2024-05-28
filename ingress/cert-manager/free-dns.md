@@ -104,7 +104,7 @@ Link: https://nic.eu.org/
 - [-] Effectively, registration is broken
 - - Domains are approved manually by a single person,
 approvals were always long, but at the moment of writing this
-that person seems to stopped responding for several months
+that person seems to have stopped responding for several months
 - - Seems to be non-operational since around mid-2023
 - - https://www.reddit.com/r/selfhosted/comments/1av6awf/euorg_validation_speed/
 - [+] Seems to be a proper 4th level domain which can be delegated

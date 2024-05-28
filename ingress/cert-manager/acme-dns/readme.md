@@ -7,6 +7,50 @@ References:
 - https://habr.com/ru/articles/674738/
 - https://cert-manager.io/docs/configuration/acme/dns01/acme-dns/
 
+acme-dns allow you to move ACME validation to a separate server.
+
+This has 2 main advantages:
+- You don't need a specialized plugin or webhook for the cert-manager, you can use it with any DNS server
+- Security is improved, because you don't need to provide full access to your main DNS server to the cluster
+
+You don't need to deploy your own instance of acme-dns to use it.
+You can use absolutely any instance for any domain,
+you just need to configure your main DNS server properly.
+
+However, remember, that by using an acme-dns instance for ACME validation,
+you grant it the ability to issue a certificate based on DNS01 challenge at any time.
+Malicious server could leverage it to impersonate your server.
+
+Requirements:
+- Static public IP
+- Access to port 53 on that IP
+- Main domain should support CNAME records
+- You should also have a domain that supports NS records.
+For a homelab it would probably be more convenient
+to use a subdomain of your main domain
+but you can absolutely host your acme-dns on a different domain if you want to.
+
+# How it works
+
+acme-dns uses [ACME challenge redirection](../acme.md#acme-delegation-for-dns01).
+
+# Init server environment
+
+```bash
+mkdir -p ./ingress/cert-manager/acme-dns/env/
+cat << EOF > ./ingress/cert-manager/acme-dns/env/acme-dns.env
+# acme-dns will serve on this domain
+# all generated validation URLs will use this as a suffix,
+# so set it to something public that will allow letsencrypt to connect to acme-dns via port 53
+domain_suffix=acme.example.org
+# there is no documentation of what this does
+# it should probably match Host value of the NS record that's pointing to acme-dns?
+ns_name=acme.example.org
+# admin email address, where @ is substituted with .
+admin_email=admin.example.org
+EOF
+```
+
 # Deploy
 
 ```bash
@@ -20,42 +64,11 @@ kl apply -f ./ingress/cert-manager/acme-dns/service-dns.yaml
 kl apply -f ./ingress/cert-manager/acme-dns/service-management.yaml
 kl -n cm-acme-dns get svc
 
-mkdir -p ./ingress/cert-manager/acme-dns/env/
-cat << EOF > ./ingress/cert-manager/acme-dns/env/acme-dns.env
-# acme-dns will serve on this domain
-# all generated validation URLs will use this as a suffix,
-# so set it to something public that will allow letsencrypt to connect to acme-dns via port 53
-domain_suffix=acme.example.org
-# there is no documentation what this does
-# it should probably match Host of the NS record that's pointing to acme-dns?
-ns_name=acme.example.org
-# ns_value=acme-ns.example.org
-# admin email address, where @ is substituted with .
-admin_email=admin.example.org
-EOF
-
 kl apply -k ./ingress/cert-manager/acme-dns/
 kl -n cm-acme-dns get pods -o wide
 
 kl apply -k ./ingress/cert-manager/acme-dns/ingress-route/
 kl -n cm-acme-dns get httproute
-
-# test creating a domain for ACME
-acmedns_mngt_domain=$(kl -n cm-acme-dns get httproute management -o go-template --template "{{ (index .spec.hostnames 0)}}")
-curl -X POST "https://$acmedns_mngt_domain/register" | jq .
-# manually substitute from /register output:
-# X-Api-User from username
-# X-Api-Key from password
-# copy "subdomain" value from subdomain
-curl -X POST \
-  -H "X-Api-User: 1f426aab-94e1-4839-97eb-97f3263b1219" \
-  -H "X-Api-Key: q3-ebN3B7N5BZZFfKvbZJoBdbRHdHXuoizd38I5X" \
-  -d '{"subdomain": "aec39e42-3caa-4f69-9acd-59d843922634", "txt": "___validation_token_received_from_the_ca___"}' \
-  "https://$acmedns_mngt_domain/update"
-# check access locally
-acmedns_lb=$(kl -n cm-acme-dns get svc dns -o go-template --template "{{ (index .status.loadBalancer.ingress 0).ip}}")
-acme_challende_domain=aec39e42-3caa-4f69-9acd-59d843922634.acme.example.cloudns.be
-nslookup -type=txt $acme_challende_domain $acmedns_lb
 ```
 
 # Cleanup
@@ -69,109 +82,128 @@ kl delete -f ./ingress/cert-manager/acme-dns/postgres.yaml
 kl delete ns cm-acme-dns
 ```
 
-# How it works
+# Check local server config
 
-acme-dns uses [ACME challenge redirection](../acme.md#acme-delegation-for-dns01).
+This just checks that acme-dns is working in a vacuum.
+This can be useful to check database connectivity and stuff.
+
+```bash
+# test creating a domain for ACME
+acmedns_mngt_domain=$(kl -n cm-acme-dns get httproute management -o go-template --template "{{ (index .spec.hostnames 0)}}")
+registration=$(curl -X POST "https://$acmedns_mngt_domain/register")
+echo $registration | jq .
+curl -X POST \
+  -H "X-Api-User: $(echo $registration | jq .username -r)" \
+  -H "X-Api-Key: $(echo $registration | jq .password -r)" \
+  -d '{"subdomain": '"$(echo $registration | jq .subdomain)"', "txt": "___validation_token_received_from_the_ca___"}' \
+  "https://$acmedns_mngt_domain/update"
+# check access locally
+acmedns_lb=$(kl -n cm-acme-dns get svc dns -o go-template --template "{{ (index .status.loadBalancer.ingress 0).ip}}")
+nslookup -type=txt $(echo $registration | jq .fulldomain -r) $acmedns_lb
+```
 
 # External DNS setup
 
-You need to have a domain and a DNS server with support for CNAME and NS records for this to work..
+Before using your own acme-dns instance, you need to set up remote access to it.
 
-Configure DNS server serving `acme-dns.env:$domain_suffix` (`auth.example.org` in the example .env file):
+This is just a standard setup for a new DNS server, it's not specific for acme-dns.
 
-- Set NS record for `$domain_suffix`.
-  Like this: `auth.example.org. NS actual.address.of.server.`
-- Make sure that domain that NS for `$domain_suffix` points to is resolvable.
-  Like this: `actual.address.of.server. A 100.200.150.250` (set to actual public IP of your server)
-- Make sure that your `acme-dns` server is available from the internet (configure firewall, NAT, etc.)
+`domain_suffix` must match the value from `./ingress/cert-manager/acme-dns/env/acme-dns.env`.
+
+- Set NS record in the parent domain of `$domain_suffix`: 
+- - `$domain_suffix. NS $actual_acmedns_server_domain.`
+- - For example: `acme.example.org. NS acme-ns.example.org.`
+- Make sure that A record for `$actual_acmedns_server_domain` can be resolved to real server IP
+- - `$actual_acmedns_server_domain. A $actual_acmedns_server_ip`
+- - For example: `acme-ns.example.org. A 100.200.150.250`
+- Make sure that port 53 at `$actual_acmedns_server_ip` is available from the internet
+- - Configure firewall, NAT, etc.
+- - UDP port access must be configured
+- - TCP is optional but may theoretically be required in some scenarios
+
+In case you have a single public IP, if you already have
+a public DNS server and don't want to replace it with acme-dns,
+you can probably setup DNS forwarding,
+but this is out of scope of this documentation.
 
 # Setup for each domain which needs a certificate
 
 References:
 - https://cert-manager.io/docs/configuration/acme/dns01/acme-dns/
 
-You can share some of this for different domains,
-but it's better to do all of the setup for each domain separately,
-unless you need a single certificate that's valid for several domains.
+Here we will create a separate issuer just for a single domain.
+It's possible to use a single issuer for several domains,
+but you need to run `/register` for each domain separately,
+and put all of the credentials in a single file.
+See cert-manager documentation for more info.
+
+Also, sharing an issuer is less secure than using separate ones.
+
+---
 
 - Register at the `acme-dns`:
 
 ```bash
 acmedns_mngt_domain=$(kl -n cm-acme-dns get httproute management -o go-template --template "{{ (index .spec.hostnames 0)}}")
-# this is just for the file name for your convenience
+# Set to your actual domain
 managed_domain=test.example.com
 # save output, we will nedd it for the cert-manager issuer
 curl -X POST "https://$acmedns_mngt_domain/register" | jq . > ./ingress/cert-manager/acme-dns/env/$managed_domain-domain-info.json
+
+echo "This if your full domain: $(jq -r .fulldomain ./ingress/cert-manager/acme-dns/env/$managed_domain-domain-info.json)"
 ```
 
-- Set CNAME record for `_acme-challenge.your.domain` that points to `acmedns-$managed_domain.json : fulldomain`
-- Create a config file for cert-manager:
+---
+
+- Set CNAME record for `_acme-challenge.$managed_domain` that points to `acmedns-$managed_domain.json : fulldomain`
 
 ```bash
+# check that CNAME reference is used
+nslookup -type=txt _acme-challenge.$managed_domain
+```
+
+---
+
+- Set up cert-manager config:
+
+```bash
+# Create a config file for acme-dns client
 jq -n --slurpfile source ./ingress/cert-manager/acme-dns/env/$managed_domain-domain-info.json '."'"$managed_domain"'" = $source[0]' > ./ingress/cert-manager/acme-dns/env/$managed_domain-acmedns.json
-```
 
-- Create a secret:
-
-```bash
-cert_namespace=cm-manual
-kl -n $cert_namespace create secret generic acme-dns-$managed_domain --from-file acmedns.json=./ingress/cert-manager/acme-dns/env/$managed_domain-acmedns.json
-```
-
-- Create a corresponding issuer:
-
-```bash
-issuer_name=example
 domain_admin_email=user@example.org
-cat << EOF > ./ingress/cert-manager/acme-dns/env/$managed_domain-issuer.yaml
+cat << EOF > ./ingress/cert-manager/acme-dns/env/$managed_domain-issuer-staging.yaml
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
-  name: $issuer_name-staging
+  name: $managed_domain-staging
 spec:
   acme:
     server: https://acme-staging-v02.api.letsencrypt.org/directory
     email: $domain_admin_email
     privateKeySecretRef:
-      name: $issuer_name-staging
+      name: letsencrypt-creds-${domain_admin_email/@/-at-}
     solvers:
     - dns01:
         acmeDNS:
-          host: https://$acmedns_mngt_domain
+          host: http://management.cm-acme-dns.svc
           accountSecretRef:
             name: acme-dns-$managed_domain
             key: acmedns.json
 EOF
-kl -n $cert_namespace apply -f ./ingress/cert-manager/acme-dns/env/$managed_domain-issuer.yaml
+sed ./ingress/cert-manager/acme-dns/env/$managed_domain-issuer-staging.yaml \
+  -e 's/acme-staging-v02/acme-v02/g' \
+  -e 's/-staging/-production/g' \
+  > ./ingress/cert-manager/acme-dns/env/$managed_domain-issuer-production.yaml
+
+# since we are using namespaced issuer, it will only be available in thie selected namespace
+issuer_namespace=gateways
+kl -n $issuer_namespace create secret generic acme-dns-$managed_domain --from-file acmedns.json=./ingress/cert-manager/acme-dns/env/$managed_domain-acmedns.json
+kl -n $issuer_namespace apply -f ./ingress/cert-manager/acme-dns/env/$managed_domain-issuer-staging.yaml
+kl -n $issuer_namespace apply -f ./ingress/cert-manager/acme-dns/env/$managed_domain-issuer-production.yaml
 ```
 
-- Create a corresponding certificate:
-
-```bash
-cert_name=example
-cat << EOF > ./ingress/cert-manager/acme-dns/env/$managed_domain-cert.yaml
 ---
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: $cert_name
-spec:
-  # shown in the cert info
-  # overridden by dnsNames when checking signature
-  commonName: $managed_domain
-  dnsNames:
-  - $managed_domain
-  - '*.$managed_domain'
-  secretName: $managed_domain-wildcard
-  issuerRef:
-    kind: Issuer
-    name: $issuer_name-staging
-  secretTemplate:
-    annotations:
-      replicator.v1.mittwald.de/replicate-to-matching: >
-        $cert_name-copy
-EOF
-kl -n $cert_namespace apply -f ./ingress/cert-manager/acme-dns/env/$managed_domain-cert.yaml
 
-kl -n cert-manager logs deployments/cert-manager | grep cloudns
-```
+You can now use this issuer to create a certificate.
+
+See here for an example how to create one: [manual-wildcard](../../manual-wildcard/readme.md#create-certificate-from-template).

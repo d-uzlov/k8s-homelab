@@ -1,5 +1,5 @@
 
-# List of AMCE providers
+# List of ACME providers
 
 * LetsEncrypt
   * Has relatively strict rate limits for production certificates
