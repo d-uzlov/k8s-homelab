@@ -206,4 +206,4 @@ kl -n $issuer_namespace apply -f ./ingress/cert-manager/acme-dns/env/$managed_do
 
 You can now use this issuer to create a certificate.
 
-See here for an example how to create one: [manual-wildcard](../../manual-wildcard/readme.md#create-certificate-from-template).
+See here for an example how to create one: [manual-certificates](../../manual-certificates/readme.md#create-certificate-from-template).

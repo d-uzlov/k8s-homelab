@@ -66,7 +66,7 @@ You can also copy a secret from another namespace, to use a shared certificate
 (this is the recommended approach for wildcard certificates).
 
 - Create a secret
-- - For example, here is a [shared "main" certificate](../manual-wildcard/readme.md)
+- - For example, here is a [shared "main" certificate](../manual-certificates/readme.md)
 - - The "main" certificate also has instructions for Replicator
 - Deploy [Replicator](../replicator/readme.md)
 - Mark target namespace with appropriate label

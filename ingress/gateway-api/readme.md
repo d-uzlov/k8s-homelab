@@ -18,7 +18,7 @@ kl apply -f ./network/gateway-api/experimental-install.yaml --server-side
 
 # Deploy gateway
 
-Deploy appropriate certificate before creating gateways: [manual-wildcard](../manual-wildcard/readme.md).
+Deploy appropriate certificate before creating gateways: [manual-certificates](../manual-certificates/readme.md).
 
 ```bash
 mkdir -p ./ingress/gateway-api/gateway/env/

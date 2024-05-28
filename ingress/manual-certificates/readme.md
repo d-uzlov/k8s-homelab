@@ -27,7 +27,7 @@ issuer_prefix=$domain_name
 
 # if you don't need the wildcard domain, remove it manually
 # remember that you have to remove if when using HTTP01 challenge
-cat << EOF > ./ingress/manual-wildcard/env/$domain_name-cert-staging.yaml
+cat << EOF > ./ingress/manual-certificates/env/$domain_name-cert-staging.yaml
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -48,28 +48,28 @@ EOF
 # useful for classic k8s ingress
 # you don't need it for gateway API
 replicator_label=copy-wild-cert=main
-cat << EOF >> ./ingress/manual-wildcard/env/$domain_name-cert-staging.yaml
+cat << EOF >> ./ingress/manual-certificates/env/$domain_name-cert-staging.yaml
   secretTemplate:
     annotations:
       replicator.v1.mittwald.de/replicate-to-matching: >
         $replicator_label
 EOF
 
-sed ./ingress/manual-wildcard/env/$domain_name-cert-staging.yaml \
+sed ./ingress/manual-certificates/env/$domain_name-cert-staging.yaml \
   -e 's/-staging/-production/g' \
-  > ./ingress/manual-wildcard/env/$domain_name-cert-production.yaml
+  > ./ingress/manual-certificates/env/$domain_name-cert-production.yaml
 ```
 
 Save environment info to automate ingress deployment:
 
 ```bash
-mkdir -p ./ingress/manual-wildcard/domain-info/env/
-cat <<EOF > ./ingress/manual-wildcard/domain-info/env/main-domain.env
+mkdir -p ./ingress/manual-certificates/domain-info/env/
+cat <<EOF > ./ingress/manual-certificates/domain-info/env/main-domain.env
 # used to deploy environment-agnostic ingress
 domain_suffix=$domain_name
 secret_name=cert-$domain_name-production
 EOF
-cat <<EOF > ./ingress/manual-wildcard/domain-info/env/main-domain-replicator.env
+cat <<EOF > ./ingress/manual-certificates/domain-info/env/main-domain-replicator.env
 # label for the certificate secret
 # used by the 'replicator' deployment
 # this is just so you don't forget the value
@@ -99,17 +99,17 @@ Staging certificates usually take quite a bit longer to produce than production 
 cert_namespace=gateways
 
 # first deploy a stagin certificate to check that everything works as expected
-kl -n $cert_namespace apply -f ./ingress/manual-wildcard/env/$domain_name-cert-staging.yaml
+kl -n $cert_namespace apply -f ./ingress/manual-certificates/env/$domain_name-cert-staging.yaml
 # wait for the certificate to be approved
 kl -n $cert_namespace get certificate
 # now that you know that challenge works
 # deploy the production certificate without the fear of getting banned by letsencrypt limits
-kl -n $cert_namespace apply -f ./ingress/manual-wildcard/env/$domain_name-cert-production.yaml
+kl -n $cert_namespace apply -f ./ingress/manual-certificates/env/$domain_name-cert-production.yaml
 kl -n $cert_namespace get certificate
 
 # if you want to use the certificate with gateway API from a different namespace
 # modify secret name in the reference grant before applying
-kl -n $cert_namespace apply -f ./ingress/manual-wildcard/reference-grant.yaml
+kl -n $cert_namespace apply -f ./ingress/manual-certificates/reference-grant.yaml
 ```
 
 # Certificate and challenge info
@@ -141,11 +141,11 @@ without requesting a new certificate from ACME provider.
 
 ```bash
 # save
-mkdir -p ./ingress/manual-wildcard/env/
-kl -n cm-manual get secrets main-wildcard -o yaml > ./ingress/manual-wildcard/env/wildcard-secret.yaml
+mkdir -p ./ingress/manual-certificates/env/
+kl -n cm-manual get secrets main-wildcard -o yaml > ./ingress/manual-certificates/env/wildcard-secret.yaml
 
 # restore
-kl apply -f ./ingress/manual-wildcard/env/wildcard-secret.yaml
+kl apply -f ./ingress/manual-certificates/env/wildcard-secret.yaml
 ```
 
 # Using in ingress resources

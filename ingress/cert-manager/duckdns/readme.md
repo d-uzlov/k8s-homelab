@@ -56,7 +56,7 @@ If you want to change namespace, change it in the helm template command.
 Kustomize doesn't change namespace of ClusterRoleBinding and in cert-manager.io/inject-ca-from annotation.
 
 After deployment you can go here to test certificate creation:
-- [manual-wildcard](../../manual-wildcard/readme.md)
+- [manual-certificates](../../manual-certificates/readme.md)
 
 # Check duckdns TXT manually
 
