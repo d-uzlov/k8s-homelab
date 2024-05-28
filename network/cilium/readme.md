@@ -120,10 +120,8 @@ for the main wildcard certificate before deploying the gateway.
 ```bash
 kl create ns gateways
 
-kl apply -f ./network/cilium/private-gateway.yaml
+kl apply -k ./network/cilium/gateway/
 kl -n gateways describe gateway main-private
-
-kl apply -f ./network/cilium/public-gateway.yaml
 kl -n gateways describe gateway main-public
 
 kl -n gateways describe httproute http-redirect-public
