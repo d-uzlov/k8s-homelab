@@ -7,81 +7,131 @@ When using LetsEncrypt there are generally 2 ways of assigning a certificate for
 
 This folder contains an example how you can create a wildcard certificate for the second approach.
 
-# Init local info
+# Create certificate from template
+
+This is a general template for certificates that I consider a good practice.
+
+You can create several certificates, but only one
+will be treated as the main one by this repo,
+with automatic ingress replacements.
+
+```bash
+domain_name=my-domain.parent-domain.com
+# either ClusterIssuer or Issuer
+issuer_kind=Issuer
+# look up available issuers
+kl get clusterissuer
+kl get issuer -A
+# $domain_name is used by acme-dns in ./ingress/cert-manager/acme-dns/readme.md
+issuer_prefix=$domain_name
+
+# if you don't need the wildcard domain, remove it manually
+# remember that you have to remove if when using HTTP01 challenge
+cat << EOF > ./ingress/manual-wildcard/env/$domain_name-cert-staging.yaml
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: $domain_name-staging
+spec:
+  issuerRef:
+    kind: $issuer_kind
+    name: $issuer_prefix-staging
+  # shown in the cert info, doesn't seem to do anything else
+  commonName: $domain_name
+  dnsNames:
+  - $domain_name
+  - '*.$domain_name'
+  secretName: cert-$domain_name-staging
+EOF
+# in case you want to use this certificate in several namespaces
+# useful for classic k8s ingress
+# you don't need it for gateway API
+replicator_label=copy-wild-cert=main
+cat << EOF >> ./ingress/manual-wildcard/env/$domain_name-cert-staging.yaml
+  secretTemplate:
+    annotations:
+      replicator.v1.mittwald.de/replicate-to-matching: >
+        $replicator_label
+EOF
+
+sed ./ingress/manual-wildcard/env/$domain_name-cert-staging.yaml \
+  -e 's/-staging/-production/g' \
+  > ./ingress/manual-wildcard/env/$domain_name-cert-production.yaml
+```
+
+Save environment info to automate ingress deployment:
 
 ```bash
 mkdir -p ./ingress/manual-wildcard/domain-info/env/
-cat <<EOF > ./ingress/manual-wildcard/domain-info/env/domain.env
-# your subdomain name registered at the duckdns website
-# if you domain is 'example.duckdns.org',
-# then place 'example' here
-subdomain=example
-
-# secret name that ingress resources will be using
-# can be anything, just make sure that you don't use this name for other secrets
-secret_name=main-wildcard
-
+cat <<EOF > ./ingress/manual-wildcard/domain-info/env/main-domain.env
+# used to deploy environment-agnostic ingress
+domain_suffix=$domain_name
+secret_name=cert-$domain_name-production
+EOF
+cat <<EOF > ./ingress/manual-wildcard/domain-info/env/main-domain-replicator.env
 # label for the certificate secret
 # used by the 'replicator' deployment
-copy_label=copy-wild-cert=main
+# this is just so you don't forget the value
+copy_label=$replicator_label
 EOF
 ```
 
-# Test on staging environment
+If you delete this file by accident,
+you can just copy corresponding values from the certificate.
+If you delete the certificate `.yaml` file,
+you get a copy from the cluster.
 
-First deploy a staging certificate to test if everything works.
-Staging servers have generous limits,
-so you won't lock yourself out of letsencrypt on accident.
+# Deploy your certificate
+
+This instruction assumes that you deploy the certificate
+immediately after creating its `.yaml` file above.
+
+If this is not the case then just substitute file names.
+
+WHen deploying the staging certificate, [check related resources](#certificate-and-challenge-info).
+DNS01 challenge can take several minutes, be patient.
+HTTP01, on the other hand, is usually almost instant.
+Staging certificates usually take quite a bit longer to produce than production ones.
 
 ```bash
-kl create ns cm-manual
+# make sure that your certificate issuer is available in the desired namespace
+cert_namespace=gateways
 
-kl apply -k ./ingress/manual-wildcard/staging/
+# first deploy a stagin certificate to check that everything works as expected
+kl -n $cert_namespace apply -f ./ingress/manual-wildcard/env/$domain_name-cert-staging.yaml
+# wait for the certificate to be approved
+kl -n $cert_namespace get certificate
+# now that you know that challenge works
+# deploy the production certificate without the fear of getting banned by letsencrypt limits
+kl -n $cert_namespace apply -f ./ingress/manual-wildcard/env/$domain_name-cert-production.yaml
+kl -n $cert_namespace get certificate
 
-# you can check the following resources to see if everything goes as expected
-kl -n cm-manual get certificate
-kl -n cm-manual get certificaterequests.cert-manager.io
-kl -n cm-manual get orders.acme.cert-manager.io
-
-# Note that it can take LetsEncrypt several minutes to verify DNS-01 challenge and give you the certificate.
-
-# delete staging certificate after it is was successfully issued
-kl delete -k ./ingress/manual-wildcard/staging/
-# if we don't delete secret, then when we re-deploy the certificate,
-# cert-manager will see that secret already exists and skip re-issuing the certificate
-kl -n cm-manual delete secrets main-wildcard
+# if you want to use the certificate with gateway API from a different namespace
+# modify secret name in the reference grant before applying
+kl -n $cert_namespace apply -f ./ingress/manual-wildcard/reference-grant.yaml
 ```
 
-If the certificate doesn't get approved for too long, you can check the following resources for debugging:
+# Certificate and challenge info
+
+Useful when checking that new issuer works,
+or for debugging why certificate is not being approved.
 
 ```bash
-# or use describe on the same resources
-kl -n cm-manual describe certificate
-kl -n cm-manual describe certificaterequests.cert-manager.io
-kl -n cm-manual describe orders.acme.cert-manager.io
+# check that all three related resources are created
+# certificaterequest: check the DENIED and READY values
+# order: check STATE
+kl -n $cert_namespace get certificate
+kl -n $cert_namespace get certificaterequest
+kl -n $cert_namespace get order
 
-# check if duckdns webhook have any errors
-kl -n cm-duckdns logs deployments/duckdns-webhook --tail 20
-# check if cert-manager have any errors
-kl -n cert-manager logs deployments/cert-manager --tail 20
-# replace with your domain to check if the webhook
-# at least set up the TXT record for DNS-01 challenge
-nslookup -q=txt example.duckdns.org
-```
+# in case of errors, of if some resources are missing, check describes
+kl -n $cert_namespace describe certificate
+kl -n $cert_namespace describe certificaterequest
+kl -n $cert_namespace describe order
 
-# Create production certificate
-
-After you verified that your setup works
-you can re-issue a proper production certificate:
-
-```bash
-kl create ns cm-manual
-
-kl apply -k ./ingress/manual-wildcard/production/
-
-kl -n cm-manual get certificate
-
-kl apply -n cm-manual -f ./ingress/manual-wildcard/reference-grant.yaml
+# in case certificaterequest and order aren't descriptive
+kl -n cert-manager logs deployments/cert-manager | grep $domain_name
 ```
 
 # Avoid re-creating production certificate when re-creating cluster
