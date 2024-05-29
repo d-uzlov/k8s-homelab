@@ -18,7 +18,7 @@ You only need to do this if you change `values.yaml` file.
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update prometheus-community
 helm search repo prometheus-community/kube-prometheus-stack --versions --devel | head
-helm show values prometheus-community/kube-prometheus-stack --version 58.6.0 > ./metrics/kube-prometheus-stack/default-values.yaml
+helm show values prometheus-community/kube-prometheus-stack --version 59.0.0 > ./metrics/kube-prometheus-stack/default-values.yaml
 ```
 
 ```bash
@@ -30,7 +30,7 @@ function remove_helm_junk() {
     -e '\|app.kubernetes.io/instance:|d' \
     -e '\|app.kubernetes.io/version|d' \
     -e '\|app.kubernetes.io/part-of|d' \
-    -e '\|58.6.0|d' \
+    -e '\|59.0.0|d' \
     -e '/^ *$/d' \
     -e '\|heritage\:|d' \
     -e '\|httpHeaders\:$|d'
@@ -43,7 +43,7 @@ function generateDeployment() {
   helm template \
     kps \
     prometheus-community/kube-prometheus-stack \
-    --version 58.6.0 \
+    --version 59.0.0 \
     --values ./metrics/kube-prometheus-stack/values.yaml \
     $args \
     | remove_helm_junk
@@ -58,7 +58,6 @@ generateDeployment kubeApiServer.enabled=true \
                    kubelet.enabled=true \
                    kubeControllerManager.enabled=true \
                    coreDns.enabled=true \
-                   kubeEtcd.enabled=true \
                    kubeScheduler.enabled=true       > ./metrics/kube-prometheus-stack/service-monitors.gen.yaml
 
 generateDeployment kubeStateMetrics.enabled=true    > ./metrics/kube-prometheus-stack/kube-state-metrics/kubeStateMetrics.gen.yaml
@@ -84,6 +83,8 @@ References:
 # Deploy
 
 ```bash
+kl apply -f ./metrics/kube-prometheus-stack/crd/ --server-side
+
 kl create ns kps-ksm
 kl apply -k ./metrics/kube-prometheus-stack/kube-state-metrics/ --server-side
 kl -n kps-ksm get pod -o wide
@@ -146,6 +147,7 @@ kl delete ns kps
 kl delete ns kps-operator
 kl delete ns kps-ksm
 kl delete ns kps-node-exporter
+kl delete -f ./metrics/kube-prometheus-stack/crd/
 ```
 
 # kube-controller-manager and kube-scheduler metrics

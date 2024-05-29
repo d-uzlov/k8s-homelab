@@ -41,26 +41,6 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: kps-kube-etcd
-  labels:
-    app: kps-kube-etcd
-    jobLabel: kube-etcd
-    release: "kps"
-  namespace: kube-system
-spec:
-  clusterIP: None
-  ports:
-    - name: http-metrics
-      port: 2379
-      protocol: TCP
-      targetPort: 2379
-  selector:
-    component: etcd
-  type: ClusterIP
----
-apiVersion: v1
-kind: Service
-metadata:
   name: kps-kube-scheduler
   labels:
     app: kps-kube-scheduler
@@ -172,42 +152,6 @@ spec:
     tlsConfig:
       caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
       insecureSkipVerify: true
-    relabelings:
-    - action: replace
-      regex: ^(.*)$
-      replacement: $1
-      separator: ;
-      sourceLabels:
-      - __meta_kubernetes_pod_node_name
-      targetLabel: nodename
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: kps-kube-etcd
-  namespace: kps
-  labels:
-    app: kps-kube-etcd
-    release: "kps"
-spec:
-  jobLabel: jobLabel
-  selector:
-    matchLabels:
-      app: kps-kube-etcd
-      release: "kps"
-  namespaceSelector:
-    matchNames:
-      - "kube-system"
-  endpoints:
-  - port: http-metrics
-    bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
-    scheme: https
-    tlsConfig:
-      serverName: localhost
-      caFile: /etc/prometheus/secrets/etcd-client-cert/ca.crt
-      certFile: /etc/prometheus/secrets/etcd-client-cert/healthcheck-client.crt
-      keyFile: /etc/prometheus/secrets/etcd-client-cert/healthcheck-client.key
-      insecureSkipVerify: false
     relabelings:
     - action: replace
       regex: ^(.*)$
