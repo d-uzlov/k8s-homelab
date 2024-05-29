@@ -23,8 +23,9 @@ Install useful tools:
 
 ```bash
 apt install -y sudo
-sudo apt install -y iperf3 htop pipx
-pipx install install s-tui
+sudo apt install -y iperf3 htop pipx gcc make
+pipx install s-tui
+pipx ensurepath
 ```
 
 Add your user for SSH access: [SSH docs](../ssh.md).
@@ -32,7 +33,7 @@ Add your user for SSH access: [SSH docs](../ssh.md).
 **Note**: when configuring SSH, you can (and should) disable SSH password login
 but don't disable root login, it is required by many proxmox functions.
 
-Fix console resolution:
+Configure better font for the host console:
 
 ```bash
 sudo dpkg-reconfigure console-setup
@@ -40,7 +41,15 @@ sudo dpkg-reconfigure console-setup
 # choose VGA or Terminus font to be able to pick a better resolution
 ```
 
-Alternatives for console resolution / font selection:
+Set host console resolution
+
+```bash
+sudo nano /etc/kernel/cmdline
+# add `video=1920x1080@60` to the file, or another appropriate resolution
+sudo proxmox-boot-tool refresh
+```
+
+References:
 - https://forum.proxmox.com/threads/changing-host-console-resolution.12408/
 - https://forum.proxmox.com/threads/console-video-resolution-whats-the-right-way.142733/
 
@@ -268,8 +277,10 @@ Run on the target system:
 ```bash
 # install dependencies
 curl https://sh.rustup.rs -sSf | sh
-# reload env
+# reload env before runnenig the next command
 cargo install uefisettings
+uefisettings
+sudo $(which uefisettings)
 ```
 
 Run on your local PC:
@@ -278,15 +289,34 @@ Run on your local PC:
 mkdir -p ./docs/proxmox/env/
 
 node=ryzen.pve.lan
-ssh $node sudo -S /home/danil-lojdls97ov/.cargo/bin/uefisettings hii list-questions --json > ./docs/proxmox/env/$node-uefi-questinos.tmp.json
+bin=$(ssh -t $node 'bash -ic "which uefisettings"')
+bin=${bin/$'\n'}
+bin=${bin/$'\r'}
+ssh $node sudo -S $bin hii list-questions --json > ./docs/proxmox/env/$node-uefi-questinos.tmp.json
 jq . ./docs/proxmox/env/$node-uefi-questinos.tmp.json > ./docs/proxmox/env/$node-uefi-questinos.json
-ssh $node sudo -S /home/danil-lojdls97ov/.cargo/bin/uefisettings hii show-ifr > ./docs/proxmox/env/$node-uefi-forms.log
+ssh $node sudo -S $bin hii show-ifr > ./docs/proxmox/env/$node-uefi-forms.log
 ```
 
 References:
 - https://github.com/linuxboot/uefisettings
 - It seems like currently you can't change any important settings (in 2024Q2):
 - - https://github.com/linuxboot/uefisettings/issues/2
+
+# ACME
+
+Usually you need to define a few environment variables in the field `API Data`.
+
+Look into the documentation for the original ACME script for the list of variables for each DNS plugin:
+- https://github.com/acmesh-official/acme.sh/wiki/dnsapi
+
+**Note**: define environment variables without `export` and without quotes!
+
+```bash
+# bad!
+export DuckDNS_Token="askdjhawkjqweeqjw"
+# good
+DuckDNS_Token=askdjhawkjqweeqjw
+```
 
 # TODO
 

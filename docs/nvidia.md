@@ -55,11 +55,9 @@ Logfile is /var/log/cuda-installer.log
 Update environment:
 
 ```bash
-echo >> ~/.bashrc '
-export PATH=/usr/local/cuda-12.2/bin${PATH:+:${PATH}}
-export LD_LIBRARY_PATH=/usr/local/cuda-12.2/lib64\
-                         ${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
-'
+# adjust CUDA version before executing
+echo 'export PATH=$PATH:/usr/local/cuda-12.2/bin' >> ~/.bashrc
+echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-12.2/lib64' >> ~/.bashrc
 ```
 
 # Install Nvidia proprietary container toolkit
@@ -119,21 +117,22 @@ sudo nvidia-smi --id 0 --power-limit 125
 # fan control
 
 ```bash
-apt-get install -y lm-sensors fancontrol
+sudo apt update
+sudo apt-get install -y lm-sensors fancontrol
 # https://www.binarytides.com/monitor-cpu-power-consumption-on-ubuntu/
-apt install linux-cpupower
+sudo apt install -y linux-cpupower
 
-sensors-detect
-service kmod restart
+sudo sensors-detect
+sudo service kmod restart
 
-pwmconfig
+sudo pwmconfig
 
-systemctl restart fancontrol.service
+sudo systemctl restart fancontrol.service
 
 sensors
 
 # turbostat doesn't seem to work properly with modern systems
-turbostat --Summary --quiet --show Busy%,Avg_MHz,PkgTmp,PkgWatt --interval 1
+sudo turbostat --Summary --quiet --show Busy%,Avg_MHz,PkgTmp,PkgWatt --interval 1
 # s-tui supposedly works better, but I'm yet to check this
 ```
 
@@ -169,3 +168,15 @@ References:
 - https://gitlab.com/polloloco/vgpu-proxmox
 - https://gitea.publichub.eu/oscar.krause/fastapi-dls
 - https://pve.proxmox.com/wiki/NVIDIA_vGPU_on_Proxmox_VE_7.x
+
+# Tyan BIOS via internet
+
+```bash
+curl -k --request GET 'https://10.0.4.18/redfish/v1/'
+curl -k -u 'Administrator:superuser' \
+        --request GET 'https://10.0.4.18/redfish/v1/AccountService/Accounts/1' \
+        --header 'If-Match: W/"1713558119"'
+curl -k -u 'danil:Qqwe123!' \
+        --request GET 'https://10.0.4.18/redfish/v1/AccountService/Accounts/1' \
+        --header 'If-Match: W/"1713558119"'
+```

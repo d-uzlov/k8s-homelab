@@ -1,5 +1,5 @@
 
-# search history with ↑
+# search history by prefix with ↑
 
 ```bash
 cat > ~/.inputrc <<EOF
@@ -85,4 +85,10 @@ export CLUSTER3_CIDR=172.18.203.0/24
 createKubectlAlias k1 "$KUBECONFIG1"
 createKubectlAlias k2 "$KUBECONFIG2"
 createKubectlAlias k3 "$KUBECONFIG3"
+```
+
+# Print CPU temperature without external tools
+
+```bash
+paste <(cat /sys/class/thermal/thermal_zone*/type) <(cat /sys/class/thermal/thermal_zone*/temp) | column -s $'\t' -t | sed 's/\(.\)..$/.\1°C/'
 ```

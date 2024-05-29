@@ -11,16 +11,17 @@ References:
 ```bash
 username=
 suffix=$(LC_ALL=C tr -dc a-z0-9 </dev/urandom | head -c 10)
-sudo adduser "$username-$suffix"
+# this command will prompt you for password
+sudo adduser "$username-$suffix" --gecos ""
 
 # enable user to use sudo
 sudo adduser "$username-$suffix" sudo
 
 # list all local users (custom ones should be at the end of the list)
 cat /etc/passwd
-# delete user
-sudo userdel USERNAME
 ```
+
+If something goes wrong you can delete this user: `sudo userdel USERNAME`.
 
 # Using SSH keys
 
@@ -65,21 +66,21 @@ ssh -i "$output_file" username@server
 Adjust SSH client config to use this key automatically:
 
 ```bash
-#     example
-# user-friendly name
-server_name=n100e1r2.pve.lan
-# IP or DNS to connect to the server
-server_address=192.168.255.2
-# private key
-server_key=~/.ssh/proxmox
-# user name on the server
-server_username=myuser-qwertyuiop
-
 #     template
+# user-friendly name
 server_name=
+# IP or DNS to connect to the server
 server_address=
+# private key
 server_key=
+# user name on the server
 server_username=
+
+#     example
+server_name=n100e1r2.pve.lan
+server_address=192.168.255.2
+server_key=~/.ssh/proxmox
+server_username=myuser-qwertyuiop
 
 mkdir -p ~/.ssh/config.d/
 touch ~/.ssh/config
