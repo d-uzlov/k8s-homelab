@@ -102,17 +102,19 @@ kl apply -k ./metrics/kube-prometheus-stack/prometheus-operator/ --server-side
 kl -n kps-operator get pod -o wide
 
 kl create ns kps
-kl apply -k ./metrics/kube-prometheus-stack/ --server-side
 kl apply -k ./metrics/kube-prometheus-stack/prometheus/ --server-side
 kl -n kps get pod -o wide
 
 kl create ns kps-default-rules
+kl apply -f ./metrics/kube-prometheus-stack/service-monitors.gen.yaml --server-side
 kl apply -k ./metrics/kube-prometheus-stack/prometheus-default-rules/ --server-side
 kl -n kps-default-rules get prometheusrule
 
+# show list of all relevant prometheus configs
 kl get prometheusrule -A
 kl get servicemonitor -A
 kl get podmonitor -A
+kl get scrapeconfig -A
 kl get probe -A
 
 # wildcard ingress
@@ -177,25 +179,6 @@ After you change kubeadm-config, you need to apply new config on all master node
 
 ```bash
 sudo kubeadm upgrade node
-```
-
-# etcd metrics
-
-If you want to see metrics from etcd, you need to provide special mTLS certificate to prometheus.
-
-You can use the following commands to extract the certificate from cluster:
-
-```bash
-kl apply -f ./metrics/kube-prometheus-stack/cert-extractor.yaml
-
-kl wait -n kps --for=condition=ready pods/cert-extractor
-
-rm -f ./metrics/kube-prometheus-stack/env/ca.crt ./metrics/kube-prometheus-stack/env/healthcheck-client.*
-kl cp kps/cert-extractor:/etc/kubernetes/pki/etcd/ca.crt ./metrics/kube-prometheus-stack/env/ca.crt &&
-kl cp kps/cert-extractor:/etc/kubernetes/pki/etcd/healthcheck-client.crt ./metrics/kube-prometheus-stack/env/healthcheck-client.crt &&
-kl cp kps/cert-extractor:/etc/kubernetes/pki/etcd/healthcheck-client.key ./metrics/kube-prometheus-stack/env/healthcheck-client.key
-
-kl -n kps delete pod cert-extractor
 ```
 
 # TODO

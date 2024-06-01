@@ -1,0 +1,44 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cert-extractor
+spec:
+  containers:
+  - name: alpine
+    image: docker.io/alpine:3.17.3
+    command: ["/bin/sh", "-c", "trap : TERM INT; sleep infinity & wait"]
+    resources:
+      limits:
+        memory: 50Mi
+    volumeMounts:
+    - mountPath: /mnt/ca.crt
+      name: pki-etcd
+      readOnly: true
+    - mountPath: /mnt/client.crt
+      name: healthcheck-client-crt
+      readOnly: true
+    - mountPath: /mnt/client.key
+      name: healthcheck-client-key
+      readOnly: true
+  nodeSelector:
+    # node-role.kubernetes.io/etcd: "true"
+    node-role.kubernetes.io/control-plane: ''
+  tolerations:
+  - key: node-role.kubernetes.io/etcd
+    operator: Exists
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+  volumes:
+  - name: ca-crt
+    hostPath:
+      path: /etc/kubernetes/pki/etcd/ca.crt
+      type: File
+  - name: healthcheck-client-crt
+    hostPath:
+      path: /etc/kubernetes/pki/etcd/healthcheck-client.crt
+      type: File
+  - name: healthcheck-client-key
+    hostPath:
+      path: /etc/kubernetes/pki/etcd/healthcheck-client.key
+      type: File

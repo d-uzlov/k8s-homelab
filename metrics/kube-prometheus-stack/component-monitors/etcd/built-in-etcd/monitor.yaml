@@ -1,0 +1,64 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kps-kube-etcd
+  labels:
+    app: kps-kube-etcd
+    jobLabel: kube-etcd
+    release: kps
+  namespace: kube-system
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: http-metrics
+    port: 2379
+    protocol: TCP
+    targetPort: 2379
+  selector:
+    component: etcd
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kps-kube-etcd
+  namespace: kps
+  labels:
+    app: kps-kube-etcd
+    release: kps
+spec:
+  jobLabel: jobLabel
+  selector:
+    matchLabels:
+      app: kps-kube-etcd
+      release: kps
+  namespaceSelector:
+    matchNames:
+    - kube-system
+  endpoints:
+  - port: http-metrics
+    bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+    scheme: https
+    tlsConfig:
+      serverName: localhost
+      insecureSkipVerify: false
+      ca:
+        secret:
+          name: built-in-etcd-cert
+          key: ca.crt
+      cert:
+        secret:
+          name: built-in-etcd-cert
+          key: client.crt
+      keySecret:
+        name: built-in-etcd-cert
+        key: client.key
+    relabelings:
+    - action: replace
+      targetLabel: nodename
+      regex: ^(.*)$
+      sourceLabels:
+      - __meta_kubernetes_pod_node_name
+      replacement: $1
+      separator: ;
