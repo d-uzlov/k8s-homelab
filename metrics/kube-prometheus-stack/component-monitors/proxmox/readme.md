@@ -56,10 +56,6 @@ kl -n pve-exporter get pod -o wide
 kl -n pve-exporter get scrapeconfig
 ```
 
-Example proxmox dashboards for Grafana:
-- https://grafana.com/grafana/dashboards/?search=Proxmox
-- https://grafana.com/grafana/dashboards/10347-proxmox-via-prometheus/
-
 # Cleanup
 
 ```bash
