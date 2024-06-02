@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pve-exporter
+spec:
+  selector:
+    matchLabels:
+      app: pve-exporter
+  template:
+    metadata:
+      labels:
+        app: pve-exporter
+    spec:
+      containers:
+      - name: pve-exporter
+        image: docker.io/prompve/prometheus-pve-exporter:3.4.2
+        ports:
+        - name: http
+          containerPort: 9221
+        volumeMounts:
+        - mountPath: /etc/prometheus/pve.yml
+          name: pve-token
+          subPath: pve.yml
+      volumes:
+      - name: pve-token
+        secret:
+          secretName: pve-token
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pve-exporter
+spec:
+  selector:
+    app: pve-exporter
+  ports:
+  - name: http
+    port: 9221
+    targetPort: http

@@ -13,7 +13,7 @@ cp ./docs/k8s/etcd/env/ca.pem               ./metrics/kube-prometheus-stack/comp
 cp ./docs/k8s/etcd/env/etcd-client.pem      ./metrics/kube-prometheus-stack/component-monitors/etcd/external-etcd/env/client.crt
 cp ./docs/k8s/etcd/env/etcd-client-key.pem  ./metrics/kube-prometheus-stack/component-monitors/etcd/external-etcd/env/client.key
 
-# init etcd scrape config
+# init scrape config using your local environment info
 cp \
   ./metrics/kube-prometheus-stack/component-monitors/etcd/external-etcd/scrape-external-etcd-template.yaml \
   ./metrics/kube-prometheus-stack/component-monitors/etcd/external-etcd/env/scrape-external-etcd.yaml

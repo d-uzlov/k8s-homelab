@@ -1,0 +1,39 @@
+---
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: proxmox-node
+  namespace: kps
+  labels:
+    release: kps
+spec:
+  scheme: HTTP
+  metricsPath: /pve
+  params:
+    cluster: ['0']
+    node: ['1']
+  #     How this works:
+  # We need to access the same endpoint (pve-exporter.pve-exporter.svc) to get metrics from each node
+  # but for each node we need to set the real node address via HTTP param 'target'.
+  # This way we can get many metrics from a single endpoint.
+  # Prometheus doesn't support this natively.
+  # It expexts that each endpoint will use the same address with the same params
+  # and will only serve its own metrics.
+  # This is the opposite of what we need.
+  # So we use relabelings aka relabel_configs to switch target address and HTTP rapam 'target' using a meta-label '__param_target'.
+  # And also we set the instance name using the proper target address.
+  relabelings:
+  - targetLabel: __param_target
+    sourceLabels: [__address__]
+  - targetLabel: instance
+    sourceLabels: [__param_target]
+    regex: ^([^\.]*)\..*$
+    replacement: $1
+  - targetLabel: __address__
+    replacement: pve-exporter.pve-exporter.svc:9221
+  staticConfigs:
+  - labels:
+      job: pve
+    # ** !! these comments should be the last lines of the template file !! **
+    # targets are expected to be filled in ./env/scrape.yaml
+    # targets:
