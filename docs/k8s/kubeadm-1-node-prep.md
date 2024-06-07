@@ -63,7 +63,7 @@ exec systemctl reboot
 EOF
 ```
 
-# Kubeadm dependencies for Debian-based distros
+# System config for k8s
 
 ```bash
 # check if swap is enabled

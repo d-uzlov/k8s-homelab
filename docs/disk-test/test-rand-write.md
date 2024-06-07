@@ -5,9 +5,9 @@ https://arstechnica.com/gadgets/2020/02/how-fast-are-your-disks-find-out-the-ope
 
 ```bash
 # test on a filesystem
-fio --ioengine=posixaio --rw=randwrite --bs=4k --numjobs=1 --iodepth=1 --runtime=60 --time_based --end_fsync=1 --name=random-write --size=4g
+fio --ioengine=posixaio --direct=1 --rw=randwrite --bs=4k --numjobs=1 --iodepth=1 --runtime=60 --time_based --end_fsync=1 --name=random-write --size=4g
 # test on a device
-fio --ioengine=posixaio --rw=randwrite --bs=4k --numjobs=1 --iodepth=1 --runtime=60 --time_based --end_fsync=1 --name=random-write --filename=/dev/nvme0n1
+fio --ioengine=posixaio --direct=1 --rw=randwrite --bs=4k --numjobs=1 --iodepth=1 --runtime=60 --time_based --end_fsync=1 --name=random-write --filename=/dev/nvme0n1
 ```
 
 # Main RAID array

@@ -47,8 +47,7 @@ or even use an alternative k8s provider, like k3s, microk8s, kops, etc.
 References:
 - [proxmox](./proxmox/proxmox-host.md)
 - [truenas](./truenas.md)
-- [ubuntu](./ubuntu.md)
-- [debian](./debian.md)
+- [k8s](./k8s/kubeadm-1-node-prep.md)
 
 # DNS
 

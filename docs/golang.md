@@ -10,13 +10,6 @@ sudo tar -C /usr/local -xzf go1.22.2.linux-amd64.tar.gz
 export PATH=$PATH:/usr/local/go/bin
 ```
 
-# Enable logs in NSM
-
-```go
-	log.EnableTracing(true)
-	logrus.SetLevel(logrus.TraceLevel)
-```
-
 # VSCode set GO OS
 
 https://github.com/microsoft/vscode-go/issues/632#issuecomment-299267102

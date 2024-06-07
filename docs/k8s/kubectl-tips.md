@@ -30,6 +30,14 @@ References:
 kl get pod -A --field-selector spec.nodeName=n100.k8s.lan
 ```
 
+# List all resources in a namespace
+
+```bash
+# set to your calue
+namespace=cilium
+kl api-resources --verbs=list --namespaced -o name | xargs -n 1 $(alias kl | sed "s/.*'\(.*\)'.*/\1/g") get --show-kind --ignore-not-found -n $namespace
+```
+
 # Re-initialize CNI on the node
 
 One time I [gracefully!] rebooted all nodes in my cluster,

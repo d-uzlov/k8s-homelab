@@ -15,8 +15,8 @@ You can disable it in the BIOS screen, which opens if you press ESC during boot:
 Enable in `<vm-settings> -> Options -> QEMU Guest Agent`.
 
 Install into VM:
+
 ```bash
-# Debian / Ubuntu
 sudo apt-get -y install qemu-guest-agent
 sudo systemctl start qemu-guest-agent
 ```
@@ -72,7 +72,7 @@ sudo virt-customize -a disk.raw \
     --update \
     --install qemu-guest-agent \
     --install ca-certificates,apt-transport-https,gnupg,ipvsadm,open-iscsi,nfs-common,cachefilesd \
-    --install bash-completion,ncat,net-tools,iperf3,fio,curl,htop,dnsutils,iotop \
+    --install bash-completion,ncat,net-tools,iperf3,fio,curl,htop,dnsutils,iotop,sysstat \
     --uninstall unattended-upgrades \
     --run-command 'sudo rm /usr/sbin/shutdown && sudo tee /usr/sbin/shutdown << EOF && sudo chmod 755 /usr/sbin/shutdown
 #!/bin/bash

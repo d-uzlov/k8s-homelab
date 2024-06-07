@@ -7,9 +7,9 @@ References:
 
 ```bash
 # test on a filesystem
-fio --rw=write --ioengine=sync --fdatasync=1 --size=22m --bs=4k --name=mytest --filename=test-data
+fio --rw=write --ioengine=sync --fdatasync=1 --size=50m --bs=4k --runtime=10 --time_based=1 --name=mytest --filename=test-data
 # test raw device
-fio --rw=write --ioengine=sync --fdatasync=1 --size=22m --bs=4k --name=mytest --filename=/dev/nvme0n1
+fio --rw=write --ioengine=sync --fdatasync=1 --size=50m --bs=4k --runtime=10 --time_based=1 --name=mytest --filename=/dev/nvme0n1
 ```
 
 # Main RAID array
@@ -947,6 +947,45 @@ mytest: (groupid=0, jobs=1): err= 0: pid=8880: Wed Jul 19 05:37:40 2023
 
 Run status group 0 (all jobs):
   WRITE: bw=14.3MiB/s (15.0MB/s), 14.3MiB/s-14.3MiB/s (15.0MB/s-15.0MB/s), io=22.0MiB (23.1MB), run=1536-1536msec
+```
+
+```log
+$ fio --rw=write --ioengine=sync --fdatasync=1 --size=50m --bs=4k --runtime=10 --time_based=1 --name=mytest --filename=test-data
+mytest: (g=0): rw=write, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, ioengine=sync, iodepth=1
+fio-3.33
+Starting 1 process
+Jobs: 1 (f=1): [W(1)][100.0%][w=8352KiB/s][w=2088 IOPS][eta 00m:00s]
+mytest: (groupid=0, jobs=1): err= 0: pid=6056: Wed Jun  5 00:54:58 2024
+  write: IOPS=2137, BW=8551KiB/s (8756kB/s)(83.5MiB/10001msec); 0 zone resets
+    clat (usec): min=4, max=253, avg=17.99, stdev=11.01
+     lat (usec): min=4, max=253, avg=18.52, stdev=11.14
+    clat percentiles (usec):
+     |  1.00th=[    5],  5.00th=[    6], 10.00th=[    6], 20.00th=[    7],
+     | 30.00th=[   15], 40.00th=[   19], 50.00th=[   21], 60.00th=[   22],
+     | 70.00th=[   22], 80.00th=[   23], 90.00th=[   25], 95.00th=[   26],
+     | 99.00th=[   52], 99.50th=[   56], 99.90th=[  194], 99.95th=[  208],
+     | 99.99th=[  235]
+   bw (  KiB/s): min= 8280, max= 8864, per=100.00%, avg=8561.26, stdev=158.98, samples=19
+   iops        : min= 2070, max= 2216, avg=2140.32, stdev=39.75, samples=19
+  lat (usec)   : 10=25.31%, 20=24.52%, 50=48.90%, 100=1.13%, 250=0.14%
+  lat (usec)   : 500=0.01%
+  fsync/fdatasync/sync_file_range:
+    sync (usec): min=385, max=9783, avg=446.95, stdev=433.44
+    sync percentiles (usec):
+     |  1.00th=[  392],  5.00th=[  396], 10.00th=[  400], 20.00th=[  408],
+     | 30.00th=[  424], 40.00th=[  429], 50.00th=[  429], 60.00th=[  429],
+     | 70.00th=[  433], 80.00th=[  437], 90.00th=[  441], 95.00th=[  449],
+     | 99.00th=[  506], 99.50th=[  570], 99.90th=[ 9634], 99.95th=[ 9765],
+     | 99.99th=[ 9765]
+  cpu          : usr=1.08%, sys=8.14%, ctx=42789, majf=0, minf=13
+  IO depths    : 1=200.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,21379,0,0 short=21379,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=8551KiB/s (8756kB/s), 8551KiB/s-8551KiB/s (8756kB/s-8756kB/s), io=83.5MiB (87.6MB), run=10001-10001msec
 ```
 
 # To be continued...

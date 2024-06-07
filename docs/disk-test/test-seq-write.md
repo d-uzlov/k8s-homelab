@@ -5,7 +5,8 @@ https://arstechnica.com/gadgets/2020/02/how-fast-are-your-disks-find-out-the-ope
 
 ```bash
 # test on a filesystem
-fio --ioengine=posixaio --rw=write --bs=32m --numjobs=4 --iodepth=1 --runtime=60 --time_based --end_fsync=1 --size=1g --group_reporting --name=seq-write
+fio --ioengine=posixaio --direct=1 --rw=write --bs=32m --numjobs=4 --iodepth=1 --runtime=20 --time_based --end_fsync=1 --size=1g --group_reporting --name=seq-write --filename=seq-write
+fio --ioengine=posixaio --direct=1 --rw=write --bs=32m --numjobs=4 --iodepth=1 --runtime=20 --time_based --end_fsync=1 --size=1g --group_reporting --name=seq-write --filename=/dev/nvme0n1
 
 # alt command
 dd if=/dev/zero of=test-dd bs=32000k count=100 oflag=dsync

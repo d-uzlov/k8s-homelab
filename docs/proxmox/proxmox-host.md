@@ -6,24 +6,26 @@ This file contains some tips for configuring Proxmox host itself.
 # Initial setup
 
 Disable subscription warning:
+
 ```bash
 curl https://raw.githubusercontent.com/foundObjects/pve-nag-buster/master/install.sh | bash
 ```
 
-Enable updates:
+`pve-nag-buster` should configure updates automatically. As an alternative:
+
 - `Datacenter / <node-name> / updates / repositories` -> add/enable/disable.
 - Disable subscription-only repos
 - - `https://enterprise.proxmox.com/debian/ceph-quincy`
 - - `https://enterprise.proxmox.com/debian/pve`
-- If it isn't already added by `pve-nag-buster`, add a subscription-free repo
+- Add a subscription-free repo
 - - `http://download.proxmox.com/debian/pve bullseye pve-no-subscription`
-- - Reference: https://www.virtualizationhowto.com/2022/08/proxmox-update-no-subscription-repository-configuration/
+- Reference: https://www.virtualizationhowto.com/2022/08/proxmox-update-no-subscription-repository-configuration/
 
 Install useful tools:
 
 ```bash
 apt install -y sudo
-sudo apt install -y iperf3 htop pipx gcc make
+sudo apt install -y iperf3 htop pipx gcc make stress
 pipx install s-tui
 pipx ensurepath
 ```
@@ -52,6 +54,16 @@ sudo proxmox-boot-tool refresh
 References:
 - https://forum.proxmox.com/threads/changing-host-console-resolution.12408/
 - https://forum.proxmox.com/threads/console-video-resolution-whats-the-right-way.142733/
+
+Enable TRIM:
+
+```bash
+zpool get autotrim
+sudo zpool set autotrim=on rpool
+# trigger TRIM manually, to make sure the disk is fully clean
+sudo zpool trim rpool
+zpool status -t
+```
 
 # Config dir list
 
