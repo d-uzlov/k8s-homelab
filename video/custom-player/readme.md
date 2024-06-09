@@ -17,6 +17,22 @@ EOF
 
 If you don't want to use default keys, make the file empty.
 
+# Download libs
+
+You need to have `ovenplayer.js` and `hls.min.js` in your content directory:
+
+```bash
+(
+    cd ./video/custom-player/content/env/
+    [ -f ovenplayer.js ] || wget https://github.com/AirenSoft/OvenPlayer/raw/master/dist/ovenplayer.js
+    [ -f hls.min.js ] || {
+        wget https://github.com/video-dev/hls.js/releases/download/v1.5.11/release.zip
+        unzip -j release.zip dist/hls.min.js
+        rm release.zip
+    }
+)
+```
+
 # Deploy
 
 ```bash
@@ -43,7 +59,7 @@ sed \
     ./video/custom-player/content/get-domain.js.template \
     > ./video/custom-player/content/env/get-domain.js
 
-kl apply -k ./video/custom-player/
+kl apply -k ./video/custom-player/ --server-side
 kl -n ome-player get pod -o wide
 ```
 
