@@ -119,8 +119,10 @@ kl get probe -A
 
 # wildcard ingress
 kl label ns --overwrite kps copy-wild-cert=main
-kl apply -k ./metrics/kube-prometheus-stack/grafana-ingress-wildcard/
+kl apply -k ./metrics/kube-prometheus-stack/prometheus-ingress-wildcard/
 kl -n kps get ingress
+kl apply -k ./metrics/kube-prometheus-stack/grafana-ingress-wildcard/
+kl -n kps-grafana get ingress
 
 # private gateway
 kl apply -k ./metrics/kube-prometheus-stack/grafana-httproute/
