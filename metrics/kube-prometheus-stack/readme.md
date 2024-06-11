@@ -190,3 +190,23 @@ Even if prometheus polls metrics each second,
 k8s metrics are updated only once every 10 seconds, or slower.
 
 Keywords: `housekeeping-interval`.
+
+# Metric manipulations
+
+```bash
+# delete a metric
+metric='prometheus_http_requests_total{job="prometheus"}'
+prometheus_ingress=$(kl -n kps get ingress   prometheus -o go-template --template "{{ (index .spec.rules 0).host}}")
+prometheus_ingress=$(kl -n kps get httproute prometheus -o go-template --template "{{ (index .spec.hostnames 0) }}")
+curl -X POST -g "https://$prometheus_ingress/api/v1/admin/tsdb/delete_series?match[]=$metric"
+
+# generate missing past metrics for a new recording rule
+#     enter the prometheus container
+kl -n kps exec statefulsets/prometheus-kps -it -- sh
+#     inside the container: run promtool
+promtool tsdb create-blocks-from rules --start 2024-05-29T21:33:40+07:00 --end 2024-06-11T14:40:40+07:00 --output-dir=. --eval-interval=5s /etc/prometheus/rules/prometheus-kps-rulefiles-0/kps-default-rules-etcd-recording-f515cf3e-c48e-4ff4-ab43-d997c9aa4825.yaml
+```
+
+References:
+- https://faun.pub/how-to-drop-and-delete-metrics-in-prometheus-7f5e6911fb33
+- https://prometheus.io/docs/prometheus/latest/storage/#backfilling-for-recording-rules
