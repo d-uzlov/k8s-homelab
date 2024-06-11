@@ -2,11 +2,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: kps-kube-etcd
+  name: kps-etcd
   labels:
-    app: kps-kube-etcd
-    jobLabel: kube-etcd
-    release: kps
+    jobLabel: etcd-built-in
   namespace: kube-system
 spec:
   type: ClusterIP
@@ -23,9 +21,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: kps-kube-etcd
-  namespace: kps
   labels:
-    app: kps-kube-etcd
     release: kps
 spec:
   jobLabel: jobLabel
@@ -54,9 +50,13 @@ spec:
       keySecret:
         name: built-in-etcd-cert
         key: client.key
+    metricRelabelings:
+    - action: drop
+      sourceLabels: [ __name__ ]
+      regex: ^etcd_debugging_.*
     relabelings:
-    - action: replace
-      targetLabel: nodename
+    - targetLabel: nodename
+      action: replace
       regex: ^(.*)$
       sourceLabels:
       - __meta_kubernetes_pod_node_name

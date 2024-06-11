@@ -3,6 +3,10 @@
 
 This setup assumes that you already have the KPS deployed.
 
+References:
+- https://etcd.io/docs/v3.5/metrics/
+- https://etcd.io/docs/v3.1/metrics/etcd-metrics-v3.1.3.txt
+
 # External ETCD case
 
 ```bash
@@ -52,6 +56,7 @@ Alternatively, you can copy etcd certs manually from any master node.
 # Common setup
 
 ```bash
-kl apply -f ./metrics/kube-prometheus-stack/component-monitors/etcd/grafana-dashboard.yaml
 kl apply -f ./metrics/kube-prometheus-stack/component-monitors/etcd/rules.yaml
+kl apply -f ./metrics/kube-prometheus-stack/component-monitors/etcd/alerts.yaml
+kl apply -k ./metrics/kube-prometheus-stack/component-monitors/etcd/dashboards/
 ```
