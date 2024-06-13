@@ -9,32 +9,50 @@ References:
 - https://gateway-api.sigs.k8s.io/guides/?h=crds#getting-started-with-gateway-api
 - https://docs.cilium.io/en/stable/network/servicemesh/gateway-api/gateway-api/
 
-# Deploy
+# Create CRDs
 
 ```bash
 # wget https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.0.0/experimental-install.yaml
-kl apply -f ./network/gateway-api/experimental-install.yaml --server-side
+# additionalPrinterColumns was edited manually for HTTPRoute to include first parent column
+kl apply -f ./ingress/gateway-api/experimental-install.yaml --server-side
 ```
+
+# Known implementations
+
+References:
+- https://gateway-api.sigs.k8s.io/implementations/
+
+In this repo refer to the following:
+- [cilium](../../network/cilium/readme.md)
+- [envoy](../envoy/readme.md)
 
 # Deploy gateway
 
 Deploy appropriate certificate before creating gateways: [manual-certificates](../manual-certificates/readme.md).
 
+You can create many gateways but ingress routes in this repo are configured to use these two.
+
 ```bash
-mkdir -p ./ingress/gateway-api/gateway/env/
-cat <<EOF > ./ingress/gateway-api/gateway/env/gateway-class.env
+mkdir -p ./ingress/gateway-api/public/env/
+cat <<EOF > ./ingress/gateway-api/public/env/gateway-class.env
+# set to your preferred gateway class
+gateway_class=cilium
+EOF
+mkdir -p ./ingress/gateway-api/private/env/
+cat <<EOF > ./ingress/gateway-api/private/env/gateway-class.env
 # set to your preferred gateway class
 gateway_class=cilium
 EOF
 
 kl create ns gateways
 
-kl apply -k ./network/cilium/gateway/
+kl apply -k ./ingress/gateway-api/private/
 kl -n gateways describe gateway main-private
-kl -n gateways describe gateway main-public
-
-kl -n gateways describe httproute http-redirect-public
 kl -n gateways describe httproute http-redirect-private
+
+kl apply -k ./ingress/gateway-api/public/
+kl -n gateways describe gateway main-public
+kl -n gateways describe httproute http-redirect-public
 
 kl -n gateways get gateway
 ```
