@@ -15,7 +15,7 @@ spec:
         sum(grpc_server_handled_total{grpc_code=~"Unknown|FailedPrecondition|ResourceExhausted|Internal|Unavailable|DataLoss|DeadlineExceeded"}) by (job, grpc_type, grpc_service, instance)
     - record: recording:all_services:grpc_server_failed_total
       expr: |-
-        sum(recording:grpc_server_failed_total) by (job, grpc_type, instance)
+        sum(grpc_server_handled_total{grpc_code=~"Unknown|FailedPrecondition|ResourceExhausted|Internal|Unavailable|DataLoss|DeadlineExceeded"}) by (job, grpc_type, instance)
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
@@ -33,7 +33,7 @@ spec:
         sum(grpc_server_handled_total) by (job, grpc_type, grpc_service, instance)
     - record: recording:all_services:grpc_server_handled_total
       expr: |-
-        sum(recording:grpc_server_handled_total) by (job, grpc_type, instance)
+        sum(grpc_server_handled_total) by (job, grpc_type, instance)
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
@@ -51,7 +51,7 @@ spec:
         sum(grpc_server_started_total) by (job, grpc_type, grpc_service, instance)
     - record: recording:all_services:grpc_server_started_total
       expr: |-
-        sum(recording:grpc_server_started_total) by (job, grpc_type, instance)
+        sum(grpc_server_started_total) by (job, grpc_type, instance)
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
@@ -70,18 +70,3 @@ spec:
     - record: recording:quantile_099:etcd_disk_wal_fsync_duration_seconds
       expr: |-
         histogram_quantile(0.99, rate(etcd_disk_wal_fsync_duration_seconds_bucket[20s]))
----
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: etcd-recording-peer-rtt
-  namespace: kps-default-rules
-  labels:
-    release: kps
-spec:
-  groups:
-  - name: etcd-recording
-    rules:
-    - record: recording:quantile_050:etcd_network_peer_round_trip_time_seconds
-      expr: |-
-        histogram_quantile(0.5, sum by (job, instance, le) (rate(etcd_network_peer_round_trip_time_seconds_bucket[20s])))
