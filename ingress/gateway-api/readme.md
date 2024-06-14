@@ -59,3 +59,11 @@ kl -n gateways get gateway
 
 References:
 - https://docs.cilium.io/en/stable/network/servicemesh/gateway-api/gateway-api/
+
+# Cleanup
+
+```bash
+kl delete -k ./ingress/gateway-api/private/
+kl delete -k ./ingress/gateway-api/public/
+kl delete ns gateways
+```
