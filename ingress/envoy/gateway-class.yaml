@@ -17,13 +17,32 @@ metadata:
   name: config
   namespace: envoy-gateway
 spec:
+  concurrency: 0
+  shutdown:
+    minDrainDuration: 1s
+    drainTimeout: 5s
   provider:
     type: Kubernetes
     kubernetes:
       envoyDeployment:
         replicas: 1
+        patch:
+          value:
+            spec:
+              template:
+                spec:
+                  terminationGracePeriodSeconds: 10
         pod:
+          # labels:
+          #   topology-affinity: test-envoy
           affinity:
+            # podAffinity:
+            #   requiredDuringSchedulingIgnoredDuringExecution:
+            #   - topologyKey: kubernetes.io/hostname
+            #     labelSelector:
+            #       matchLabels:
+            #         topology-affinity: test-envoy
+            #     weight: 1
             nodeAffinity: {}
           nodeSelector: {}
       envoyService:
