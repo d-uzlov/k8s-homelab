@@ -2,6 +2,7 @@
 # Envoy
 
 References:
+- https://github.com/envoyproxy/gateway
 - https://gateway.envoyproxy.io/v1.0.1/install/install-helm/
 
 # Generate config
@@ -13,7 +14,7 @@ git ls-remote https://github.com/envoyproxy/gateway.git | grep tags | tail
 git clone --depth 1 --branch v1.0.1 https://github.com/envoyproxy/gateway.git ./ingress/envoy/envoyproxy-gateway/
 
 rm -r ./ingress/envoy/crds/
-cp -r ./ingress/envoy/envoyproxy-gateway/charts/gateway-helm/crds/ ./ingress/envoy/crds/
+cp -r ./ingress/envoy/envoyproxy-gateway/charts/gateway-helm/crds/generated/ ./ingress/envoy/crds/
 
 ImageRepository=docker.io/envoyproxy/gateway ImageTag=v1.0.1 envsubst \
   < ./ingress/envoy/envoyproxy-gateway/charts/gateway-helm/values.tmpl.yaml \
@@ -34,8 +35,7 @@ helm template \
 # Deploy
 
 ```bash
-kl apply -f ./ingress/envoy/crds/gatewayapi-crds.yaml
-kl apply -f ./ingress/envoy/crds/generated/
+kl apply -f ./ingress/envoy/crds/
 
 kl create ns envoy-gateway
 kl label ns envoy-gateway pod-security.kubernetes.io/enforce=baseline
@@ -51,11 +51,11 @@ Don't forget to enable NAT port forwarding if needed.
 # Cleanup
 
 ```bash
+kl delete -f ./ingress/envoy/gateway-class.yaml
 kl delete -f ./ingress/envoy/envoy.gen.yaml
 kl delete ns envoy-gateway
 
-kl delete -f ./ingress/envoy/crds/gatewayapi-crds.yaml
-kl delete -f ./ingress/envoy/crds/generated/
+kl delete -f ./ingress/envoy/crds/
 ```
 
 # Create gateway
