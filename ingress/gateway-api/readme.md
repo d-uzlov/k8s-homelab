@@ -45,6 +45,7 @@ gateway_class=cilium
 EOF
 
 kl create ns gateways
+kl label ns gateways ingress=ingress
 
 kl apply -k ./ingress/gateway-api/private/
 kl -n gateways describe gateway main-private
