@@ -5,7 +5,7 @@ kind: Kustomization
 namespace: jellyfin
 
 resources:
-- ingress.yaml
+- httproute.yaml
 - ../../../ingress/manual-certificates/domain-info/
 
 replacements:
@@ -15,20 +15,10 @@ replacements:
     fieldPath: data.domain_suffix
   targets:
   - select:
-      kind: Ingress
+      kind: HTTPRoute
       name: jellyfin
     options:
       delimiter: .
       index: 1
     fieldPaths:
-    - spec.rules.0.host
-- source:
-    kind: ConfigMap
-    name: main-domain-info
-    fieldPath: data.secret_name
-  targets:
-  - select:
-      kind: Ingress
-      name: jellyfin
-    fieldPaths:
-    - spec.tls.0.secretName
+    - spec.hostnames.0

@@ -5,4 +5,18 @@ kind: Kustomization
 namespace: jellyfin
 
 resources:
-- jellyfin.yaml
+- ../pvc/base-env/
+- ./jellyfin.yaml
+- ./allow-ingress.yaml
+
+replacements:
+- source:
+    kind: ConfigMap
+    name: jellyfin-pvc
+    fieldPath: data.data_name
+  targets:
+  - select:
+      kind: Deployment
+      name: jellyfin
+    fieldPaths:
+    - spec.template.spec.volumes.0.persistentVolumeClaim.claimName

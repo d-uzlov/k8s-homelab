@@ -13,13 +13,26 @@ References:
 # list storage classes
 kl get sc
 # set values in env file
-mkdir -p ./video/jellyfin/pvc/env/
-cat <<EOF > ./video/jellyfin/pvc/env/pvc.env
-config=bulk
+mkdir -p ./video/jellyfin/pvc/base-env/env/
+cat << EOF > ./video/jellyfin/pvc/base-env/env/pvc.env
+# type: RWO
+db_class=block
+db_size=1Gi
+
+# type: RWX
+config_class=bulk
 config_size=1Gi
 
-torrent=shared
-torrent_size=10Ti
+# this deployment assumes that 'shared' storage class is shared between namespaces,
+# and we use qbittorrent to populate it
+# type: RWX
+data_name=torrent
+data_class=shared
+data_size=10Ti
+
+# type: RWX
+links_class=bulk
+links_size=1Gi
 EOF
 ```
 
@@ -27,9 +40,17 @@ EOF
 
 ```bash
 kl create ns jellyfin
+kl label ns jellyfin pod-security.kubernetes.io/enforce=baseline
+
+kl -n jellyfin apply -f ./network/network-policies/deny-ingress.yaml
+kl -n jellyfin apply -f ./network/network-policies/allow-same-namespace.yaml
 
 kl apply -k ./video/jellyfin/pvc/
 kl -n jellyfin get pvc
+
+kl apply -k ./video/jellyfin/ingress-route/
+kl -n jellyfin describe httproute
+kl -n jellyfin get httproute
 
 # setup wildcard ingress
 kl label ns --overwrite jellyfin copy-wild-cert=main
@@ -53,6 +74,22 @@ kl -n jellyfin get pod -o wide
 kl delete -k ./video/jellyfin/generic/
 kl delete -k ./video/jellyfin/pvc/
 kl delete ns jellyfin
+```
+
+# Links
+
+Jellyfin expects a specific file/folder layout for the media files.
+It's unlikely that you already have it,
+and some other programs that you use may require a different layout.
+
+So in this deployment we create a separate folder
+in which you can place symlinks to your real files, which are mounted to `/raw-data/`.
+This way you can completely redefine folder layout without touching the original files.
+
+```bash
+kl -n jellyfin exec deployments/jellyfin -it -- bash
+# ln -s /path/to/file /path/to/symlink
+ln -s /raw-data/video/ /media/video
 ```
 
 # Enable hardware transcoding

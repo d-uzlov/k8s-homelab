@@ -5,22 +5,17 @@ kind: Kustomization
 namespace: jellyfin
 
 resources:
+- ./base-env
 - db.yaml
 - config.yaml
-- torrent.yaml
-
-configMapGenerator:
-- name: jellyfin-pvc
-  envs:
-  - env/pvc.env
-  options:
-    disableNameSuffixHash: true
+- data.yaml
+- links.yaml
 
 replacements:
 - source:
     kind: ConfigMap
     name: jellyfin-pvc
-    fieldPath: data.config
+    fieldPath: data.config_class
   targets:
   - select:
       kind: PersistentVolumeClaim
@@ -40,27 +35,37 @@ replacements:
 - source:
     kind: ConfigMap
     name: jellyfin-pvc
-    fieldPath: data.torrent
+    fieldPath: data.data_class
   targets:
   - select:
       kind: PersistentVolumeClaim
-      name: torrent
+      name: data
     fieldPaths:
     - spec.storageClassName
 - source:
     kind: ConfigMap
     name: jellyfin-pvc
-    fieldPath: data.torrent_size
+    fieldPath: data.data_size
   targets:
   - select:
       kind: PersistentVolumeClaim
-      name: torrent
+      name: data
     fieldPaths:
     - spec.resources.requests.storage
 - source:
     kind: ConfigMap
     name: jellyfin-pvc
-    fieldPath: data.db
+    fieldPath: data.data_name
+  targets:
+  - select:
+      kind: PersistentVolumeClaim
+      name: data
+    fieldPaths:
+    - metadata.name
+- source:
+    kind: ConfigMap
+    name: jellyfin-pvc
+    fieldPath: data.db_class
   targets:
   - select:
       kind: PersistentVolumeClaim
@@ -75,5 +80,25 @@ replacements:
   - select:
       kind: PersistentVolumeClaim
       name: db
+    fieldPaths:
+    - spec.resources.requests.storage
+- source:
+    kind: ConfigMap
+    name: jellyfin-pvc
+    fieldPath: data.links_class
+  targets:
+  - select:
+      kind: PersistentVolumeClaim
+      name: links
+    fieldPaths:
+    - spec.storageClassName
+- source:
+    kind: ConfigMap
+    name: jellyfin-pvc
+    fieldPath: data.links_size
+  targets:
+  - select:
+      kind: PersistentVolumeClaim
+      name: links
     fieldPaths:
     - spec.resources.requests.storage

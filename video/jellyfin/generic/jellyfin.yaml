@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -22,7 +23,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
       - name: jellyfin
-        image: docker.io/jellyfin/jellyfin:10.8.11
+        image: docker.io/jellyfin/jellyfin:10.9.6
         ports:
         - name: http
           containerPort: 8096
@@ -36,28 +37,43 @@ spec:
           name: config
         - mountPath: /config/data
           name: db
-        - mountPath: /media
-          name: media
-        - mountPath: /cache
-          name: cache
         - mountPath: /config/transcodes
           name: transcodes
+        - mountPath: /media
+          name: links
+        - mountPath: /raw-data
+          name: raw-data
+        - mountPath: /cache
+          name: cache
+        startupProbe:
+          httpGet:
+            port: http
+          periodSeconds: 1
+        readinessProbe:
+          httpGet:
+            port: http
+          failureThreshold: 1
+          periodSeconds: 1
       volumes:
+      - name: raw-data
+        persistentVolumeClaim:
+          claimName: AUTOMATIC_REPLACE
+          readOnly: true
       - name: db
         persistentVolumeClaim:
           claimName: db
       - name: config
         persistentVolumeClaim:
           claimName: config
+      - name: links
+        persistentVolumeClaim:
+          claimName: links
       - name: cache
         emptyDir: {}
       - name: transcodes
         emptyDir:
           medium: Memory
           sizeLimit: 3Gi
-      - name: media
-        persistentVolumeClaim:
-          claimName: torrent
 ---
 apiVersion: v1
 kind: Service
