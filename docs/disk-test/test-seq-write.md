@@ -6,15 +6,15 @@ https://arstechnica.com/gadgets/2020/02/how-fast-are-your-disks-find-out-the-ope
 ```bash
 # test on a filesystem
 fio --ioengine=posixaio --direct=1 --rw=write --bs=32m --numjobs=4 --iodepth=1 --runtime=20 --time_based --end_fsync=1 --size=1g --group_reporting --name=seq-write --filename=seq-write
-fio --ioengine=posixaio --direct=1 --rw=write --bs=32m --numjobs=4 --iodepth=1 --runtime=20 --time_based --end_fsync=1 --size=1g --group_reporting --name=seq-write --filename=/dev/nvme0n1
+sudo fio --ioengine=posixaio --direct=1 --rw=write --bs=32m --numjobs=4 --iodepth=1 --runtime=20 --time_based --end_fsync=1 --size=1g --group_reporting --name=seq-write --filename=/dev/nvme0n1
 
 # alt command
-dd if=/dev/zero of=test-dd bs=32000k count=100 oflag=dsync
+dd if=/dev/zero of=test-dd bs=32000k count=100 oflag=dsync conv=fsync
 ```
 
 # Main RAID array
 
-Truenas Scale, SZTD-3, 6 cores:
+Truenas Scale, ZSTD-3, 6 cores:
 
 ```log
 root@truenas[/mnt/main/data/torrent-data]# fio --ioengine=posixaio --rw=write --bs=32m --numjobs=4 --iodepth=1 --runtime=60 --time_based --end_fsync=1 --size=1g --group_reporting --name=seq-write
@@ -53,7 +53,7 @@ Run status group 0 (all jobs):
   WRITE: bw=100MiB/s (105MB/s), 100MiB/s-100MiB/s (105MB/s-105MB/s), io=7648MiB (8020MB), run=76350-76350msec
 ```
 
-Truenas Scale, SZTD-1, 6 cores:
+Truenas Scale, ZSTD-1, 6 cores:
 
 ```log
 root@truenas[/mnt/main/data/torrent-data]# fio --ioengine=posixaio --rw=write --bs=32m --numjobs=4 --iodepth=1 --runtime=60 --time_based --end_fsync=1 --size=1g --group_reporting --name=seq-write
@@ -92,7 +92,7 @@ Run status group 0 (all jobs):
   WRITE: bw=161MiB/s (169MB/s), 161MiB/s-161MiB/s (169MB/s-169MB/s), io=11.5GiB (12.3GB), run=72790-72790msec
 ```
 
-Truenas Scale, SZTD-3, 10 cores:
+Truenas Scale, ZSTD-3, 10 cores:
 
 ```log
 root@truenas[/mnt/main/data/torrent-data]# fio --ioengine=posixaio --rw=write --bs=32m --numjobs=4 --iodepth=1 --runtime=60 --time_based --end_fsync=1 --size=1g --group_reporting --name=seq-write

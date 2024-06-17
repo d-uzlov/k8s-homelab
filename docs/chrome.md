@@ -14,4 +14,4 @@ Beware that this completely disables checks for the whole domain.
 
 Alternatively, delete site from HSTS list in [Chrome settings](chrome://net-internals/#hsts).
 
-Not that this won't work if the site is in the preloaded HSTS list.
+Note that this won't work if the site is in the preloaded HSTS list.

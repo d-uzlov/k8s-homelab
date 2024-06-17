@@ -16,7 +16,7 @@ Prerequisites:
 - [cert-manager](../cert-manager/readme.md)
 - - [optional] letsencrypt provider (deploy it only after ingress-nginx setup)
 - - [optional] duckdns provider
-- [wildcard certificate](../manual-wildcard/readme.md)
+- [wildcard certificate](../manual-certificates/readme.md)
 - [local DNS](../dns-k8s-gateway/readme.md)
 - - Also set up DNS forwarding for you main DNS zone
 

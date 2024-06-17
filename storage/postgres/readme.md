@@ -98,3 +98,22 @@ The issue is also described here:
 
 - https://github.com/zalando/postgres-operator/issues/1978
 - https://github.com/zalando/postgres-operator/issues/2003
+
+# Check DB state
+
+```bash
+# list databases
+psql --list
+# list users
+psql template1 -c '\du'
+
+psql -c 'create database test;'
+```
+
+# Database not created
+
+Check that database name is correct.
+
+For example, postgres doesn't allow `-` in database names.
+
+This operator doesn't seem to have any indication of such errors.
