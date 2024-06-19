@@ -17,6 +17,10 @@ EOF
 
 If you don't want to use default keys, make the file empty.
 
+If the default keys don't contain something,
+you can point the page to required keys
+using URL args: `/#sources=source_key1,source_key2`.
+
 # Download libs
 
 You need to have `ovenplayer.js` and `hls.min.js` in your content directory:
