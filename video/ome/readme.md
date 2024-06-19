@@ -61,6 +61,7 @@ kl -n ome get ingress
 
 # if you are using gateway api
 kl apply -k ./video/ome/ingress-route/
+kl apply -k ./video/ome/api-route/
 kl -n ome describe httproute
 kl -n ome get httproute
 
