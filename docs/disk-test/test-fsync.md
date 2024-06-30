@@ -9,7 +9,7 @@ References:
 # test on a filesystem
 fio --rw=write --ioengine=sync --fdatasync=1 --size=50m --bs=4k --runtime=10 --time_based=1 --name=mytest --filename=test-data
 # test raw device
-fio --rw=write --ioengine=sync --fdatasync=1 --size=50m --bs=4k --runtime=10 --time_based=1 --name=mytest --filename=/dev/nvme0n1
+sudo fio --rw=write --ioengine=sync --fdatasync=1 --size=50m --bs=4k --runtime=10 --time_based=1 --name=mytest --filename=/dev/nvme0n1
 ```
 
 # Main RAID array
@@ -986,6 +986,51 @@ mytest: (groupid=0, jobs=1): err= 0: pid=6056: Wed Jun  5 00:54:58 2024
 
 Run status group 0 (all jobs):
   WRITE: bw=8551KiB/s (8756kB/s), 8551KiB/s-8551KiB/s (8756kB/s-8756kB/s), io=83.5MiB (87.6MB), run=10001-10001msec
+```
+
+# SK Hynix P31 Gold 500GB
+
+RAW:
+
+```log
+$ sudo fio --rw=write --ioengine=sync --fdatasync=1 --size=50m --bs=4k --runtime=10 --time_based=1 --name=mytest --filename=/dev/nvme0n1
+mytest: (g=0): rw=write, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, ioengine=sync, iodepth=1
+fio-3.33
+Starting 1 process
+Jobs: 1 (f=1): [W(1)][100.0%][w=16.6MiB/s][w=4254 IOPS][eta 00m:00s]
+mytest: (groupid=0, jobs=1): err= 0: pid=1441: Wed Jun 26 05:29:21 2024
+  write: IOPS=4257, BW=16.6MiB/s (17.4MB/s)(166MiB/10001msec); 0 zone resets
+    clat (nsec): min=2307, max=34173, avg=2725.54, stdev=758.20
+     lat (nsec): min=2401, max=34439, avg=2814.27, stdev=766.17
+    clat percentiles (nsec):
+     |  1.00th=[ 2416],  5.00th=[ 2480], 10.00th=[ 2480], 20.00th=[ 2544],
+     | 30.00th=[ 2544], 40.00th=[ 2576], 50.00th=[ 2608], 60.00th=[ 2672],
+     | 70.00th=[ 2704], 80.00th=[ 2768], 90.00th=[ 2896], 95.00th=[ 3088],
+     | 99.00th=[ 4576], 99.50th=[ 5472], 99.90th=[13888], 99.95th=[18560],
+     | 99.99th=[28288]
+   bw (  KiB/s): min=16864, max=17160, per=100.00%, avg=17039.16, stdev=91.05, samples=19
+   iops        : min= 4216, max= 4290, avg=4259.79, stdev=22.76, samples=19
+  lat (usec)   : 4=98.47%, 10=1.36%, 20=0.13%, 50=0.05%
+  fsync/fdatasync/sync_file_range:
+    sync (usec): min=224, max=6900, avg=231.08, stdev=96.45
+    sync percentiles (usec):
+     |  1.00th=[  227],  5.00th=[  227], 10.00th=[  227], 20.00th=[  229],
+     | 30.00th=[  229], 40.00th=[  229], 50.00th=[  229], 60.00th=[  229],
+     | 70.00th=[  229], 80.00th=[  229], 90.00th=[  231], 95.00th=[  237],
+     | 99.00th=[  241], 99.50th=[  243], 99.90th=[  322], 99.95th=[ 2278],
+     | 99.99th=[ 5604]
+  cpu          : usr=0.78%, sys=4.28%, ctx=85175, majf=4, minf=15
+  IO depths    : 1=200.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,42579,0,0 short=42579,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=16.6MiB/s (17.4MB/s), 16.6MiB/s-16.6MiB/s (17.4MB/s-17.4MB/s), io=166MiB (174MB), run=10001-10001msec
+
+Disk stats (read/write):
+  nvme0n1: ios=52/84273, merge=0/0, ticks=2/9490, in_queue=18265, util=98.99%
 ```
 
 # To be continued...

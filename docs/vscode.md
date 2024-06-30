@@ -89,3 +89,10 @@ Add the following to the `settings.json`:
 
 References:
 - https://medium.com/bootdotdev/how-to-get-consistent-line-breaks-in-vs-code-lf-vs-crlf-e1583bf0f0b6
+
+# Fold all blocks on a page
+
+`ctrl + K, ctrl + 0` to fold everything.
+Instead of `0` you can use other numbers fo fold only until N level.
+
+`ctrl + K, ctrl + J` to unfold everything.

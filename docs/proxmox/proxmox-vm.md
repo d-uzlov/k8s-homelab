@@ -89,8 +89,7 @@ EOF' \
 runcmd:
 - '/usr/sbin/dhclient'
 EOF' \
-    --run-command 'sudo cloud-init clean' \
-    --run-command 'sudo journalctl --rotate && sudo journalctl -m --vacuum-time=1s' \
+    --run-command 'sudo cloud-init clean && sudo journalctl --rotate && sudo journalctl -m --vacuum-time=1s' \
     --truncate /etc/hostname \
     --truncate /etc/machine-id
 ```
