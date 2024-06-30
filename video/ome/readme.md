@@ -201,6 +201,20 @@ docker build https://github.com/AirenSoft/OvenMediaEngine/raw/4b297cc97fbc8e9ff7
 docker push docker.io/$docker_username/$docker_repo:ome-official-v0.16.4-fixed
 ```
 
-# TODO
+# API usage examples
 
+```bash
+api_public_domain=$(kl -n ome get ingress api -o go-template --template "{{ (index .spec.rules 0).host}}")
+api_public_domain=$(kl -n ome get httproute api -o go-template --template "{{ (index .spec.hostnames 0)}}")
+token=your_access_token
+AUTH=$(echo -ne "$token" | base64 --wrap 0)
+curl --header "Authorization: Basic $AUTH" https://$api_public_domain/v1/vhosts/default/apps | jq
+curl --header "Authorization: Basic $AUTH" https://$api_public_domain/v1/vhosts/default/apps/tc/streams | jq
+
+api_edge_public_domain=$(kl -n ome get httproute api-edge -o go-template --template "{{ (index .spec.hostnames 0)}}")
+curl --header "Authorization: Basic $AUTH" https://$api_edge_public_domain/v1/vhosts/default/apps | jq
+curl --header "Authorization: Basic $AUTH" https://$api_edge_public_domain/v1/vhosts/default/apps/tc/streams | jq
+```
+
+Apparently, someone created a client for the OME API:
 https://github.com/AirenSoft/OvenMediaEngine/discussions/1609
