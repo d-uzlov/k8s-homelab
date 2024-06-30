@@ -133,3 +133,5 @@ if version_greater "$image_version" "$installed_version"; then
 fi
 
 run_path before-starting
+
+echo install finished

@@ -19,3 +19,5 @@ cat << EOF > /var/www/html/config/umask.config.php
     'localstorage.umask' => 0,
 );
 EOF
+
+echo pre-install finished

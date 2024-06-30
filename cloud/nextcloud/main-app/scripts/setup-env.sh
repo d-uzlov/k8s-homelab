@@ -32,3 +32,5 @@ php occ config:system:set memcache.distributed --value "\OC\Memcache\Redis"
 echo "Configure settings..."
 echo "Set background job to Cron"
 php occ background:cron
+
+echo setup-env finished

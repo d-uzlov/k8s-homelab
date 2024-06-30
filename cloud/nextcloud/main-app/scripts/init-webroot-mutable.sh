@@ -27,3 +27,5 @@ for dir in config custom_apps themes; do
         ls -lahF "$target_directory/$dir"
     fi
 done
+
+echo init-webroot-mutable finished
