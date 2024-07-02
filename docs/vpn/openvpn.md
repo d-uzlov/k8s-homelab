@@ -180,7 +180,6 @@ ifconfig-pool-persist ipp.txt
 In the end, your `openvpn.conf` will look like this:
 
 ```
-…
 server 192.168.255.0 255.255.255.0
 verb 3
 key /etc/openvpn/pki/private/fulldungeon.duckdns.org.key
