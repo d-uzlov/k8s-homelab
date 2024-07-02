@@ -143,6 +143,7 @@ push "route <OpenVPN_subnet> 255.255.255.0"
 ### DNS
 
 N.B. You can see the `<OpenVPN_subnet>` on the first line of the generated config file:
+
 ```
 server 192.168.255.0 255.255.255.0
 ```
@@ -157,6 +158,7 @@ push "dhcp-option DNS 8.8.4.4"
 ```
 
 with your local DNS:
+
 ```
 push "dhcp-option DNS <local_DNS>"
 ```
