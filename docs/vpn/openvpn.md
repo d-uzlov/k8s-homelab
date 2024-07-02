@@ -220,7 +220,7 @@ push "comp-lzo no"
 docker compose up -d openvpn
 ```
 
-# Step 4. Create a client configuration
+# Step 4. Set up a client
 
 ```shell
 export CLIENT_NAME="your_client_name"
