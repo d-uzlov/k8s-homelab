@@ -206,12 +206,18 @@ ifconfig-pool-persist ipp.txt
 
 ### Route Configurations Below
 push "route 192.168.255.0 255.255.255.0"
-push "route 192.168.88.0 255.255.255.0"
+push "route <local_subnet> 255.255.255.0"
 
 ### Push Configurations Below
 push "block-outside-dns"
-push "dhcp-option DNS 192.168.88.63"
+push "dhcp-option DNS <DNS_server>"
 push "comp-lzo no"
+```
+
+## Start the server
+
+```shell
+docker compose up -d openvpn
 ```
 
 # Step 4. Create a client configuration
@@ -233,8 +239,4 @@ If not, edit the line 6 in `$CLIENT_NAME.ovpn`:
 remote <your_server_public_address> <port> udp
 ```
 
-# Step 5. Start the server
-
-```shell
-docker compose up -d openvpn
-```
+Download the client app [here](https://openvpn.net/client/).
