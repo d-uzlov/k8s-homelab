@@ -15,7 +15,7 @@ is accessible via VPN by any client connected. In short, we need to:
 - [Documentation for the Docker image](https://github.com/kylemanna/docker-openvpn)
 - [IP forwarding activation](https://www.dmosk.ru/miniinstruktions.php?mini=openvpn-local-network)
 
-## Step 1. Enable IP forwarding on Proxmox
+# Step 1. Enable IP forwarding on Proxmox
 
 ```shell
 tee /etc/sysctl.d/ip_forward.conf <<EOF
@@ -25,11 +25,11 @@ EOF
 sysctl --system
 ```
 
-## Step 2. Set up a Debian container
+# Step 2. Set up a Debian container
 
 On this stage, it's assumed you already have a Debian container image in Proxmox.
 
-### Create the container
+## Create the container
 
 - Start creating a new container and disable the `Unprivileged container` option on the `General` tab.
 - Enable DHCP on the `Network` tab.
@@ -67,7 +67,7 @@ thread on the Proxmox forum.
 
 Start the container.
 
-### Enable IP forwarding
+## Enable IP forwarding
 
 ```shell
 tee /etc/sysctl.d/ip_forward.conf <<EOF
@@ -77,19 +77,19 @@ EOF
 sysctl --system
 ```
 
-## Step 3. Set up the server
+# Step 3. Set up the server
 
 All the following commands are run in the Debian container shell.
 
-### Install Docker on the Debian container
+## Install Docker on the Debian container
 
 ```shell
 apt update && apt install curl -y && curl https://get.docker.com | bash
 ```
 
-### Configure the server image
+## Configure the server image
 
-#### Create the files for container settings
+### Create the files for container settings
 
 ```shell
 tee sysctl.conf <<EOF
@@ -115,7 +115,7 @@ EOF
 touch ipp.txt
 ```
 
-#### Generate base server settings
+### Generate base server settings
 
 ```shell
 # This address is used in default client configuration files and certificates
@@ -130,7 +130,7 @@ You will have to manually edit `openvpn-data/conf/openvpn.conf` because OpenVPN 
 nano openvpn-data/conf/openvpn.conf
 ```
 
-#### Routes to LAN and OpenVPN network
+### Routes to LAN and OpenVPN network
 
 Replace the default route setting `route 192.168.254.0 255.255.255.0`
 with routes to your LAN and the OpenVPN network:
@@ -140,7 +140,7 @@ push "route <local_subnet> 255.255.255.0"
 push "route <OpenVPN_subnet> 255.255.255.0"
 ```
 
-#### DNS
+### DNS
 
 N.B. You can see the `<OpenVPN_subnet>` on the first line of the generated config file:
 ```
@@ -161,7 +161,7 @@ with your local DNS:
 push "dhcp-option DNS <local_DNS>"
 ```
 
-#### Individual IPs and IP persistency
+### Individual IPs and IP persistency
 
 And add some useful options:
 
@@ -173,7 +173,7 @@ topology subnet
 ifconfig-pool-persist ipp.txt
 ```
 
-#### Final server configuration
+### Final server configuration
 
 In the end, your `openvpn.conf` will look like this:
 
@@ -214,7 +214,7 @@ push "dhcp-option DNS 192.168.88.63"
 push "comp-lzo no"
 ```
 
-## Step 4. Create a client configuration
+# Step 4. Create a client configuration
 
 ```shell
 export CLIENT_NAME="your_client_name"
@@ -233,7 +233,7 @@ If not, edit the line 6 in `$CLIENT_NAME.ovpn`:
 remote <your_server_public_address> <port> udp
 ```
 
-## Step 5. Start the server
+# Step 5. Start the server
 
 ```shell
 docker compose up -d openvpn
