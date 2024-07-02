@@ -110,9 +110,6 @@ services:
      - ./openvpn-data/conf:/etc/openvpn
      - ./sysctl.conf:/etc/sysctl.conf
 EOF
-
-# The file to persistently store clients' IP associations in. See "ifconfig-pool-persist" option below
-touch ipp.txt
 ```
 
 ### Generate base server settings
