@@ -9,6 +9,12 @@ is accessible via VPN by any client connected. In short, we need to:
   - route to the local network via the OpenVPN server (necessary),
   - local DNS server (optional).
 
+# Sources
+
+- [OpenVPN docker image by kylemanna](https://hub.docker.com/r/kylemanna/openvpn/)
+- [Documentation for the Docker image](https://github.com/kylemanna/docker-openvpn)
+- [IP forwarding activation](https://www.dmosk.ru/miniinstruktions.php?mini=openvpn-local-network)
+
 ## Step 1. Enable IP forwarding on Proxmox
 
 ```shell
@@ -33,12 +39,14 @@ Don't start the container after creating. Docker needs to have nesting enabled, 
 - open the file `/etc/pve/lxc/<CONTAINER_ID>.conf` on the Proxmox machine,
 - enable nesting: `features: nesting=1`,
 - enable the capability to create devices:
+
   ```
   lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file
   lxc.cgroup2.devices.allow: c 10:200 rwm 
   ```
   
 Your container config file will finally look like this:
+
 ```
 arch: amd64
 cores: 1
@@ -53,6 +61,10 @@ lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file
 lxc.cgroup2.devices.allow: c 10:200 rwm
 ```
 
+`lxc.cgroup2` hack that allows device creation is taken from
+[this](https://forum.proxmox.com/threads/pve-7-openvpn-lxc-problem-cannot-open-tun-tap-dev.92893/)
+thread on the Proxmox forum.
+
 Start the container.
 
 ### Enable IP forwarding
@@ -65,7 +77,7 @@ EOF
 sysctl --system
 ```
 
-## Step 3. Deploy OpenVPN
+## Step 3. Set up the server
 
 All the following commands are run in the Debian container shell.
 
@@ -98,13 +110,18 @@ services:
      - ./openvpn-data/conf:/etc/openvpn
      - ./sysctl.conf:/etc/sysctl.conf
 EOF
+
+# The file to persistently store clients' IP associations in. See "ifconfig-pool-persist" option below
+touch ipp.txt
 ```
 
-#### Generate and edit the server settings
+#### Generate base server settings
 
 ```shell
+# This address is used in default client configuration files and certificates
 export OPENVPN_SERVER="your_server_public_address"
 docker compose run --rm openvpn ovpn_genconfig -u udp://$OPENVPN_SERVER
+docker compose run --rm openvpn ovpn_initpki
 ```
 
 You will have to manually edit `openvpn-data/conf/openvpn.conf` because OpenVPN doesn't support config directories:
@@ -113,33 +130,91 @@ You will have to manually edit `openvpn-data/conf/openvpn.conf` because OpenVPN 
 nano openvpn-data/conf/openvpn.conf
 ```
 
-Add routes to your local network to the end of the file:
+#### Routes to LAN and OpenVPN network
+
+Replace the default route setting `route 192.168.254.0 255.255.255.0`
+with routes to your LAN and the OpenVPN network:
+
 ```
 push "route <local_subnet> 255.255.255.0"
 push "route <OpenVPN_subnet> 255.255.255.0"
 ```
 
-(Optional) Replace Google DNS with your local DNS:
+#### DNS
+
+N.B. You can see the `<OpenVPN_subnet>` on the first line of the generated config file:
 ```
-#push "dhcp-option DNS 8.8.8.8"
-#push "dhcp-option DNS 8.8.4.4"
+server 192.168.255.0 255.255.255.0
+```
+
+In this example, the server will take the IP `192.168.255.1` and give the clients IPs from the rest of the range.
+
+(Optional) Replace Google DNS:
+
+```
+push "dhcp-option DNS 8.8.8.8"
+push "dhcp-option DNS 8.8.4.4"
+```
+
+with your local DNS:
+```
 push "dhcp-option DNS <local_DNS>"
 ```
 
-In the end, your `openvpn.conf` will look like this:
+#### Individual IPs and IP persistency
+
+And add some useful options:
+
 ```
-…
-### Push Configurations Below
-push "block-outside-dns"
-#push "dhcp-option DNS 8.8.8.8"
-#push "dhcp-option DNS 8.8.4.4"
-push "dhcp-option DNS 192.168.88.63"
-push "comp-lzo no"
-push "route 192.168.88.0 255.255.255.0"
-push "route 192.168.255.0 255.255.255.0"
+# Assign each client an individual IP instead of /30 subnet.
+# Defaults to "net30" for compatibility with outdated Windows clients
+topology subnet
+# Persistently store IP associations in this file
+ifconfig-pool-persist ipp.txt
 ```
 
-### Create a client configuration
+#### Final server configuration
+
+In the end, your `openvpn.conf` will look like this:
+
+```
+…
+server 192.168.255.0 255.255.255.0
+verb 3
+key /etc/openvpn/pki/private/fulldungeon.duckdns.org.key
+ca /etc/openvpn/pki/ca.crt
+cert /etc/openvpn/pki/issued/fulldungeon.duckdns.org.crt
+dh /etc/openvpn/pki/dh.pem
+tls-auth /etc/openvpn/pki/ta.key
+key-direction 0
+keepalive 10 60
+persist-key
+persist-tun
+
+proto udp
+# Rely on Docker to do port mapping, internally always 1194
+port 1194
+dev tun0
+status /tmp/openvpn-status.log
+
+user nobody
+group nogroup
+comp-lzo no
+
+topology subnet
+ifconfig-pool-persist ipp.txt
+
+### Route Configurations Below
+push "route 192.168.255.0 255.255.255.0"
+push "route 192.168.88.0 255.255.255.0"
+
+### Push Configurations Below
+push "block-outside-dns"
+push "dhcp-option DNS 192.168.88.63"
+push "comp-lzo no"
+```
+
+## Step 4. Create a client configuration
 
 ```shell
 export CLIENT_NAME="your_client_name"
@@ -151,14 +226,15 @@ docker compose run --rm openvpn easyrsa build-client-full $CLIENT_NAME nopass
 docker compose run --rm openvpn ovpn_getclient $CLIENT_NAME > $CLIENT_NAME.ovpn
 ```
 
-### Start the server
+The freshly generated client configuration is ready-to-use if your server is available via the default port `1194`.
+If not, edit the line 6 in `$CLIENT_NAME.ovpn`:
+
+```
+remote <your_server_public_address> <port> udp
+```
+
+## Step 5. Start the server
 
 ```shell
 docker compose up -d openvpn
 ```
-
-# Sources
-
-- https://github.com/kylemanna/docker-openvpn
-- https://forum.proxmox.com/threads/pve-7-openvpn-lxc-problem-cannot-open-tun-tap-dev.92893/
-- https://www.dmosk.ru/miniinstruktions.php?mini=openvpn-local-network
