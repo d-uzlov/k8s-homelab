@@ -14,30 +14,25 @@ You need to regenerate the deployment if you use control plane endpoint other th
 helm repo add cilium https://helm.cilium.io/
 helm repo update cilium
 helm search repo cilium/cilium --versions --devel | head
-helm show values cilium/cilium --version 1.15.5 > ./network/cilium/default-values.yaml
+helm show values cilium/cilium --version 1.15.7 > ./network/cilium/default-values.yaml
 
-# replace with your value
-control_plane_endpoint=cp.k8s.lan
 helm template cilium cilium/cilium \
-  --version 1.15.5 \
+  --version 1.15.7 \
   --values ./network/cilium/values.yaml \
   --namespace cilium \
-  --set k8sServiceHost=$control_plane_endpoint \
   --api-versions gateway.networking.k8s.io/v1/GatewayClass \
   > ./network/cilium/cilium-native.gen.yaml
 helm template cilium cilium/cilium \
-  --version 1.15.5 \
+  --version 1.15.7 \
   --values ./network/cilium/values.yaml \
   --namespace cilium \
-  --set k8sServiceHost=$control_plane_endpoint \
   --set l2announcements.enable=true \
   --api-versions gateway.networking.k8s.io/v1/GatewayClass \
   > ./network/cilium/cilium-native-l2lb.gen.yaml
 helm template cilium cilium/cilium \
-  --version 1.15.5 \
+  --version 1.15.7 \
   --values ./network/cilium/values.yaml \
   --namespace cilium \
-  --set k8sServiceHost=$control_plane_endpoint \
   --set routingMode=tunnel \
   --set autoDirectNodeRoutes=false \
   --set loadBalancer.dsrDispatch=geneve \
@@ -46,24 +41,25 @@ helm template cilium cilium/cilium \
   > ./network/cilium/cilium-tunnel.gen.yaml
 ```
 
-# Disable kube-proxy
-
-Cilium completely replaces kube-proxy so you need to disable it.
-
-```bash
-# disable kube-proxy
-kl -n kube-system patch ds kube-proxy -p '{"spec":{"template":{"spec":{"nodeSelector":{"enable-kube-proxy": "true"}}}}}'
-# revert if you uninstall cilium
-kl -n kube-system patch ds kube-proxy --type=json -p='[{"op": "remove", "path": "/spec/template/spec/nodeSelector/enable-kube-proxy"}]'
-```
-
-It's possible to make Cilium coexist with kube-proxy
-if you change Cilium settings but it's more effective to replace it.
-Also, `l2lb` doesn't work without kube-proxy replacement.
-
 # Deploy
 
 ```bash
+# cilium completely replaces kube-proxy so you need to disable it.
+#   disable kube-proxy
+kl -n kube-system patch ds kube-proxy -p '{"spec":{"template":{"spec":{"nodeSelector":{"enable-kube-proxy": "true"}}}}}'
+#   revert if you uninstall cilium
+kl -n kube-system patch ds kube-proxy --type=json -p='[{"op": "remove", "path": "/spec/template/spec/nodeSelector/enable-kube-proxy"}]'
+# It's possible to make Cilium coexist with kube-proxy
+# if you change Cilium settings but it's more effective to replace it.
+# Also, `l2lb` doesn't work without kube-proxy replacement.
+
+mkdir -p ./network/cilium/env/
+cat <<EOF > ./network/cilium/env/contol-plane-endpoint.env
+# ip or domain that points to your control plane nodes
+# same as what you set during cluster creation
+control_plane_endpoint=cp.k8s.lan
+EOF
+
 kl create ns cilium cilium-secrets
 
 kl -n cilium apply -f ./network/network-policies/deny-ingress.yaml
@@ -71,13 +67,25 @@ kl -n cilium apply -f ./network/network-policies/allow-same-namespace.yaml
 
 # choose one of the deployment options:
 # - choose native when using a single L2 segment
-kl apply -f ./network/cilium/cilium-native.gen.yaml --server-side=true
+(
+  . ./network/cilium/env/contol-plane-endpoint.env \
+  && sed "s/cp-address-automatic-replace/$control_plane_endpoint/" ./network/cilium/cilium-native.gen.yaml \
+  | kl apply -f - --server-side=true
+)
 # - also enable L2 announcements, when not using any other load balancer provider
-kl apply -f ./network/cilium/cilium-native-l2lb.gen.yaml --server-side=true
+(
+  . ./network/cilium/env/contol-plane-endpoint.env \
+  && sed "s/cp-address-automatic-replace/$control_plane_endpoint/" ./network/cilium/cilium-native-l2lb.gen.yaml \
+  | kl apply -f - --server-side=true
+)
 # - choose tunnel when nodes are in different L2 segments
 #   tunnel has worse performance than native,
 #   see test/iperf folder for details
-kl apply -f ./network/cilium/cilium-tunnel.gen.yaml --server-side=true
+(
+  . ./network/cilium/env/contol-plane-endpoint.env \
+  && sed "s/cp-address-automatic-replace/$control_plane_endpoint/" ./network/cilium/cilium-tunnel.gen.yaml \
+  | kl apply -f - --server-side=true
+)
 
 kl -n cilium get pod -o wide
 
