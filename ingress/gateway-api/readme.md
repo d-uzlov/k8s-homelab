@@ -2,8 +2,7 @@
 # Gateway API
 
 By default k8s doesn't contain gateway API CRDs.
-
-This readme has instructions to fix it.
+You need to install it manually to be able to use it.
 
 References:
 - https://gateway-api.sigs.k8s.io/guides/?h=crds#getting-started-with-gateway-api
@@ -12,10 +11,15 @@ References:
 # Create CRDs
 
 ```bash
-# wget https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.0.0/experimental-install.yaml
-# additionalPrinterColumns was edited manually for HTTPRoute to include first parent column
-kl apply -f ./ingress/gateway-api/experimental-install.yaml --server-side
+curl -L https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/experimental-install.yaml \
+  > ./ingress/gateway-api/install/experimental-install.yaml
+
+kl apply -f ./ingress/gateway-api/install/experimental-install.yaml --server-side
+kl patch crd httproutes.gateway.networking.k8s.io --patch-file ./ingress/gateway-api/install/httproutes-print-patch.json --type json
 ```
+
+References:
+- https://github.com/kubernetes-sigs/gateway-api/releases
 
 # Known implementations
 
@@ -25,6 +29,7 @@ References:
 In this repo refer to the following:
 - [cilium](../../network/cilium/readme.md)
 - [envoy](../envoy/readme.md)
+- [istio](../istio/readme.md)
 
 # Deploy gateway
 
