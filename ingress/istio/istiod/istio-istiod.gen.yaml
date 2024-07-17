@@ -67,6 +67,9 @@ data:
 
   values: |-
     {
+      "gateways": {
+        "securityContext": {}
+      },
       "global": {
         "autoscalingv2API": true,
         "caAddress": "",
@@ -150,7 +153,7 @@ data:
         "sts": {
           "servicePort": 0
         },
-        "tag": "1.22.1",
+        "tag": "1.22.3",
         "variant": ""
       },
       "istio_cni": {
@@ -749,9 +752,13 @@ data:
           }
         spec:
           securityContext:
+          {{- if .Values.gateways.securityContext }}
+            {{- toYaml .Values.gateways.securityContext | nindent 4 }}
+          {{- else }}
             sysctls:
             - name: net.ipv4.ip_unprivileged_port_start
               value: "0"
+          {{- end }}
           containers:
           - name: istio-proxy
           {{- if contains "/" .Values.global.proxy.image }}
@@ -1571,7 +1578,10 @@ data:
                 securityContext:
                   privileged: false
                   runAsGroup: 1337
-                  runAsUser: 0
+                  runAsUser: 1337
+                  allowPrivilegeEscalation: false
+                  readOnlyRootFilesystem: true
+                  runAsNonRoot: true
                   capabilities:
                     drop:
                     - ALL
@@ -1735,9 +1745,13 @@ data:
               {{- if ge .KubeVersion 122 }}
               {{/* safe since 1.22: https://github.com/kubernetes/kubernetes/pull/103326. */}}
               securityContext:
+              {{- if .Values.gateways.securityContext }}
+                {{- toYaml .Values.gateways.securityContext | nindent 8 }}
+              {{- else }}
                 sysctls:
                 - name: net.ipv4.ip_unprivileged_port_start
                   value: "0"
+              {{- end }}
               {{- end }}
               serviceAccountName: {{.ServiceAccount | quote}}
               containers:
@@ -2347,7 +2361,7 @@ spec:
       serviceAccountName: istiod
       containers:
         - name: discovery
-          image: "docker.io/istio/pilot:1.22.1"
+          image: "docker.io/istio/pilot:1.22.3"
           args:
           - "discovery"
           - --monitoringAddr=:15014
