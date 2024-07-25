@@ -1,0 +1,38 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: mongo-test
+
+resources:
+- ./mongo.yaml
+- ../../../storage/mongo/default-rbac/
+- ../../../storage/mongo/pvc-config/
+
+secretGenerator:
+- name: mongo-admin-password
+  # name must match .spec.users.passwordSecretRef.name in the MongoDBCommunity spec
+  envs:
+  - ./env/password.env
+  options:
+    disableNameSuffixHash: true
+
+replacements:
+- source:
+    kind: ConfigMap
+    name: mongo-pvc-config
+    fieldPath: data.data_class
+  targets:
+  - select:
+      kind: MongoDBCommunity
+    fieldPaths:
+    - spec.statefulSet.spec.volumeClaimTemplates.0.spec.storageClassName
+- source:
+    kind: ConfigMap
+    name: mongo-pvc-config
+    fieldPath: data.logs_class
+  targets:
+  - select:
+      kind: MongoDBCommunity
+    fieldPaths:
+    - spec.statefulSet.spec.volumeClaimTemplates.1.spec.storageClassName
