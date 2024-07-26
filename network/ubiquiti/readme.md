@@ -40,6 +40,11 @@ For example: `set-inform http://unifi.ubiquiti.kubelb.lan:8080/inform`.
 
 ```bash
 kl create ns ubiquiti
+kl label ns ubiquiti pod-security.kubernetes.io/enforce=baseline
+
+# kl -n ubiquiti apply -f ./network/network-policies/deny-ingress.yaml
+# kl -n ubiquiti apply -f ./network/network-policies/allow-same-namespace.yaml
+# kl -n ubiquiti apply -f ./network/network-policies/allow-lan.yaml
 
 kl apply -k ./network/ubiquiti/loadbalancer/
 kl -n ubiquiti get svc
