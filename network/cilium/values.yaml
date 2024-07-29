@@ -1,3 +1,4 @@
+---
 
 kubeProxyReplacement: true
 k8sServiceHost: cp-address-automatic-replace
@@ -19,6 +20,7 @@ ipam:
 # MTU: 1500
 bpf:
   masquerade: true
+  # datapathMode: netkit
 encryption:
   enabled: false
   # https://github.com/cilium/cilium/issues/28413
@@ -47,10 +49,12 @@ k8sClientRateLimit:
   burst: 200
 
 envoy:
-  enabled: false
+  # by default envoy is running in the cilium agent pods
+  # this options decouples it into separate pods
+  enabled: true
 l2podAnnouncements:
   enabled: false
-  interface: "eth0"
+  interface: eth0
 pmtuDiscovery:
   enabled: true
 # required for l2announcements for .spec.externalIPs
@@ -76,6 +80,7 @@ gatewayAPI:
     # -- Enable secret sync, which will make sure all TLS secrets used by Ingress are synced to secretsNamespace.name.
     # If disabled, TLS secrets must be maintained externally.
     sync: true
+  externalTrafficPolicy: Local
 
 hubble:
   enabled: true
@@ -89,6 +94,17 @@ hubble:
       # renew certificates automatically
       # remove certificates from generated .gen.yaml file
       method: cronJob
+  # -- Emit v1.Events related to pods on detection of packet drops.
+  #    This feature is alpha, please provide feedback at https://github.com/cilium/cilium/issues/33975.
+  dropEventEmitter:
+    enabled: false
+    # --- Minimum time between emitting same events.
+    interval: 2m
+    # --- Drop reasons to emit events for.
+    # ref: https://docs.cilium.io/en/stable/_api/v1/flow/README/#dropreason
+    reasons:
+    - auth_required
+    - policy_denied
 
 rollOutCiliumPods: true
 operator:
