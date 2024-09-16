@@ -29,7 +29,6 @@ helm template \
 # Environment setup
 
 - Create Truenas Scale instance
-- Create dataset for iSCSI shares
 - Enable iSCSI service
 - Create iSCSI portal (simple case: no auth, listen on 0.0.0.0)
 - Create initiator group (simple case: check "Allow all initiators")
