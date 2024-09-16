@@ -9,129 +9,107 @@ References:
 
 # host
 
-```bash
-apt install -y build-* dkms git
-apt install -y pve-headers-6.2.16-12-pve
-
-git clone https://github.com/strongtz/i915-sriov-dkms.git
-nano i915-sriov-dkms/dkms.conf
-# set package name to i915-sriov-dkms
-# set version to 6.1
-mv i915-sriov-dkms /usr/src/i915-sriov-dkms-6.1
-
-dkms install -m i915-sriov-dkms -v 6.1 --force
-# this can take a long time
-dkms status
-
-nano /etc/kernel/cmdline
-# add: i915.enable_guc=3 i915.max_vfs=7
-proxmox-boot-tool refresh
-# if you are having issues, you could also try this: update-initramfs -u -k all
-reboot now
-
-# you can try to install a different kernel if you want to
-proxmox-boot-tool kernel list
-proxmox-boot-tool kernel pin 6.2.16-12-pve
-```
-
-```bash
-# enable automatically after reboot
-echo "devices/pci0000:00/0000:00:02.0/sriov_numvfs = 1" > /etc/sysfs.conf
-# or enable for current session
-echo 1 > "/sys/devices/pci0000:00/0000:00:02.0/sriov_numvfs"
-# you can set up to `i915.max_vfs` virtual devices
-```
-
-# guest
+References:
+- https://github.com/strongtz/i915-sriov-dkms
+- https://forum.proxmox.com/threads/alder-lake-gvt-d-integrated-graphics-passthrough.105983/
 
 ```bash
 sudo apt install -y build-* dkms git
+sudo apt install -y pve-headers-$(uname -r)
 
 git clone https://github.com/strongtz/i915-sriov-dkms.git
-nano i915-sriov-dkms/dkms.conf
-# set package name to i915-sriov-dkms
-# set version to 6.1
-sudo mv i915-sriov-dkms /usr/src/i915-sriov-dkms-6.1
 
-# this can take a long time
-sudo dkms install -m i915-sriov-dkms -v 6.1 --force
-# dkms may fail with an error describing which modules you need to additionally install
+sudo dkms add ./i915-sriov-dkms/
+
+sudo dkms install -m i915-sriov-dkms -v $(cat ./i915-sriov-dkms/VERSION) --force
+# dkms install can take a long time
 sudo dkms status
+# status must be "installed"
 
-sudo nano /etc/default/grub
-# add i915.enable_guc=3
-sudo update-grub
-sudo update-initramfs -u
+sudo nano /etc/kernel/cmdline
+# add: i915.enable_guc=3 i915.max_vfs=7
 
-sudo reboot
+# pin the kernel (optional)
+sudo proxmox-boot-tool kernel pin $(uname -r)
+sudo proxmox-boot-tool kernel list
+# when you want to update, unpin:
+# sudo proxmox-boot-tool kernel unpin
+
+sudo proxmox-boot-tool refresh
+# if you are having issues, you could also try this: update-initramfs -u -k all
+
+lspci -tv
+sudo apt install sysfsutils
+# replace `00:02` with the address of your GPU as printed by lspci
+# this will automatically create virtual GPUs on boot
+echo "devices/pci0000:00/0000:00:02.0/sriov_numvfs = 7" | sudo tee -a /etc/sysfs.conf
+# alternatively, create vGPUs manually, they will last until reboot
+# echo 7 | sudo tee "/sys/devices/pci0000:00/0000:00:02.0/sriov_numvfs"
+
+sudo reboot now
+
+# check that you now have 8 virtual GPUs with addresses 02.0 through 02.7
+lspci -tv
 ```
 
-After reboot check that driver successfully loaded:
+Note: never use vGPU with index 0: `02.0`.
+
+# guest: prerequisites
+
+Guest kernel must have `CONFIG_INTEL_MEI_PXP=m` and `CONFIG_DRM_I915_PXP=y` set, which Debian 12 doesn't do.
+Other distributions shouldn't require any changes.
+
+On debian 12 you can install the proxmox kernel:
+
+```bash
+echo "deb [arch=amd64] http://download.proxmox.com/debian/pve bookworm pve-no-subscription" | sudo tee /etc/apt/sources.list.d/pve-install-repo.list
+sudo wget https://enterprise.proxmox.com/debian/proxmox-release-bookworm.gpg -O /etc/apt/trusted.gpg.d/proxmox-release-bookworm.gpg
+# verify
+sha512sum /etc/apt/trusted.gpg.d/proxmox-release-bookworm.gpg
+# sha512sum output must be:
+# 7da6fe34168adc6e479327ba517796d4702fa2f8b4f0a9833f5ea6e6b48f6507a6da403a274fe201595edc86a84463d50383d07f64bdde2e3658108db7d6dc87 /etc/apt/trusted.gpg.d/proxmox-release-bookworm.gpg
+sudo apt update && sudo apt full-upgrade -y
+sudo apt install -y proxmox-default-kernel
+sudo reboot now
+# adjust for your kernel version prefix
+sudo apt remove -y linux-image-amd64 'linux-image-6.1*'
+sudo update-grub
+```
+
+# guest: installation
+
+```bash
+sudo apt install -y build-* dkms git
+sudo apt install -y pve-headers-$(uname -r)
+
+git clone https://github.com/strongtz/i915-sriov-dkms.git
+
+sudo dkms add ./i915-sriov-dkms/
+
+sudo dkms install -m i915-sriov-dkms -v $(cat ./i915-sriov-dkms/VERSION) --force
+# dkms install can take a long time
+sudo dkms status
+# status must be "installed"
+
+sudo nano /etc/default/grub
+# add to GRUB_CMDLINE_LINUX_DEFAULT: i915.enable_guc=3
+sudo update-grub
+sudo update-initramfs -u
+sudo reboot now
+```
+
+After reboot check that driver successfully loaded.
+Don't forget to add the add the PCI device passthrough.
+
 ```bash
 sudo dmesg | grep i915
 # dmesg may show that some symbols are missing
 # this is a known issue:
 #   https://github.com/strongtz/i915-sriov-dkms/issues/55#issuecomment-1478305083
 
-ls -la /dev/dri
+ls -la /dev/dri/
 
 # check GPU capabilities
 sudo apt install -y vainfo
 vainfo
-```
-
-References:
-- https://forum.proxmox.com/threads/alder-lake-gvt-d-integrated-graphics-passthrough.105983/
-- https://github.com/strongtz/i915-sriov-dkms
-
-# Debian-specific
-
-Tested on Debian 12.
-
-Alternatively, you can just install proxmox kernel
-which is based on debian but have everything enabled by default.
-
-```bash
-# check that your kernel is at least 6.1
-apt search '^linux-image-.*-amd64' | grep installed
-# if you don't, find and install one
-apt search '^linux-image-6.*-amd64' | grep 'for 64-bit PCs (signed)' -B 1
-sudo apt -y install linux-image-6.1.0-7-amd64
-sudo reboot now
-
-# install corresponding sources
-sudo apt -y install dwarves linux-source-6.1 pahole vainfo
-cd /usr/src
-sudo tar xJvf linux-source-6.1.tar.xz
-
-# Copy Debian's original build configuration into the source tree:
-sudo cp $(ls /boot/config-6.1.*-amd64 | sort -V | tail -n 1) /usr/src/linux-source-6.1/.config
-# enable features required for i915 sriov
-echo CONFIG_INTEL_MEI_PXP=m | sudo tee -a /usr/src/linux-source-6.1/.config
-echo CONFIG_DRM_I915_PXP=y | sudo tee -a /usr/src/linux-source-6.1/.config
-
-cd /usr/src/linux-source-6.1
-# this will take a long time...
-# you also need at least 32 GB of total disk space if you are doing it on a completely fresh system
-# optimally you want to increase the size to 40+ GB if you have anything installed
-sudo make deb-pkg LOCALVERSION=-sriov KDEB_PKGVERSION=$(make kernelversion)-1 -j$(( $(nproc) * 2 )) ARCH=$(arch)
-sudo dpkg -i /usr/src/*.deb
-sudo reboot
-
-# verify that you are running a modified kernel
-uname -r
-```
-
-You can also save resulting `.deb` files and use them on other systems.
-
-```bash
-# on your main PC
-remote=n100.k8s.lan
-scp "$remote":'/usr/src/*.deb' .
-scp ./*.deb "$remote":.
-
-# on remote
-sudo dpkg -i ./*.deb
-# verify that you are running a modified kernel
-uname -r
 ```

@@ -23,17 +23,18 @@ kl -n hw-intel get pod -o wide
 
 ```bash
 kl delete -k ./hardware/intel-device-plugin/
-kl delete ns hardware
+kl delete ns hw-intel
 ```
 
 # Test that pods can access GPU
 
 ```bash
-kl apply -f ./hardware/intel-device-plugin/test.yaml
-kl get pod
-kl logs jobs/intelgpu-demo-job | less
+kl create ns hw-intel-test
+kl -n hw-intel-test apply -f ./hardware/intel-device-plugin/test.yaml
+kl -n hw-intel-test get pod -o wide
+kl -n hw-intel-test logs jobs/intelgpu-demo-job | less
 
-kl delete -f ./hardware/intel-device-plugin/test.yaml
+kl delete ns hw-intel-test
 ```
 
 References:
