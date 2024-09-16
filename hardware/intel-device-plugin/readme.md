@@ -11,18 +11,78 @@ References:
 References:
 - [node-feature-discovery](../node-feature-discovery/readme.md)
 
+# Update
+
+```bash
+helm repo add intel https://intel.github.io/helm-charts
+helm repo update intel
+helm search repo intel/intel-device-plugins-gpu --versions --devel | head
+helm show values intel/intel-device-plugins-gpu --version 0.30.0 > ./hardware/intel-device-plugin/default-values.yaml
+helm search repo intel/intel-device-plugins-gpu --versions --devel | head
+helm show values intel/intel-device-plugins-operator --version 0.30.0 > ./hardware/intel-device-plugin/operator/default-values.yaml
+```
+
+```bash
+kl kustomize https://github.com/intel/intel-device-plugins-for-kubernetes/deployments/operator/crd?ref=v0.30.0 \
+  > ./hardware/intel-device-plugin/operator/crds.gen.yaml
+
+helm template \
+  intel-operator \
+  intel/intel-device-plugins-operator \
+  --version 0.30.0 \
+  --namespace hw-intel \
+  --values ./hardware/intel-device-plugin/operator/values.yaml \
+  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/part-of|d' -e '\|app.kubernetes.io/version|d' \
+  | sed -e 's/inteldeviceplugins-controller-manager-metrics-service/operator-metrics/g' \
+  | sed -e 's/inteldeviceplugins-controller-manager/operator/g' \
+  | sed -e 's/inteldeviceplugins-validating-webhook-configuration/intel-operator-val/g' \
+  | sed -e 's/inteldeviceplugins-mutating-webhook-configuration/intel-operator-mut/g' \
+  | sed -e 's/inteldeviceplugins-serving-cert/operator/g' \
+  | sed -e 's/inteldeviceplugins-webhook-service/operator-webhook/g' \
+  | sed -e 's/inteldeviceplugins-gpu-manager-rolebinding/intel-gpu-manager/g' \
+  | sed -e 's/inteldeviceplugins-gpu-manager-role/intel-gpu-manager/g' \
+  | sed -e 's/inteldeviceplugins-manager-rolebinding/intel-manager/g' \
+  | sed -e 's/inteldeviceplugins-manager-role/intel-manager/g' \
+  | sed -e 's/inteldeviceplugins-proxy-rolebinding/intel-proxy/g' \
+  | sed -e 's/inteldeviceplugins-proxy-role/intel-proxy/g' \
+  | sed -e 's/inteldeviceplugins-leader-election-role/operator-leader-election/g' \
+  | sed -e 's/inteldeviceplugins-leader-election-rolebinding/operator-leader-election/g' \
+  | sed -e 's/inteldeviceplugins-selfsigned-issuer/selfsigned/g' \
+  | sed -e 's/inteldeviceplugins-metrics-reader/intel-operator-metrics-reader/g' \
+  > ./hardware/intel-device-plugin/operator/intel-operator.gen.yaml
+
+helm template \
+  intel-gpu-plugin \
+  intel/intel-device-plugins-gpu \
+  --version 0.30.0 \
+  --namespace hw-intel \
+  --values ./hardware/intel-device-plugin/values.yaml \
+  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/part-of|d' -e '\|app.kubernetes.io/version|d' \
+  > ./hardware/intel-device-plugin/intel-gpu-plugin.gen.yaml
+```
+
 # Deploy
 
 ```bash
+kl apply -f ./hardware/intel-device-plugin/operator/crds.gen.yaml --server-side
+
 kl create ns hw-intel
-kl apply -k ./hardware/intel-device-plugin/
+kl label ns hw-intel pod-security.kubernetes.io/enforce=privileged
+
+# kl -n hw-intel apply -f ./network/network-policies/deny-ingress.yaml
+# kl -n hw-intel apply -f ./network/network-policies/allow-same-namespace.yaml
+
+kl apply -f ./hardware/intel-device-plugin/operator/intel-operator.gen.yaml
+kl -n hw-intel apply -f ./hardware/intel-device-plugin/intel-gpu-plugin.gen.yaml
 kl -n hw-intel get pod -o wide
 ```
 
 # Cleanup
 
 ```bash
-kl delete -k ./hardware/intel-device-plugin/
+kl delete -f ./hardware/intel-device-plugin/intel-gpu-plugin.gen.yaml
+kl delete -f ./hardware/intel-device-plugin/operator/intel-operator.gen.yaml
+kl delete -f ./hardware/intel-device-plugin/operator/crds.gen.yaml
 kl delete ns hw-intel
 ```
 
