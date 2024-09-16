@@ -20,7 +20,7 @@ helm show values nfd/node-feature-discovery > ./hardware/node-feature-discovery/
 helm template \
   nfd \
   nfd/node-feature-discovery \
-  --version 0.14.1 \
+  --version 0.16.4 \
   --namespace hw-nfd \
   --values ./hardware/node-feature-discovery/values.yaml \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/part-of|d' -e '\|app.kubernetes.io/version|d' \
@@ -28,7 +28,7 @@ helm template \
 ```
 
 ```bash
-crd_url=https://github.com/kubernetes-sigs/node-feature-discovery/raw/v0.14.1/deployment/helm/node-feature-discovery/crds/nfd-api-crds.yaml
+crd_url=https://github.com/kubernetes-sigs/node-feature-discovery/raw/v0.16.4/deployment/helm/node-feature-discovery/crds/nfd-api-crds.yaml
 curl -fsSL "$crd_url" --output ./hardware/node-feature-discovery/crd.yaml
 ```
 
@@ -40,7 +40,7 @@ kl apply -f ./hardware/node-feature-discovery/crd.yaml --server-side
 kl create ns hw-nfd
 kl apply -f ./hardware/node-feature-discovery/nfd.gen.yaml
 
-kl -n hw-nfd get pod
+kl -n hw-nfd get pod -o wide
 
 # check that nfd deployment updated node labels
 kl describe node | grep feature.node.kubernetes.io
