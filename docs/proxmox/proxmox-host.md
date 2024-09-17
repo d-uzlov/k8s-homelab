@@ -330,6 +330,30 @@ export DuckDNS_Token="askdjhawkjqweeqjw"
 DuckDNS_Token=askdjhawkjqweeqjw
 ```
 
+# Huge pages
+
+There isn't a lot of info on best practices with huge pages.
+
+It seems like the default settings in Proxmox are good enough.
+
+```bash
+# total huge page usage in the system
+cat /proc/meminfo | grep Huge
+# current huge page usage per VM
+sudo grep -e AnonHugePages /proc/*/smaps | awk '{ if($2>4) print $0} ' | awk -F "/" '{print $0; system("ps -fp " $3)} '
+
+cat /sys/kernel/mm/transparent_hugepage/enabled
+#   recommended [madvise]
+
+cat /sys/kernel/mm/transparent_hugepage/defrag
+#   recommended either [defer+madvise] or [madvise]
+```
+
+References:
+- https://forum.level1techs.com/t/proxmox-slow-ram-in-windows-vm/167075/13
+- https://mathiashueber.com/configuring-hugepages-use-virtual-machine/
+- https://docs.renderex.ae/posts/Enabling-hugepages/
+
 # TODO
 
 iscsi + CHAP:
