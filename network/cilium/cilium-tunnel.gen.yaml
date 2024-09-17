@@ -175,7 +175,7 @@ data:
   enable-ipv6-big-tcp: "false"
   enable-ipv6-masquerade: "true"
   enable-tcx: "true"
-  datapath-mode: "veth"
+  datapath-mode: "netkit"
   enable-bpf-masquerade: "true"
   enable-masquerade-to-route-source: "false"
 
@@ -282,6 +282,9 @@ data:
   max-connected-clusters: "255"
   clustermesh-enable-endpoint-sync: "false"
   clustermesh-enable-mcs-api: "false"
+
+  nat-map-stats-entries: "32"
+  nat-map-stats-interval: "30s"
 
 # Extra config allows adding arbitrary properties to the cilium config.
 # By putting it at the end of the ConfigMap, it's also possible to override existing properties.
@@ -1351,7 +1354,7 @@ spec:
     metadata:
       annotations:
         # ensure pods roll when configmap updates
-        cilium.io/cilium-configmap-checksum: "0722cad4b9016e04a8b9ec29659181f03d230986ee7beeec7fc112262d2cedc4"
+        cilium.io/cilium-configmap-checksum: "256ed9c01da0bae6e1a688153134c45b29933981645397c4727038c3f2ed939f"
         # Set app AppArmor's profile to "unconfined". The value of this annotation
         # can be modified as long users know which profiles they have available
         # in AppArmor.
@@ -1366,7 +1369,7 @@ spec:
     spec:
       containers:
       - name: cilium-agent
-        image: "quay.io/cilium/cilium:v1.16.0@sha256:46ffa4ef3cf6d8885dcc4af5963b0683f7d59daa90d49ed9fb68d3b1627fe058"
+        image: "quay.io/cilium/cilium:v1.16.1@sha256:0b4a3ab41a4760d86b7fc945b8783747ba27f29dac30dd434d94f2c9e3679f39"
         imagePullPolicy: IfNotPresent
         command:
         - cilium-agent
@@ -1524,7 +1527,7 @@ spec:
           mountPath: /tmp
       initContainers:
       - name: config
-        image: "quay.io/cilium/cilium:v1.16.0@sha256:46ffa4ef3cf6d8885dcc4af5963b0683f7d59daa90d49ed9fb68d3b1627fe058"
+        image: "quay.io/cilium/cilium:v1.16.1@sha256:0b4a3ab41a4760d86b7fc945b8783747ba27f29dac30dd434d94f2c9e3679f39"
         imagePullPolicy: IfNotPresent
         command:
         - cilium-dbg
@@ -1551,7 +1554,7 @@ spec:
       # Required to mount cgroup2 filesystem on the underlying Kubernetes node.
       # We use nsenter command with host's cgroup and mount namespaces enabled.
       - name: mount-cgroup
-        image: "quay.io/cilium/cilium:v1.16.0@sha256:46ffa4ef3cf6d8885dcc4af5963b0683f7d59daa90d49ed9fb68d3b1627fe058"
+        image: "quay.io/cilium/cilium:v1.16.1@sha256:0b4a3ab41a4760d86b7fc945b8783747ba27f29dac30dd434d94f2c9e3679f39"
         imagePullPolicy: IfNotPresent
         env:
         - name: CGROUP_ROOT
@@ -1588,7 +1591,7 @@ spec:
             drop:
               - ALL
       - name: apply-sysctl-overwrites
-        image: "quay.io/cilium/cilium:v1.16.0@sha256:46ffa4ef3cf6d8885dcc4af5963b0683f7d59daa90d49ed9fb68d3b1627fe058"
+        image: "quay.io/cilium/cilium:v1.16.1@sha256:0b4a3ab41a4760d86b7fc945b8783747ba27f29dac30dd434d94f2c9e3679f39"
         imagePullPolicy: IfNotPresent
         env:
         - name: BIN_PATH
@@ -1626,7 +1629,7 @@ spec:
       # from a privileged container because the mount propagation bidirectional
       # only works from privileged containers.
       - name: mount-bpf-fs
-        image: "quay.io/cilium/cilium:v1.16.0@sha256:46ffa4ef3cf6d8885dcc4af5963b0683f7d59daa90d49ed9fb68d3b1627fe058"
+        image: "quay.io/cilium/cilium:v1.16.1@sha256:0b4a3ab41a4760d86b7fc945b8783747ba27f29dac30dd434d94f2c9e3679f39"
         imagePullPolicy: IfNotPresent
         args:
         - 'mount | grep "/sys/fs/bpf type bpf" || mount -t bpf bpf /sys/fs/bpf'
@@ -1642,7 +1645,7 @@ spec:
           mountPath: /sys/fs/bpf
           mountPropagation: Bidirectional
       - name: clean-cilium-state
-        image: "quay.io/cilium/cilium:v1.16.0@sha256:46ffa4ef3cf6d8885dcc4af5963b0683f7d59daa90d49ed9fb68d3b1627fe058"
+        image: "quay.io/cilium/cilium:v1.16.1@sha256:0b4a3ab41a4760d86b7fc945b8783747ba27f29dac30dd434d94f2c9e3679f39"
         imagePullPolicy: IfNotPresent
         command:
         - /init-container.sh
@@ -1693,7 +1696,7 @@ spec:
           mountPath: /var/run/cilium # wait-for-kube-proxy
       # Install the CNI binaries in an InitContainer so we don't have a writable host mount in the agent
       - name: install-cni-binaries
-        image: "quay.io/cilium/cilium:v1.16.0@sha256:46ffa4ef3cf6d8885dcc4af5963b0683f7d59daa90d49ed9fb68d3b1627fe058"
+        image: "quay.io/cilium/cilium:v1.16.1@sha256:0b4a3ab41a4760d86b7fc945b8783747ba27f29dac30dd434d94f2c9e3679f39"
         imagePullPolicy: IfNotPresent
         command:
           - "/install-plugin.sh"
@@ -2045,7 +2048,7 @@ spec:
     metadata:
       annotations:
         # ensure pods roll when configmap updates
-        cilium.io/cilium-configmap-checksum: "0722cad4b9016e04a8b9ec29659181f03d230986ee7beeec7fc112262d2cedc4"
+        cilium.io/cilium-configmap-checksum: "256ed9c01da0bae6e1a688153134c45b29933981645397c4727038c3f2ed939f"
         prometheus.io/port: "9963"
         prometheus.io/scrape: "true"
       labels:
@@ -2056,7 +2059,7 @@ spec:
     spec:
       containers:
       - name: cilium-operator
-        image: "quay.io/cilium/operator-generic:v1.16.0@sha256:d6621c11c4e4943bf2998af7febe05be5ed6fdcf812b27ad4388f47022190316"
+        image: "quay.io/cilium/operator-generic:v1.16.1@sha256:3bc7e7a43bc4a4d8989cb7936c5d96675dd2d02c306adf925ce0a7c35aa27dc4"
         imagePullPolicy: IfNotPresent
         command:
         - cilium-operator-generic
@@ -2175,7 +2178,7 @@ spec:
             runAsGroup: 65532
             runAsNonRoot: true
             runAsUser: 65532
-          image: "quay.io/cilium/hubble-relay:v1.16.0@sha256:33fca7776fc3d7b2abe08873319353806dc1c5e07e12011d7da4da05f836ce8d"
+          image: "quay.io/cilium/hubble-relay:v1.16.1@sha256:2e1b4c739a676ae187d4c2bfc45c3e865bda2567cc0320a90cb666657fcfcc35"
           imagePullPolicy: IfNotPresent
           command:
             - hubble-relay
@@ -2361,8 +2364,6 @@ spec:
             k8s-app: hubble-generate-certs
         spec:
           securityContext:
-            appArmorProfile:
-              type: RuntimeDefault
             seccompProfile:
               type: RuntimeDefault
           containers:
@@ -2445,8 +2446,6 @@ spec:
         k8s-app: hubble-generate-certs
     spec:
       securityContext:
-        appArmorProfile:
-          type: RuntimeDefault
         seccompProfile:
           type: RuntimeDefault
       containers:
