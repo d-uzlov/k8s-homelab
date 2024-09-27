@@ -3,14 +3,15 @@
 
 This file describes various useful kubectl commands.
 
-# Install kubectl locally
+# Install kubectl
 
 Usually you don't use kubectl on your server
 so you only need to run this on your local machine.
 
 ```bash
-curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl.sha256"
+kubectl_version=$(curl -L -s https://dl.k8s.io/release/stable.txt)
+curl -LO "https://dl.k8s.io/release/$kubectl_version/bin/linux/amd64/kubectl"
+curl -LO "https://dl.k8s.io/release/$kubectl_version/bin/linux/amd64/kubectl.sha256"
 echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
 sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 kubectl version --client
@@ -21,8 +22,38 @@ References:
 
 # Bash completion
 
-References:
-- [kubectl bash completion](../bash.md#kubectl-completion)
+Prerequisites:
+- [.bashrc directory](../bash.md#add-bashrc-directory)
+
+```bash
+ cat << "EOF" > ~/.bashrc.d/999-kubectl-completion.sh
+# enable kubectl completion
+source <(kubectl completion bash)
+
+# create both the bash alias and the function alias
+# with given name and kubeconfig file
+# and enable bash completion for them
+function createKubectlAlias() {
+  name=$1
+  config=$2
+  . <(echo 'function '$name'() { kubectl --kubeconfig "'"$config"'" "$@"; }; export -f '$name'; alias '$name'="kubectl --kubeconfig='$config'"; complete -o default -F __start_kubectl '$name)
+}
+
+export KUBECONFIG_MAIN=
+createKubectlAlias k "$KUBECONFIG_MAIN"
+
+export KUBECONFIG_LOCAL=
+createKubectlAlias kl "$KUBECONFIG_LOCAL"
+EOF
+```
+
+After creating `~/.bashrc.d/999-kubectl-completion.sh` edit it:
+- adjust the number of aliases that you need
+- edit `KUBECONFIG_MAIN`, `KUBECONFIG_LOCAL` and any other paths
+
+```bash
+nano ~/.bashrc.d/999-kubectl-completion.sh
+```
 
 # Show pods from a certain node
 
