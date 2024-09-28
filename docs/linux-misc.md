@@ -1,11 +1,7 @@
 
-# Debian initial setup
-
-Use `su` to install `sudo`.
+# Edit $PATH for sudo
 
 ```bash
-# add user to sudoers
-sudo adduser your-user-name sudo
 # add `/usr/local/sbin` to `$PATH` for `sudoers`:
 sudo visudo
 # In the opened `nano` editor, add `/usr/local/sbin` to `$PATH`.
@@ -75,6 +71,8 @@ fs.inotify.max_user_instances = 512
 EOF
 # reload rules from /etc/sysctl.d
 sudo sysctl --system
+# check new values
+sudo sysctl fs.inotify
 ```
 
 In `WSL 22.04.1 LTS 5.15.90.1-microsoft-standard-WSL2`

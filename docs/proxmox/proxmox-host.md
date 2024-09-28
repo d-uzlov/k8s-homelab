@@ -24,13 +24,15 @@ curl https://raw.githubusercontent.com/foundObjects/pve-nag-buster/master/instal
 Install useful tools:
 
 ```bash
-apt install -y sudo
+apt update && apt install -y sudo
 sudo apt install -y iperf3 htop pipx gcc make stress
 pipx install s-tui
 pipx ensurepath
 ```
 
-Add your user for SSH access: [SSH docs](../ssh.md).
+Add your user for SSH access:
+- [User tips](../linux-users.md#create-new-user).
+- [SSH tips](../ssh.md#allow-login-with-your-ssh-key).
 
 **Note**: when configuring SSH, you can (and should) disable SSH password login
 but don't disable root login, it is required by many proxmox functions.

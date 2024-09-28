@@ -6,64 +6,57 @@ This file contains useful commands for SSH setup both on server and on an client
 References:
 - https://ivansalloum.com/comprehensive-linux-server-hardening-guide/
 
-# Server: create new user for SSH access
+# Generate new SSH key
+
+If you don't have a key, or if you want to use a separate key for something.
 
 ```bash
-username=
-suffix=$(LC_ALL=C tr -dc a-z0-9 </dev/urandom | head -c 10)
-# this command will prompt you for password
-sudo adduser "$username-$suffix" --gecos ""
+# generate a new one
+output_file=~/.ssh/new-key
+# avoid rewriting already existing keys
+! ls -l "$output_file" || ( echo file exists; exit 1; )
+! ls -l "$output_file".pub || ( echo file exists; exit 1; )
 
-# enable user to use sudo
-sudo adduser "$username-$suffix" sudo
-
-# list all local users (custom ones should be at the end of the list)
-cat /etc/passwd
+# to generate the default key
+# ssh-keygen -b 4096
+ssh-keygen -b 4096 -f "$output_file"
 ```
 
-If something goes wrong you can delete this user: `sudo userdel USERNAME`.
+# Allow login with your SSH key
 
-# Using SSH keys
-
-Client: print your public key:
+Client: print your public key.
 
 ```bash
-# the default key
 public_key=~/.ssh/id_rsa.pub
 echo $(cat "$public_key")
-
-# generate a new one
-output_file=~/.ssh/proxmox
-# first check that key with this name doesn't exist yet
-! ls -l "$output_file"*
-ssh-keygen -b 4096 -f "$output_file"
-echo $(cat "$output_file".pub)
+# change the path if you don't want to use the default id_rsa key
 ```
 
-Server: enable login with this key:
+Server: enable login with this key.
+You must be logged in as your user.
 
 ```bash
-# move into your home directory
-cd ~
-# if you are root, specify user home directory manually
-cd /home/user_name
-
-mkdir -p ./.ssh
-cat << EOF >> ./.ssh/authorized_keys
-# content of the .pub file
+mkdir -p ~/.ssh
+cat << EOF >> ~/.ssh/authorized_keys
+# replace this line with contents of the .pub file
 EOF
 ```
 
-Test client access with the private key:
+Test client access with the private key.
 
 ```bash
 # with the default key
-ssh server
-# using selected key
+ssh server.address
+# using a selected key
 ssh -i "$output_file" username@server
 ```
 
-Adjust SSH client config to use this key automatically:
+# Add SSH config for a certain server
+
+Set a name for a server and override some defaults:
+- You can redirect connectino to a different IP or domain
+- Set key instead of the default one
+- Set custom
 
 ```bash
 #     template
@@ -84,7 +77,7 @@ server_username=myuser-qwertyuiop
 
 mkdir -p ~/.ssh/config.d/
 touch ~/.ssh/config
-grep "^Include config.d/\*$" ~/.ssh/config || echo -e "Include config.d/*\n\n$(cat ~/.ssh/config)" > ~/.ssh/config
+grep "^Include config.d/\*$" ~/.ssh/config || echo -e "Include config.d/*\n\n$(cat ~/.ssh/config)" >> ~/.ssh/config
 tee << EOF ~/.ssh/config.d/"$server_name".conf
 Host $server_name
    HostName $server_address
@@ -119,5 +112,16 @@ cat << EOF | sudo tee /etc/ssh/sshd_config.d/0-disable_root_login.conf
 PermitRootLogin no
 EOF
 # force ssh to re-read its config
-sudo systemctl restart ssh
+sudo systemctl restart sshd
+```
+
+# Enable root login
+
+In cases when you need it.
+
+```bash
+cat << EOF | tee /etc/ssh/sshd_config.d/0-enable_root_login.conf
+PermitRootLogin yes
+EOF
+systemctl restart sshd
 ```
