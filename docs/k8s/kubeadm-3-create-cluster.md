@@ -35,14 +35,21 @@ This address must be available before you create the cluster, or kubelet will fa
 
 For example: [kube-vip for control plane](../../network/kube-vip-control-plane/readme.md).
 
+3. Local setup
+
+- `kubectl` installed
+- [options] Passwordless sudo on the nodes
+
 # Set up cluster config
 
 ```bash
+# add key or user if needed
 cp_node1=m1.k8s.lan
-# you can print the default config, just for reference, you don't really need it
-ssh "$cp_node1" sudo kubeadm config print init-defaults --component-configs KubeletConfiguration,KubeProxyConfiguration > ./docs/k8s/env/kconf-default.yaml
+# you can print the default config
+# this is just for reference, you don't really need it
+ssh $cp_node1 sudo kubeadm config print init-defaults --component-configs KubeletConfiguration,KubeProxyConfiguration > ./docs/k8s/env/kconf-default.yaml
 echo --- >> ./docs/k8s/env/kconf-default.yaml
-ssh "$cp_node1" sudo kubeadm config print join-defaults >> ./docs/k8s/env/kconf-default.yaml
+ssh $cp_node1 sudo kubeadm config print join-defaults >> ./docs/k8s/env/kconf-default.yaml
 
 control_plane_endpoint=cp.k8s.lan
 serverTLSBootstrap=true
@@ -80,10 +87,6 @@ ssh $cp_node1 sudo tee '>' /dev/null /etc/etcd/pki/etcd-client.pem     < ./docs/
 ssh $cp_node1 sudo tee '>' /dev/null /etc/etcd/pki/etcd-client-key.pem < ./docs/k8s/etcd/env/etcd-client-key.pem
 
 # if using kube-vip for control plane, you should switch to its commands at this point
-# also, run this after copying the kube-vip manifest
-# this is only required for the first node of the cluster
-ssh $cp_node1 sudo sed -i '"s#path: /etc/kubernetes/admin.conf#path: /etc/kubernetes/super-admin.conf#"' /etc/kubernetes/manifests/kube-vip.yaml
-# see details here: https://github.com/kube-vip/kube-vip/issues/684
 
 # init remotely
 ssh $cp_node1 sudo kubeadm init \
@@ -97,19 +100,18 @@ sudo kubeadm init \
   --node-name "$(hostname --fqdn)" \
   --skip-phases show-join-command
 
-# when using kube-vip for control plane, also run this, only on the first node of the cluster
-ssh $cp_node1 sudo sed -i '"s#path: /etc/kubernetes/super-admin.conf#path: /etc/kubernetes/admin.conf#"' /etc/kubernetes/manifests/kube-vip.yaml
-
-# check cluster state in place
-ssh $cp_node1 sudo kubectl --kubeconfig /etc/kubernetes/admin.conf -n kube-system get node -o wide
-ssh $cp_node1 sudo kubectl --kubeconfig /etc/kubernetes/admin.conf -n kube-system get pod -A -o wide
-ssh $cp_node1 sudo kubectl --kubeconfig /etc/kubernetes/admin.conf -n kube-system get csr
-# change to your CSR names
-ssh $cp_node1 sudo kubectl --kubeconfig /etc/kubernetes/admin.conf -n kube-system certificate approve csr-8dhw5 csr-wp6k6 csr-wqd9s csr-zjn49
-ssh $cp_node1 sudo kubectl --kubeconfig /etc/kubernetes/admin.conf -n kube-system logs -l component=kube-apiserver
-
 # fetch admin kubeconfig
 ssh $cp_node1 sudo cat /etc/kubernetes/admin.conf > ./_env/"$control_plane_endpoint".yaml
+
+# check cluster state
+kubectl --kubeconfig ./_env/"$control_plane_endpoint".yaml -n kube-system get node -o wide
+kubectl --kubeconfig ./_env/"$control_plane_endpoint".yaml -n kube-system get pod -A -o wide
+kubectl --kubeconfig ./_env/"$control_plane_endpoint".yaml -n kube-system get csr
+
+# if you enabled serverTLSBootstrap, you need to manually approve CSRs
+# change to your CSR names
+kubectl --kubeconfig ./_env/"$control_plane_endpoint".yaml -n kube-system certificate approve csr-8dhw5 csr-wp6k6 csr-wqd9s csr-zjn49
+kubectl --kubeconfig ./_env/"$control_plane_endpoint".yaml -n kube-system logs -l component=kube-apiserver
 ```
 
 # Join additional nodes
@@ -119,7 +121,7 @@ Show command to join:
 ```bash
 # worker join can be generated on any master node
 ssh $cp_node1 bash -s - < ./docs/k8s/print-join.sh worker
-# master join requires kconf.yaml to be presetn, copy it into the node if needed
+# master join requires kconf.yaml to be preset, copy it into the node if needed
 ssh $cp_node1 bash -s - < ./docs/k8s/print-join.sh master
 ```
 
@@ -136,38 +138,3 @@ For master nodes remember:
 
 - Install CNI
 - `serverTLSBootstrap`: [CSR approver](../../metrics/kubelet-csr-approver/readme.md)
-
-# Remove node from cluster
-
-First remove pods and the node itself using kubectl:
-
-```bash
-kl drain n100.k8s.lan --ignore-daemonsets --delete-emptydir-data
-kl delete node n100.k8s.lan
-```
-
-Then ssh into the removed node and disable kubelet:
-
-```bash
-sudo kubeadm reset --force
-sudo rm -rf /etc/cni/
-sudo rm -rf /var/lib/kubelet/
-sudo reboot
-```
-
-When using local etcd, master node removal requires additional configuration.
-For example: https://paranoiaque.fr/en/2020/04/19/remove-master-node-from-ha-kubernetes/
-
-# Kubelet logs
-
-```bash
-# it is advised to clear logs before kubelet restart, if you want to read them
-# WARNING: this will delete all node logs, not only from kubelet
-sudo journalctl --rotate && sudo journalctl -m --vacuum-time=1s
-sudo systemctl restart kubelet
-
-# show full logs
-journalctl -x --unit kubelet
-# show last 50 lines
-journalctl -x -n 50 --unit kubelet
-```
