@@ -1,5 +1,10 @@
 #!/mnt/c/Windows/System32/WindowsPowerShell/v1.0//powershell.exe -File
 
+# This is a personal file.
+# It fixes a bug in Windows when there can sometimes be duplicated keyboard layout entries
+# which make language switching unreliable.
+# These layouts are not listed by Windows, so we first add them, and then remove them.
+
 $LanguageList = Get-WinUserLanguageList
 ($LanguageList | Where-Object LanguageTag -like 'en-US').InputMethodTips.Add('0409:A0000409')
 ($LanguageList | Where-Object LanguageTag -like 'en-US').InputMethodTips.Add('0409:00000409')

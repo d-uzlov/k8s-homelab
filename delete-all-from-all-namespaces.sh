@@ -1,7 +1,16 @@
 #!/bin/bash
 
+if [ -z "$1" ]; then
+cat << EOF
+Usage:
+$0 resource_name
+
+Go over all namespaces and delete --all resource_name
+EOF
+exit
+fi
+
 resource=$1
-[ ! "$resource" = "" ] || { echo "you need to specify type of resource you need to be deleted"; exit 1; }
 
 namespaces=$(kl get ns -o jsonpath='{.items..metadata.name}')
 

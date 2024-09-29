@@ -33,10 +33,13 @@ Prerequisites:
 ```bash
 # check latest version: https://github.com/kubecolor/kubecolor/releases
 kubecolor_version=0.4.0
+mkdir -p kubecolor
+cd kubecolor
 curl -LO "https://github.com/kubecolor/kubecolor/releases/download/v$kubecolor_version/kubecolor_${kubecolor_version}_linux_amd64.tar.gz"
 tar -xzf "kubecolor_${kubecolor_version}_linux_amd64.tar.gz"
 sudo install -o root -g root -m 0755 kubecolor /usr/local/bin/kubecolor
-rm kubecolor "kubecolor_${kubecolor_version}_linux_amd64.tar.gz" LICENSE
+cd ..
+rm -rf kubecolor
 ```
 
 # Bash completion
