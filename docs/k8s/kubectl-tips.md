@@ -20,12 +20,35 @@ kubectl version --client
 References:
 - https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/
 
+# Colorized output
+
+`kubectl` doesn't use colors.
+`kubecolor` is a wrapped that adds them.
+
+Kubecolor can be used as a direct replacement for kubectl.
+
+Prerequisites:
+- [.bashrc directory](../bash.md#add-bashrc-directory)
+
+```bash
+# check latest version: https://github.com/kubecolor/kubecolor/releases
+kubecolor_version=0.4.0
+curl -LO "https://github.com/kubecolor/kubecolor/releases/download/v$kubecolor_version/kubecolor_${kubecolor_version}_linux_amd64.tar.gz"
+tar -xzf "kubecolor_${kubecolor_version}_linux_amd64.tar.gz"
+sudo install -o root -g root -m 0755 kubecolor /usr/local/bin/kubecolor
+rm kubecolor "kubecolor_${kubecolor_version}_linux_amd64.tar.gz" LICENSE
+```
+
 # Bash completion
 
 Prerequisites:
 - [.bashrc directory](../bash.md#add-bashrc-directory)
 
 ```bash
+ cat << "EOF" > ~/.bashrc.d/998-kubeconfig.sh
+export KUBECONFIG_MAIN=
+export KUBECONFIG_LOCAL=
+EOF
  cat << "EOF" > ~/.bashrc.d/999-kubectl-completion.sh
 # enable kubectl completion
 source <(kubectl completion bash)
@@ -36,24 +59,17 @@ source <(kubectl completion bash)
 function createKubectlAlias() {
   name=$1
   config=$2
-  . <(echo 'function '$name'() { kubectl --kubeconfig "'"$config"'" "$@"; }; export -f '$name'; alias '$name'="kubectl --kubeconfig='$config'"; complete -o default -F __start_kubectl '$name)
+  . <(echo 'function '$name'() { kubecolor --kubeconfig "'"$config"'" "$@"; }; export -f '$name'; alias '$name'="kubecolor --kubeconfig='$config'"; complete -o default -F __start_kubectl '$name)
 }
 
-export KUBECONFIG_MAIN=
 createKubectlAlias k "$KUBECONFIG_MAIN"
-
-export KUBECONFIG_LOCAL=
 createKubectlAlias kl "$KUBECONFIG_LOCAL"
 EOF
 ```
 
-After creating `~/.bashrc.d/999-kubectl-completion.sh` edit it:
-- adjust the number of aliases that you need
-- edit `KUBECONFIG_MAIN`, `KUBECONFIG_LOCAL` and any other paths
-
-```bash
-nano ~/.bashrc.d/999-kubectl-completion.sh
-```
+Local configuration:
+- edit variables in `~/.bashrc.d/998-kubeconfig.sh`
+- adjust the amount of aliases
 
 # Show pods from a certain node
 
