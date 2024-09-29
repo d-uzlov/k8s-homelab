@@ -2,7 +2,9 @@
 # Homepage
 
 References:
-- https://gethomepage.dev/latest/installation/k8s/
+- https://gethomepage.dev/installation/k8s/
+- https://github.com/gethomepage/homepage
+- https://github.com/gethomepage/homepage/pkgs/container/homepage
 
 # Init configs
 
