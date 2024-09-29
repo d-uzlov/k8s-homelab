@@ -46,5 +46,13 @@ sed -e "s/VIP_STUB/'$VIP'/" \
   ./network/kube-vip-control-plane/static-pod-template.gen.yaml \
   > ./network/kube-vip-control-plane/env/$cp_node1.yaml
 ssh "$cp_node1" sudo mkdir -p /etc/kubernetes/manifests/
+
 ssh "$cp_node1" sudo tee /etc/kubernetes/manifests/kube-vip.yaml '>' /dev/null < ./network/kube-vip-control-plane/env/$cp_node1.yaml
+
+# for the first master node change the config before deploying k8s
+# other nodes don't need this
+# see reasoning here: https://github.com/kube-vip/kube-vip/issues/684
+ssh $cp_node1 sudo sed -i '"s#path: /etc/kubernetes/admin.conf#path: /etc/kubernetes/super-admin.conf#"' /etc/kubernetes/manifests/kube-vip.yaml
+# change it back after kubeadm init has finished
+ssh $cp_node1 sudo sed -i '"s#path: /etc/kubernetes/super-admin.conf#path: /etc/kubernetes/admin.conf#"' /etc/kubernetes/manifests/kube-vip.yaml
 ```
