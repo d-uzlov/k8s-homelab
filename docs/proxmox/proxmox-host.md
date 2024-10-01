@@ -5,67 +5,55 @@ This file contains some tips for configuring Proxmox host itself.
 
 # Initial setup
 
-Disable subscription warning:
-
 ```bash
+# disable subscription warning
 curl https://raw.githubusercontent.com/foundObjects/pve-nag-buster/master/install.sh | bash
-```
-
-`pve-nag-buster` should configure updates automatically. As an alternative:
-
-- `Datacenter / <node-name> / updates / repositories` -> add/enable/disable.
-- Disable subscription-only repos
-- - `https://enterprise.proxmox.com/debian/ceph-quincy`
-- - `https://enterprise.proxmox.com/debian/pve`
-- Add a subscription-free repo
-- - `http://download.proxmox.com/debian/pve bullseye pve-no-subscription`
-- Reference: https://www.virtualizationhowto.com/2022/08/proxmox-update-no-subscription-repository-configuration/
-
-Install useful tools:
-
-```bash
+# fix apt update
+mv /etc/apt/sources.list.d/ceph.list /etc/apt/sources.list.d/ceph.list.disabled
+# add sudo for all later commands
 apt update && apt install -y sudo
-sudo apt install -y iperf3 htop pipx gcc make stress
-pipx install s-tui
+```
+
+Add your user for SSH access: [Create user](../linux-users.md#create-new-user).
+
+Later commands are assumed to be executed from your new user.
+
+```bash
+# install utils you will likely need
+sudo apt install -y iperf3 htop pipx gcc make stress fio
 pipx ensurepath
-```
+pipx install s-tui
 
-Add your user for SSH access:
-- [User tips](../linux-users.md#create-new-user).
-- [SSH tips](../ssh.md#allow-login-with-your-ssh-key).
-
-**Note**: when configuring SSH, you can (and should) disable SSH password login
-but don't disable root login, it is required by many proxmox functions.
-
-Configure better font for the host console:
-
-```bash
+# configure local terminal to use better fonts
 sudo dpkg-reconfigure console-setup
-# `fixed` fond doesn't have high resolutions
-# choose VGA or Terminus font to be able to pick a better resolution
-```
+# recommended settings:
+# - utf-8
+# - Latin1 and Latin5
+# - TerminusBold
+# - 14x28 or 16x32
 
-Set host console resolution
-
-```bash
+# Set host console resolution
+# By default the kernel terminal tries to use the biggest available resolution
+# which can be really hard to read at resolutions above FHD.
 sudo nano /etc/kernel/cmdline
 # add `video=1920x1080@60` to the file, or another appropriate resolution
 sudo proxmox-boot-tool refresh
-```
 
-References:
-- https://forum.proxmox.com/threads/changing-host-console-resolution.12408/
-- https://forum.proxmox.com/threads/console-video-resolution-whats-the-right-way.142733/
-
-Enable TRIM:
-
-```bash
+# enable TRIM
 zpool get autotrim
 sudo zpool set autotrim=on rpool
 # trigger TRIM manually, to make sure the disk is fully clean
 sudo zpool trim rpool
 zpool status -t
 ```
+
+**Note**: when configuring SSH, you can (and should) disable SSH password login
+but don't disable root login, it is required by many proxmox functions.
+
+References:
+- https://www.virtualizationhowto.com/2022/08/proxmox-update-no-subscription-repository-configuration/
+- https://forum.proxmox.com/threads/changing-host-console-resolution.12408/
+- https://forum.proxmox.com/threads/console-video-resolution-whats-the-right-way.142733/
 
 # Config dir list
 
@@ -355,6 +343,70 @@ References:
 - https://forum.level1techs.com/t/proxmox-slow-ram-in-windows-vm/167075/13
 - https://mathiashueber.com/configuring-hugepages-use-virtual-machine/
 - https://docs.renderex.ae/posts/Enabling-hugepages/
+
+# Add second bootable drive
+
+Add second device permanently, or temporarily, or migrate to a different boot device.
+
+```bash
+# find what disk you are currently using
+zpool status rpool
+# example: nvme-eui.34333630524469720025384300000001-part3
+# strip the -part3 and use it as disk id
+
+old_disk=
+# example: old_disk=/dev/disk/by-id/nvme-eui.34333630524469720025384300000001
+new_disk=
+# example: old_disk=/dev/disk/by-id/ata-PLEXTOR_PX-128M5S_P02313102798
+
+# show partition table
+sudo sgdisk --print $old_disk
+
+# === When disks are similar ===
+# works only if disks have the same size and sector size
+sudo sgdisk --backup $(basename $old_disk).table $old_disk
+sudo sgdisk --load-backup $(basename $old_disk).table $new_disk
+sudo sgdisk --randomize-guids $new_disk
+sudo sgdisk --print $new_disk
+
+# === When disks are different ===
+# in some cases you may need to re-create the partition table manually:
+# - if the new disk is smaller, --load-backup will fail
+# - if the new disk is bigger, partitions will be too small
+# - sgdisk works with sectors, so when going from 512b to 4096b, partition sizes will change 8x
+sudo sgdisk --zap-all $new_disk
+# For proxmox 8.0 you need 1 GB boot partition, the rest is usually used for ZFS root
+# - for 512b sectors
+sudo sgdisk --new 1:2048:2099199 --new 2:2099200 $new_disk
+# - for 4k sectors
+sudo sgdisk --new 1:256:262399 --new 2:262400 $new_disk
+
+sudo sgdisk --print $new_disk
+
+# init boot partition
+sudo pve-efiboot-tool format $new_disk-part1 --force
+sudo pve-efiboot-tool init $new_disk-part1
+
+# === ZFS mirror ===
+# in case you want to add the disk permanently
+# disk needs to be the same size or bigger
+sudo zpool set autoexpand=off rpool
+sudo zpool attach rpool $old_disk-part3 $new_disk-part2
+
+# === Copy zfs to a temporary device ===
+sudo zpool create rpool2 $new_disk-part2
+# prepare data for transfer
+sudo zfs snapshot -r rpool@send1
+# overwrite the whole new pool with data from the old disk
+sudo zfs send -R rpool@send1 | sudo zfs receive rpool2 -F
+
+sudo pve-efiboot-tool refresh
+```
+
+References:
+- https://pve.proxmox.com/wiki/ZFS_on_Linux#_zfs_administration
+- https://forum.proxmox.com/threads/moving-boot-disk-to-new-disks.105543/
+- https://unix.stackexchange.com/questions/263677/how-to-one-way-mirror-an-entire-zfs-pool-to-another-zfs-pool
 
 # TODO
 
