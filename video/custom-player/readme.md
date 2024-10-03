@@ -10,8 +10,13 @@ You can set a list of default keys that are used when page arg list is empty:
 
 ```bash
 mkdir -p ./video/custom-player/content/env/
-cat << EOF > ./video/custom-player/content/env/key.list
-'key','another_key'
+cat << EOF > ./video/custom-player/content/env/sources.list
+# redact manually to include all your api-exporter sources
+export function getDataSources() {
+  return [
+    'https://ome-streams.example.cloudns.be/list',
+  ];
+}
 EOF
 ```
 
@@ -53,15 +58,6 @@ kl -n ome-player get ingress
 kl apply -k ./video/custom-player/ingress-route/
 kl -n ome-player describe httproute
 kl -n ome-player get httproute
-
-# choose one depending on what you used for the main OME app
-ome_public_domain=$(kl -n ome get ingress signal -o go-template --template "{{ (index .spec.rules 0).host}}")
-ome_public_domain=$(kl -n ome get httproute signal -o go-template --template "{{ (index .spec.hostnames 0)}}")
-sed \
-    -e "s/AUTOREPLACE_SIGNAL_DOMAIN/$ome_public_domain/" \
-    -e "s/AUTOREPLACE_DEFAULT_STREAM_KEYS/$(cat ./video/custom-player/content/env/key.list)/" \
-    ./video/custom-player/content/get-domain.js.template \
-    > ./video/custom-player/content/env/get-domain.js
 
 kl apply -k ./video/custom-player/ --server-side
 kl -n ome-player get pod -o wide
