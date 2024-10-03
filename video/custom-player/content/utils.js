@@ -19,7 +19,8 @@ export function getSettings(name) {
   return JSON.parse(localStorage.getItem(settingsName)) || {};
 }
 
-export function saveSettings(source, fun, settingsName) {
+export function saveSettings(source, fun, name) {
+  const settingsName = name ?? defaultSettingsName;
   const settings = getSettings(settingsName);
   fun(settings);
   console.log('saving settings', source, settings);

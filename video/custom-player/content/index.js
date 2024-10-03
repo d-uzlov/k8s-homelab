@@ -10,11 +10,24 @@ const urls = getDataSources();
 
 function addStream(stream) {
   const thumbLink = '/empty-symbol.png';
-  const urlArg = 'url=' + stream.url + '/' + stream.app + '/' + stream.key;
+  const urlBase = stream.url + '/' + stream.app + '/' + stream.key;
 
   const links = [];
-  links.push({ name: 'Low latency', ref: './player.html#type=ome-webrtc&' + urlArg });
-  links.push({ name: 'HLS', ref: './player.html#type=ome-llhls&' + urlArg });
+  for (let i = 0; i < stream.playlists.length; i++) {
+    const playlist = stream.playlists[i];
+    let url = urlBase
+    if (playlist.file != "") {
+      url = url + "/" + playlist.file;
+    }
+    switch (playlist.type) {
+      case "webrtc":
+        links.push({ name: playlist.name, ref: './player.html#type=ome-webrtc&url=' + url });
+        break;
+      case "llhls":
+        links.push({ name: playlist.name, ref: './player.html#type=ome-llhls&url=' + url });
+        break;
+    }
+  }
   const fullName = stream.key + '@' + stream.url;
   addStreamCard(thumbLink, fullName, links, 'active-stream');
   totalStreams++;

@@ -22,6 +22,7 @@ func main() {
 		client: client,
 	}
 	http.HandleFunc("/list", httpServer.getStreams)
+	fmt.Println("listening on 8082")
 	err = http.ListenAndServe(":8082", nil)
 	if err != nil {
 		fmt.Println("ListenAndServe", err)

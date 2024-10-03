@@ -71,11 +71,11 @@ function setupPage() {
   let urlType = '';
   switch (args.type) {
     case 'ome-webrtc':
-      url = 'wss://' + args.url + '/webrtc?transport=tcp';
+      url = 'wss://' + args.url + '?transport=tcp';
       urlType = 'webrtc';
       break;
     case 'ome-llhls':
-      url = 'https://' + args.url + '/llhls.m3u8';
+      url = 'https://' + args.url;
       urlType = 'll-hls';
       break;
     default:
