@@ -1,0 +1,79 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-exporter
+  template:
+    metadata:
+      labels:
+        app: api-exporter
+    spec:
+      containers:
+      - name: api-exporter
+        image: docker.io/daniluzlov/k8s-snippets:api-exporter-v1.13
+        ports:
+        - name: http
+          containerPort: 8082
+        command:
+        - /ome-api-exporter
+        - /mnt/config.yaml
+        env:
+        - name: OME_API_DOMAIN
+          value: http://api-origin:8081
+        - name: OME_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: access-token
+              key: token
+        - name: PUBLIC_SUFFIX
+          valueFrom:
+            configMapKeyRef:
+              name: main-domain-info
+              key: domain_suffix
+        resources:
+          requests:
+            memory: 5Mi
+          # limits:
+          #   memory: 7Mi
+        volumeMounts:
+        # - mountPath: /usr/share/nginx/html
+        #   name: content
+        - mountPath: /mnt/config.yaml
+          name: config
+          subPath: config.yaml
+        # startupProbe:
+        #   httpGet:
+        #     port: 80
+        #   failureThreshold: 10
+        #   initialDelaySeconds: 0
+        #   periodSeconds: 1
+        # livenessProbe:
+        #   httpGet:
+        #     port: 80
+        #   failureThreshold: 1
+        #   initialDelaySeconds: 0
+        #   periodSeconds: 10
+      volumes:
+      - name: config
+        configMap:
+          name: api-exporter-config
+      # - name: content
+      #   configMap:
+      #     name: content
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-exporter
+spec:
+  selector:
+    app: api-exporter
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
