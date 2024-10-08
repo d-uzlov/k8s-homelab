@@ -9,27 +9,36 @@ let urlsChecked = 0;
 const dataSources = Object.entries(getDataSources());
 
 function addStream(server, sourceName) {
-  const thumbLink = '/empty-symbol.png';
   const apps = server.apps;
   if (apps == null || apps.length == 0) {
     return;
   }
   for (let i = 0; i < apps.length; i++) {
-    const app = apps[i];
-    if (app.keys.length == 0) {
+    const keys = apps[i].keys;
+    const app = apps[i].app;
+    if (keys.length == 0) {
       continue;
     }
     const url = server.url;
-    const name = app.app.name;
-    for (let j = 0; j < app.keys.length; j++) {
-      const key = app.keys[j];
+    const name = app.name;
+
+    let description = url + '/' + name;
+    if (app.readName != null && app.readName != "") {
+      description = app.readName;
+    }
+
+    for (let j = 0; j < keys.length; j++) {
+      const key = keys[j];
       const playerArgs = 'url=' + url + '&app=' + name + '&key=' + key + '&api=' + sourceName;
 
-      const fullName = key + '@' + url + '/' + name;
-      addStreamCard(thumbLink, fullName, [{
-        name: 'Play',
-        ref: './player.html#' + playerArgs,
-      }], 'active-stream');
+      let thumbLink = '/no-thumbnail.png';
+      if (app.image) {
+        thumbLink = 'https://' + url + '/tc/' + key + '/thumb.jpg';
+      }
+
+      const link = './player.html#' + playerArgs;
+      const header = key + ' streaming';
+      addStreamCard(thumbLink, link, header, description, 'active-stream');
     }
   }
 
@@ -46,18 +55,6 @@ function checkEmpty() {
   }
 }
 
-function handleResponse(err, data, url, sourceName) {
-  urlsChecked++;
-  if (err !== null) {
-    if (data === null) {
-      addErrorCard("can't connect to " + url, 'see console for details');
-    } else {
-      addErrorCard("error from " + url, data);
-    }
-    return;
-  }
-}
-
 for (let i = 0; i < dataSources.length; i++) {
   const source = dataSources[i];
   const sName = source[0];
@@ -69,8 +66,8 @@ for (let i = 0; i < dataSources.length; i++) {
     urlsChecked++;
   }).catch(function (err) {
     urlsChecked++;
-    addErrorCard("error " + err + "from " + sUrl);
-  }).finally(function(){
+    addErrorCard("error " + JSON.stringify(err) + " from " + sUrl);
+  }).finally(function () {
     checkEmpty();
   });
 }

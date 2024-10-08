@@ -38,7 +38,7 @@ export async function getJSON(url) {
   return new Promise(function (resolve, reject) {
     let xhr = new XMLHttpRequest();
     xhr.responseType = 'json';
-    xhr.timeout = 1000;
+    xhr.timeout = 10000;
     xhr.open('GET', url);
     xhr.onload = function () {
       if (this.status >= 200 && this.status < 300) {
@@ -57,6 +57,12 @@ export async function getJSON(url) {
         status: this.status,
         statusText: xhr.statusText
       });
+    };
+    xhr.onabort = () => {
+      console.log('XHR aborted');
+    };
+    xhr.ontimeout = () => {
+      console.log('XHR timeout');
     };
     xhr.send();
   });

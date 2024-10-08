@@ -11,6 +11,7 @@ import (
 
 type ServerInfo struct {
 	Name            string `yaml:"name"`
+	hostname        string
 	ApiUrl          string `yaml:"apiUrl"`
 	ApiAuth         string `yaml:"apiAuth"`
 	PublicSignalUrl string `yaml:"publicSignalUrl"`
@@ -23,8 +24,23 @@ type OmeServerHandle struct {
 	ApiAuth string
 }
 
-func (h *OmeServerHandle) query(path string) ([]byte, error) {
-	return h.client.QueryWithAuth(h.ApiUrl, h.ApiAuth, h.ip, path)
+func (h *OmeServerHandle) query(path string) (interface{}, error) {
+	body, err := h.client.QueryWithAuth(h.ApiUrl, h.ApiAuth, h.ip, path)
+	if err != nil {
+		return nil, fmt.Errorf("query '%v': %w", path, err)
+	}
+
+	rawResponse := make(map[string]interface{})
+	err = json.Unmarshal(body, &rawResponse)
+	if err != nil {
+		return nil, fmt.Errorf("parse json: '%v': %w", body, err)
+	}
+	statusCode := int(rawResponse["statusCode"].(float64))
+	if statusCode != 200 {
+		return nil, fmt.Errorf("status code %v: %v", statusCode, rawResponse["message"])
+	}
+
+	return rawResponse["response"], nil
 }
 
 func (h *OmeServerHandle) getExport() (*OmeExport, error) {
@@ -52,55 +68,63 @@ func (h *OmeServerHandle) getExport() (*OmeExport, error) {
 	}
 	return res, nil
 }
+
 func (h *OmeServerHandle) listApps() ([]string, error) {
-	body, err := h.query("/v1/vhosts/default/apps")
+	rawResponse, err := h.query("/v1/vhosts/default/apps")
 	if err != nil {
-		return nil, fmt.Errorf("query apps: %w", err)
+		return nil, err
 	}
 
-	appList, err := parseListResponse(body)
-	if err != nil {
-		return nil, fmt.Errorf("parse json: '%v': %w", body, err)
+	appList, ok := rawResponse.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("response is not a list: %v", rawResponse)
 	}
-	if appList.StatusCode != 200 {
-		return nil, fmt.Errorf("app list: code %v: %v", appList.StatusCode, appList.Message)
+	res := []string{}
+	for _, v := range appList {
+		value, ok := v.(string)
+		if !ok {
+			return nil, fmt.Errorf("response is not a string: %v", v)
+		}
+		res = append(res, value)
 	}
 
-	return appList.Response, nil
+	return res, nil
 }
 
 func (h *OmeServerHandle) listKeys(app string) ([]string, error) {
-	body, err := h.query("/v1/vhosts/default/apps/" + app + "/streams")
+	rawResponse, err := h.query("/v1/vhosts/default/apps/" + app + "/streams")
 	if err != nil {
-		return nil, fmt.Errorf("app '%v': query streams: %w", app, err)
+		return nil, err
 	}
-	streamList, err := parseListResponse(body)
-	if err != nil {
-		return nil, fmt.Errorf("app '%v': parse json: '%v': %w", app, body, err)
+
+	streamList, ok := rawResponse.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("response is not a list: %v", rawResponse)
 	}
-	if streamList.StatusCode != 200 {
-		return nil, fmt.Errorf("app '%v': stream list: code %v: %v", app, streamList.StatusCode, streamList.Message)
+	res := []string{}
+	for _, v := range streamList {
+		value, ok := v.(string)
+		if !ok {
+			return nil, fmt.Errorf("response is not a string: %v", v)
+		}
+		res = append(res, value)
 	}
-	return streamList.Response, nil
+
+
+	return res, nil
 }
 
 func (h *OmeServerHandle) getAppInfo(app string) (*OmeAppInfo, error) {
-	body, err := h.query("/v1/vhosts/default/apps/" + app)
+	rawResponse, err := h.query("/v1/vhosts/default/apps/" + app)
 	if err != nil {
-		return nil, fmt.Errorf("query app: %w", err)
+		return nil, err
 	}
 
-	rawResponse := make(map[string]interface{})
-	err = json.Unmarshal(body, &rawResponse)
-	if err != nil {
-		return nil, fmt.Errorf("parse json: '%v': %w", body, err)
-	}
-	statusCode := int(rawResponse["statusCode"].(float64))
-	if statusCode != 200 {
-		return nil, fmt.Errorf("app info: code %v: %v", statusCode, rawResponse["message"])
+	response, ok := rawResponse.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("response is not a struct: %v", rawResponse)
 	}
 
-	response := rawResponse["response"].(map[string]interface{})
 	publishers := response["publishers"].(map[string]interface{})
 
 	webrtcEnabled := false
@@ -113,18 +137,62 @@ func (h *OmeServerHandle) getAppInfo(app string) (*OmeAppInfo, error) {
 	}
 
 	outputProfile := response["outputProfiles"].(map[string]interface{})["outputProfile"].([]interface{})[0].(map[string]interface{})
-	audioEncodes := outputProfile["encodes"].(map[string]interface{})["audios"].([]interface{})
+	encodes := outputProfile["encodes"].(map[string]interface{})
+	audioEncodes := encodes["audios"].([]interface{})
 	aac, opus := parseAudioEncodes(audioEncodes)
 	slog.Debug("audio list", "aac", aac, "opus", opus)
+
+	hasImage := false
+	imageEncodes, ok := encodes["images"].([]interface{})
+	if ok {
+		for _, e := range imageEncodes {
+			value, ok := e.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			codec := value["codec"]
+			if codec == "jpeg" {
+				hasImage = true
+				break
+			}
+		}
+	}
 
 	res := &OmeAppInfo{
 		Name:   app,
 		Webrtc: nil,
 		Llhls:  nil,
+		Image:  hasImage,
 	}
-	res.Name = app
+
+	profileName := outputProfile["name"].(string)
+	props, err := parseGoparse(profileName)
+	if err != nil {
+		return nil, err
+	}
+	if props == nil {
+		res.ReadName = profileName
+	} else {
+		res.ReadName = props["name"]
+		delete(props, "name")
+		res.Props = props
+	}
+
 	playlists := outputProfile["playlists"]
 	if playlists == nil {
+		videoName := "none"
+		videoEncodes, ok := encodes["videos"].([]interface{})
+		if ok {
+			firstVideo, ok := videoEncodes[0].(map[string]interface{})
+			if ok {
+				encodeVideoName, ok := firstVideo["name"].(string)
+				if !ok || encodeVideoName != "" {
+					videoName = encodeVideoName
+				} else {
+					videoName = "unknown"
+				}
+			}
+		}
 		if webrtcEnabled && len(opus) > 0 {
 			res.Webrtc = &OmeDataStreams{
 				Name: "WebRTC",
@@ -132,7 +200,7 @@ func (h *OmeServerHandle) getAppInfo(app string) (*OmeAppInfo, error) {
 				Links: []OmeDataStream{
 					{
 						File:       "",
-						Resolution: "multi",
+						Resolution: videoName,
 					},
 				},
 			}
@@ -144,7 +212,7 @@ func (h *OmeServerHandle) getAppInfo(app string) (*OmeAppInfo, error) {
 				Links: []OmeDataStream{
 					{
 						File:       "llhls.m3u8",
-						Resolution: "multi",
+						Resolution: videoName,
 					},
 				},
 			}

@@ -1,41 +1,34 @@
 
 const streamList = document.getElementById("stream-list");
 
-export function addStreamCard(thumbnailLink, streamName, links, cardType) {
+export function addStreamCard(thumbnailLink, link, streamHeader, streamDescription, cardType) {
   const thumbImage = document.createElement('img');
-  thumbImage.setAttribute('src', thumbnailLink);
-  const thumbContainer = document.createElement('div');
-  thumbContainer.setAttribute('class', 'thumbnail-container');
+  thumbImage.src = thumbnailLink;
+  const thumbContainer = document.createElement('a');
+  thumbContainer.classList = 'thumbnail-container';
   thumbContainer.appendChild(thumbImage);
+  thumbContainer.href = link;
 
-  const header = document.createElement('h3');
-  header.setAttribute('class', 'list-link-container');
-
-  for (let i = 0; i < links.length; i++) {
-    const link = links[i];
-
-    const linkContainer = document.createElement('h3');
-    linkContainer.setAttribute('class', 'list-link button-27');
-
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', link.ref);
-    linkElement.text = link.name;
-    linkContainer.appendChild(linkElement);
-
-    header.appendChild(linkContainer);
-  }
+  const headerContainer = document.createElement('div');
+  headerContainer.setAttribute('class', 'list-description');
+  const header = document.createElement('div');
+  headerContainer.appendChild(header);
+  const headerLink = document.createElement('a');
+  header.appendChild(headerLink);
+  headerLink.href = link;
+  headerLink.textContent = streamHeader;
 
   const descriptionContainer = document.createElement('div');
-  descriptionContainer.setAttribute('class', 'list-description');
-  descriptionContainer.textContent = streamName;
+  descriptionContainer.classList = 'list-description';
+  descriptionContainer.textContent = streamDescription;
 
   const rightContainer = document.createElement('div');
-  rightContainer.setAttribute('class', 'list-right');
+  rightContainer.classList = 'list-right';
+  rightContainer.appendChild(headerContainer);
   rightContainer.appendChild(descriptionContainer);
-  rightContainer.appendChild(header);
 
   const element = document.createElement('li');
-  element.setAttribute('class', cardType);
+  element.classList = cardType;
   element.appendChild(thumbContainer);
   element.appendChild(rightContainer);
   streamList.appendChild(element);
@@ -47,12 +40,12 @@ let loadingOuter = null;
 export function setLoadingCard(content) {
   if (loadingInner == null) {
     loadingInner = document.createElement('div');
-    loadingInner.setAttribute('class', 'list-description');
+    loadingInner.classList = 'list-description';
   }
 
   if (loadingOuter == null) {
     loadingOuter = document.createElement('li');
-    loadingOuter.setAttribute('class', 'empty-stream');
+    loadingOuter.classList = 'empty-stream';
     loadingOuter.appendChild(loadingInner);
     streamList.appendChild(loadingOuter);
   }
@@ -69,15 +62,15 @@ export function setLoadingCard(content) {
 
 export function addErrorCard(content, errorText) {
   const descriptionContainer = document.createElement('div');
-  descriptionContainer.setAttribute('class', 'list-description');
+  descriptionContainer.classList = 'list-description';
   descriptionContainer.textContent = content;
 
   const textContainer = document.createElement('div');
-  textContainer.setAttribute('class', 'list-description');
+  textContainer.classList = 'list-description';
   textContainer.textContent = errorText;
 
   const element = document.createElement('li');
-  element.setAttribute('class', 'error-stream');
+  element.classList = 'error-stream';
   element.appendChild(descriptionContainer);
   element.appendChild(textContainer);
   streamList.appendChild(element);

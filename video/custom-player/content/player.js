@@ -1,6 +1,5 @@
 
-import { setSoundButtons, setReloadAction, setStopAction, setButtons } from './player-buttons.js';
-import { restoreQuality } from './player-quality.js';
+import { setSoundButtons, setButtons, reloadButton, stopButton, controlsTopButton, controlsBottomButton, redBorder } from './player-buttons.js';
 import { getJSON, parseHash, setDefaultSettingsName, getSettings, saveSettings } from './utils.js';
 import { getDataSources } from './data-sources.js';
 
@@ -14,13 +13,10 @@ function updateVolumeButtons(playerInstance) {
 }
 
 function setupEvents(playerInstance) {
-  playerInstance.on('ready', function (data) {
-    console.log('player ready', data);
+  playerInstance.on('ready', function () {
     playerInstance.setAutoQuality(false);
     const settings = getSettings();
-    if (settings.sourceType != null && settings.sourceFile != null) {
-      setSource(globalPlayer, settings.sourceType, settings.sourceFile);
-    }
+    setSource(playerInstance, settings.sourceType, settings.sourceFile);
     updateVolumeButtons(playerInstance);
   });
 
@@ -36,7 +32,6 @@ function setupEvents(playerInstance) {
   });
 
   playerInstance.on('volumeChanged', function (data) {
-    console.log('volumeChanged', data);
     updateVolumeButtons(playerInstance);
   });
   // playerInstance.on('qualityLevelChanged', function (data) {
@@ -55,8 +50,8 @@ function destroyPlayer() {
 
 function createPlayer(playerOptions) {
   destroyPlayer();
-  
-  const containerId = 'player_id';
+
+  const containerId = 'main-player';
   globalPlayer = OvenPlayer.create(containerId, playerOptions);
 }
 
@@ -76,7 +71,6 @@ async function getAppInfo(apiName, url, app, key) {
 }
 
 function setQualityButtons(appInfo, setSourceFile, selected) {
-  console.log('setQualityButtons: appInfo', appInfo);
   if (appInfo.webrtc != null) {
     const qualityButtons = [];
     const links = appInfo.webrtc.links;
@@ -117,6 +111,9 @@ function setQualityButtons(appInfo, setSourceFile, selected) {
     console.log('hiding hls quality');
     document.getElementById('hls-quality').style.display = 'none';
   }
+  if (appInfo.webrtc == null && appInfo.llhls == null) {
+    document.getElementById('no-quality').style.display = 'block';
+  }
 }
 
 function makePlaySources(appInfo, url, key) {
@@ -148,8 +145,10 @@ function makePlaySources(appInfo, url, key) {
   return res;
 }
 
-function setSource(playerInstance, type, file) {
-  const sources = playerInstance.getSources();
+function findSource(sources, type, file) {
+  if (type == null) {
+    return null;
+  }
   let ending = '/' + file;
   if (type == 'webrtc') {
     ending += '?transport=tcp';
@@ -157,11 +156,23 @@ function setSource(playerInstance, type, file) {
   for (let i = 0; i < sources.length; i++) {
     const s = sources[i];
     if (s.file.endsWith(ending)) {
-      playerInstance.setCurrentSource(i);
-      return;
+      return i;
     }
   }
-  alert('womething went wrong when changing quality');
+  return null;
+}
+
+function setSource(playerInstance, type, file) {
+  const sources = playerInstance.getSources();
+  if (sources == null || !(sources.length > 0)) {
+    return;
+  }
+  const foundIndex = findSource(sources, type, file);
+  if (foundIndex != null) {
+    playerInstance.setCurrentSource(foundIndex);
+  } else {
+    playerInstance.setCurrentSource(0);
+  }
 }
 
 function updateQualityButtons(appInfo, selectedSource) {
@@ -175,21 +186,79 @@ function updateQualityButtons(appInfo, selectedSource) {
   }, selectedSource);
 }
 
+function updateSourceSettings(sources, appInfo) {
+  if (sources == null || sources.length == 0) {
+    return;
+  }
+  let settings = getSettings();
+
+  let type = settings.sourceType;
+  let file = settings.sourceFile;
+  let sourceIndex = findSource(sources, type, file);
+  if (sourceIndex != null) {
+    return;
+  }
+  if (appInfo.props == null) {
+    return;
+  }
+  type = appInfo.props.preferType;
+  file = appInfo.props.prefer
+  sourceIndex = findSource(sources, type, file);
+  if (sourceIndex != null) {
+    saveSettings('prefer', (settings) => {
+      settings.sourceType = type;
+      settings.sourceFile = file;
+    });
+    return;
+  }
+  let anySource = null;
+  if (appInfo.webrtc != null) {
+    const links = appInfo.webrtc.links;
+    for (const link of links) {
+      if (link.resolution == 'multi' && links.length > 1) {
+        continue
+      }
+      anySource = {
+        type: 'webrtc',
+        file: link.file,
+      };
+      break;
+    }
+  } else if (appInfo.llhls != null) {
+    const links = appInfo.llhls.links;
+    for (const link of links) {
+      if (link.resolution == 'multi' && links.length > 1) {
+        continue
+      }
+      anySource = {
+        type: 'llhls',
+        file: link.file,
+      };
+      break;
+    }
+  }
+  saveSettings('prefer', (settings) => {
+    settings.sourceType = first.type;
+    settings.sourceFile = first.file;
+  });
+}
+
 async function setupPage() {
   const args = parseHash();
   if (args.url === undefined || args.app === undefined || args.key === undefined || args.api == undefined) {
-    console.log('args missing');
+    alert('required args missing');
     return;
   }
-  const appInfo = await getAppInfo(args.api, args.url, args.app, args.key);
-  console.log('app info', appInfo)
+  setDefaultSettingsName('settings@' + args.key + '@' + args.url + '/' + args.app);
 
-  setDefaultSettingsName('settings@' + args.type + '@' + args.url);
-  const settings = getSettings();
+  const appInfo = await getAppInfo(args.api, args.url, args.app, args.key);
+  const sources = makePlaySources(appInfo, args.url, args.key);
+
+  updateSourceSettings(sources, appInfo);
+
+  let settings = getSettings();
   console.log('using settings', settings);
 
-  const sources = makePlaySources(appInfo, args.url, args.key);
-  console.log('player sources', sources);
   updateQualityButtons(appInfo, settings.sourceFile);
 
   const playerOptions = {
@@ -197,17 +266,43 @@ async function setupPage() {
     autoStart: true,
     autoFallback: false,
     controls: false,
+    // controls: true,
     mute: settings.mute ?? false,
     volume: settings.volume ?? 100,
     sources: sources,
-  }
+  };
 
   createPlayer(playerOptions)
   setupEvents(globalPlayer);
+}
 
-  setStopAction(destroyPlayer);
+reloadButton.onclick = setupPage;
+stopButton.onclick = destroyPlayer;
+
+const globalSettings = getSettings('global');
+function moveControls(isTop) {
+  const controls = document.getElementById('main-controls');
+  const player = document.getElementById('main-player');
+  const lastNode = isTop ? player : controls;
+  controls.parentNode.appendChild(lastNode);
+}
+const topControls = globalSettings.topControls ?? true
+moveControls(topControls);
+const selectedControls = topControls ? controlsTopButton : controlsBottomButton;
+selectedControls.classList.add(redBorder);
+controlsTopButton.onclick = () => {
+  const isTop = true;
+  moveControls(isTop);
+  saveSettings('controls-position', (settings) => settings.topControls = isTop, 'global');
+  controlsTopButton.classList.add(redBorder);
+  controlsBottomButton.classList.remove(redBorder);
+}
+controlsBottomButton.onclick = () => {
+  const isTop = false;
+  moveControls(isTop);
+  saveSettings('controls-position', (settings) => settings.topControls = isTop, 'global');
+  controlsTopButton.classList.remove(redBorder);
+  controlsBottomButton.classList.add(redBorder);
 }
 
 setupPage();
-
-setReloadAction(setupPage);

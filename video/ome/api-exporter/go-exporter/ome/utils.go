@@ -1,9 +1,10 @@
 package ome
 
 import (
-	"encoding/json"
 	"fmt"
+	"strings"
 )
+
 func parseAudioEncodes(rawInfo []interface{}) (aac, opus []string) {
 	for _, v := range rawInfo {
 		encode := v.(map[string]interface{})
@@ -57,54 +58,38 @@ func parsePlaylistInfo(rawInfo map[string]interface{}) (*playlistInfo, error) {
 	return res, nil
 }
 
-type OMEListResponse struct {
-	Message    string
-	Response   []string
-	StatusCode int
-}
-
-func parseListResponse(body []byte) (*OMEListResponse, error) {
-	appList := OMEListResponse{}
-	err := json.Unmarshal(body, &appList)
-	if err != nil {
-		return nil, fmt.Errorf("can't parse: %w", err)
-	}
-
-	return &appList, nil
-}
-
 // we can't use JSON or yaml here
 // because it is used in a one-line name
 // that is expected to be written and maintained by a human
-// func parseGoparse(text string) (map[string]string, error) {
-// 	goparsePrefix := "goparse!"
-// 	if strings.Index(text, goparsePrefix) != 0 {
-// 		return nil, nil
-// 	}
+func parseGoparse(text string) (map[string]string, error) {
+	goparsePrefix := "goparse!"
+	if strings.Index(text, goparsePrefix) != 0 {
+		return nil, nil
+	}
 
-// 	text = text[len(goparsePrefix):]
-// 	text = strings.TrimSpace(text)
+	text = text[len(goparsePrefix):]
+	text = strings.TrimSpace(text)
 
-// 	res := map[string]string{}
-// 	for len(text) > 0 {
-// 		firstBrace := strings.Index(text, "{")
-// 		if firstBrace < 0 {
-// 			return nil, fmt.Errorf("format error: opening { not found: %v", text)
-// 		}
-// 		optionName := text[:firstBrace]
-// 		text = text[firstBrace+1:]
+	res := map[string]string{}
+	for len(text) > 0 {
+		firstBrace := strings.Index(text, "{")
+		if firstBrace < 0 {
+			return nil, fmt.Errorf("format error: opening { not found: %v", text)
+		}
+		optionName := text[:firstBrace]
+		text = text[firstBrace+1:]
 
-// 		secondBrace := strings.Index(text, "}")
-// 		if secondBrace < 0 {
-// 			return nil, fmt.Errorf("format error: closing } not found: %v", text)
-// 		}
-// 		optionValue := text[:secondBrace]
-// 		text = text[secondBrace+1:]
+		secondBrace := strings.Index(text, "}")
+		if secondBrace < 0 {
+			return nil, fmt.Errorf("format error: closing } not found: %v", text)
+		}
+		optionValue := text[:secondBrace]
+		text = text[secondBrace+1:]
 
-// 		res[optionName] = optionValue
+		res[optionName] = optionValue
 
-// 		text = strings.TrimSpace(text)
-// 	}
+		text = strings.TrimSpace(text)
+	}
 
-// 	return res, nil
-// }
+	return res, nil
+}

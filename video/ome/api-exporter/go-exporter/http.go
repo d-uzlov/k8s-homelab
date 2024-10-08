@@ -15,6 +15,8 @@ type httpServer struct {
 	client query.MyClient
 }
 
+func (s *httpServer) healthy(w http.ResponseWriter, req *http.Request) {}
+
 func (s *httpServer) getStreams(w http.ResponseWriter, req *http.Request) {
 	streams, err := ome.ListStreams(s.config.Servers, s.client)
 	if err != nil {

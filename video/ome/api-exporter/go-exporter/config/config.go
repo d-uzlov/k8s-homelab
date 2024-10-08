@@ -14,7 +14,7 @@ import (
 const commandPrefix = "command!"
 
 type ProgramConfig struct {
-	Servers []ome.ServerInfo `yaml:"servers"`
+	Servers []*ome.ServerInfo `yaml:"servers"`
 	Debug   bool
 }
 
@@ -49,8 +49,7 @@ func ParseArgs() (*ProgramConfig, error) {
 		return nil, fmt.Errorf("server list is empty")
 	}
 
-	for i := range res.Servers {
-		server := &res.Servers[i]
+	for _, server := range res.Servers {
 		name := server.Name
 		server.Name, err = resolveCommands(server.Name)
 		if err != nil {

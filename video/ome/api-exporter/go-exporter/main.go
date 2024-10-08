@@ -16,11 +16,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	for _, v := range config.Servers {
+		v.Init();
+	}
+
 	client := query.CreateClient(config.Debug)
 	httpServer := httpServer{
 		config: config,
 		client: client,
 	}
+	http.HandleFunc("/healthy", httpServer.healthy)
 	http.HandleFunc("/list", httpServer.getStreams)
 	http.HandleFunc("/app", httpServer.getAppInfo)
 	fmt.Println("listening on 8082")

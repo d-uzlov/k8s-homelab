@@ -20,10 +20,12 @@ type OmeAppStreams struct {
 }
 
 type OmeAppInfo struct {
-	Name   string          `json:"name"`
-	Webrtc *OmeDataStreams `json:"webrtc"`
-	Llhls  *OmeDataStreams `json:"llhls"`
-	Image  bool            `json:"image"`
+	Name     string            `json:"name"`
+	Webrtc   *OmeDataStreams   `json:"webrtc"`
+	Llhls    *OmeDataStreams   `json:"llhls"`
+	Image    bool              `json:"image"`
+	ReadName string            `json:"readName"`
+	Props    map[string]string `json:"props"`
 }
 
 type OmeDataStreams struct {
@@ -37,7 +39,7 @@ type OmeDataStream struct {
 	Resolution string `json:"resolution"`
 }
 
-func ListStreams(servers []ServerInfo, client query.MyClient) ([]OmeExport, error) {
+func ListStreams(servers []*ServerInfo, client query.MyClient) ([]OmeExport, error) {
 	res := []OmeExport{}
 	for _, server := range servers {
 		streams, err := server.ListStreams(client)
@@ -49,25 +51,31 @@ func ListStreams(servers []ServerInfo, client query.MyClient) ([]OmeExport, erro
 	return res, nil
 }
 
-func (s *ServerInfo) getIps() ([]net.IP, error) {
+func (s *ServerInfo) Init() error {
 	url, err := url.Parse(s.ApiUrl)
 	if err != nil {
-		return nil, fmt.Errorf("parse url '%v': %w", s.ApiUrl, err)
+		return fmt.Errorf("parse url '%v': %w", s.ApiUrl, err)
 	}
 	hostname := url.Hostname()
 	if hostname == "" {
-		return nil, fmt.Errorf("parse url '%v': hostname is empty", s.ApiUrl)
+		return fmt.Errorf("parse url '%v': hostname is empty", s.ApiUrl)
 	}
+	s.hostname = hostname
+	return nil
+}
 
+func (s *ServerInfo) getIps() ([]net.IP, error) {
 	var ips []net.IP
-	addr := net.ParseIP(hostname)
+	addr := net.ParseIP(s.hostname)
 	if addr != nil {
 		ips = append(ips, addr)
-	} else {
-		ips, err = query.LookupDomain(hostname)
-		if err != nil {
-			return nil, fmt.Errorf("resolve '%v': %w", hostname, err)
-		}
+		return ips, nil
+	}
+
+	var err error
+	ips, err = query.LookupDomain(s.hostname)
+	if err != nil {
+		return nil, fmt.Errorf("resolve '%v': %w", s.hostname, err)
 	}
 
 	return ips, nil
@@ -109,7 +117,7 @@ func (s *ServerInfo) ListStreams(client query.MyClient) ([]OmeExport, error) {
 	return res, nil
 }
 
-func GetAppInfo(servers []ServerInfo, client query.MyClient, url string, app string, key string) (*OmeAppInfo, error) {
+func GetAppInfo(servers []*ServerInfo, client query.MyClient, url string, app string, key string) (*OmeAppInfo, error) {
 	for _, server := range servers {
 		slog.Debug("compare url", "server.PublicSignalUrl", server.PublicSignalUrl, "requested", url)
 		if server.PublicSignalUrl == url {

@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: api-exporter
-        image: docker.io/daniluzlov/k8s-snippets:api-exporter-v1.24
+        image: docker.io/daniluzlov/k8s-snippets:api-exporter-v1.30
         ports:
         - name: http
           containerPort: 8082
@@ -37,32 +37,21 @@ spec:
               key: domain_suffix
         resources:
           requests:
-            memory: 5Mi
+            memory: 1Mi
           # limits:
           #   memory: 7Mi
         volumeMounts:
         - mountPath: /mnt/config.yaml
           name: config
           subPath: config.yaml
-        # startupProbe:
-        #   httpGet:
-        #     port: 80
-        #   failureThreshold: 10
-        #   initialDelaySeconds: 0
-        #   periodSeconds: 1
-        # livenessProbe:
-        #   httpGet:
-        #     port: 80
-        #   failureThreshold: 1
-        #   initialDelaySeconds: 0
-        #   periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            port: http
+            path: /healthy
       volumes:
       - name: config
         configMap:
           name: api-exporter-config
-      # - name: content
-      #   configMap:
-      #     name: content
 ---
 apiVersion: v1
 kind: Service
