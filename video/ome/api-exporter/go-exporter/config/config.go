@@ -3,6 +3,8 @@ package config
 import (
 	"encoding/base64"
 	"fmt"
+	"log/slog"
+	"ome-api-exporter/ome"
 	"os"
 	"strings"
 
@@ -12,17 +14,8 @@ import (
 const commandPrefix = "command!"
 
 type ProgramConfig struct {
-	Servers []ServerInfo `yaml:"servers"`
+	Servers []ome.ServerInfo `yaml:"servers"`
 	Debug   bool
-}
-
-var GlobalDebug bool
-
-type ServerInfo struct {
-	Name            string `yaml:"name"`
-	ApiUrl          string `yaml:"apiUrl"`
-	ApiAuth         string `yaml:"apiAuth"`
-	PublicSignalUrl string `yaml:"publicSignalUrl"`
 }
 
 func PrintUsage() {
@@ -48,7 +41,9 @@ func ParseArgs() (*ProgramConfig, error) {
 		return nil, fmt.Errorf("parse config: %w", err)
 	}
 
-	GlobalDebug = res.Debug
+	if res.Debug {
+		slog.SetLogLoggerLevel(slog.LevelDebug)
+	}
 
 	if len(res.Servers) == 0 {
 		return nil, fmt.Errorf("server list is empty")
@@ -140,9 +135,7 @@ func resolveCommand(value string, action string, resolve func(string) (string, e
 		commandContent := value[:commandEnd]
 		value = value[commandEnd+len(endCover):]
 
-		if GlobalDebug {
-			fmt.Println("debug: solving", commandContent)
-		}
+		slog.Debug("resolveCommand", "name", action, "value", commandContent)
 		if strings.Contains(commandContent, commandPrefix) {
 			// there are nested commands that need to be resolved first
 			prefix += commandContent

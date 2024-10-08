@@ -27,27 +27,61 @@ export function saveSettings(source, fun, name) {
   localStorage.setItem(settingsName, JSON.stringify(settings));
 }
 
-export function getJSON(url, callback) {
-  var xhr = new XMLHttpRequest();
-  xhr.open('GET', url, true);
-  xhr.responseType = 'json';
-  xhr.timeout = 1000;
-  xhr.onload = function () {
-    var status = xhr.status;
-    if (status === 200) {
-      callback(null, xhr.response);
-    } else {
-      callback(status, xhr.response);
-    }
-  };
-  xhr.onerror = function (event) {
-    console.log(event);
-    callback(event, null);
-  }
-  try {
+export function saveLocal(name, value) {
+  localStorage.setItem(name, JSON.stringify(value));
+}
+export function readLocal(name) {
+  return JSON.parse(localStorage.getItem(name));
+}
+
+export async function getJSON(url) {
+  return new Promise(function (resolve, reject) {
+    let xhr = new XMLHttpRequest();
+    xhr.responseType = 'json';
+    xhr.timeout = 1000;
+    xhr.open('GET', url);
+    xhr.onload = function () {
+      if (this.status >= 200 && this.status < 300) {
+        resolve(xhr.response);
+      } else {
+        console.log('xhr error 2', xhr.response)
+        reject({
+          status: this.status,
+          statusText: xhr.statusText
+        });
+      }
+    };
+    xhr.onerror = function () {
+      console.log('xhr error', xhr.response)
+      reject({
+        status: this.status,
+        statusText: xhr.statusText
+      });
+    };
     xhr.send();
-  } catch (error) {
-    console.log(error);
-    callback('xhr exception: ' + error, null);
-  }
-};
+  });
+}
+// export async function getJSON(url, callback) {
+//   var xhr = new XMLHttpRequest();
+//   xhr.open('GET', url, true);
+//   xhr.responseType = 'json';
+//   xhr.timeout = 1000;
+//   xhr.onload = function () {
+//     var status = xhr.status;
+//     if (status === 200) {
+//       callback(null, xhr.response);
+//     } else {
+//       callback(status, xhr.response);
+//     }
+//   };
+//   xhr.onerror = function (event) {
+//     console.log(event);
+//     callback(event, null);
+//   }
+//   try {
+//     xhr.send();
+//   } catch (error) {
+//     console.log(error);
+//     callback('xhr exception: ' + error, null);
+//   }
+// };

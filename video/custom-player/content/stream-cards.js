@@ -9,6 +9,7 @@ export function addStreamCard(thumbnailLink, streamName, links, cardType) {
   thumbContainer.appendChild(thumbImage);
 
   const header = document.createElement('h3');
+  header.setAttribute('class', 'list-link-container');
 
   for (let i = 0; i < links.length; i++) {
     const link = links[i];
@@ -57,7 +58,7 @@ export function setLoadingCard(content) {
   }
 
   loadingInner.textContent = content;
-  if (content.length > 0) {
+  if (content != null && content.length > 0) {
     loadingOuter.style.display = null;
   } else {
     loadingOuter.style.display = 'none';

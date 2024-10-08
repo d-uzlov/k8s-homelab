@@ -1,49 +1,52 @@
 
-import { getJSON } from './utils.js';
+import { getJSON, saveLocal } from './utils.js';
 import { addStreamCard, setLoadingCard, addErrorCard } from './stream-cards.js';
 import { getDataSources } from './data-sources.js';
 
 let totalStreams = 0;
 let urlsChecked = 0;
 
-const urls = getDataSources();
+const dataSources = Object.entries(getDataSources());
 
-function addStream(stream) {
+function addStream(server, sourceName) {
   const thumbLink = '/empty-symbol.png';
-  const urlBase = stream.url + '/' + stream.app + '/' + stream.key;
-
-  const links = [];
-  for (let i = 0; i < stream.playlists.length; i++) {
-    const playlist = stream.playlists[i];
-    let url = urlBase
-    if (playlist.file != "") {
-      url = url + "/" + playlist.file;
+  const apps = server.apps;
+  if (apps == null || apps.length == 0) {
+    return;
+  }
+  for (let i = 0; i < apps.length; i++) {
+    const app = apps[i];
+    if (app.keys.length == 0) {
+      continue;
     }
-    switch (playlist.type) {
-      case "webrtc":
-        links.push({ name: playlist.name, ref: './player.html#type=ome-webrtc&url=' + url });
-        break;
-      case "llhls":
-        links.push({ name: playlist.name, ref: './player.html#type=ome-llhls&url=' + url });
-        break;
+    const url = server.url;
+    const name = app.app.name;
+    for (let j = 0; j < app.keys.length; j++) {
+      const key = app.keys[j];
+      const playerArgs = 'url=' + url + '&app=' + name + '&key=' + key + '&api=' + sourceName;
+
+      const fullName = key + '@' + url + '/' + name;
+      addStreamCard(thumbLink, fullName, [{
+        name: 'Play',
+        ref: './player.html#' + playerArgs,
+      }], 'active-stream');
     }
   }
-  const fullName = stream.key + '@' + stream.url;
-  addStreamCard(thumbLink, fullName, links, 'active-stream');
+
   totalStreams++;
 }
 
 function checkEmpty() {
-  if (urlsChecked >= urls.length && totalStreams == 0) {
+  if (urlsChecked >= dataSources.length && totalStreams == 0) {
     setLoadingCard('no streams found');
-  } else if (urlsChecked < urls.length) {
-    setLoadingCard('still fetching more streams...');
+  } else if (urlsChecked < dataSources.length) {
+    setLoadingCard('still fetching more streams from ' + (dataSources.length - urlsChecked) + ' source(s)...');
   } else {
     setLoadingCard('');
   }
 }
 
-function handleResponse(err, data, url) {
+function handleResponse(err, data, url, sourceName) {
   urlsChecked++;
   if (err !== null) {
     if (data === null) {
@@ -53,15 +56,21 @@ function handleResponse(err, data, url) {
     }
     return;
   }
-  for (let i = 0; i < data.length; i++) {
-    addStream(data[i]);
-  }
 }
 
-for (let i = 0; i < urls.length; i++) {
-  const url = urls[i];
-  getJSON(url, function (err, data) {
-    handleResponse(err, data, url);
+for (let i = 0; i < dataSources.length; i++) {
+  const source = dataSources[i];
+  const sName = source[0];
+  const sUrl = source[1];
+  getJSON(sUrl + '/list').then(function (data) {
+    for (let i = 0; i < data.length; i++) {
+      addStream(data[i], sName);
+    }
+    urlsChecked++;
+  }).catch(function (err) {
+    urlsChecked++;
+    addErrorCard("error " + err + "from " + sUrl);
+  }).finally(function(){
     checkEmpty();
   });
 }

@@ -1,6 +1,4 @@
 
-const qualityButtonsContainer = document.getElementById("quality-select-buttons");
-
 function createButton(text, onclick, redBorder) {
   const button = document.createElement('button');
   let style = 'button-27';
@@ -14,18 +12,15 @@ function createButton(text, onclick, redBorder) {
   return button;
 }
 
-export function setQualityButtons(playerInstance, saveSettings) {
-  qualityButtonsContainer.textContent = '';
+// values is { name, action }
+// checkSelected is called with full value
+export function setButtons(containerId, values, checkSelected) {
+  const container = document.getElementById(containerId);
+  container.textContent = '';
 
-  const qualityList = playerInstance.getQualityLevels();
-  const currentQuality = playerInstance.getCurrentQuality();
-  for (let i = 0; i < qualityList.length; i++) {
-    const element = qualityList[i];
-    const button = createButton(element.label, function () {
-      playerInstance.setCurrentQuality(i);
-      saveSettings();
-    }, i == currentQuality);
-    qualityButtonsContainer.appendChild(button);
+  for (const v of values) {
+    const mute = createButton(v.name, v.action, checkSelected(v));
+    container.appendChild(mute);
   }
 }
 

@@ -217,6 +217,7 @@ api_public_domain=$(kl -n ome get ingress api-origin -o go-template --template "
 api_public_domain=$(kl -n ome get httproute api-origin -o go-template --template "{{ (index .spec.hostnames 0)}}")
 AUTH=$(kl -n ome get deployments.apps ome-origin-cpu -o go-template --template "{{ ( index ( index .spec.template.spec.containers 0 ).readinessProbe.httpGet.httpHeaders 0 ).value }}")
 curl --header "Authorization: $AUTH" https://$api_public_domain/v1/vhosts/default/apps | jq
+curl --header "Authorization: $AUTH" https://$api_public_domain/v1/vhosts/default/apps/tc | jq
 curl --header "Authorization: $AUTH" https://$api_public_domain/v1/vhosts/default/apps/tc/streams | jq
 
 api_edge_public_domain=$(kl -n ome get httproute api-edge -o go-template --template "{{ (index .spec.hostnames 0)}}")
@@ -237,6 +238,9 @@ docker build ./video/ome/api-exporter/go-exporter/ -f ./video/ome/api-exporter/D
 docker push docker.io/$docker_username/$docker_repo:api-exporter-v1
 
 kl apply -k ./video/ome/api-exporter/
+
+api_exporter_domain=$(kl -n ome get httproute api-exporter -o go-template --template "{{ (index .spec.hostnames 0)}}")
+curl https://$api_exporter_domain/list
 ```
 
 # TODO

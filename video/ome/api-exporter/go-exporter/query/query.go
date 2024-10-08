@@ -10,11 +10,9 @@ import (
 	"net/url"
 	"strconv"
 	"time"
-
-	"ome-api-exporter/config"
 )
 
-func getIPs(domain string) ([]net.IP, error) {
+func LookupDomain(domain string) ([]net.IP, error) {
 	ips, err := net.LookupIP(domain)
 	if err != nil {
 		return nil, fmt.Errorf("lookup '%v': %w", domain, err)
@@ -56,10 +54,10 @@ func CreateClient(debug bool) MyClient {
 	return res
 }
 
-func (c *MyClient) queryOme(server config.ServerInfo, ip net.IP, path string) ([]byte, error) {
-	url, err := url.Parse(server.ApiUrl)
+func (c *MyClient) QueryWithAuth(serverUrl string, auth string, ip net.IP, path string) ([]byte, error) {
+	url, err := url.Parse(serverUrl)
 	if err != nil {
-		return nil, fmt.Errorf("parse url '%v': %w", server.ApiUrl, err)
+		return nil, fmt.Errorf("parse url '%v': %w", serverUrl, err)
 	}
 
 	req, err := http.NewRequest("GET", "", nil)
@@ -70,7 +68,7 @@ func (c *MyClient) queryOme(server config.ServerInfo, ip net.IP, path string) ([
 	req.URL = url
 	req.URL.Path = path
 
-	req.Header.Add("Authorization", server.ApiAuth)
+	req.Header.Add("Authorization", auth)
 
 	var port int
 	if url.Port() != "" {
