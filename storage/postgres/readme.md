@@ -70,6 +70,11 @@ kl -n postgres-test get pods -o wide -L spilo-role
 kl -n postgres-test get pvc
 kl -n postgres-test get svc
 
+# list users
+kl -n postgres-test exec pods/postgres-0 -- psql template1 -c '\du'
+# list databases
+kl -n postgres-test exec pods/postgres-0 -- psql --list
+
 kl delete -f ./storage/postgres/test-cluster.yaml
 kl delete ns postgres-test
 ```
