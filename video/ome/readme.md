@@ -14,7 +14,7 @@ Generate passwords and set up config.
 
 ```bash
 mkdir -p ./video/ome/common-env/env/
-cat << EOF > ./video/ome/common-env/env/passwords.env
+cat << EOF > ./video/ome/common-env/env/redis.env
 redis_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 EOF
 cat << EOF > ./video/ome/common-env/env/access-token.env
@@ -176,15 +176,6 @@ You will need to modify the config if you want to use plain HTTP.
 # LLHLS playback (latency 1-3 seconds)
 
 - Streaming via HTTPS: `https://<ingress_public_domain>/app/<stream-key>/llhls.m3u8`
-
-# Extract config from image
-
-Obviously, you need to disable config replacement in the deployment if you want to get the default config.
-
-```bash
-kl -n ome exec deployments/ovenmediaengine -it -- cat /opt/ovenmediaengine/bin/origin_conf/Server.xml > ome-config.xml
-kl -n ome exec deployments/ovenmediaengine -it -- cat /opt/ovenmediaengine/bin/edge_conf/Server.xml > ome-edge-config.xml
-```
 
 # Using WebSocket with untrusted TLS termination
 

@@ -237,10 +237,12 @@ function updateSourceSettings(sources, appInfo) {
       break;
     }
   }
-  saveSettings('prefer', (settings) => {
-    settings.sourceType = first.type;
-    settings.sourceFile = first.file;
-  });
+  if (anySource != null) {
+    saveSettings('prefer', (settings) => {
+      settings.sourceType = anySource.type;
+      settings.sourceFile = anySource.file;
+    });
+  }
 }
 
 async function setupPage() {
@@ -305,4 +307,5 @@ controlsBottomButton.onclick = () => {
   controlsBottomButton.classList.add(redBorder);
 }
 
+OvenPlayer.debug(false);
 setupPage();

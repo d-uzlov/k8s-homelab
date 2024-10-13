@@ -15,10 +15,10 @@ spec:
         app: ovenmediaengine
         ome-type: edge
     spec:
-      terminationGracePeriodSeconds: 1
+      # terminationGracePeriodSeconds: 1
       containers:
       - name: ovenmediaengine
-        image: docker.io/airensoft/ovenmediaengine:0.16.5
+        image: docker.io/airensoft/ovenmediaengine:0.17.1
         ports:
         - name: rtmp # streamer RTMP
           containerPort: 1935
@@ -54,6 +54,11 @@ spec:
             secretKeyRef:
               name: redis-password
               key: redis_password
+        - name: OME_ACCESS_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: access-token
+              key: token
         - name: OME_RTMP_PROV_PORT
           value: '1935'
         - name: OME_SRT_PROV_PORT
@@ -83,6 +88,14 @@ spec:
         - mountPath: /opt/ovenmediaengine/bin/origin_conf/Server.xml
           name: config-edge
           subPath: edge-config.xml
+        readinessProbe:
+          httpGet:
+            port: api
+            path: /v1/vhosts
+            httpHeaders:
+            - name: Authorization
+              # must match <AccessToken> from the config, converted to base64
+              value: Basic eW91cl9hY2Nlc3NfdG9rZW4=
       volumes:
       - name: config-edge
         configMap:

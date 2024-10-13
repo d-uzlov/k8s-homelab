@@ -10,14 +10,14 @@ You can set a list of default keys that are used when page arg list is empty:
 
 ```bash
 mkdir -p ./video/custom-player/content/env/
-cat << EOF > ./video/custom-player/content/env/sources.list
-# redact manually to include all your api-exporter sources
+cat << EOF > ./video/custom-player/content/env/data-sources.js
 export function getDataSources() {
-  return [
-    'https://ome-streams.example.cloudns.be/list',
-  ];
+  const res = {};
+  res.main = 'https://ome-streams.domain';
+  return res;
 }
 EOF
+# redact this file manually to include all your api-exporter sources
 ```
 
 If you don't want to use default keys, make the file empty.
