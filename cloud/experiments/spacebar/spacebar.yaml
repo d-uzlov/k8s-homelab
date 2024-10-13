@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spacebar
+spec:
+  selector:
+    matchLabels:
+      app: spacebar
+  template:
+    metadata:
+      labels:
+        app: spacebar
+    spec:
+      containers:
+      - name: spacebar
+        image: docker.io/daniluzlov/k8s-snippets:spacebar-2024-10-13-v1
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - name: http
+          containerPort: 3001
+        command:
+        - /bin/sh
+        - -c
+        - |
+          export DATABASE="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_ADDRESS}:5432/${POSTGRES_DATABASE}?sslmode=no-verify"
+          npm run start
+        env:
+        - name: PORT
+          value: '3001'
+        - name: DATABASE
+          value: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DATABASE}
+        - name: STORAGE_PROVIDER
+          value: file
+        - name: STORAGE_LOCATION
+          value: /mnt/storage/
+        - name: POSTGRES_ADDRESS
+          value: postgres
+        - name: POSTGRES_DATABASE
+          value: spacebar
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: spacebar.postgres.credentials.postgresql.acid.zalan.do
+              key: username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: spacebar.postgres.credentials.postgresql.acid.zalan.do
+              key: password
+        readinessProbe:
+          httpGet:
+            port: http
+            path: /api/ping
+        volumeMounts:
+        - mountPath: /mnt/storage/
+          name: storage
+      volumes:
+      - name: storage
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spacebar
+spec:
+  selector:
+    app: spacebar
+  ports:
+  - port: 80
+    targetPort: http
