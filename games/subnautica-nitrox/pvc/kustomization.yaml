@@ -1,0 +1,37 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: nitrox
+
+resources:
+- subnautica.yaml
+
+configMapGenerator:
+- name: nitrox-pvc
+  envs:
+  - env/pvc.env
+  options:
+    disableNameSuffixHash: true
+
+replacements:
+- source:
+    kind: ConfigMap
+    name: nitrox-pvc
+    fieldPath: data.subnautica_class
+  targets:
+  - select:
+      kind: PersistentVolumeClaim
+      name: subnautica
+    fieldPaths:
+    - spec.storageClassName
+- source:
+    kind: ConfigMap
+    name: nitrox-pvc
+    fieldPath: data.subnautica_size
+  targets:
+  - select:
+      kind: PersistentVolumeClaim
+      name: subnautica
+    fieldPaths:
+    - spec.resources.requests.storage

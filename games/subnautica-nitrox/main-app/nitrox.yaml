@@ -1,0 +1,93 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nitrox
+spec:
+  selector:
+    matchLabels:
+      app: nitrox
+  serviceName: nitrox
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: nitrox
+    spec:
+      containers:
+      - name: nitrox
+        image: docker.io/daniluzlov/k8s-snippets:nitrox-dc90f19
+        ports:
+        - containerPort: 11000
+          name: nitrox
+          protocol: UDP
+        command:
+        - /entrypoint.sh
+        env:
+        - name: SUBNAUTICA_INSTALLATION_PATH
+          value: /subnautica
+        - name: SEED
+          valueFrom:
+            configMapKeyRef:
+              name: nitrox-config
+              key: seed
+        - name: ENABLE_STARTUP_CACHE
+          valueFrom:
+            configMapKeyRef:
+              name: nitrox-config
+              key: enable_startup_cache
+        - name: GAME_MODE
+          valueFrom:
+            configMapKeyRef:
+              name: nitrox-config
+              key: game_mode
+        - name: SERVER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: nitrox-passwords
+              key: server_password
+        - name: ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: nitrox-passwords
+              key: admin_password
+        volumeMounts:
+        - mountPath: /mnt/config-template
+          name: config-template
+        - mountPath: /home/nitrox/.config/Nitrox/saves/docker-save
+          name: saves
+        - mountPath: /subnautica
+          name: subnautica
+        - mountPath: /entrypoint.sh
+          name: entrypoint
+          subPath: entrypoint.sh
+        resources:
+          requests:
+            # mono always consumes roughly 2.5 cores all the time
+            cpu: 2000m
+            memory: 150Mi
+            # is it really the upper limit?
+            # limits:
+            #   memory: 1.5Gi
+      volumes:
+      - name: config-template
+        configMap:
+          name: nitrox-config-template
+      - name: subnautica
+        persistentVolumeClaim:
+          claimName: subnautica
+          readOnly: true
+      - name: entrypoint
+        configMap:
+          name: nitrox-entrypoint
+          defaultMode: 0555
+  volumeClaimTemplates:
+  - metadata:
+      name: saves
+    spec:
+      storageClassName: fast
+      accessModes:
+      - ReadWriteMany
+      resources:
+        requests:
+          storage: 1Gi
