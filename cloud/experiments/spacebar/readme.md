@@ -1,5 +1,5 @@
 
-# Onlyoffice
+# Spacebar
 
 References:
 - https://spacebar.chat/
