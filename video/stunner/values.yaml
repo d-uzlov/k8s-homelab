@@ -1,0 +1,55 @@
+# Default values for stunner-gateway-operator.
+
+# To set the namespace for the deployment use the --namespace=<your-namespace> --create-namespace
+# additional commands when installing your release
+# It will create the desired namespace if not present
+
+stunnerGatewayOperator:
+  enabled: true
+  deployment:
+    name: stunner-gateway-operator
+    container:
+      manager: {}
+        # resources:
+        #   limits:
+        #     cpu: 1000m
+        #     memory: 512Mi
+        #   requests:
+        #     cpu: 250m
+        #     memory: 128Mi
+        # args:
+        #   - --health-probe-bind-address=:8081
+        #   - --metrics-bind-address=127.0.0.1:8080
+        #   - --leader-elect
+        #   - --zap-log-level=info
+  dataplane:
+    # Can be 'legacy' or 'managed'
+    # default is managed
+    mode: managed
+    spec:
+      replicas: 1
+      imagePullPolicy: IfNotPresent
+      # resources:
+      #   limits:
+      #     cpu: 2
+      #     memory: 512Mi
+      #   requests:
+      #     cpu: 500m
+      #     memory: 128Mi
+      terminationGracePeriodSeconds: 10
+      enableMetricsEndpoint: false
+      hostNetwork: false
+
+stunnerAuthService:
+  enabled: true
+  deployment:
+    container:
+      authService:
+        image:
+          name: docker.io/l7mp/stunner-auth-server
+          pullPolicy: IfNotPresent
+          tag: 0.21.0
+        args:
+          - --port=8088
+          - -v
+
