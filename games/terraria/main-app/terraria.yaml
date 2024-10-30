@@ -1,0 +1,117 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: terraria
+spec:
+  selector:
+    matchLabels:
+      app: terraria
+  serviceName: terraria
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: terraria
+    spec:
+      containers:
+      - name: terraria
+        image: ghcr.io/beardedio/terraria:tshock-5.2.0
+        ports:
+        - containerPort: 7777
+          name: terraria
+        command:
+        - /bin/bash
+        - -c
+        - |
+          # entrypoint in container image uses $@ instead of "$@" which breaks worls with spaces in name
+          ./TShock.Server \
+            -configpath /config \
+            -worldpath /config \
+            -worldselectpath /config \
+            -logpath /config \
+            "$@"
+        args:
+        - ''
+        - -world
+        - /config/world.wld
+        - -port
+        - '7777'
+        - -autocreate
+        - '1'
+        - -noupnp
+        - -seed
+        - $(SEED)
+        - -maxplayers
+        - $(MAX_PLAYERS)
+        - -password
+        - $(SERVER_PASSWORD)
+        - -worldevil
+        - $(WORLD_EVIL)
+        - -difficulty
+        - $(DIFFICULTY)
+        - -worldname
+        - $(WORLD_NAME)
+        stdin: true
+        # if enabled:
+        # + kubectl attach output will be colored
+        # - kubectl logs will break local terminal settings
+        # - kubectl attach will pass through signals (you can kill the container via ctrl+C)
+        # - there is no easy way to detach:
+        # - - either kill the container or kill `kubectl attack` process from a separate local terminal
+        # tty: true
+        env:
+        - name: SEED
+          valueFrom:
+            configMapKeyRef:
+              name: terraria-config
+              key: seed
+        - name: MAX_PLAYERS
+          valueFrom:
+            configMapKeyRef:
+              name: terraria-config
+              key: max_players
+        - name: WORLD_EVIL
+          valueFrom:
+            configMapKeyRef:
+              name: terraria-config
+              key: world_evil
+        - name: DIFFICULTY
+          valueFrom:
+            configMapKeyRef:
+              name: terraria-config
+              key: difficulty
+        - name: WORLD_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: terraria-config
+              key: world_name
+        - name: SERVER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: terraria-passwords
+              key: server_password
+        volumeMounts:
+        - mountPath: /config/
+          name: config
+        resources:
+          requests:
+            cpu: 300m
+            memory: 1.5Gi
+            # limits:
+            #   memory: 3Gi
+        # readiness probe causes log SPAM
+        # readinessProbe:
+        #   tcpSocket:
+        #     port: terraria
+        #   periodSeconds: 1
+  volumeClaimTemplates:
+  - metadata:
+      name: config
+    spec:
+      storageClassName: fast
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
