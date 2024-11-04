@@ -97,3 +97,11 @@ In hyper-v vSwitch setup at most `ping 10.0.0.1 -l 1458` worked.
 I found 2 solutions:
 - Set `Encapsulation overhead` on the parent interface to at least 32 (the lowest possible value aside from 0)
 - Increate MTU on the parent interface
+
+# MTU
+
+```powershell
+# you can get interface name here:
+netsh interface ipv4 show subinterface
+netsh interface ipv4 set interface "interface-name" mtu=1280
+```

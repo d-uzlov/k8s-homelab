@@ -23,7 +23,7 @@ sudo nvme id-ns -H /dev/nvme0n1
 sudo nvme id-ns -H /dev/nvme0n1 | grep "LBA Format"
 
 # !! this will erase all info from the disk !!
-nvme format --lbaf=1 /dev/nvme0n1
+sudo nvme format --lbaf=1 /dev/nvme0n1
 ```
 
 # NVMe namespaces

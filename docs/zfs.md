@@ -176,7 +176,7 @@ options zfs zfs_arc_max=4294967296
 EOF
 sudo update-initramfs -u
 
-# clear cache for current system (useful if yolu want to reduce ARC size)
+# purge cache for current system (useful if you want to reduce ARC size)
 echo 0 | sudo tee /sys/module/zfs/parameters/zfs_arc_shrinker_limit
 echo 3 | sudo tee /proc/sys/vm/drop_caches
 ```
@@ -192,6 +192,9 @@ This depends on your record size, and file sizes.
 Here is my experience with L2ARC RAM overhead, according to arc statistics tool:
 - L2ARC size `~100 GiB`, overhead `~5 MiB`
 - L2ARC size `~380 GiB`, overhead `~24 MiB`
+- L2ARC size `~450 GiB`, overhead `~53 MiB` (without `l2arc_exclude_special`)
+- L2ARC size `~600 GiB`, overhead `~54 MiB`
+- L2ARC size `~925 GiB`, overhead `~150 MiB`
 
 References:
 - https://www.reddit.com/r/zfs/comments/ud1djk/l2arc_overhead_confusion/
@@ -203,15 +206,16 @@ References:
     > this works out to 640MiB of RAM consumed to index the L2ARC
 - https://www.reddit.com/r/zfs/comments/sql872/why_you_need_at_least_64gb_of_ram_before/
 
-# # L2ARC tuning
+# L2ARC tuning
 
 ```bash
 # disable l2 caching for the special metadata device
 echo 1 | sudo tee /sys/module/zfs/parameters/l2arc_exclude_special
 # set max write speed of l2arc device
 # the default speed is just a few MB/s
+# this sets average write limit to 100 MB/s, peak to 200 MB/s
 echo 209715200 | sudo tee /sys/module/zfs/parameters/l2arc_write_boost
-echo 209715200 | sudo tee /sys/module/zfs/parameters/l2arc_write_max
+echo 104857600 | sudo tee /sys/module/zfs/parameters/l2arc_write_max
 ```
 
 # ZFS ARC statistics

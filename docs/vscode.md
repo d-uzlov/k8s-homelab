@@ -66,6 +66,8 @@ Add the following to the `settings.json`
   "-workbench.action.debug.start", // f5
   "-workbench.action.focusNextPart", // f6
   "-workbench.action.quickOpen", // ctrl + P
+  "-workbench.action.quickOpenView", // ctrl + Q
+  "-workbench.action.togglePanel", // ctrl + J
   "-workbench.action.terminal.goToRecentDirectory", // ctrl + G
   "-workbench.action.terminal.scrollToTopAccessibleView", // ctrl + Home
   "-workbench.action.terminal.scrollToTop", // ctrl + Home

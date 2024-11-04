@@ -20,7 +20,7 @@ Later commands are assumed to be executed from your new user.
 
 ```bash
 # install utils you will likely need
-sudo apt install -y iperf3 htop pipx gcc make stress fio
+sudo apt install -y iperf3 htop pipx gcc make stress fio unzip
 pipx ensurepath
 pipx install s-tui
 
