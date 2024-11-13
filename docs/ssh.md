@@ -37,9 +37,8 @@ You must be logged in as your user.
 
 ```bash
 mkdir -p ~/.ssh
-cat << EOF >> ~/.ssh/authorized_keys
-# replace this line with contents of the .pub file
-EOF
+nano ~/.ssh/authorized_keys
+# insert public key into the file
 ```
 
 Test client access with the private key.

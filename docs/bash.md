@@ -8,7 +8,7 @@ mkdir -p ~/.bashrc.d/
  grep "add support for bashrc.d" ~/.bashrc || cat << "EOF" >> ~/.bashrc
 # add support for bashrc.d
 if [ -d ~/.bashrc.d ]; then
-  for rc in ~/.bashrc.d/*; do
+  for rc in ~/.bashrc.d/*.sh; do
     if [ -f "$rc" ]; then
       . "$rc"
     fi
@@ -29,12 +29,18 @@ You can adjust `.bashrc` and other files in that directory to change the default
 # Respect default shortcuts.
 $include /etc/inputrc
 
+# ctrl + Backspace
+"\C-H": shell-backward-kill-word
+# ctrl + delete
+"\e[3;5~": shell-kill-word
+
 # search history by prefix
 ## arrow up
-"\e[A":history-search-backward
+"\e[A": history-search-backward
 ## arrow down
-"\e[B":history-search-forward
+"\e[B": history-search-forward
 
+set bell-style none
 set completion-ignore-case on
 # add / to dirs and * to executables
 set visible-stats on
@@ -59,41 +65,44 @@ This is just an opinionated convenient prompt:
 - Username and host at the beginning
 - Full path with the last firectory highlighted
 - Current date and time
+- Timer for previous command
 - Number of background jobs if any
 - Exit code if not zero
 - Command on a separate line, so you don't depend on the length of current path
 
-Example: `user@host:/path/to/current/directory # 2000-01-01 15:10:30 # ! jobs: 1  $? == 130 `.
+Example: `user@host:/path/to/current/directory # 2000-01-01 15:10:30 # timer: 1.1ms ! jobs: 1  $? == 130 `.
+
+Also, prompt history is saved after every command.
 
 ```bash
  cat << "EOF" > ~/.bashrc.d/0-prompt.sh
 
 function timer_now {
-    date +%s%N
+  date +%s%N
 }
 
 function timer_start {
-    timer_start=${timer_start:-$(timer_now)}
+  timer_start=${timer_start:-$(timer_now)}
 }
 
 # https://stackoverflow.com/questions/1862510/how-can-the-last-commands-wall-time-be-put-in-the-bash-prompt
 function timer_stop {
-    local delta_us=$((($(timer_now) - $timer_start) / 1000))
-    local us=$((delta_us % 1000))
-    local ms=$(((delta_us / 1000) % 1000))
-    local s=$(((delta_us / 1000000) % 60))
-    local m=$(((delta_us / 60000000) % 60))
-    local h=$((delta_us / 3600000000))
-    # Goal: always show around 3 digits of accuracy
-    if ((h > 0)); then timer_show=${h}h${m}m
-    elif ((m > 0)); then timer_show=${m}m${s}s
-    elif ((s >= 10)); then timer_show=${s}.$((ms / 100))s
-    elif ((s > 0)); then timer_show=${s}.$(printf %03d $ms)s
-    elif ((ms >= 100)); then timer_show=${ms}ms
-    elif ((ms > 0)); then timer_show=${ms}.$((us / 100))ms
-    else timer_show=${us}us
-    fi
-    unset timer_start
+  local delta_us=$((($(timer_now) - $timer_start) / 1000))
+  local us=$((delta_us % 1000))
+  local ms=$(((delta_us / 1000) % 1000))
+  local s=$(((delta_us / 1000000) % 60))
+  local m=$(((delta_us / 60000000) % 60))
+  local h=$((delta_us / 3600000000))
+  # Goal: always show around 3 digits of accuracy
+  if ((h > 0)); then timer_show=${h}h${m}m
+  elif ((m > 0)); then timer_show=${m}m${s}s
+  elif ((s >= 10)); then timer_show=${s}.$((ms / 100))s
+  elif ((s > 0)); then timer_show=${s}.$(printf %03d $ms)s
+  elif ((ms >= 100)); then timer_show=${ms}ms
+  elif ((ms > 0)); then timer_show=${ms}.$((us / 100))ms
+  else timer_show=${us}us
+  fi
+  unset timer_start
 }
 
 term_reset="$(tput sgr0)"
@@ -109,11 +118,10 @@ term_cyan="$(tput setaf 6)"
 term_white="$(tput setaf 7)"
 term_standout="$(tput smso)"
 
-__prompt_command() {
+function __prompt_command() {
   # $? check needs to be the first command
   local prev_exit="$?"
   timer_stop
-  history -a
 
   # PS1="$term_reset"
   PS1="\n"
@@ -133,7 +141,7 @@ __prompt_command() {
   fi
   PS1+="$term_green$term_bold${dir/*\/}$term_reset"
 
-  # time
+  # datetime
   PS1+=" $term_yellow# \D{%F %T} #$term_reset"
 
   PS1+=" timer: $timer_show"
@@ -150,7 +158,13 @@ __prompt_command() {
   # PS1+='\[\e[1;33m\]'"\\\$ "'\[\e[0m\]'
 }
 
-trap 'timer_start' DEBUG
+function before_command() {
+  timer_start
+  # save history right after command has been sent
+  history -a
+}
+
+trap 'before_command' DEBUG
 PROMPT_COMMAND=__prompt_command
 EOF
 ```
@@ -170,6 +184,9 @@ curl -fsSL "https://github.com/trapd00r/LS_COLORS/raw/refs/heads/master/lscolors
 
 # add more default args to ls
  cat << "EOF" > ~/.bashrc.d/0-better-ls.sh
+unalias ls
+unalias ll
+
 if ls --color -d . >/dev/null 2>&1; then  # GNU ls
   export COLUMNS  # Remember columns for subprocesses.
   eval "$(dircolors)"
@@ -178,13 +195,15 @@ if ls --color -d . >/dev/null 2>&1; then  # GNU ls
     # -h, --human-readable: with -l and -s, print sizes like 1K 234M 2G etc.
     # -v: natural sort of (version) numbers within text
     # --author: with -l, print the author of each file
-    # -C: list entries by columns (conflicts with -l)
-    # command ls -F -h --color=always -v --author --time-style=long-iso -C "$@" | less -R -X -F
-    command ls -F -h --color=always -v --time-style=long-iso -C "$@"
+    # -C: list entries by columns instead of just using lines (conflicts with -l)
+    command ls -Fhv --color=always --time-style=long-iso -C "$@"
+    # optionally: use less to avoid overflowing the screen
+    # command ls -Fhv --color=always --time-style=long-iso -C "$@" | less -R -X -F
   }
   function ll() {
-    echo "Perms, Links|Owner|Group|Size| Mod. Date Time |Name"
-    ls -la "$@"
+    # -s: print disk allocation for each file
+    echo "Alloc|Perms,Links|Owner|Group|Size| Mod. Date Time |Name"
+    ls -las "$@"
   }
   alias l=ll
 fi
@@ -198,17 +217,74 @@ References:
 # Nano settings
 
 ```bash
+sudo apt install -y unzip
 # syntax highlights for many languages
-curl https://raw.githubusercontent.com/scopatz/nanorc/master/install.sh | sh
+curl https://raw.githubusercontent.com/galenguyer/nano-syntax-highlighting/master/install.sh | bash
 # installs into ~/.nano/
 
-cat << EOF > ~/.nanorc
+ cat << EOF > ~/.nanorc
 set tabsize 2
 set tabstospaces
+
+set wordbounds
+set zap
+set linenumbers
+set smarthome
+set autoindent
+set afterends
+set wordchars "_"
+set atblanks
+set constantshow
+set indicator
+set minibar
+set nowrap
+
+bind ^Z undo all
+bind ^Y redo all
+bind M-f whereis all
+bind F3 findnext all
+# F15 is shift+F3
+bind F15 findprevious all
+
+# ^H is ctrl + Backspace
+bind ^H chopwordleft all
+# ^W is "delete word" in bash,
+# terminals often map it from ctrl + Backspace
+bind ^W chopwordleft all
+# since ^W is no longer used for forward search, use ^Q instead
+bind ^Q whereis all
+
+bind M-d chopwordright main
+bind ^/ comment main
+bind ^L linenumbers main
+bind M-K copy main
+bind M-U paste main
+
+# ctrl+D - duplicate current line
+# does not work on nano 6.2 and below, install nano 7.2
+bind ^D "{copy}{paste}{up}" main
+# Shift + F1, Shift + F2 - move line up/down
+# you can set up terminal to send ctrl+UP as F13, ctrl+DOWN as F14
+bind F13 "{cut}{up}{paste}{up}" main
+bind F14 "{cut}{down}{paste}{up}" main
+
+# unbind justify
+unbind ^J all
+unbind M-J all
+unbind F4 all
+# cut from current to the end of file
+unbind M-T all
 
 include ~/.nano/*.nanorc
 EOF
 ```
+
+Toggle lines with `ctrl + L` if you want to select multiple lines with mouse.
+
+References:
+- https://github.com/galenguyer/nano-syntax-highlighting
+- https://github.com/davidhcefx/Modern-Nano-Keybindings
+- https://stackoverflow.com/questions/33217564/move-whole-line-up-down-shortcut-in-nano-analogue-to-intellij-or-visual-studio
 
 # Docker completion
 
