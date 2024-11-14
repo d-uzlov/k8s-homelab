@@ -39,6 +39,14 @@ sudo nano /etc/kernel/cmdline
 # add `video=1920x1080@60` to the file, or another appropriate resolution
 sudo proxmox-boot-tool refresh
 
+# https://askubuntu.com/a/1445347
+sudo tee /etc/sysctl.d/0-swap.conf << EOF
+vm.swappiness = 0
+EOF
+sudo sysctl --system
+# make sure nothing is overriding swappiness
+sudo sysctl vm.swappiness
+
 # enable TRIM
 zpool get autotrim
 sudo zpool set autotrim=on rpool
@@ -59,25 +67,6 @@ References:
 
 References:
 - https://www.hungred.com/how-to/list-of-proxmox-important-configuration-files-directory/
-
-# Network: custom MTU
-
-```bash
-# get max MTU of your device:
-ip -d link | grep maxmtu -B 1
-```
-
-Set desired MTU in `<node-name> -> System -> Network / <device-name>`.
-
-Don't forget to set network device MTU to 1 in VM hardware settings.
-
-```bash
-# check if your desired MTU is currently allowed in the network
-ping -M do -i 0.002 -c 1 -s $((9198 - 28)) 10.0.0.2
-
-# you can set MTU manually for testing
-sudo ip link set dev ln_storage mtu 9200
-```
 
 # PCI-e passthrough
 
@@ -121,71 +110,6 @@ References:
 ```bash
 /lib64/ld-linux-x86-64.so.2 --help | grep x86
 ```
-
-# LACP status
-
-```bash
-cat /proc/net/bonding/bond0
-```
-
-# Mellanox ConnectX-3 VLANs
-
-Mellanox ConnectX-3 only supports 126 VLANs.
-
-If you set "VLAN aware" on a bridge in proxmox, proxmox will try to enable VLANs 2-4094,
-which is a lot more than 126.
-You will see an error like this:
-
-```bash
-failed to set vid `{ 127, 128 ... 4093, 4094}`
-cmd '/sbin/bridge -force -batch - [vlan add vid 127-4094 dev enp65s0 ]'
-failed: No space left on device
-```
-
-There are several workarounds:
-
-- Limit VLANs to 2-126
-- - Edit bridge in /etc/network/interfaces
-```bash
-auto vmbr0
-iface vmbr0 inet static
-  ...
-  bridge-vlan-aware yes
-  bridge-vids 2-126
-```
-- Set VLANs you need manually, instead of using a long list
-- - Edit bridge in /etc/network/interfaces
-```bash
-auto vmbr0
-iface vmbr0 inet static
-  ...
-  bridge-vlan-aware yes
-  bridge-vids 2 10 50 228 1999
-```
-- Don't use VLAN aware bridges
-- - You can create a separate bridge for a specific VLAN
-- - Technically this is similar to defining VLANs you need manually
-- - When using Proxmox SDN it already creates special bridges, so just don't set VLAN aware checkbox
-- Disable VLAN hardware offloading
-- - This may or may not work depending on driver capabilities
-- - Edit physical interface in /etc/network/interfaces
-```bash
-iface enp129s0 inet manual
-  rx-vlan-filter off
-```
-
-Note that when using VLAN aware bridges VM guests
-will receive traffic from all VLANs
-which can be a security issue,
-and you probably don't want it for most of your VMs.
-
-As mentioned earlier, you can still use VLAN traffic
-when using a separate VLAN interface, even without VLAN aware bridge.
-
-References:
-- https://forum.proxmox.com/threads/vlan-with-tag-above-126-problem.46072/page-2
-- https://forum.proxmox.com/threads/vlan-issues.124714/
-- https://www.reddit.com/r/homelab/comments/114ieep/proxmox_bridgevids_option_host_itself_in_vlan/
 
 # email notifications
 
@@ -294,8 +218,8 @@ node=ryzen.pve.lan
 bin=$(ssh -t $node 'bash -ic "which uefisettings"')
 bin=${bin/$'\n'}
 bin=${bin/$'\r'}
-ssh $node sudo -S $bin hii list-questions --json > ./docs/proxmox/env/$node-uefi-questinos.tmp.json
-jq . ./docs/proxmox/env/$node-uefi-questinos.tmp.json > ./docs/proxmox/env/$node-uefi-questinos.json
+ssh $node sudo -S $bin hii list-questions --json > ./docs/proxmox/env/$node-uefi-questions.tmp.json
+jq . ./docs/proxmox/env/$node-uefi-questions.tmp.json > ./docs/proxmox/env/$node-uefi-questions.json
 ssh $node sudo -S $bin hii show-ifr > ./docs/proxmox/env/$node-uefi-forms.log
 ```
 
@@ -315,9 +239,9 @@ Look into the documentation for the original ACME script for the list of variabl
 
 ```bash
 # bad!
-export DuckDNS_Token="askdjhawkjqweeqjw"
+export DuckDNS_Token="qwertyuiop"
 # good
-DuckDNS_Token=askdjhawkjqweeqjw
+DuckDNS_Token=qwertyuiop
 ```
 
 # Huge pages

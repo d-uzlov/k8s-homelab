@@ -1,3 +1,4 @@
+
 # Outline client on OpenWRT
 
 In this guide, we set up the `shadowsocks-libev` Outline/Shadowsocks client.
@@ -19,6 +20,7 @@ opkg install shadowsocks-libev-ss-local shadowsocks-libev-ss-redir
 opkg install shadowsocks-libev-ss-rules shadowsocks-libev-ss-tunnel
 opkg install luci-app-shadowsocks-libev
 opkg install coreutils-base64
+opkg install bind-dig
 
  cat << "SCRIPT_EOF" > ./setup-outline.sh
 #!/bin/bash
@@ -212,23 +214,10 @@ cat << EOF > /etc/shadowsocks-libev/bypass-ubisoft2.lst
 194.169.249.0/24
 195.22.144.0/23
 EOF
-# nslookup connect.ubisoft.com
-# nslookup ubi.com
-# nslookup ubisoft.com
-# nslookup www.ubisoft.com
-cat << EOF > /etc/shadowsocks-libev/bypass-ubisoft3.lst
-3.216.167.152
-3.216.104.140
-18.173.154.37
-18.173.154.48
-18.173.154.82
-18.173.154.113
-34.224.14.87
-34.226.34.72
-54.91.237.202
-54.85.193.54
-100.27.116.167
-EOF
+
+dig +short connect.ubisoft.com ubi.com ubisoft.com www.ubisoft.com | grep '^[.0-9]*$' > /etc/shadowsocks-libev/bypass-ubisoft3.lst
+# dig +short www.pixiv.net pixiv.net i.pximg.net | grep '^[.0-9]*$' > /etc/shadowsocks-libev/bypass-pixiv.lst
+dig +short pixiv.net i.pximg.net | grep '^[.0-9]*$' > /etc/shadowsocks-libev/bypass-pixiv.lst
 
 /root/shadowsocks-bypass-update.sh
 ```
@@ -238,7 +227,7 @@ EOF
 ```bash
 load_rkn_list=/root/load-rkn-list.sh
 
- cat <<"EOF" > $load_rkn_list
+ cat << "EOF" > $load_rkn_list
 #!/bin/bash
 set -e
 
@@ -255,4 +244,14 @@ $load_rkn_list
 
 # repeat download every day at 03:17
 echo "17 3 */1 * * $load_rkn_list" >> /etc/crontabs/root
+```
+
+# Common forward lists
+
+```bash
+# https://github.com/GhostRooter0953/discord-voice-ips
+wget https://github.com/GhostRooter0953/discord-voice-ips/raw/refs/heads/master/main_domains/discord-main-ip-list -O /etc/shadowsocks-libev/forward-discord-main.lst
+wget https://github.com/GhostRooter0953/discord-voice-ips/raw/refs/heads/master/voice_domains/discord-voice-ip-list -O /etc/shadowsocks-libev/forward-discord-voice.lst
+
+/root/shadowsocks-forward-update.sh
 ```
