@@ -64,7 +64,7 @@ which in the process will resync the whole disk content from scratch.
 
 While you are re-creating the mirror, your data will be completely unprotected.
 
-If any unsafe shutdown happen, it will also likely require resyncing.
+If any unsafe shutdown happen, it will also likely require resync.
 For example: BSOD, power loss, hard reboot.
 
 Opinions (there doesn't seem to be too much negativity, unlike Storage Spaces):

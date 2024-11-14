@@ -109,7 +109,7 @@ kl apply -f ./docs/k8s/auth-convenience/
 namespace=test-namespace
 kl create ns "$namespace"
 # enforce=baseline disables access to host machine:
-#     hostPath volumes, hostNetwork, sysctls, etc.
+#     hostPath volumes, hostNetwork, sysctl, etc.
 kl label ns "$namespace" pod-security.kubernetes.io/enforce=baseline
 kl label ns "$namespace" "rbac/has-external-access=true"
 kl label ns "$namespace" "rbac-user/${short_user_name}=edit"

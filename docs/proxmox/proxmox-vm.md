@@ -40,7 +40,7 @@ sudo tee /lib/udev/rules.d/80-hotplug-cpu.rules << EOF
 SUBSYSTEM=="cpu", ACTION=="add", TEST=="online", ATTR{online}=="0", ATTR{online}="1"
 EOF
 
-# not nessesary
+# not necessary
 # should fix issues if changes don't apply without reboot
 sudo udevadm control --reload-rules && sudo udevadm trigger
 ```

@@ -15,6 +15,7 @@ curl -LO "https://dl.k8s.io/release/$kubectl_version/bin/linux/amd64/kubectl.sha
 echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
 sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 kubectl version --client
+rm -rf kubectl kubectl.sha256
 ```
 
 References:
@@ -72,7 +73,7 @@ EOF
 
 Local configuration:
 - edit variables in `~/.bashrc.d/998-kubeconfig.sh`
-- adjust the amount of aliases
+- adjust the amount and name of aliases in `~/.bashrc.d/999-kubectl-completion.sh`
 
 # Show pods from a certain node
 
@@ -108,8 +109,8 @@ sudo rm -rf /etc/cni/ && sudo reboot
 # Taint nodes if necessary
 
 ```bash
-kl taint nodes nodename key=value:type
-kl label node nodename key=value
+kl taint nodes node-name key=value:type
+kl label node node-name key=value
 # value is optional
 # for example
 kl taint nodes --overwrite n100.k8s.lan weak-node=:PreferNoSchedule
@@ -138,4 +139,12 @@ kl get pods --field-selector status.phase=Succeeded --all-namespaces
 # delete pods
 kl delete pods --field-selector status.phase=Failed --all-namespaces
 kl delete pods --field-selector status.phase=Succeeded --all-namespaces
+```
+
+# Get cluster info
+
+```bash
+# cluster domain, cluster CIDR
+kl -n kube-system describe cm kubeadm-config
+kl describe node | grep -e PodCIDR -e Name:
 ```

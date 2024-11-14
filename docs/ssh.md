@@ -53,9 +53,9 @@ ssh -i "$output_file" username@server
 # Add SSH config for a certain server
 
 Set a name for a server and override some defaults:
-- You can redirect connectino to a different IP or domain
-- Set key instead of the default one
-- Set custom
+- You can redirect connection to a different IP or domain
+- Set custom key instead of the default one
+- Set different username
 
 ```bash
 #     template

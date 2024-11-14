@@ -52,7 +52,7 @@ done
 
 # check that cache works
 # you shouldn't see any errors here,
-# and "Quota used" in the Harbor web UI should increate after the pull
+# and "Quota used" in the Harbor web UI should increase after the pull
 # you can also find the image in the registry after Harbor indexes it
 ssh $containerd_node sudo crictl pull docker.io/alpine:20240315
 ssh $containerd_node sudo crictl pull ghcr.io/screego/server:1.10.1

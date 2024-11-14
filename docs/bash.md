@@ -63,7 +63,7 @@ References:
 
 This is just an opinionated convenient prompt:
 - Username and host at the beginning
-- Full path with the last firectory highlighted
+- Full path with the last directory highlighted
 - Current date and time
 - Timer for previous command
 - Number of background jobs if any

@@ -127,7 +127,7 @@ References:
 #     this succeeds
 /usr/bin/ssh -e none -o 'BatchMode=yes'                            root@node.ip /bin/true
 #     this fails
-/usr/bin/ssh -e none -o 'BatchMode=yes' -o 'HostKeyAlias=nodename' root@node.ip /bin/true
+/usr/bin/ssh -e none -o 'BatchMode=yes' -o 'HostKeyAlias=node-name' root@node.ip /bin/true
 
 # run this on the target node to fix
 systemctl restart pveproxy

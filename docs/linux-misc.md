@@ -53,13 +53,9 @@ sudo nano /etc/hosts
 # Fix 'too many open files' issue
 
 ```bash
-# defualt values:
+# default values:
 #   fs.inotify.max_user_watches=8192
 #   fs.inotify.max_user_instances=128
-
-# change limits for current session
-sudo sysctl fs.inotify.max_user_watches=524288
-sudo sysctl fs.inotify.max_user_instances=512
 
 # change permanently
 # make sure that /etc/sysctl.conf

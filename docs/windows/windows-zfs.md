@@ -73,7 +73,7 @@ References:
 
 # Limit max ARC size
 
-- Open regedit
+- Open `regedit`
 - Go to `Computer\HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\OpenZFS\zfs_arc`
 - Set `zfs_arc_max` in bytes
 - - For example:

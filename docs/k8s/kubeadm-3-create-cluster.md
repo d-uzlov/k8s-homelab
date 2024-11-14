@@ -38,7 +38,7 @@ For example: [kube-vip for control plane](../../network/kube-vip-control-plane/r
 3. Local setup
 
 - `kubectl` installed
-- [options] Passwordless sudo on the nodes
+- [optional] Passwordless sudo on the nodes
 
 # Set up cluster config
 

@@ -73,7 +73,7 @@ kvmd:
     type: disabled
 EOF
 # relative mouse is only needed in case your OS
-# does not suport absolute mouse mode
+# does not support absolute mouse mode
 # source: https://docs.pikvm.org/mouse/
 # sudo tee << EOF /etc/kvmd/override.d/0-enable-relative-mouse.yaml
 # kvmd:
@@ -236,7 +236,7 @@ usbrelay
 # set pin like this
 usbrelay PSUIS_1=0
 
-# here id of the relay couldn\t be read, so it's just _1 instead of SOMEPREFIX_1
+# here id of the relay couldn't be read, so it's just _1 instead of PREFIX_1
 usbrelay
 # _1=0
 # _2=0

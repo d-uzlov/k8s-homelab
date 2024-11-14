@@ -10,8 +10,8 @@ git config --global user.name "FirstName LastName"
 
 ```bash
 ID=1440
-BRANCHNAME=pull-request-branch-name
-git fetch origin pull/$ID/head:$BRANCHNAME
+branch_name=pull-request-branch-name
+git fetch origin pull/$ID/head:$branch_name
 ```
 
 # Disable push

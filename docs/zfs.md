@@ -102,7 +102,7 @@ zfs --version
 dd if=/dev/zero of=/tmp/test-zfs-file bs=100M count=1
 sudo zpool create tank /tmp/test-zfs-file
 sudo zfs create tank/test
-# use sha256 chechsum to enable nopwrite
+# use sha256 checksum to enable nopwrite
 sudo zfs set checksum=sha256 tank/test
 sudo zfs set compression=lz4 tank/test
 sudo chmod 777 -R /tank
@@ -113,7 +113,7 @@ cp /tmp/test-random-file /tank/test/
 zfs list -t all -r tank/test
 # 1M used, 39M available
 
-# create snapshot, rewrite file, sheck used space
+# create snapshot, rewrite file, check used space
 sudo zfs snapshot tank/test@1
 cp /tmp/test-random-file /tank/test/
 zfs list -t all -r tank/test
