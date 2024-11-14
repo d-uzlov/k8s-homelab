@@ -13,12 +13,9 @@ References:
 - https://github.com/kubernetes/ingress-nginx
 
 Prerequisites:
-- [cert-manager](../cert-manager/readme.md)
-- - [optional] letsencrypt provider (deploy it only after ingress-nginx setup)
-- - [optional] duckdns provider
-- [wildcard certificate](../manual-certificates/readme.md)
-- [local DNS](../dns-k8s-gateway/readme.md)
-- - Also set up DNS forwarding for you main DNS zone
+- TLS certificate (preferably public one)
+- - For example: [wildcard certificate](../manual-certificates/readme.md)
+- [optional] [DNS for exposed services](../dns-k8s-gateway/readme.md)
 
 # Generate config
 
@@ -47,6 +44,7 @@ helm template \
 ```bash
 kl create ns ingress-nginx
 kl label ns ingress-nginx pod-security.kubernetes.io/enforce=baseline
+kl label ns ingress-nginx ingress=ingress
 
 kl apply -k ./ingress/nginx/
 kl -n ingress-nginx get pod -o wide

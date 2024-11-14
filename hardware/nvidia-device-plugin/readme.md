@@ -76,3 +76,8 @@ Default value is `utility,compute`.
 
 References:
 - https://github.com/NVIDIA/nvidia-container-runtime
+
+# nvenc support
+
+References:
+- https://developer.nvidia.com/video-encode-and-decode-gpu-support-matrix-new

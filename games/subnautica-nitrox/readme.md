@@ -1,5 +1,5 @@
 
-# Palworld
+# Nitrox (Subnautica coop server)
 
 References:
 - https://github.com/FuzzyStatic/nitrox-server
@@ -7,7 +7,7 @@ References:
 
 This is an _alpha_ version if nitrox which is able to work with Subnautica 2.0.
 
-Stability is below average.
+Stability is below ~~zero~~ average.
 
 The docker image is a derivative of [FuzzyStatic's image](https://github.com/FuzzyStatic/nitrox-server).
 
@@ -69,7 +69,7 @@ kl -n nitrox get pvc
 
 # after creating subnautica PVC
 # copy your installation folder to that PVC
-# root of the PVC must contain Subnautica_Data and Subnautica.exe
+# root of the PVC must contain Subnautica_Data/ and Subnautica.exe
 # you need to manually edit /Subnautica/Subnautica_Data/StreamingAssets/aa/catalog.json
 # replace all \\ with /
 
