@@ -11,10 +11,11 @@ References:
 # Create CRDs
 
 ```bash
-curl -L https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/experimental-install.yaml \
+curl -L https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/experimental-install.yaml \
   > ./ingress/gateway-api/install/experimental-install.yaml
 
-kl apply -f ./ingress/gateway-api/install/experimental-install.yaml --server-side
+kl apply -f ./ingress/gateway-api/install/experimental-install.yaml --server-side --force-conflicts
+# patch adds "parent" column and short name `htr`
 kl patch crd httproutes.gateway.networking.k8s.io --patch-file ./ingress/gateway-api/install/httproutes-print-patch.json --type json
 ```
 
