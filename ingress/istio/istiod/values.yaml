@@ -1,107 +1,102 @@
+pilot:
+  autoscaleEnabled: true
+  autoscaleMin: 1
+  autoscaleMax: 5
+  autoscaleBehavior: {}
+  replicaCount: 1
+  rollingMaxSurge: 100%
+  rollingMaxUnavailable: 25%
 
-defaults:
-  #.Values.pilot for discovery and mesh wide config
+  # Resources for a small pilot install
+  resources:
+    requests:
+      cpu: 0m
+      memory: 100Mi
 
-  ## Discovery Settings
-  pilot:
-    autoscaleEnabled: true
-    autoscaleMin: 1
-    autoscaleMax: 5
-    autoscaleBehavior: {}
-    replicaCount: 1
-    rollingMaxSurge: 100%
-    rollingMaxUnavailable: 25%
+  # Whether to use an existing CNI installation
+  cni:
+    enabled: false
+    provider: default
 
-    # Resources for a small pilot install
+  cpu:
+    targetAverageUtilization: 80
+  memory: {}
+    # targetAverageUtilization: 80
+
+  ## Mesh config settings
+
+  # Install the mesh config map, generated from values.yaml.
+  # If false, pilot wil use default values (by default) or user-supplied values.
+  configMap: true
+
+sidecarInjectorWebhook:
+  # This enables injection of sidecar in all namespaces,
+  # with the exception of namespaces with "istio-injection:disabled" annotation
+  # Only one environment should have this enabled.
+  enableNamespacesByDefault: false
+
+experimental:
+  stableValidationPolicy: false
+
+global:
+  istioNamespace: istio
+
+  # To output all istio components logs in json format by adding --log_as_json argument to each container argument
+  logAsJson: false
+
+  # Comma-separated minimum per-scope logging level of messages to output, in the form of <scope>:<level>,<scope>:<level>
+  # The control plane has different scopes depending on component, but can configure default log level across all components
+  # If empty, default scope and level will be used as configured in code
+  logging:
+    level: "default:info"
+
+  omitSidecarInjectorConfigMap: false
+
+  # Configure whether Operator manages webhook configurations. The current behavior
+  # of Istiod is to manage its own webhook configurations.
+  # When this option is set as true, Istio Operator, instead of webhooks, manages the
+  # webhook configurations. When this option is set as false, webhooks manage their
+  # own webhook configurations.
+  operatorManageWebhooks: false
+
+  proxy:
+    image: proxyv2
+
+    # This controls the 'policy' in the sidecar injector.
+    autoInject: enabled
+
+    # CAUTION: It is important to ensure that all Istio helm charts specify the same clusterDomain value
+    # cluster domain. Default value is "cluster.local".
+    clusterDomain: "cluster.local"
+
+    # Per Component log level for proxy, applies to gateways and sidecars. If a component level is
+    # not set, then the global "logLevel" will be used.
+    componentLogLevel: "misc:error"
+
+    # Resources for the sidecar.
     resources:
       requests:
-        cpu: 0m
-        memory: 100Mi
+        cpu: null
+        memory: 128Mi
+      limits:
+        cpu: null
+        memory: 1024Mi
 
-    # Whether to use an existing CNI installation
-    cni:
-      enabled: false
-      provider: default
+  proxy_init:
+    # Base name for the proxy_init container, used to configure iptables.
+    image: proxyv2
 
-    cpu:
-      targetAverageUtilization: 80
-    memory: {}
-      # targetAverageUtilization: 80
+  ##############################################################################################
+  # The following values are found in other charts. To effectively modify these values, make   #
+  # make sure they are consistent across your Istio helm charts                                #
+  ##############################################################################################
 
-    ## Mesh config settings
+  # Configure the certificate provider for control plane communication.
+  # Currently, two providers are supported: "kubernetes" and "istiod".
+  # As some platforms may not have kubernetes signing APIs,
+  # Istiod is the default
+  pilotCertProvider: istiod
 
-    # Install the mesh config map, generated from values.yaml.
-    # If false, pilot wil use default values (by default) or user-supplied values.
-    configMap: true
-
-  sidecarInjectorWebhook:
-    # This enables injection of sidecar in all namespaces,
-    # with the exception of namespaces with "istio-injection:disabled" annotation
-    # Only one environment should have this enabled.
-    enableNamespacesByDefault: false
-
-  experimental:
-    stableValidationPolicy: false
-
-  global:
-    istioNamespace: istio
-
-    # To output all istio components logs in json format by adding --log_as_json argument to each container argument
-    logAsJson: false
-
-    # Comma-separated minimum per-scope logging level of messages to output, in the form of <scope>:<level>,<scope>:<level>
-    # The control plane has different scopes depending on component, but can configure default log level across all components
-    # If empty, default scope and level will be used as configured in code
-    logging:
-      level: "default:info"
-
-    omitSidecarInjectorConfigMap: false
-
-    # Configure whether Operator manages webhook configurations. The current behavior
-    # of Istiod is to manage its own webhook configurations.
-    # When this option is set as true, Istio Operator, instead of webhooks, manages the
-    # webhook configurations. When this option is set as false, webhooks manage their
-    # own webhook configurations.
-    operatorManageWebhooks: false
-
-    proxy:
-      image: proxyv2
-
-      # This controls the 'policy' in the sidecar injector.
-      autoInject: enabled
-
-      # CAUTION: It is important to ensure that all Istio helm charts specify the same clusterDomain value
-      # cluster domain. Default value is "cluster.local".
-      clusterDomain: "cluster.local"
-
-      # Per Component log level for proxy, applies to gateways and sidecars. If a component level is
-      # not set, then the global "logLevel" will be used.
-      componentLogLevel: "misc:error"
-
-      # Resources for the sidecar.
-      resources:
-        requests:
-          cpu: null
-          memory: 128Mi
-        limits:
-          cpu: null
-          memory: 1024Mi
-
-    proxy_init:
-      # Base name for the proxy_init container, used to configure iptables.
-      image: proxyv2
-
-    ##############################################################################################
-    # The following values are found in other charts. To effectively modify these values, make   #
-    # make sure they are consistent across your Istio helm charts                                #
-    ##############################################################################################
-
-    # Configure the certificate provider for control plane communication.
-    # Currently, two providers are supported: "kubernetes" and "istiod".
-    # As some platforms may not have kubernetes signing APIs,
-    # Istiod is the default
-    pilotCertProvider: istiod
-
-  base:
-    # For istioctl usage to disable istio config crds in base
-    enableIstioConfigCRDs: true
+base:
+  # For istioctl usage to disable istio config crds in base
+  enableIstioConfigCRDs: true
