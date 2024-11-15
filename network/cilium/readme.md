@@ -14,23 +14,23 @@ You need to regenerate the deployment if you use control plane endpoint other th
 helm repo add cilium https://helm.cilium.io/
 helm repo update cilium
 helm search repo cilium/cilium --versions --devel | head
-helm show values cilium/cilium --version 1.16.2 > ./network/cilium/default-values.yaml
+helm show values cilium/cilium --version 1.17.0-pre.2 > ./network/cilium/default-values.yaml
 
 helm template cilium cilium/cilium \
-  --version 1.16.2 \
+  --version 1.17.0-pre.2 \
   --values ./network/cilium/values.yaml \
   --namespace cilium \
   --api-versions gateway.networking.k8s.io/v1/GatewayClass \
   > ./network/cilium/cilium-native.gen.yaml
 helm template cilium cilium/cilium \
-  --version 1.16.2 \
+  --version 1.17.0-pre.2 \
   --values ./network/cilium/values.yaml \
   --namespace cilium \
   --set l2announcements.enable=true \
   --api-versions gateway.networking.k8s.io/v1/GatewayClass \
   > ./network/cilium/cilium-native-l2lb.gen.yaml
 helm template cilium cilium/cilium \
-  --version 1.16.2 \
+  --version 1.17.0-pre.2 \
   --values ./network/cilium/values.yaml \
   --namespace cilium \
   --set routingMode=tunnel \
@@ -64,6 +64,8 @@ kl create ns cilium cilium-secrets
 
 kl -n cilium apply -f ./network/network-policies/deny-ingress.yaml
 kl -n cilium apply -f ./network/network-policies/allow-same-namespace.yaml
+
+kl -n cilium delete job hubble-generate-certs
 
 # choose one of the deployment options:
 # - choose native when using a single L2 segment
@@ -151,11 +153,11 @@ cilium version --client
 Test connection to cluster:
 
 ```bash
-# if you are using a custom kubecondig, set it before running the command
-KUBECONFIG=$KUBECONFIGLOCAL cilium status -n cilium
+# if you are using a custom kubeconfig, set it before running the command
+KUBECONFIG=$KUBECONFIG_LOCAL cilium status -n cilium
 # or define a short alias
 function cilium() {
-  KUBECONFIG=$KUBECONFIGLOCAL /usr/local/bin/cilium -n cilium "$@"
+  KUBECONFIG=$KUBECONFIG_LOCAL /usr/local/bin/cilium -n cilium "$@"
 }
 # check that the tool works
 cilium status

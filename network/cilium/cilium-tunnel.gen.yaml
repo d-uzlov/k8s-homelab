@@ -50,7 +50,8 @@ metadata:
 data:
 
   # Identity allocation mode selects how identities are shared between cilium
-  # nodes by setting how they are stored. The options are "crd" or "kvstore".
+  # nodes by setting how they are stored. The options are "crd", "kvstore" or
+  # "doublewrite-readkvstore" / "doublewrite-readcrd".
   # - "crd" stores identities in kubernetes as CRDs (custom resource definition).
   #   These can be queried with:
   #     kubectl get ciliumid
@@ -59,7 +60,11 @@ data:
   #   backend. Upgrades from these older cilium versions should continue using
   #   the kvstore by commenting out the identity-allocation-mode below, or
   #   setting it to "kvstore".
+  # - "doublewrite" modes store identities in both the kvstore and CRDs. This is useful
+  #   for seamless migrations from the kvstore mode to the crd mode. Consult the
+  #   documentation for more information on how to perform the migration.
   identity-allocation-mode: crd
+
   identity-heartbeat-timeout: "30m0s"
   identity-gc-interval: "15m0s"
   cilium-endpoint-gc-interval: "5m0s"
@@ -129,6 +134,7 @@ data:
   # backend and affinity maps.
   bpf-lb-map-max: "65536"
   bpf-lb-external-clusterip: "false"
+  bpf-lb-source-range-all-types: "false"
 
   bpf-events-drop-enabled: "true"
   bpf-events-policy-verdict-enabled: "true"
@@ -201,6 +207,7 @@ data:
   bpf-lb-mode: "dsr"
   bpf-lb-acceleration: "disabled"
   bpf-lb-dsr-dispatch: "geneve"
+  enable-experimental-lb: "false"
   enable-svc-source-range-check: "true"
   enable-l2-neigh-discovery: "true"
   arping-refresh-period: "30s"
@@ -233,6 +240,8 @@ data:
   ipam-cilium-node-update-rate: "15s"
   cluster-pool-ipv4-cidr: "10.201.0.0/16"
   cluster-pool-ipv4-mask-size: "24"
+
+  default-lb-service-ipam: "lbipam"
   egress-gateway-reconciliation-trigger-interval: "1s"
   enable-vtep: "false"
   vtep-endpoint: ""
@@ -245,7 +254,6 @@ data:
   cgroup-root: "/run/cilium/cgroupv2"
   enable-k8s-terminating-endpoint: "true"
   enable-sctp: "false"
-
   k8s-client-qps: "100"
   k8s-client-burst: "200"
   remove-cilium-node-taints: "true"
@@ -285,6 +293,10 @@ data:
 
   nat-map-stats-entries: "32"
   nat-map-stats-interval: "30s"
+  enable-internal-traffic-policy: "true"
+  enable-lb-ipam: "true"
+  enable-non-default-deny-policies: "true"
+  enable-source-ip-verification: "true"
 
 # Extra config allows adding arbitrary properties to the cilium config.
 # By putting it at the end of the ConfigMap, it's also possible to override existing properties.
@@ -594,17 +606,21 @@ data:
           }
         }
       ],
-      "layeredRuntime": {
-        "layers": [
+      "overload_manager": {
+        "resource_monitors": [
           {
-            "name": "static_layer_0",
-            "staticLayer": {
-              "overload": {
-                "global_downstream_max_connections": 50000
-              }
+            "name": "envoy.resource_monitors.global_downstream_max_connections",
+            "typed_config": {
+              "@type": "type.googleapis.com/envoy.extensions.resource_monitors.downstream_connections.v3.DownstreamConnectionsConfig",
+              "max_active_downstream_connections": "50000"
             }
           }
         ]
+      },
+      "application_log_config": {
+        "log_format": {
+          "text_format": "[%Y-%m-%d %T.%e][%t][%l][%n] [%g:%#] %v"
+        }
       },
       "admin": {
         "address": {
@@ -781,6 +797,15 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - configmaps
+  resourceNames:
+  - cilium-config
+  verbs:
+   # allow patching of the configmap to set annotations
+  - patch
+- apiGroups:
+  - ""
+  resources:
   - nodes
   verbs:
   - list
@@ -910,6 +935,13 @@ rules:
   - delete
   - patch
 - apiGroups:
+  - cilium.io
+  resources:
+  - ciliumbgpclusterconfigs/status
+  - ciliumbgppeerconfigs/status
+  verbs:
+  - update
+- apiGroups:
   - apiextensions.k8s.io
   resources:
   - customresourcedefinitions
@@ -955,6 +987,7 @@ rules:
   - ciliumbgppeeringpolicies
   - ciliumbgpclusterconfigs
   - ciliumbgpnodeconfigoverrides
+  - ciliumbgppeerconfigs
   verbs:
   - get
   - list
@@ -1379,22 +1412,18 @@ spec:
     metadata:
       annotations:
         # ensure pods roll when configmap updates
-        cilium.io/cilium-configmap-checksum: "256ed9c01da0bae6e1a688153134c45b29933981645397c4727038c3f2ed939f"
-        # Set app AppArmor's profile to "unconfined". The value of this annotation
-        # can be modified as long users know which profiles they have available
-        # in AppArmor.
-        container.apparmor.security.beta.kubernetes.io/cilium-agent: "unconfined"
-        container.apparmor.security.beta.kubernetes.io/clean-cilium-state: "unconfined"
-        container.apparmor.security.beta.kubernetes.io/mount-cgroup: "unconfined"
-        container.apparmor.security.beta.kubernetes.io/apply-sysctl-overwrites: "unconfined"
+        cilium.io/cilium-configmap-checksum: "e6ac504424a48363410cfdbcf9d37f1f390e331359cb240a04bbf93e3f79103c"
       labels:
         k8s-app: cilium
         app.kubernetes.io/name: cilium-agent
         app.kubernetes.io/part-of: cilium
     spec:
+      securityContext:
+        appArmorProfile:
+          type: Unconfined
       containers:
       - name: cilium-agent
-        image: "quay.io/cilium/cilium:v1.16.2@sha256:4386a8580d8d86934908eea022b0523f812e6a542f30a86a47edd8bed90d51ea"
+        image: "quay.io/cilium/cilium:v1.17.0-pre.2@sha256:9027c22b27e600e56eef6b35771629e9d14a7e9075170f516845d30b5776943d"
         imagePullPolicy: IfNotPresent
         command:
         - cilium-agent
@@ -1534,6 +1563,9 @@ spec:
           mountPropagation: HostToContainer
         - name: cilium-run
           mountPath: /var/run/cilium
+        - name: cilium-netns
+          mountPath: /var/run/cilium/netns
+          mountPropagation: HostToContainer
         - name: etc-cni-netd
           mountPath: /host/etc/cni/net.d
         - name: clustermesh-secrets
@@ -1552,7 +1584,7 @@ spec:
           mountPath: /tmp
       initContainers:
       - name: config
-        image: "quay.io/cilium/cilium:v1.16.2@sha256:4386a8580d8d86934908eea022b0523f812e6a542f30a86a47edd8bed90d51ea"
+        image: "quay.io/cilium/cilium:v1.17.0-pre.2@sha256:9027c22b27e600e56eef6b35771629e9d14a7e9075170f516845d30b5776943d"
         imagePullPolicy: IfNotPresent
         command:
         - cilium-dbg
@@ -1579,7 +1611,7 @@ spec:
       # Required to mount cgroup2 filesystem on the underlying Kubernetes node.
       # We use nsenter command with host's cgroup and mount namespaces enabled.
       - name: mount-cgroup
-        image: "quay.io/cilium/cilium:v1.16.2@sha256:4386a8580d8d86934908eea022b0523f812e6a542f30a86a47edd8bed90d51ea"
+        image: "quay.io/cilium/cilium:v1.17.0-pre.2@sha256:9027c22b27e600e56eef6b35771629e9d14a7e9075170f516845d30b5776943d"
         imagePullPolicy: IfNotPresent
         env:
         - name: CGROUP_ROOT
@@ -1616,7 +1648,7 @@ spec:
             drop:
               - ALL
       - name: apply-sysctl-overwrites
-        image: "quay.io/cilium/cilium:v1.16.2@sha256:4386a8580d8d86934908eea022b0523f812e6a542f30a86a47edd8bed90d51ea"
+        image: "quay.io/cilium/cilium:v1.17.0-pre.2@sha256:9027c22b27e600e56eef6b35771629e9d14a7e9075170f516845d30b5776943d"
         imagePullPolicy: IfNotPresent
         env:
         - name: BIN_PATH
@@ -1654,7 +1686,7 @@ spec:
       # from a privileged container because the mount propagation bidirectional
       # only works from privileged containers.
       - name: mount-bpf-fs
-        image: "quay.io/cilium/cilium:v1.16.2@sha256:4386a8580d8d86934908eea022b0523f812e6a542f30a86a47edd8bed90d51ea"
+        image: "quay.io/cilium/cilium:v1.17.0-pre.2@sha256:9027c22b27e600e56eef6b35771629e9d14a7e9075170f516845d30b5776943d"
         imagePullPolicy: IfNotPresent
         args:
         - 'mount | grep "/sys/fs/bpf type bpf" || mount -t bpf bpf /sys/fs/bpf'
@@ -1670,7 +1702,7 @@ spec:
           mountPath: /sys/fs/bpf
           mountPropagation: Bidirectional
       - name: clean-cilium-state
-        image: "quay.io/cilium/cilium:v1.16.2@sha256:4386a8580d8d86934908eea022b0523f812e6a542f30a86a47edd8bed90d51ea"
+        image: "quay.io/cilium/cilium:v1.17.0-pre.2@sha256:9027c22b27e600e56eef6b35771629e9d14a7e9075170f516845d30b5776943d"
         imagePullPolicy: IfNotPresent
         command:
         - /init-container.sh
@@ -1721,7 +1753,7 @@ spec:
           mountPath: /var/run/cilium # wait-for-kube-proxy
       # Install the CNI binaries in an InitContainer so we don't have a writable host mount in the agent
       - name: install-cni-binaries
-        image: "quay.io/cilium/cilium:v1.16.2@sha256:4386a8580d8d86934908eea022b0523f812e6a542f30a86a47edd8bed90d51ea"
+        image: "quay.io/cilium/cilium:v1.17.0-pre.2@sha256:9027c22b27e600e56eef6b35771629e9d14a7e9075170f516845d30b5776943d"
         imagePullPolicy: IfNotPresent
         command:
           - "/install-plugin.sh"
@@ -1765,6 +1797,11 @@ spec:
       - name: cilium-run
         hostPath:
           path: /var/run/cilium
+          type: DirectoryOrCreate
+        # To exec into pod network namespaces
+      - name: cilium-netns
+        hostPath:
+          path: /var/run/netns
           type: DirectoryOrCreate
         # To keep state between restarts / upgrades for bpf maps
       - name: bpf-maps
@@ -1888,19 +1925,18 @@ spec:
   template:
     metadata:
       annotations:
-        # Set app AppArmor's profile to "unconfined". The value of this annotation
-        # can be modified as long users know which profiles they have available
-        # in AppArmor.
-        container.apparmor.security.beta.kubernetes.io/cilium-envoy: "unconfined"
       labels:
         k8s-app: cilium-envoy
         name: cilium-envoy
         app.kubernetes.io/name: cilium-envoy
         app.kubernetes.io/part-of: cilium
     spec:
+      securityContext:
+        appArmorProfile:
+          type: Unconfined
       containers:
       - name: cilium-envoy
-        image: "quay.io/cilium/cilium-envoy:v1.29.9-1726784081-a90146d13b4cd7d168d573396ccf2b3db5a3b047@sha256:9762041c3760de226a8b00cc12f27dacc28b7691ea926748f9b5c18862db503f"
+        image: "quay.io/cilium/cilium-envoy:v1.30.7-1730239547-90b7953f5b6ffe617fa630d42ea6d5b65fba1b9e@sha256:d7db101d856c478a497fc79fab3ce3c732221e80fdf37bfe001672acb155d164"
         imagePullPolicy: IfNotPresent
         command:
         - /usr/bin/cilium-envoy-starter
@@ -1909,7 +1945,6 @@ spec:
         - '-c /var/run/cilium/envoy/bootstrap-config.json'
         - '--base-id 0'
         - '--log-level info'
-        - '--log-format [%Y-%m-%d %T.%e][%t][%l][%n] [%g:%#] %v'
         startupProbe:
           httpGet:
             host: "127.0.0.1"
@@ -2071,7 +2106,7 @@ spec:
     metadata:
       annotations:
         # ensure pods roll when configmap updates
-        cilium.io/cilium-configmap-checksum: "256ed9c01da0bae6e1a688153134c45b29933981645397c4727038c3f2ed939f"
+        cilium.io/cilium-configmap-checksum: "e6ac504424a48363410cfdbcf9d37f1f390e331359cb240a04bbf93e3f79103c"
         prometheus.io/port: "9963"
         prometheus.io/scrape: "true"
       labels:
@@ -2082,7 +2117,7 @@ spec:
     spec:
       containers:
       - name: cilium-operator
-        image: "quay.io/cilium/operator-generic:v1.16.2@sha256:cccfd3b886d52cb132c06acca8ca559f0fce91a6bd99016219b1a81fdbc4813a"
+        image: "quay.io/cilium/operator-generic:v1.17.0-pre.2@sha256:2262d42f99acce0aefac822e0317f4d74668a5e76d54f736f19b75f6081184cb"
         imagePullPolicy: IfNotPresent
         command:
         - cilium-operator-generic
@@ -2201,7 +2236,7 @@ spec:
             runAsGroup: 65532
             runAsNonRoot: true
             runAsUser: 65532
-          image: "quay.io/cilium/hubble-relay:v1.16.2@sha256:4b559907b378ac18af82541dafab430a857d94f1057f2598645624e6e7ea286c"
+          image: "quay.io/cilium/hubble-relay:v1.17.0-pre.2@sha256:f37cf93adc02d60143132272169ff6e528b9271d1c46830d802271c22606720f"
           imagePullPolicy: IfNotPresent
           command:
             - hubble-relay
@@ -2391,7 +2426,7 @@ spec:
               type: RuntimeDefault
           containers:
             - name: certgen
-              image: "quay.io/cilium/certgen:v0.2.0@sha256:169d93fd8f2f9009db3b9d5ccd37c2b753d0989e1e7cd8fe79f9160c459eef4f"
+              image: "quay.io/cilium/certgen:v0.2.1@sha256:ab6b1928e9c5f424f6b0f51c68065b9fd85e2f8d3e5f21fbd1a3cb27e6fb9321"
               imagePullPolicy: IfNotPresent
               securityContext:
                 capabilities:
@@ -2404,7 +2439,7 @@ spec:
               # line args instead of via config map. This allows users to inspect
               # the values used in past runs by inspecting the completed pod.
               args:
-                - "--ca-generate"
+                - "--ca-generate=true"
                 - "--ca-reuse-secret"
                 - "--ca-secret-namespace=cilium"
                 - "--ca-secret-name=cilium-ca"
@@ -2422,7 +2457,8 @@ spec:
                       - signing
                       - key encipherment
                       - server auth
-                      validity: 26280h
+                      - client auth
+                      validity: 8760h
                     - name: hubble-relay-client-certs
                       namespace: cilium
                       commonName: "*.hubble-relay.cilium.io"
@@ -2432,7 +2468,7 @@ spec:
                       - signing
                       - key encipherment
                       - client auth
-                      validity: 26280h
+                      validity: 8760h
           hostNetwork: false
           serviceAccount: "hubble-generate-certs"
           serviceAccountName: "hubble-generate-certs"
@@ -2473,7 +2509,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: certgen
-          image: "quay.io/cilium/certgen:v0.2.0@sha256:169d93fd8f2f9009db3b9d5ccd37c2b753d0989e1e7cd8fe79f9160c459eef4f"
+          image: "quay.io/cilium/certgen:v0.2.1@sha256:ab6b1928e9c5f424f6b0f51c68065b9fd85e2f8d3e5f21fbd1a3cb27e6fb9321"
           imagePullPolicy: IfNotPresent
           securityContext:
             capabilities:
@@ -2486,7 +2522,7 @@ spec:
           # line args instead of via config map. This allows users to inspect
           # the values used in past runs by inspecting the completed pod.
           args:
-            - "--ca-generate"
+            - "--ca-generate=true"
             - "--ca-reuse-secret"
             - "--ca-secret-namespace=cilium"
             - "--ca-secret-name=cilium-ca"
@@ -2504,7 +2540,8 @@ spec:
                   - signing
                   - key encipherment
                   - server auth
-                  validity: 26280h
+                  - client auth
+                  validity: 8760h
                 - name: hubble-relay-client-certs
                   namespace: cilium
                   commonName: "*.hubble-relay.cilium.io"
@@ -2514,7 +2551,7 @@ spec:
                   - signing
                   - key encipherment
                   - client auth
-                  validity: 26280h
+                  validity: 8760h
       hostNetwork: false
       serviceAccount: "hubble-generate-certs"
       serviceAccountName: "hubble-generate-certs"
