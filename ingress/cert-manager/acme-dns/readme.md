@@ -160,7 +160,7 @@ echo "This is your full domain: $(jq -r .fulldomain ./ingress/cert-manager/acme-
 
 ```bash
 # check that CNAME reference is used
-nslookup -type=txt _acme-challenge.$managed_domain
+nslookup -type=txt _acme-challenge.$managed_domain 8.8.8.8
 ```
 
 ---
@@ -169,7 +169,10 @@ nslookup -type=txt _acme-challenge.$managed_domain
 
 ```bash
 # Create a config file for acme-dns client
-jq -n --slurpfile source ./ingress/cert-manager/acme-dns/env/$managed_domain-domain-info.json '."'"$managed_domain"'" = $source[0]' > ./ingress/cert-manager/acme-dns/env/$managed_domain-acmedns.json
+jq -n \
+  --slurpfile source ./ingress/cert-manager/acme-dns/env/$managed_domain-domain-info.json \
+  '."'"$managed_domain"'" = $source[0]' \
+  > ./ingress/cert-manager/acme-dns/env/$managed_domain-acmedns.json
 
 # set to your email
 domain_admin_email=user@example.org

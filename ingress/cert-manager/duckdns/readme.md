@@ -64,13 +64,14 @@ You can use these commands to check that you are using the correct DuckDNS token
 and that the service is currently working as expected.
 
 ```bash
-# don't forget to update these values before running the command
-token="<token>"
-domain="example"
+token=
+# duckdns prefix, not a full domain
+domain=
+value=
 # update TXT record
-curl "https://www.duckdns.org/update?domains=$domain&token=$token&txt=test-2-txt-value"
+curl "https://www.duckdns.org/update?domains=$domain&token=$token&txt=$value"
 
 # query TXT record
-nslookup -q=txt example.duckdns.org
-dig _acme-challenege.example.duckdns.org TXT
+nslookup -q=txt _acme-challenge.$domain.duckdns.org
+dig _acme-challenge.$domain.duckdns.org TXT
 ```

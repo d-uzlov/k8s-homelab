@@ -44,7 +44,7 @@ Link: https://www.cloudns.net/
 
 - [?] 1 free subdomain
 - [?] Several parent domains available
-- [+] Allows custom entries
+- [+] Allows any custom entries
 - [+] All parent domains are public domain suffixes in 2024: https://github.com/publicsuffix/list/blob/f781a9a41c45c1438be97543c8e2d31530ad3429/public_suffix_list.dat#L12453-L12472
 - [-] You are limited by 50 records in total, including any A, NS, CNAME, etc.
 
@@ -75,14 +75,19 @@ Link: https://freedns.afraid.org/
 
 Link: https://www.noip.com/
 
-- [-] `Confirm Hostname Every 30 Days` in the free tier
+- [-] `Confirm Hostname Every 30 Days via link in email` in the free tier
 - [+] Reddit is happy with the reliability
 
 # Dynu
 
 Link: https://www.dynu.com/
 
-- [-] Registration is broken
+- [+] All provided domains are public suffixes in 2024: https://github.com/publicsuffix/list/blob/b00d15ea62059a24d57cac96740c98dcb80b6edc/public_suffix_list.dat#L12968-L12985
+- [+] 4 free 3rd level domains
+- [+] Wildcard records
+- [+] No auto deletion
+- [+] Custom DNS records: A, AAAA, CNAME, PTR (?), MX, SRV
+- [-] TXT records are not available in the free tier, except ACME validation
 
 # Free my ip
 
@@ -107,4 +112,13 @@ approvals were always long, but at the moment of writing this
 that person seems to have stopped responding for several months
 - - Seems to be non-operational since around mid-2023
 - - https://www.reddit.com/r/selfhosted/comments/1av6awf/euorg_validation_speed/
-- [+] Seems to be a proper 4th level domain which can be delegated
+- [+] Seems to be a proper 3rd level domain which can be delegated
+
+# myaddr
+
+Link: https://myaddr.tools/
+
+- [-] `myaddr.*` is NOT a public domain suffix in 2024
+- [+] Unlimited registrations
+- [+] Wildcard record
+- [+] DNS01 is available

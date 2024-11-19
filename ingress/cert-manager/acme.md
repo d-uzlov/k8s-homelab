@@ -27,19 +27,17 @@ Staging issuer has some unspecified high limits.
 
 Production issuer has the following limits:
 - Certificates per Registered Name: 50 per week
-  - Registered Domain is a `<subdomains>.<registered-name>.<register-domain>`.
+  - Registered Domain is the last component before last public suffix
+  - For example: `<subdomain>.<registered-name>.<register-domain>`.
   - `<register-domain>` is a parent domain, like `com`, `net`, `co.uk`, etc.
-  - Fortunately, `duckdns.org` is in the list of register domains,
-  so things like `my-domain.duckdns.org` and `another-domain.duckdns.org`
-  are considered separate domains and don't share a rate limit.
-  - However, `app.my-domain.duckdns.org` and `cloud.my-domain.duckdns.org` share the limit.
+  - Subdomains share the limit.
   - This is better explained here: https://publicsuffix.org.
   Also, that website has a list of all `<register-domain>` possible values.
 - New Orders per account: 300 per 3 hours
 - Duplicate Certificate: 5 per week
 - Failed Validation limit: 5 failures per account, per hostname, per hour.
   This limit is higher on staging environment
-- Accounts per IP Address: 10 per 3 hours
+- Accounts registration: 10 per 3 hours per IP Address
 
 An account is registered by cert-manager when you create a new Issuer or a ClusterIssuer
 https://cert-manager.io/docs/configuration/acme/
@@ -76,3 +74,6 @@ resolve the NS record via the corresponding A record,
 and finally query the corresponding DNS server via the resolved IP.
 
 NS and the corresponding A records are optional.
+
+More info on how to get the CNAME address and set up validation is here:
+[acme-dns](./acme-dns/readme.md)
