@@ -119,8 +119,8 @@ sudo systemctl restart sshd
 In cases when you need it.
 
 ```bash
-cat << EOF | tee /etc/ssh/sshd_config.d/0-enable_root_login.conf
+cat << EOF | tee /etc/ssh/sshd_config.d/1-enable_root_login.conf
 PermitRootLogin yes
 EOF
-systemctl restart sshd
+sudo systemctl restart sshd
 ```

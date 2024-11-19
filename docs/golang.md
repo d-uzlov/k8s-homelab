@@ -2,12 +2,19 @@
 # Install
 
 ```bash
-curl -OL https://golang.org/dl/go1.22.2.linux-amd64.tar.gz &&
+# check out the latest release
+release=1.23.0
+filename=go$release.linux-amd64.tar.gz
+curl -OL https://golang.org/dl/$filename &&
 rm -rf /usr/local/go &&
-sudo tar -C /usr/local -xzf go1.22.2.linux-amd64.tar.gz
+sudo tar -C /usr/local -xzf $filename &&
+rm $filename
 
-# if you don't have it already in path
+cat << "EOF" > ~/.bashrc.d/0-gopath.sh
 export PATH=$PATH:/usr/local/go/bin
+EOF
+
+go install golang.org/x/tools/gopls@latest
 ```
 
 # VSCode set GO OS

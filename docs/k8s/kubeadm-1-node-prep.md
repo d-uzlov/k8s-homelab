@@ -16,8 +16,8 @@ sudo dnf remove -y zram-generator-defaults
 
 ```bash
 sudo tee /etc/sysctl.d/inotify.conf <<EOF
-fs.inotify.max_user_watches = 524288
-fs.inotify.max_user_instances = 512
+fs.inotify.max_user_watches = 4194304
+fs.inotify.max_user_instances = 65536
 EOF
 # reload rules from /etc/sysctl.d
 sudo sysctl --system

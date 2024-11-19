@@ -230,10 +230,20 @@ References:
 
 # ACME
 
-Usually you need to define a few environment variables in the field `API Data`.
+- `Datacenter` -> `ACME`: Create account and plugin context
+- - This menu is available only for root account
+- Node -> `System` -> Certificates: add new ACME certificate, choose your plugin
+
+For plugin you need to define a few environment variables in the field `API Data`.
 
 Look into the documentation for the original ACME script for the list of variables for each DNS plugin:
 - https://github.com/acmesh-official/acme.sh/wiki/dnsapi
+
+For example:
+
+- DuckDNS: `DuckDNS_Token`
+- Dynu: `Dynu_ClientId`, `Dynu_Secret`
+- - Get them here: https://www.dynu.com/ControlPanel/APICredentials
 
 **Note**: define environment variables without `export` and without quotes!
 

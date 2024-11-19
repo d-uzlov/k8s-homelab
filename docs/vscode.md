@@ -87,6 +87,11 @@ Add hotkeys into array in `keybindings.json`:
   "when": "terminalFocus"
 },
 {
+  "key": "shift+enter",
+  "command": "workbench.action.terminal.runSelectedText",
+  "when": "editorFocus"
+},
+{
   "key": "ctrl+oem_comma", // this blocks `ctrl + ,` in terminal, and it can't be disabled via commandsToSkipShell
   "command": "-workbench.action.openSettings"
 },
