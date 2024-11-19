@@ -141,7 +141,7 @@ you need to set `OME_WEBRTC_CANDIDATE_IP` environment variable to point to corre
 - - Set server: `rtmp://<provide_ip or DNS>:1935/app`
 - - Set stream key: an arbitrary string
 - - `/app` corresponds to `<Name>app</Name>` in `ome-config.xml`, and can be changed by editing the config.
-- - Reference: [OME quickstart docs](https://airensoft.gitbook.io/ovenmediaengine/quick-start)
+- - Reference: [OME quick start docs](https://airensoft.gitbook.io/ovenmediaengine/quick-start)
 
 You can see several `streamer` services depending on your setup.
 Just `streamer` will connect to a random available OME origin instance.

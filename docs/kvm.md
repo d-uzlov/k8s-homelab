@@ -30,6 +30,8 @@ git clone https://github.com/srepac/kvmd-armbian.git --depth 1
 # read errors and fix them if there were errors instead of yaml
 
 curl --insecure https://localhost/login/
+# if needed, change displayed name of the system
+sudo nano /etc/kvmd/meta.yaml
 
 # optionally, set up users
 # set password for username, create user if needed
@@ -230,17 +232,13 @@ Usage example:
 ```bash
 # without args prints all available pins
 usbrelay
-# PSUIS_1=1
-# PSUIS_2=0
+# PREFIX_1=1
+# PREFIX_2=0
 
 # set pin like this
-usbrelay PSUIS_1=0
+usbrelay PREFIX_1=0
 
-# here id of the relay couldn't be read, so it's just _1 instead of PREFIX_1
-usbrelay
-# _1=0
-# _2=0
-
+# on some relays PREFIX is empty
 # you can set pins via this short name
 usbrelay _1=0
 # you can also use the device path
@@ -255,7 +253,7 @@ sudo usermod -a -G plugdev kvmd
 
 # select a relay to use
 # note that /dev/usbrelay* is a physical device path
-# that wiil change if you plug the device into a different USB port
+# that will change if you plug the device into a different USB port
 ls -la /dev/usbrelay*
 relay=
 # example: relay=/dev/usbrelay5-1

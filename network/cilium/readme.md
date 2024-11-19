@@ -54,7 +54,7 @@ kl -n kube-system patch ds kube-proxy --type=json -p='[{"op": "remove", "path": 
 # Also, `l2lb` doesn't work without kube-proxy replacement.
 
 mkdir -p ./network/cilium/env/
-cat <<EOF > ./network/cilium/env/contol-plane-endpoint.env
+cat <<EOF > ./network/cilium/env/control-plane-endpoint.env
 # ip or domain that points to your control plane nodes
 # same as what you set during cluster creation
 control_plane_endpoint=cp.k8s.lan
@@ -70,13 +70,13 @@ kl -n cilium delete job hubble-generate-certs
 # choose one of the deployment options:
 # - choose native when using a single L2 segment
 (
-  . ./network/cilium/env/contol-plane-endpoint.env \
+  . ./network/cilium/env/control-plane-endpoint.env \
   && sed "s/cp-address-automatic-replace/$control_plane_endpoint/" ./network/cilium/cilium-native.gen.yaml \
   | kl apply -f - --server-side=true
 )
 # - also enable L2 announcements, when not using any other load balancer provider
 (
-  . ./network/cilium/env/contol-plane-endpoint.env \
+  . ./network/cilium/env/control-plane-endpoint.env \
   && sed "s/cp-address-automatic-replace/$control_plane_endpoint/" ./network/cilium/cilium-native-l2lb.gen.yaml \
   | kl apply -f - --server-side=true
 )
@@ -84,7 +84,7 @@ kl -n cilium delete job hubble-generate-certs
 #   tunnel has worse performance than native,
 #   see test/iperf folder for details
 (
-  . ./network/cilium/env/contol-plane-endpoint.env \
+  . ./network/cilium/env/control-plane-endpoint.env \
   && sed "s/cp-address-automatic-replace/$control_plane_endpoint/" ./network/cilium/cilium-tunnel.gen.yaml \
   | kl apply -f - --server-side=true
 )

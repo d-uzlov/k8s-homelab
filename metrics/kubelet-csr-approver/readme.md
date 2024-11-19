@@ -55,7 +55,7 @@ kl create ns csr-approver
 kl apply -k ./metrics/kubelet-csr-approver/
 kl -n csr-approver get pod -o wide
 
-# check CSRs to make sure they are aproved
+# check CSRs to make sure they are approved
 kl get csr
 ```
 

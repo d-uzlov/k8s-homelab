@@ -62,10 +62,13 @@ EOF
 
 # user-facing services
 ingress_domain_suffix=
-sed -e "s|AUTOMATIC_RELACE_DOMAIN_SUFFIX|$ingress_domain_suffix|g" \
+sed -e "s|AUTOMATIC_REPLACE_DOMAIN_SUFFIX|$ingress_domain_suffix|g" \
   ./board/homepage/config/services-user.tmpl.yaml \
   >> ./board/homepage/config/env/services-user.yaml
 ```
+
+Manually edit `./board/homepage/config/env/services-*`
+to account for your local environment.
 
 # Deploy
 
@@ -79,8 +82,8 @@ cat \
   ./board/homepage/config/env/services-truenas.yaml \
   ./board/homepage/config/env/services-user.yaml \
   ./board/homepage/config/env/services-network.yaml \
-  > ./board/homepage/config/env/services.yaml
-kl apply -k ./board/homepage/config/
+  > ./board/homepage/config/env/services.yaml \
+&& kl apply -k ./board/homepage/config/
 
 kl apply -k ./board/homepage/
 kl -n homepage get pod -o wide

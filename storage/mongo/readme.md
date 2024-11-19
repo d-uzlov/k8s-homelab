@@ -94,8 +94,8 @@ connection=$(kl -n mongo-test get secrets mongo-admin-admin -o go-template --tem
 kl -n mongo-test exec sts/mongo -it -- mongosh "$connection"
 
 kl expose service -n mongo-test mongo-svc --type LoadBalancer --name mongo-external
-lbip=$(kl -n mongo-test get svc mongo-external -o go-template --template "{{ (index .status.loadBalancer.ingress 0).ip}}")
-mongosh "mongodb://my-user@$lbip/admin?ssl=true"
+lbIp=$(kl -n mongo-test get svc mongo-external -o go-template --template "{{ (index .status.loadBalancer.ingress 0).ip}}")
+mongosh "mongodb://my-user@$lbIp/admin?ssl=true"
 ```
 
 # Deploy database

@@ -147,10 +147,11 @@ Also, sharing an issuer is less secure than using separate ones.
 acmedns_mngt_domain=$(kl -n cm-acme-dns get httproute management -o go-template --template "{{ (index .spec.hostnames 0)}}")
 # Set to your actual domain
 managed_domain=test.example.com
-# save output, we will nedd it for the cert-manager issuer
-curl -X POST "https://$acmedns_mngt_domain/register" | jq . > ./ingress/cert-manager/acme-dns/env/$managed_domain-domain-info.json
+# save output, we will need it for the cert-manager issuer
+curl -X POST "https://$acmedns_mngt_domain/register" | jq . \
+  > ./ingress/cert-manager/acme-dns/env/$managed_domain-domain-info.json
 
-echo "This if your full domain: $(jq -r .fulldomain ./ingress/cert-manager/acme-dns/env/$managed_domain-domain-info.json)"
+echo "This is your full domain: $(jq -r .fulldomain ./ingress/cert-manager/acme-dns/env/$managed_domain-domain-info.json)"
 ```
 
 ---
@@ -170,6 +171,7 @@ nslookup -type=txt _acme-challenge.$managed_domain
 # Create a config file for acme-dns client
 jq -n --slurpfile source ./ingress/cert-manager/acme-dns/env/$managed_domain-domain-info.json '."'"$managed_domain"'" = $source[0]' > ./ingress/cert-manager/acme-dns/env/$managed_domain-acmedns.json
 
+# set to your email
 domain_admin_email=user@example.org
 cat << EOF > ./ingress/cert-manager/acme-dns/env/$managed_domain-issuer-staging.yaml
 apiVersion: cert-manager.io/v1

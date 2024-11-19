@@ -49,7 +49,7 @@ kl patch felixconfiguration default --type=merge --patch='{"spec": {"bpfExternal
 
 # disable kube-proxy
 kl -n kube-system patch ds kube-proxy -p '{"spec":{"template":{"spec":{"nodeSelector":{"enable-kube-proxy": "true"}}}}}'
-# revert rebu-proxy if something goes wrong
+# revert kube-proxy if something goes wrong
 kl -n kube-system patch ds kube-proxy --type=json -p='[{"op": "remove", "path": "/spec/template/spec/nodeSelector/enable-kube-proxy"}]'
 ```
 

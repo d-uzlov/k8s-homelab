@@ -84,7 +84,7 @@ kl label ns bt-qbittorrent pod-security.kubernetes.io/enforce=baseline
 
 # set up storage, avoid deleting it
 kl apply -k ./torrents/qbittorrent/pvc/
-# make sure that PVCs are successfulyl provisioned
+# make sure that PVCs are successfully provisioned
 kl -n bt-qbittorrent get pvc
 
 # loadbalancer service

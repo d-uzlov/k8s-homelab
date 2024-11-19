@@ -98,7 +98,7 @@ Staging certificates usually take quite a bit longer to produce than production 
 # make sure that your certificate issuer is available in the desired namespace
 cert_namespace=gateways
 
-# first deploy a stagin certificate to check that everything works as expected
+# first deploy a staging certificate to check that everything works as expected
 kl -n $cert_namespace apply -f ./ingress/manual-certificates/env/$domain_name-cert-staging.yaml
 # wait for the certificate to be approved
 kl -n $cert_namespace get certificate
