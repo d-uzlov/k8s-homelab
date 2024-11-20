@@ -55,7 +55,7 @@ checkEnv DATA_PORT
 checkEnv DEFAULT_CONFIG_LOCATION
 checkEnv CONFIG_LOCATION
 checkEnv FORCE_OVERWRITE_CONFIG "true false"
-checkEnv FORCE_OVERWRITE_WATCHFILE "true false"
+checkEnv FORCE_OVERWRITE_WATCH_FILE "true false"
 checkEnv RESET_PASSWORD "true false"
 checkEnv ENABLE_TMP_FOLDER "true false"
 checkEnv TRUSTED_PROXIES "comma-separated CIDR list, or empty"
@@ -76,7 +76,7 @@ if [ "$FORCE_OVERWRITE_CONFIG" = "true" ] || [ ! -f "$configFile" ]; then
     cp -f "$DEFAULT_CONFIG_LOCATION/qBittorrent.conf" "$configFile"
 fi
 
-if [ "$FORCE_OVERWRITE_CONFIG" = "true" ] || [ "$FORCE_OVERWRITE_WATCHFILE" = "true" ] || [ ! -f "$watchFile" ]; then
+if [ "$FORCE_OVERWRITE_CONFIG" = "true" ] || [ "$FORCE_OVERWRITE_WATCH_FILE" = "true" ] || [ ! -f "$watchFile" ]; then
     echo "copying/overwriting watched folders file..."
     rm -rf "$watchFile"
     mkdir -p "$(dirname "$watchFile")"
@@ -86,7 +86,7 @@ if [ "$FORCE_OVERWRITE_CONFIG" = "true" ] || [ "$FORCE_OVERWRITE_WATCHFILE" = "t
     sed -i "s|AUTOMATIC_REPLACE_FINISHED_FOLDER|$FINISHED_FOLDER|" "$watchFile"
 fi
 
-# without this this script can fail because
+# without this the script can fail because
 # config file deletion is registered but config (re)creation isn't yet
 # BTW WTF is wrong with NFS? Why can't client see the file that it has just created?
 sleep 0.5

@@ -26,7 +26,7 @@ spec:
         runAsGroup: 65534
       containers:
       - name: qbittorrent
-        image: docker.io/qbittorrentofficial/qbittorrent-nox:4.6.5-1
+        image: docker.io/qbittorrentofficial/qbittorrent-nox:5.0.2-1
         command: ["/sbin/tini", "-g", "--"]
         args:
         - /entrypoint/entrypoint.sh
@@ -55,7 +55,7 @@ spec:
             configMapKeyRef:
               name: settings
               key: force_overwrite_config
-        - name: FORCE_OVERWRITE_WATCHFILE
+        - name: FORCE_OVERWRITE_WATCH_FILE
           value: 'true'
         - name: RESET_PASSWORD
           valueFrom:
@@ -122,15 +122,24 @@ spec:
           timeoutSeconds: 1
           successThreshold: 1
           failureThreshold: 20
+        readinessProbe:
+          httpGet:
+            path: /api/v2/app/version
+            port: web-ui
+            scheme: HTTP
+          periodSeconds: 5
+          timeoutSeconds: 10
+          successThreshold: 1
+          failureThreshold: 1
         livenessProbe:
           httpGet:
             path: /api/v2/app/version
             port: web-ui
             scheme: HTTP
           periodSeconds: 5
-          timeoutSeconds: 1
+          timeoutSeconds: 10
           successThreshold: 1
-          failureThreshold: 2
+          failureThreshold: 50
       volumes:
       - name: entrypoint
         configMap:
@@ -145,7 +154,7 @@ spec:
       - name: watch
         persistentVolumeClaim:
           claimName: watch
-          readOnly: true
+          # readOnly: true
       - name: finished
         persistentVolumeClaim:
           claimName: torrent
