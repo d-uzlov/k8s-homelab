@@ -1,0 +1,54 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service_name
+spec:
+  type: ExternalName
+  externalName: service_address
+  ports:
+  - name: http
+    port: 80
+    targetPort: target_port
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: service_name
+spec:
+  hostnames:
+  - httproute_domain
+  parentRefs:
+  - kind: Gateway
+    name: main-private
+    namespace: gateways
+    sectionName: http
+  rules:
+  - backendRefs:
+    - kind: Service
+      name: service_name
+      port: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: service_name
+  annotations:
+    nginx.ingress.kubernetes.io/whitelist-source-range: 10.0.0.0/16
+  #   nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/proxy-body-size: 100G
+spec:
+  ingressClassName: nginx
+  tls:
+  - secretName: ingress_secret
+  rules:
+  - host: ingress_domain
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: service_name
+            port:
+              name: http
