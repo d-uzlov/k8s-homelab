@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: juice-shop
+spec:
+  selector:
+    matchLabels:
+      app: juice-shop
+  template:
+    metadata:
+      labels:
+        app: juice-shop
+    spec:
+      containers:
+      - name: juice-shop
+        image: docker.io/bkimminich/juice-shop:v17.1.1
+        resources:
+          limits:
+            memory: 1Gi
+            cpu: 2
+        ports:
+        - name: http
+          containerPort: 3000
+        env:
+        - name: NODE_ENV
+          value: unsafe
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: juice-shop
+spec:
+  selector:
+    app: juice-shop
+  ports:
+  - port: 80
+    targetPort: http
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: qbittorrent
+spec:
+  hostnames:
+  # - juice-shop.REPLACE_ME
+  - juice-shop.meoe.cloudns.be
+  parentRefs:
+  - kind: Gateway
+    namespace: gateways
+    name: main-public
+    sectionName: https-main
+  rules:
+  - backendRefs:
+    - kind: Service
+      name: juice-shop
+      port: 80
