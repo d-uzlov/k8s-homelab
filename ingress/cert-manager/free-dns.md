@@ -88,6 +88,7 @@ Link: https://www.dynu.com/
 - [+] No auto deletion
 - [+] Custom DNS records: A, AAAA, CNAME, PTR (?), MX, SRV
 - [-] TXT records are not available in the free tier, except ACME validation
+- [-] NS records are not available
 
 # Free my ip
 
@@ -122,3 +123,9 @@ Link: https://myaddr.tools/
 - [+] Unlimited registrations
 - [+] Wildcard record
 - [+] DNS01 is available
+
+# DynV6
+
+Link: https://dynv6.com/
+
+- [-] Seems dead

@@ -22,11 +22,13 @@ issuer_kind=Issuer
 # look up available issuers
 kl get clusterissuer
 kl get issuer -A
-# $domain_name is used by acme-dns in ./ingress/cert-manager/acme-dns/readme.md
+# $domain_name is used by acme-dns in /ingress/cert-manager/acme-dns/readme.md
+# for other issuers fill issuer_prefix manually
 issuer_prefix=$domain_name
 
+mkdir -p ./ingress/manual-certificates/env/
 # if you don't need the wildcard domain, remove it manually
-# remember that you have to remove if when using HTTP01 challenge
+# remember that you _have_ to remove if when using HTTP01 challenge
 cat << EOF > ./ingress/manual-certificates/env/$domain_name-cert-staging.yaml
 ---
 apiVersion: cert-manager.io/v1
@@ -44,7 +46,7 @@ spec:
   - '*.$domain_name'
   secretName: cert-$domain_name-staging
 EOF
-# in case you want to use this certificate in several namespaces
+# add annotations that allow you to copy this certificate automatically between namespaces
 # useful for classic k8s ingress
 # you don't need it for gateway API
 replicator_label=copy-wild-cert=main
@@ -77,10 +79,10 @@ copy_label=$replicator_label
 EOF
 ```
 
-If you delete this file by accident,
+If you delete `.env` files by accident,
 you can just copy corresponding values from the certificate.
 If you delete the certificate `.yaml` file,
-you get a copy from the cluster.
+you can get a copy from the cluster.
 
 # Deploy your certificate
 
@@ -89,7 +91,7 @@ immediately after creating its `.yaml` file above.
 
 If this is not the case then just substitute file names.
 
-WHen deploying the staging certificate, [check related resources](#certificate-and-challenge-info).
+When deploying the staging certificate, [check related resources](#certificate-and-challenge-info).
 DNS01 challenge can take several minutes, be patient.
 HTTP01, on the other hand, is usually almost instant.
 Staging certificates usually take quite a bit longer to produce than production ones.
