@@ -4,6 +4,9 @@
 This is an app to automatically create and update certificates
 by automatically issuing them from any ACME-compatible certificate provider.
 
+References:
+- https://github.com/cert-manager/cert-manager
+
 # Generate config
 
 You only need to do this when updating the app.
@@ -12,27 +15,40 @@ You only need to do this when updating the app.
 helm repo add jetstack https://charts.jetstack.io
 helm repo update jetstack
 helm search repo jetstack/cert-manager --versions --devel | head
-helm show values jetstack/cert-manager --version v1.14.4 > ./ingress/cert-manager/default-values.yaml
+helm show values jetstack/cert-manager --version v1.16.2 > ./ingress/cert-manager/default-values.yaml
 ```
 
 ```bash
 helm template \
   cert-manager jetstack/cert-manager \
   --values ./ingress/cert-manager/values.yaml \
-  --version v1.14.4 \
+  --version v1.16.2 \
   --namespace cert-manager \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/version|d' \
   > ./ingress/cert-manager/cert-manager.gen.yaml
+
+wget https://github.com/cert-manager/cert-manager/releases/download/v1.16.2/cert-manager.crds.yaml \
+  -O ./ingress/cert-manager/cert-manager.crds.yaml
 ```
 
 # Deploy
 
 ```bash
+kl apply -f ./ingress/cert-manager/cert-manager.crds.yaml --server-side
+
 kl create ns cert-manager
 kl label ns cert-manager pod-security.kubernetes.io/enforce=baseline
 
 kl apply -k ./ingress/cert-manager/
 kl -n cert-manager get pod
+```
+
+# Cleanup
+
+```bash
+kl delete -k ./ingress/cert-manager/
+kl delete ns cert-manager
+kl delete -f ./ingress/cert-manager/cert-manager.crds.yaml
 ```
 
 # Deploy issuers
@@ -43,6 +59,7 @@ Choose what you need:
 - - [LetsEncrypt](./letsencrypt/readme.md)
 - DNS-01
 - - [DuckDNS](./duckdns/readme.md)
+- - [acme-dns](./acme-dns/readme.md)
 
 # Ingress with automatic certificates
 
@@ -71,12 +88,6 @@ You can also copy a secret from another namespace, to use a shared certificate
 - Deploy [Replicator](../replicator/readme.md)
 - Mark target namespace with appropriate label
 - Set `spec.tls.0.secretName` to a name of the copied secret
-
-# Wildcard certificate
-
-- [DuckDNS webhook](./duckdns/readme.md)
-
-Manual certificate deployment also has instructions on how to use the certificate.
 
 # Error handling
 
