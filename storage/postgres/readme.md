@@ -15,14 +15,14 @@ You only need to do this when updating the app.
 helm repo add postgres-operator-charts https://opensource.zalando.com/postgres-operator/charts/postgres-operator
 helm repo update postgres-operator-charts
 helm search repo postgres-operator-charts/postgres-operator --versions --devel | head
-helm show values postgres-operator-charts/postgres-operator --version 1.11.0 > ./storage/postgres/default-values.yaml
+helm show values postgres-operator-charts/postgres-operator --version 1.13.0 > ./storage/postgres/default-values.yaml
 ```
 
 ```bash
 helm template \
   postgres-operator \
   postgres-operator-charts/postgres-operator \
-  --version 1.11.0 \
+  --version 1.13.0 \
   --namespace postgres-operator \
   --values ./storage/postgres/values.yaml \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/instance|d' -e '\|app.kubernetes.io/part-of|d' \
@@ -32,12 +32,11 @@ helm template \
 # Deploy
 
 ```bash
-kl apply -k ./storage/postgres/crd/ --server-side
+kl apply -k ./storage/postgres/crd/ --server-side --force-conflicts
 kl apply -f ./storage/postgres/roles/
 
 kl create ns postgres-operator
-kl apply -f ./storage/postgres/config.yaml
-kl apply -f ./storage/postgres/postgres.gen.yaml
+kl apply -k ./storage/postgres/
 kl -n postgres-operator get pod -o wide
 ```
 

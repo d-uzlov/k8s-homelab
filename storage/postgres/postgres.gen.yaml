@@ -1,4 +1,16 @@
 ---
+apiVersion: scheduling.k8s.io/v1
+description: 'Use only for databases controlled by Postgres operator'
+kind: PriorityClass
+metadata:
+  labels:
+    app.kubernetes.io/name: postgres-operator
+  name: postgres-operator-pod
+  namespace: postgres-operator
+preemptionPolicy: PreemptLowerPriority
+globalDefault: false
+value: 1e+06
+---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -132,6 +144,7 @@ rules:
   - create
   - delete
   - get
+  - patch
   - update
 # to check nodes for node readiness label
 - apiGroups:
@@ -203,6 +216,7 @@ rules:
   - get
   - list
   - patch
+  - update
 # to CRUD cron jobs for logical backups
 - apiGroups:
   - batch
@@ -294,14 +308,14 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: 6f878aedad14d11b57541244dacce7dfa41949999b8045d293270f024f1c0150
+        checksum/config: 7941acafd2f83e07433eff994f5598dced1a691586a680e0d3827e64413131b9
       labels:
         app.kubernetes.io/name: postgres-operator
     spec:
       serviceAccountName: postgres-operator
       containers:
       - name: postgres-operator
-        image: "registry.opensource.zalan.do/acid/postgres-operator:v1.11.0"
+        image: "ghcr.io/zalando/postgres-operator:v1.13.0"
         imagePullPolicy: IfNotPresent
         env:
         - name: POSTGRES_OPERATOR_CONFIGURATION_OBJECT
@@ -341,7 +355,7 @@ metadata:
 configuration:
   crd_categories:
   - all
-  docker_image: ghcr.io/zalando/spilo-16:3.2-p2
+  docker_image: ghcr.io/zalando/spilo-16:3.3-p1
   enable_crd_registration: true
   enable_lazy_spilo_upgrade: false
   enable_pgversion_env_var: true
@@ -361,7 +375,7 @@ configuration:
     replication_username: standby
     super_username: postgres
   major_version_upgrade:
-    major_version_upgrade_mode: "off"
+    major_version_upgrade_mode: manual
     minimal_major_version: "12"
     target_major_version: "16"
   kubernetes:
@@ -374,10 +388,12 @@ configuration:
     enable_cross_namespace_secret: false
     enable_finalizers: false
     enable_init_containers: true
+    enable_owner_references: false
     enable_persistent_volume_claim_deletion: true
     enable_pod_antiaffinity: true
     enable_pod_disruption_budget: true
     enable_readiness_probe: true
+    enable_secrets_deletion: true
     enable_sidecars: true
     pdb_master_label_selector: true
     pdb_name_format: postgres-{cluster}-pdb
@@ -430,11 +446,12 @@ configuration:
     enable_ebs_gp3_migration: false
   logical_backup:
     logical_backup_cronjob_environment_secret: ""
-    logical_backup_docker_image: registry.opensource.zalan.do/acid/logical-backup:v1.11.0
+    logical_backup_docker_image: ghcr.io/zalando/postgres-operator/logical-backup:v1.13.0
     logical_backup_job_prefix: logical-backup-
     logical_backup_provider: s3
     logical_backup_s3_access_key_id: ""
     logical_backup_s3_bucket: my-bucket-url
+    logical_backup_s3_bucket_prefix: spilo
     logical_backup_s3_endpoint: ""
     logical_backup_s3_region: ""
     logical_backup_s3_retention_time: ""
@@ -478,15 +495,3 @@ configuration:
     connection_pooler_user: pooler
   patroni:
     enable_patroni_failsafe_mode: false
----
-apiVersion: scheduling.k8s.io/v1
-description: 'Use only for databases controlled by Postgres operator'
-kind: PriorityClass
-metadata:
-  labels:
-    app.kubernetes.io/name: postgres-operator
-  name: postgres-operator-pod
-  namespace: postgres-operator
-preemptionPolicy: PreemptLowerPriority
-globalDefault: false
-value: 1e+06
