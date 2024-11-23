@@ -30,6 +30,18 @@ References:
 
 https://jro.io/capacity/
 
+# Use partitions in ZFS
+
+```bash
+# find out PART UUID of a partition
+blkid /dev/nvme1n1p1 -s PARTUUID -o value
+
+zpool add -f main log /dev/disk/by-partuuid/your-partuuid-value
+
+# check status
+zpool list main -v
+```
+
 # Statistics
 
 ```bash

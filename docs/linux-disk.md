@@ -18,12 +18,22 @@ References:
 
 # NVMe sector size
 
-```bash
-sudo nvme id-ns -H /dev/nvme0n1
-sudo nvme id-ns -H /dev/nvme0n1 | grep "LBA Format"
+References:
+- https://www.bjonnh.net/article/20210721_nvme4k/
 
+```bash
+# check if the drive supports 4k sectors
+nvme id-ns -H /dev/nvme0n1 | grep "LBA Format"
+
+# format
 # !! this will erase all info from the disk !!
-sudo nvme format --lbaf=1 /dev/nvme0n1
+# either use lbaf=<LBA format index>
+nvme format /dev/nvme0n1 --lbaf=1
+# or directly use block size
+nvme format /dev/nvme0n1 --block-size=4096
+
+# check that sector size changed
+nvme id-ns -H /dev/nvme0n1 | grep "LBA Format"
 ```
 
 # NVMe namespaces
@@ -37,6 +47,28 @@ sudo nvme id-ctrl /dev/nvme0 | grep ^nn
 
 References:
 - https://narasimhan-v.github.io/2020/06/12/Managing-NVMe-Namespaces.html
+
+# Setup partitions
+
+```bash
+parted
+
+> select /dev/nvme1n1
+> unit s print free
+> mkpart
+> Partition name?  []? p1
+> File system type?  [ext2]? zfs
+> Start? 2048s
+> End? 50%
+```
+
+# Disable write cache for a SATA drive
+
+```bash
+# replace /dev/sdl with path to your drive
+# you can use partitions
+hdparm -W 0 /dev/sdl
+```
 
 # Show current mounts
 

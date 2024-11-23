@@ -1,4 +1,12 @@
 
+# Check sector size on Windows
+
+```ps
+fsutil fsinfo sectorinfo C:
+```
+
+Look at the `LogicalBytesPerSector` value.
+
 # Remove non-existent keyboard layouts
 
 ```powershell
