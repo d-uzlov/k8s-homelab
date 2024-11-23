@@ -55,6 +55,8 @@ sudo iptables -t nat -A POSTROUTING -o wt0 -j MASQUERADE
 sudo iptables -t nat -C POSTROUTING -o wt0 -j MASQUERADE
 sudo iptables -t nat -L POSTROUTING
 sudo iptables -t nat -S POSTROUTING
+# delete
+sudo iptables -t nat -D POSTROUTING -o wt0 -j MASQUERADE
 
 # to avoid redoing this on startup
 sudo apt install iptables-persistent

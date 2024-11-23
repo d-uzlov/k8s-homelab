@@ -17,7 +17,7 @@ kl apply -f ./test/ingress/echo-ds.yaml
 
 kl -n ingress-test get pod -o wide
 
-# depoy different ingress resources
+# deploy different ingress resources
 kl label ns --overwrite ingress-test copy-wild-cert=main
 kl apply -f ./test/ingress/service.yaml
 kl apply -k ./test/ingress/wildcard/

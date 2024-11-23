@@ -87,9 +87,14 @@ Add hotkeys into array in `keybindings.json`:
   "when": "terminalFocus"
 },
 {
-  "key": "shift+enter",
+  "key": "ctrl+shift+enter",
   "command": "workbench.action.terminal.runSelectedText",
   "when": "editorFocus"
+},
+{
+  "key": "ctrl+shift+enter", // disable default
+  "command": "-editor.action.insertLineBefore",
+  "when": "editorTextFocus && !editorReadonly"
 },
 {
   "key": "ctrl+oem_comma", // this blocks `ctrl + ,` in terminal, and it can't be disabled via commandsToSkipShell
@@ -135,7 +140,7 @@ Add hotkeys into array in `keybindings.json`:
 //   // default ctrl+backspace in terminal is ^H
 //   // default "delete word" is ^W
 //   // vscode maps ctrl backspace to ^W
-//   // this breaks nano
+//   // this breaks default nano settings
 //   "command": "-workbench.action.terminal.sendSequence",
 //   "when": "terminalFocus"
 // },
@@ -144,7 +149,7 @@ Add hotkeys into array in `keybindings.json`:
 //   // default ctrl+delete is ^[[3;5~
 //   // default "delete next word" is M-D
 //   // vscode maps ctrl+delete to M-D
-//   // this breaks nano
+//   // this breaks default nano settings
 //   "command": "-workbench.action.terminal.sendSequence",
 //   "when": "terminalFocus"
 // },

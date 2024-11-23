@@ -167,9 +167,9 @@ In the end, your `openvpn.conf` will look like this:
 ```conf
 server 192.168.255.0 255.255.255.0
 verb 3
-key /etc/openvpn/pki/private/fulldungeon.duckdns.org.key
+key /etc/openvpn/pki/private/example.duckdns.org.key
 ca /etc/openvpn/pki/ca.crt
-cert /etc/openvpn/pki/issued/fulldungeon.duckdns.org.crt
+cert /etc/openvpn/pki/issued/example.duckdns.org.crt
 dh /etc/openvpn/pki/dh.pem
 tls-auth /etc/openvpn/pki/ta.key
 key-direction 0
