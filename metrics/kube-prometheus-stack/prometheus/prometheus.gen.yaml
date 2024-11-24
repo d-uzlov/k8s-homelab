@@ -29,6 +29,10 @@ rules:
   - endpoints
   - pods
   verbs: ["get", "list", "watch"]
+- apiGroups: ["discovery.k8s.io"]
+  resources:
+  - endpointslices
+  verbs: ["get", "list", "watch"]
 - apiGroups:
   - "networking.k8s.io"
   resources:
@@ -87,8 +91,9 @@ metadata:
     app: kps-prometheus
     release: "kps"
 spec:
-  image: "quay.io/prometheus/prometheus:v2.52.0"
-  version: v2.52.0
+  automountServiceAccountToken: true
+  image: "quay.io/prometheus/prometheus:v2.55.1"
+  version: v2.55.1
   externalUrl: http://kps-prometheus.kps:9090
   paused: false
   replicas: 1
@@ -145,6 +150,16 @@ spec:
           requests:
             storage: invalid
         storageClassName: invalid
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          topologyKey: kubernetes.io/hostname
+          labelSelector:
+            matchExpressions:
+              - {key: app.kubernetes.io/name, operator: In, values: [prometheus]}
+              - {key: prometheus, operator: In, values: [kps]}
   portName: http-web
   volumes:
     - emptyDir: {}
