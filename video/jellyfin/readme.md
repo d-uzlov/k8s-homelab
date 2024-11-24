@@ -34,6 +34,45 @@ data_size=10Ti
 links_class=bulk
 links_size=1Gi
 EOF
+
+# here is an example patch for local data
+# adjust for your needs
+mkdir -p ./video/jellyfin/generic/env/
+cat << EOF > ./video/jellyfin/generic/env/patch.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jellyfin
+spec:
+  selector:
+    matchLabels:
+      app: jellyfin
+  template:
+    spec:
+      containers:
+      - name: jellyfin
+        volumeMounts:
+        - mountPath: /raw-data
+          name: raw-data
+        - mountPath: /media
+          name: links
+        - mountPath: /media2
+          name: media
+      volumes:
+      - name: media
+        nfs:
+          path: /mnt/main/data/video
+          server: truenas.lan
+          readOnly: true
+      - name: raw-data
+        persistentVolumeClaim:
+          claimName: raw-data
+          readOnly: true
+      - name: links
+        persistentVolumeClaim:
+          claimName: links
+EOF
 ```
 
 # Deploy
