@@ -4,6 +4,12 @@
 References:
 - https://github.com/kubernetes-sigs/metrics-server
 
+# Generate config
+
+```bash
+wget https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.7.2/components.yaml -O ./metrics/metrics-server/secure/metrics-server.yaml
+```
+
 # Install
 
 ```bash
