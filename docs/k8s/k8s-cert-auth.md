@@ -249,7 +249,7 @@ kubectl --kubeconfig "$new_kubeconfig" describe ns -l "rbac-user/${short_user_na
 You can now deploy stuff in available namespace(s).
 
 You can create an alias for this config for easier access.
-For example, use `createKubectlAlias` from [Bash: Kubectl completion](../bash.md#kubectl-completion):
+For example, use `createKubectlAlias` from [Kubectl completion](./kubectl-tips.md#bash-completion):
 
 ```bash
 # execute this in terminal, or add to bashrc

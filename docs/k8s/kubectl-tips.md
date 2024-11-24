@@ -28,9 +28,6 @@ References:
 
 Kubecolor can be used as a direct replacement for kubectl.
 
-Prerequisites:
-- [.bashrc directory](../bash.md#add-bashrc-directory)
-
 ```bash
 # check latest version: https://github.com/kubecolor/kubecolor/releases
 kubecolor_version=0.4.0
@@ -46,7 +43,7 @@ rm -rf kubecolor
 # Bash completion
 
 Prerequisites:
-- [.bashrc directory](../bash.md#add-bashrc-directory)
+- [.bashrc directory](../bash-setup.md#add-bashrc-directory)
 
 ```bash
  cat << "EOF" > ~/.bashrc.d/998-kubeconfig.sh
