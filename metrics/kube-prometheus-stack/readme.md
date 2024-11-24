@@ -83,6 +83,29 @@ References:
 # Deploy
 
 ```bash
+# customize your storage class and storage size request
+mkdir -p ./metrics/kube-prometheus-stack/prometheus/env/
+cat << EOF > ./metrics/kube-prometheus-stack/prometheus/env/patch.yaml
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: kps
+  namespace: kps
+spec:
+  storage:
+    volumeClaimTemplate:
+      metadata:
+        name: db
+      spec:
+        resources:
+          requests:
+            storage: 150Gi
+        storageClassName: fast
+EOF
+```
+
+```bash
 kl apply -f ./metrics/kube-prometheus-stack/crd/ --server-side
 
 kl create ns kps-ksm
