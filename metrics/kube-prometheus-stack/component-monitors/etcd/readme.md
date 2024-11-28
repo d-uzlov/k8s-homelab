@@ -60,3 +60,14 @@ kl apply -f ./metrics/kube-prometheus-stack/component-monitors/etcd/rules.yaml
 kl apply -f ./metrics/kube-prometheus-stack/component-monitors/etcd/alerts.yaml
 kl apply -k ./metrics/kube-prometheus-stack/component-monitors/etcd/dashboards/
 ```
+
+# Metrics
+
+```bash
+etcdIp=k8s1-etcd1.k8s.lan
+curl \
+  --cert ./metrics/kube-prometheus-stack/component-monitors/etcd/external-etcd/env/client.crt \
+  --key ./metrics/kube-prometheus-stack/component-monitors/etcd/external-etcd/env/client.key \
+  --cacert ./metrics/kube-prometheus-stack/component-monitors/etcd/external-etcd/env/ca.crt \
+  https://$etcdIp:2379/metrics
+```

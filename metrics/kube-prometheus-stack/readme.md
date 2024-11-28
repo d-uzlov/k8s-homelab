@@ -57,7 +57,7 @@ generateDeployment grafana.defaultDashboardsEnabled=true \
 generateDeployment kubeApiServer.enabled=true \
                    kubelet.enabled=true \
                    kubeControllerManager.enabled=true \
-                   coreDns.enabled=true \
+                   coreDns.enabled=false \
                    kubeScheduler.enabled=true       > ./metrics/kube-prometheus-stack/service-monitors.gen.yaml
 
 generateDeployment kubeStateMetrics.enabled=true    > ./metrics/kube-prometheus-stack/kube-state-metrics/kubeStateMetrics.gen.yaml
@@ -109,28 +109,34 @@ EOF
 kl apply -f ./metrics/kube-prometheus-stack/crd/ --server-side
 
 kl create ns kps-ksm
-kl apply -k ./metrics/kube-prometheus-stack/kube-state-metrics/ --server-side
+kl label ns kps-ksm pod-security.kubernetes.io/enforce=baseline
+kl apply -k ./metrics/kube-prometheus-stack/kube-state-metrics/
 kl -n kps-ksm get pod -o wide
 
 kl create ns kps-node-exporter
-kl apply -k ./metrics/kube-prometheus-stack/node-exporter/ --server-side
+kl label ns kps-node-exporter pod-security.kubernetes.io/enforce=privileged
+kl apply -k ./metrics/kube-prometheus-stack/node-exporter/
 kl -n kps-node-exporter get pod -o wide
 
 kl create ns kps-grafana
-kl apply -k ./metrics/kube-prometheus-stack/grafana/ --server-side
+kl label ns kps-grafana pod-security.kubernetes.io/enforce=baseline
+kl apply -k ./metrics/kube-prometheus-stack/grafana/
 kl -n kps-grafana get pod -o wide
 
 kl create ns kps-operator
-kl apply -k ./metrics/kube-prometheus-stack/prometheus-operator/ --server-side
+kl label ns kps-operator pod-security.kubernetes.io/enforce=baseline
+kl apply -k ./metrics/kube-prometheus-stack/prometheus-operator/
 kl -n kps-operator get pod -o wide
 
 kl create ns kps
-kl apply -k ./metrics/kube-prometheus-stack/prometheus/ --server-side
+kl label ns kps pod-security.kubernetes.io/enforce=baseline
+kl apply -k ./metrics/kube-prometheus-stack/prometheus/
 kl -n kps get pod -o wide
 
 kl create ns kps-default-rules
-kl apply -f ./metrics/kube-prometheus-stack/service-monitors.gen.yaml --server-side
-kl apply -k ./metrics/kube-prometheus-stack/prometheus-default-rules/ --server-side
+kl label ns kps-default-rules pod-security.kubernetes.io/enforce=baseline
+kl apply -f ./metrics/kube-prometheus-stack/service-monitors.gen.yaml
+kl apply -k ./metrics/kube-prometheus-stack/prometheus-default-rules/
 kl -n kps-default-rules get prometheusrule
 
 # show list of all relevant prometheus configs
@@ -154,6 +160,8 @@ kl -n kps-grafana describe httproute grafana
 kl apply -k ./metrics/kube-prometheus-stack/prometheus-httproute/
 kl -n kps get httproute prometheus
 kl -n kps describe httproute prometheus
+
+kl -n kps exec sts/prometheus-kps -- df -h | grep /prometheus\$
 ```
 
 Default username/password is `admin` / `admin`.
@@ -218,18 +226,95 @@ Keywords: `housekeeping-interval`.
 
 ```bash
 # delete a metric
-metric='prometheus_http_requests_total{job="prometheus"}'
 prometheus_ingress=$(kl -n kps get ingress   prometheus -o go-template --template "{{ (index .spec.rules 0).host}}")
 prometheus_ingress=$(kl -n kps get httproute prometheus -o go-template --template "{{ (index .spec.hostnames 0) }}")
+metric=
 curl -X POST -g "https://$prometheus_ingress/api/v1/admin/tsdb/delete_series?match[]=$metric"
+curl -X POST -g "https://$prometheus_ingress/api/v1/admin/tsdb/clean_tombstones"
+
+# list all metrics that have specified labels
+# source: https://stackoverflow.com/questions/70301131/how-to-get-all-metric-names-from-prometheus-server-filtered-by-a-particular-labe
+curl -X GET -G "https://$prometheus_ingress/api/v1/label/__name__/values" --data-urlencode 'match[]={__name__=~".+", job="kubelet"}'
+
+# show current config
+kl -n kps exec statefulsets/prometheus-kps -it -- cat /etc/prometheus/config_out/prometheus.env.yaml
 
 # generate missing past metrics for a new recording rule
 #     enter the prometheus container
 kl -n kps exec statefulsets/prometheus-kps -it -- sh
-#     inside the container: run promtool
+#     inside the container: find recording rule file and run promtool
 promtool tsdb create-blocks-from rules --start 2024-05-29T21:33:40+07:00 --end 2024-06-11T14:40:40+07:00 --output-dir=. --eval-interval=5s /etc/prometheus/rules/prometheus-kps-rulefiles-0/kps-default-rules-etcd-recording-f515cf3e-c48e-4ff4-ab43-d997c9aa4825.yaml
+
+# to delete _all_ data from prometheus, delete /prometheus contents and restart prometheus
+# rm -rf will fail, it's OK, it just can't delete some of the special files
+kl -n kps exec statefulsets/prometheus-kps -it -- rm -rf /prometheus
+kl -n kps delete pod prometheus-kps-0
+kl -n kps get pod -o wide
 ```
 
 References:
 - https://faun.pub/how-to-drop-and-delete-metrics-in-prometheus-7f5e6911fb33
 - https://prometheus.io/docs/prometheus/latest/storage/#backfilling-for-recording-rules
+
+# Manual metric checking
+
+```bash
+bearer=$(kl -n kps exec sts/prometheus-kps -- cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+kl get node -o wide
+nodeIp=
+curl -k -H "Authorization: Bearer $bearer" https://$nodeMetrics:10250/metrics
+curl -k -H "Authorization: Bearer $bearer" https://$nodeMetrics:10250/metrics/cadvisor
+curl -k -H "Authorization: Bearer $bearer" https://$nodeMetrics:10250/metrics/probes
+
+kl exec deployments/alpine -- apk add curl
+
+kl -n kube-system describe svc kps-coredns
+corednsIp=
+kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" http://$corednsIp:9153/metrics
+
+kl describe svc kubernetes
+curl -k -H "Authorization: Bearer $bearer" https://$nodeIp:6443/metrics
+
+kl -n kube-system describe svc kps-kube-controller-manager
+curl -k -H "Authorization: Bearer $bearer" https://$nodeIp:10257/metrics
+
+kl -n kube-system describe svc kps-kube-scheduler
+curl -k -H "Authorization: Bearer $bearer" https://$nodeIp:10259/metrics
+
+kl -n kps-grafana describe svc kps-grafana
+grafanaIp=
+kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" http://$grafanaIp:3000/metrics
+
+kl -n kps-node-exporter describe svc kps-prometheus-node-exporter
+curl -k -H "Authorization: Bearer $bearer" http://$nodeIp:9100/metrics
+
+kl -n kps describe svc alertmanager-operated
+alertManagerIp=10.201.2.77
+kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" http://$alertManagerIp:9093/metrics
+kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" http://$alertManagerIp:8080/metrics
+
+kl -n kps describe svc prometheus-operated
+prometheusIp=10.201.2.214
+kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" http://$prometheusIp:9090/metrics
+kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" http://$prometheusIp:8080/metrics
+
+kl -n kps describe svc prometheus-operated
+prometheusOperatorIp=10.201.3.129
+kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" https://$prometheusOperatorIp:10250/metrics
+
+kl -n kps-ksm describe svc kube-state-metrics
+kubeStateMetricsIp=10.201.2.109
+kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" http://$kubeStateMetricsIp:8080/metrics
+kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" http://$kubeStateMetricsIp:8081/metrics
+```
+
+# TODO
+
+cadvisor metrics seem to have issues:
+- large cardinality?
+- values are duplicated: container==name and container==""
+
+high cardinality:
+- prober_probe_duration_seconds
+
+Need to check out kubelet metrics.

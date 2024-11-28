@@ -22,9 +22,28 @@ spec:
       name: etcd-client-cert
       key: client.key
   metricRelabelings:
-  - action: drop
-    sourceLabels: [ __name__ ]
-    regex: ^etcd_debugging_.*
+  # - action: drop
+  #   sourceLabels: [ __name__ ]
+  #   regex: ^etcd_debugging_.*
+  - action: keep
+    # relabelings here affect both alertmanager and config-reloader containers
+    regex: "\
+      etcd_disk_backend_commit_duration_seconds_.*|\
+      etcd_disk_wal_fsync_duration_seconds_.*|\
+      etcd_mvcc_db_.*|\
+      etcd_network_peer_sent_failures_total|\
+      etcd_server_has_leader|\
+      etcd_server_heartbeat_send_failures_total|\
+      etcd_server_is_leader|\
+      etcd_server_leader_changes_seen_total|\
+      etcd_server_proposals_.*|\
+      etcd_server_quota_backend_bytes|\
+      etcd_server_slow_apply_total|\
+      etcd_server_version|\
+      process_resident_memory_bytes|\
+      "
+    sourceLabels:
+    - __name__
   staticConfigs:
   - labels:
       job: external-etcd
