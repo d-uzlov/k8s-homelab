@@ -61,9 +61,9 @@ sed \
   -e "s|AUTOREPLACE_SSH_USER|$ssh_user|g" \
   -e "s|AUTOREPLACE_MAIN_DATASET|$main_dataset|g" \
   -e "s|AUTOREPLACE_SNAP_DATASET|$snapshot_dataset|g" \
-  ./storage/democratic-csi-generic/nvmeof/config.template.yaml
+  ./storage/democratic-csi-generic/nvmeof/config.template.yaml &&
+sed -e 's/^/    /' ./storage/democratic-csi-generic/nvmeof/nvme/env/ssh-key
 ) > ./storage/democratic-csi-generic/nvmeof/nvme/env/config.yaml
-# then manually copy ./storage/democratic-csi-generic/nvmeof/nvme/env/ssh-key into sshConnection.privateKey
 ```
 
 # Deploy
@@ -108,6 +108,9 @@ kl exec deployments/test-nvmeof -- mount | grep /mnt/data
 kl exec deployments/test-nvmeof -- df -h /mnt/data
 kl exec deployments/test-nvmeof -- touch /mnt/data/test-file
 kl exec deployments/test-nvmeof -- ls -laF /mnt/data
+
+# explore container
+kl exec deployments/test-nvmeof-root -it -- sh
 
 # cleanup resources
 kl delete -f ./storage/democratic-csi-generic/nvmeof/nvme/test.yaml
