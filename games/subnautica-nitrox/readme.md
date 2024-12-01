@@ -4,8 +4,9 @@
 References:
 - https://github.com/FuzzyStatic/nitrox-server
 - https://github.com/SubnauticaNitrox/Nitrox
+- https://github.com/d-uzlov/Nitrox
 
-This is an _alpha_ version if nitrox which is able to work with Subnautica 2.0.
+This is an _alpha_ version of nitrox which is able to work with Subnautica 2.0.
 
 Stability is below ~~zero~~ average.
 
@@ -17,8 +18,8 @@ The docker image is a derivative of [FuzzyStatic's image](https://github.com/Fuz
 docker_username=
 docker_repo=
 
-docker build ./games/subnautica-nitrox/docker/ -t docker.io/$docker_username/$docker_repo:nitrox-dc90f19
-docker push docker.io/$docker_username/$docker_repo:nitrox-dc90f19
+docker build ./games/subnautica-nitrox/docker/ -t docker.io/$docker_username/$docker_repo:nitrox-63b26cc
+docker push docker.io/$docker_username/$docker_repo:nitrox-63b26cc
 
 # you can test this image on your local machine
 subnautica_path=
@@ -26,7 +27,7 @@ docker run -p 11000:11000/udp \
   -v $subnautica_path:/subnautica \
   -v ./games/subnautica-nitrox/env/saves:/home/nitrox/.config/Nitrox/saves/docker-save \
   -e SUBNAUTICA_INSTALLATION_PATH=/subnautica \
-  docker.io/$docker_username/$docker_repo:nitrox-dc90f19
+  docker.io/$docker_username/$docker_repo:nitrox-63b26cc
 # make sure that ./games/subnautica-nitrox/env/saves
 # have a copy of server.cfg (can be generated from server-template.cfg)
 ```

@@ -7,8 +7,10 @@ useradd --gid 1001 --uid 1001 --create-home nitrox
 
 echo "Downloading latest Nitrox release..."
 # downloadUrl="https://github.com/SubnauticaNitrox/Nitrox/releases/download/${NITROX_VERSION}/Nitrox_${NITROX_VERSION}.zip"
-file=Nitrox-dc90f19-fix-14
-downloadUrl="https://github.com/d-uzlov/Nitrox/releases/download/dc90f19/$file.zip"
+# file=Nitrox-dc90f19-fix-14
+# downloadUrl="https://github.com/d-uzlov/Nitrox/releases/download/dc90f19/$file.zip"
+file=Nitrox-63b26cc-1
+downloadUrl="https://github.com/d-uzlov/Nitrox/releases/download/63b26cc/$file.zip"
 wget "$downloadUrl" --output-document /tmp/nitrox.zip
 
 echo "Unzipping Nitrox..."
