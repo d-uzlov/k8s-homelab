@@ -102,14 +102,24 @@ Pin: release n=${VERSION_CODENAME}-backports
 Pin-Priority: 990
 EOF
 
-sudo apt install -y scst-dkms
+# seems like SCST is a legacy project, which is used by cockpit but not by democratic-csi?
+# sudo apt install -y scst-dkms
+sudo apt-get -y install targetcli-fb
 
-sudo tee /etc/modules-load.d/scst.conf << EOF
-scst_vdisk
-iscsi_scst
-scst
-EOF
-sudo systemctl restart systemd-modules-load.service
+# sudo tee /etc/modules-load.d/scst.conf << EOF
+# scst_vdisk
+# iscsi_scst
+# scst
+# EOF
+# sudo systemctl restart systemd-modules-load.service
+
+ls /sys/kernel/scst_tgt/targets/
+# interactive shell
+sudo targetcli
+sudo targetcli ls /
+
+# debug on client
+sudo iscsiadm --mode session -P 3
 ```
 
 # NVMEoF
@@ -138,11 +148,6 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now nvmet.service
 sudo systemctl status nvmet.service
 
-echo "
-cd /
-ls
-" | sudo nvmetcli
-
 # create a tcp port listening on all IPs on port 4420
 echo "
 cd /ports
@@ -152,6 +157,11 @@ set addr adrfam=ipv4 trtype=tcp traddr=0.0.0.0 trsvcid=4420
 
 saveconfig /etc/nvmet/config.json
 " | sudo nvmetcli
+
+sudo nvmetcli ls /
+
+# list connections on client
+sudo nvme list-subsys
 ```
 
 References:

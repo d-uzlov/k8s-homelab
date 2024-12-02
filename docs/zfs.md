@@ -42,6 +42,14 @@ zpool add -f main log /dev/disk/by-partuuid/your-partuuid-value
 zpool list main -v
 ```
 
+# ashift
+
+```bash
+# print current ashift
+zpool get all | grep ashift
+sudo zdb -C | grep ashift
+```
+
 # Statistics
 
 ```bash
@@ -174,6 +182,9 @@ As noted in the [`nopwrite`](#nopwrite) section, encryption breaks nopwrite.
 # Set limit for ARC size
 
 ```bash
+cat /sys/module/zfs/parameters/zfs_arc_min /sys/module/zfs/parameters/zfs_arc_max
+cat /sys/module/zfs/parameters/zfs_arc_min /sys/module/zfs/parameters/zfs_arc_max | numfmt --to=iec
+
 # set 8G for current session
 echo 4294967296 >> /sys/module/zfs/parameters/zfs_arc_min
 echo 4294967296 >> /sys/module/zfs/parameters/zfs_arc_max
@@ -182,10 +193,11 @@ echo 4294967296 >> /sys/module/zfs/parameters/zfs_arc_max
 # 4G:  4294967296
 
 # set ARC size automatically after boot
-cat << EOF | sudo tee /etc/modprobe.d/zfs_arc_size.conf
+sudo tee /etc/modprobe.d/50-zfs_arc_size.conf << EOF
 options zfs zfs_arc_min=4294967296
 options zfs zfs_arc_max=4294967296
 EOF
+cat /etc/modprobe.d/50-zfs_arc_size.conf
 sudo update-initramfs -u
 
 # purge cache for current system (useful if you want to reduce ARC size)

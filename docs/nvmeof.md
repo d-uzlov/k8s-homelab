@@ -3,7 +3,7 @@
 
 NVMe-oF is a way to run NVMe over some network.
 
-Usually you would want to use some RDMA-capable device for the best performance,
+For best performance you would want to use RDMA,
 but NVMe-over-TCP is also possible.
 
 Tutorials:

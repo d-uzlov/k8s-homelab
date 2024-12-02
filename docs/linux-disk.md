@@ -70,6 +70,28 @@ parted
 hdparm -W 0 /dev/sdl
 ```
 
+# Block device info
+
+```bash
+# device size in bytes
+sudo blockdev --getsize64 /dev/sdb
+# device block size
+sudo blockdev --getss /dev/sdb
+cat /sys/block/sdb/queue/hw_sector_size
+cat /sys/block/sdb/queue/physical_block_size
+
+sudo dumpe2fs /dev/sdb
+sudo dumpe2fs /dev/sdb | grep "Block size"
+
+sudo apt-get install smartmontools
+sudo smartctl -a /dev/sdb
+
+# TRIM / discard support
+lsblk -D
+cat /sys/block/sdb/queue/discard_max_hw_bytes
+cat /sys/block/sdb/queue/discard_granularity
+```
+
 # Show current mounts
 
 ```bash

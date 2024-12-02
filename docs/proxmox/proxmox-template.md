@@ -43,8 +43,9 @@ tar -xvf debian-12-generic-amd64-20241110-1927.tar.xz
 sudo virt-customize -a disk.raw \
   --update \
   --install qemu-guest-agent \
-  --install ca-certificates,apt-transport-https,gnupg,ipvsadm,open-iscsi,nfs-common,cachefilesd \
-  --install bash-completion,ncat,net-tools,iperf3,fio,curl,htop,dnsutils,iotop,sysstat \
+  --install ca-certificates,apt-transport-https,gnupg,lsb-core \
+  --install open-iscsi,nfs-common,samba,nvme-cli,cachefilesd \
+  --install bash-completion,ncat,net-tools,iperf3,fio,curl,htop,dnsutils,iotop,sysstat,git,make \
   --uninstall unattended-upgrades \
   --run-command 'sudo rm /usr/sbin/shutdown && sudo tee /usr/sbin/shutdown << EOF && sudo chmod 755 /usr/sbin/shutdown
 #!/bin/bash
@@ -57,7 +58,7 @@ EOF
 '   --run-command 'sudo tee /lib/udev/rules.d/80-hotplug-cpu.rules << EOF
 SUBSYSTEM=="cpu", ACTION=="add", TEST=="online", ATTR{online}=="0", ATTR{online}="1"
 EOF
-'   --run-command 'sudo tee /etc/cloud/cloud.cfg.d/99_dnsfix.cfg << EOF
+'   --run-command 'sudo tee /etc/cloud/cloud.cfg.d/10-dnsfix.cfg << EOF
 runcmd:
 - /usr/sbin/dhclient
 EOF

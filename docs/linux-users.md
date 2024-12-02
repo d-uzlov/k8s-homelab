@@ -32,5 +32,8 @@ sudo userdel USERNAME
 # `sudo` without password
 
 ```bash
+# when creating user
+echo "$username ALL=(ALL:ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/$username
+# when already running as user
 echo "$USER ALL=(ALL:ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/$USER
 ```
