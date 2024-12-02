@@ -116,6 +116,7 @@ kl -n kps-ksm get pod -o wide
 kl create ns kps-node-exporter
 kl label ns kps-node-exporter pod-security.kubernetes.io/enforce=privileged
 kl apply -k ./metrics/kube-prometheus-stack/node-exporter/
+kl apply -k ./metrics/kube-prometheus-stack/node-exporter/dashboards/ --server-side
 kl -n kps-node-exporter get pod -o wide
 
 kl create ns kps-grafana
@@ -281,29 +282,29 @@ curl -k -H "Authorization: Bearer $bearer" https://$nodeIp:10257/metrics
 kl -n kube-system describe svc kps-kube-scheduler
 curl -k -H "Authorization: Bearer $bearer" https://$nodeIp:10259/metrics
 
+kl -n kps-node-exporter describe svc kps-prometheus-node-exporter
+curl -k -H "Authorization: Bearer $bearer" http://$nodeIp:9100/metrics
+
 kl -n kps-grafana describe svc kps-grafana
 grafanaIp=
 kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" http://$grafanaIp:3000/metrics
 
-kl -n kps-node-exporter describe svc kps-prometheus-node-exporter
-curl -k -H "Authorization: Bearer $bearer" http://$nodeIp:9100/metrics
-
 kl -n kps describe svc alertmanager-operated
-alertManagerIp=10.201.2.77
+alertManagerIp=
 kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" http://$alertManagerIp:9093/metrics
 kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" http://$alertManagerIp:8080/metrics
 
 kl -n kps describe svc prometheus-operated
-prometheusIp=10.201.2.214
+prometheusIp=
 kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" http://$prometheusIp:9090/metrics
 kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" http://$prometheusIp:8080/metrics
 
-kl -n kps describe svc prometheus-operated
-prometheusOperatorIp=10.201.3.129
+kl -n kps-operator describe svc prometheus-operator
+prometheusOperatorIp=
 kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" https://$prometheusOperatorIp:10250/metrics
 
 kl -n kps-ksm describe svc kube-state-metrics
-kubeStateMetricsIp=10.201.2.109
+kubeStateMetricsIp=
 kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" http://$kubeStateMetricsIp:8080/metrics
 kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" http://$kubeStateMetricsIp:8081/metrics
 ```
