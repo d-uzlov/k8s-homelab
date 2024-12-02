@@ -8,7 +8,8 @@ You can quickly run all commands from there
 if you have it in your local filesystem:
 
 ```bash
-. <(sed -n '/```bash/,/```/{//!p;}' ./docs/bash-setup.md)
+sed -n '/```bash/,/```/{//!p;}' ./docs/bash-setup.md | bash
+sed -n '/```bash/,/```/{//!p;}' ./docs/bash-setup.md | ssh $remote_hostname
 ```
 
 # Docker completion

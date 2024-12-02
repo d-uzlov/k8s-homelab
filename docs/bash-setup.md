@@ -1,11 +1,25 @@
 
+# Bash setup
+
+# Script header
+
+```bash
+# from `help set`:
+# -e Exit immediately if a command exits with a non-zero status
+# -u Treat unset variables as an error when substituting
+set -eu
+```
+
+Note: the code section above must be the first in the file.
+Commands in it are helpful in automated setups that transform this file into `.sh`.
+
 # Add bashrc directory
 
 Enable using `~/.bashrc.d` for adjustments.
 
 ```bash
 mkdir -p ~/.bashrc.d/
- grep "add support for bashrc.d" ~/.bashrc > /dev/null || cat << "EOF" >> ~/.bashrc
+ cat << "EOF" >> ~/.bashrc.d/include
 # add support for bashrc.d
 if [ -d ~/.bashrc.d ]; then
   for rc in ~/.bashrc.d/*.sh; do
@@ -15,6 +29,7 @@ if [ -d ~/.bashrc.d ]; then
   done
 fi
 EOF
+grep '\.bashrc\.d' ~/.bashrc > /dev/null || echo '. ~/.bashrc.d/include' >> ~/.bashrc
 ```
 
 # Settings for new users
@@ -217,7 +232,7 @@ References:
 # Nano settings
 
 ```bash
-which unzip > /dev/null || sudo apt install -y unzip
+which unzip > /dev/null || { sudo apt update; sudo apt install -y unzip; }
 # syntax highlights for many languages
 [ -d ~/.nano/ ] || curl https://raw.githubusercontent.com/galenguyer/nano-syntax-highlighting/master/install.sh | bash
 # installs into ~/.nano/
@@ -289,3 +304,11 @@ References:
 - https://github.com/galenguyer/nano-syntax-highlighting
 - https://github.com/davidhcefx/Modern-Nano-Keybindings
 - https://stackoverflow.com/questions/33217564/move-whole-line-up-down-shortcut-in-nano-analogue-to-intellij-or-visual-studio
+
+# Additional colors
+
+```bash
+ cat << EOF > ~/.bashrc.d/0-colors.sh
+alias ip='ip --color=auto'
+EOF
+```
