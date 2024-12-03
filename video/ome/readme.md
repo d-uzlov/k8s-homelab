@@ -42,9 +42,11 @@ kl apply -k ./video/ome/svc-streamer/
 # choose one configuration, or deploy several configs
 kl apply -k ./video/ome/origin-cpu/
 kl apply -k ./video/ome/origin-nvidia/
+kl -n ome get pod -o wide
 
 # only works with a single origin instance
 kl apply -k ./video/ome/svc-viewer-origin/
+kl -n ome get pod -o wide
 
 # works with any amount of origins but more complex
 kl apply -k ./video/ome/edge/

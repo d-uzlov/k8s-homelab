@@ -3,9 +3,22 @@ import { setSoundButtons, setButtons, reloadButton, stopButton, controlsTopButto
 import { getJSON, parseHash, setDefaultSettingsName, getSettings, saveSettings } from './utils.js';
 import { getDataSources } from './data-sources.js';
 
+const metaType = {
+  llhls: 'llhls',
+  webRtcTcp: 'webrtc-tcp',
+  webRtcUdp: 'webrtc-udp',
+};
+
+const omePlayerType = {
+  llhls: 'll-hls',
+  webrtc: 'webrtc',
+};
+
+const settingsPreferKey = 'prefer';
+
 function updateVolumeButtons(playerInstance) {
   setSoundButtons(playerInstance, playerInstance.getVolume(), playerInstance.getMute(), function () {
-    saveSettings('volume', function (settings) {
+    saveSettings('', 'volume', function (settings) {
       settings.volume = playerInstance.getVolume();
       settings.mute = playerInstance.getMute();
     });
@@ -16,7 +29,7 @@ function setupEvents(playerInstance) {
   playerInstance.on('ready', function () {
     playerInstance.setAutoQuality(false);
     const settings = getSettings();
-    setSource(playerInstance, settings.sourceType, settings.sourceFile);
+    // setSource(playerInstance, settings.sourceType, settings.sourceFile);
     updateVolumeButtons(playerInstance);
   });
 
@@ -48,6 +61,8 @@ function destroyPlayer() {
   globalPlayer = null;
 }
 
+var globalSourcesMeta = null;
+
 function createPlayer(playerOptions) {
   destroyPlayer();
 
@@ -70,26 +85,34 @@ async function getAppInfo(apiName, url, app, key) {
   return getJSON(query);
 }
 
-function setQualityButtons(appInfo, setSourceFile, selected) {
+function setQualityButtons(appInfo, setSourceFile, selectedType, selectedFile) {
   if (appInfo.webrtc != null) {
-    const qualityButtons = [];
+    const qualityButtonsTcp = [];
+    const qualityButtonsUdp = [];
     const links = appInfo.webrtc.links;
     for (const link of links) {
       if (link.resolution == 'multi' && links.length > 1) {
         continue
       }
-      qualityButtons.push({
+      qualityButtonsTcp.push({
         name: link.resolution,
         file: link.file,
-        action: () => setSourceFile('webrtc', link.file),
+        type: metaType.webRtcTcp,
+        action: () => setSourceFile(metaType.webRtcTcp, link.file),
+      });
+      qualityButtonsUdp.push({
+        name: link.resolution,
+        file: link.file,
+        type: metaType.webRtcUdp,
+        action: () => setSourceFile(metaType.webRtcUdp, link.file),
       });
     }
-    setButtons('webrtc-quality-buttons', qualityButtons, function (val) {
-      return val.file == selected;
-    })
+    setButtons('webrtc-tcp-quality-buttons', qualityButtonsTcp, (val) => val.file == selectedFile && val.type == selectedType);
+    setButtons('webrtc-udp-quality-buttons', qualityButtonsUdp, (val) => val.file == selectedFile && val.type == selectedType);
   } else {
     console.log('hiding webrtc quality');
-    document.getElementById('webrtc-quality').style.display = 'none';
+    document.getElementById('webrtc-udp-quality').style.display = 'none';
+    document.getElementById('webrtc-tcp-quality').style.display = 'none';
   }
   if (appInfo.llhls != null) {
     const qualityButtons = [];
@@ -101,12 +124,10 @@ function setQualityButtons(appInfo, setSourceFile, selected) {
       qualityButtons.push({
         name: link.resolution,
         file: link.file,
-        action: () => setSourceFile('llhls', link.file),
+        action: () => setSourceFile(metaType.llhls, link.file),
       });
     }
-    setButtons('hls-quality-buttons', qualityButtons, function (val) {
-      return val.file == selected;
-    })
+    setButtons('hls-quality-buttons', qualityButtons, (val) => val.file == selectedFile && val.type == selectedType);
   } else {
     console.log('hiding hls quality');
     document.getElementById('hls-quality').style.display = 'none';
@@ -116,18 +137,25 @@ function setQualityButtons(appInfo, setSourceFile, selected) {
   }
 }
 
+function sourceMetaIndex(type, file) {
+  return type + ":" + file;
+}
+
 function makePlaySources(appInfo, url, key) {
-  const res = [];
+  const list = [];
+  const meta = {};
   if (appInfo.webrtc != null) {
     const links = appInfo.webrtc.links;
     for (const link of links) {
       if (link.resolution == 'multi' && links.length > 1) {
         continue
       }
-      res.push({
-        file: 'wss://' + url + '/' + appInfo.name + '/' + key + '/' + link.file + '?transport=tcp',
-        type: 'webrtc',
-      });
+      const fileTcp = 'wss://' + url + '/' + appInfo.name + '/' + key + '/' + link.file + '?transport=tcp';
+      const fileUdp = 'wss://' + url + '/' + appInfo.name + '/' + key + '/' + link.file + '?transport=udp';
+      list.push({ file: fileTcp, type: omePlayerType.webrtc });
+      list.push({ file: fileUdp, type: omePlayerType.webrtc });
+      meta[sourceMetaIndex(metaType.webRtcTcp, link.file)] = fileTcp;
+      meta[sourceMetaIndex(metaType.webRtcUdp, link.file)] = fileUdp;
     }
   }
   if (appInfo.llhls != null) {
@@ -136,26 +164,22 @@ function makePlaySources(appInfo, url, key) {
       if (link.resolution == 'multi' && links.length > 1) {
         continue
       }
-      res.push({
-        file: 'https://' + url + '/' + appInfo.name + '/' + key + '/' + link.file,
-        type: 'll-hls',
-      });
+      const file = 'https://' + url + '/' + appInfo.name + '/' + key + '/' + link.file;
+      list.push({ file: file, type: omePlayerType.llhls });
+      meta[sourceMetaIndex(metaType.llhls, link.file)] = file;
     }
   }
-  return res;
+  return { list, meta };
 }
 
 function findSource(sources, type, file) {
   if (type == null) {
     return null;
   }
-  let ending = '/' + file;
-  if (type == 'webrtc') {
-    ending += '?transport=tcp';
-  }
+  const link = globalSourcesMeta[sourceMetaIndex(type, file)];
   for (let i = 0; i < sources.length; i++) {
     const s = sources[i];
-    if (s.file.endsWith(ending)) {
+    if (s.file == link) {
       return i;
     }
   }
@@ -175,22 +199,22 @@ function setSource(playerInstance, type, file) {
   }
 }
 
-function updateQualityButtons(appInfo, selectedSource) {
+function updateQualityButtons(appInfo, selectedType, selectedFile) {
   setQualityButtons(appInfo, (type, file) => {
     setSource(globalPlayer, type, file);
-    saveSettings('source', function (settings) {
+    saveSettings('', 'set quality', function (settings) {
       settings.sourceType = type;
       settings.sourceFile = file;
     });
-    updateQualityButtons(appInfo, file);
-  }, selectedSource);
+    updateQualityButtons(appInfo, type, file);
+  }, selectedType, selectedFile);
 }
 
 function updateSourceSettings(sources, appInfo) {
   if (sources == null || sources.length == 0) {
     return;
   }
-  let settings = getSettings();
+  let settings = getSettings(settingsPreferKey);
 
   let type = settings.sourceType;
   let file = settings.sourceFile;
@@ -201,48 +225,21 @@ function updateSourceSettings(sources, appInfo) {
   if (appInfo.props == null) {
     return;
   }
+  console.log('no matching saved source, use default');
   type = appInfo.props.preferType;
-  file = appInfo.props.prefer
+  if (type == 'webrtc') {
+    type = metaType.webRtcTcp;
+  }
+  file = appInfo.props.prefer;
   sourceIndex = findSource(sources, type, file);
   if (sourceIndex != null) {
-    saveSettings('prefer', (settings) => {
+    saveSettings(settingsPreferKey, 'updateSourceSettings', (settings) => {
       settings.sourceType = type;
       settings.sourceFile = file;
     });
     return;
   }
-  let anySource = null;
-  if (appInfo.webrtc != null) {
-    const links = appInfo.webrtc.links;
-    for (const link of links) {
-      if (link.resolution == 'multi' && links.length > 1) {
-        continue
-      }
-      anySource = {
-        type: 'webrtc',
-        file: link.file,
-      };
-      break;
-    }
-  } else if (appInfo.llhls != null) {
-    const links = appInfo.llhls.links;
-    for (const link of links) {
-      if (link.resolution == 'multi' && links.length > 1) {
-        continue
-      }
-      anySource = {
-        type: 'llhls',
-        file: link.file,
-      };
-      break;
-    }
-  }
-  if (anySource != null) {
-    saveSettings('prefer', (settings) => {
-      settings.sourceType = anySource.type;
-      settings.sourceFile = anySource.file;
-    });
-  }
+  console.log('no default source, use any');
 }
 
 async function setupPage() {
@@ -253,15 +250,28 @@ async function setupPage() {
   }
   setDefaultSettingsName('settings@' + args.key + '@' + args.url + '/' + args.app);
 
-  const appInfo = await getAppInfo(args.api, args.url, args.app, args.key);
-  const sources = makePlaySources(appInfo, args.url, args.key);
+  const streamNameLabel = document.getElementById('stream-name');
+  streamNameLabel.textContent = args.key + ' streaming';
 
-  updateSourceSettings(sources, appInfo);
+  const appInfo = await getAppInfo(args.api, args.url, args.app, args.key);
+  const playSources = makePlaySources(appInfo, args.url, args.key);
+  globalSourcesMeta = playSources.meta;
+
+  updateSourceSettings(playSources.list, appInfo);
 
   let settings = getSettings();
   console.log('using settings', settings);
+  // let preferSettings = getSettings(settingsPreferKey);
 
-  updateQualityButtons(appInfo, settings.sourceFile);
+  const foundIndex = findSource(playSources.list, settings.sourceType, settings.sourceFile);
+  if (foundIndex != null) {
+    // at start player selects the first source
+    const selectedSource = playSources.list[foundIndex];
+    playSources.list[foundIndex] = playSources.list[0];
+    playSources.list[0] = selectedSource;
+  }
+
+  updateQualityButtons(appInfo, settings.sourceType, settings.sourceFile);
 
   const playerOptions = {
     // title: 'My title',
@@ -271,7 +281,7 @@ async function setupPage() {
     // controls: true,
     mute: settings.mute ?? false,
     volume: settings.volume ?? 100,
-    sources: sources,
+    sources: playSources.list,
   };
 
   createPlayer(playerOptions)
@@ -281,31 +291,25 @@ async function setupPage() {
 reloadButton.onclick = setupPage;
 stopButton.onclick = destroyPlayer;
 
-const globalSettings = getSettings('global');
+const globalSettingsKey = 'global';
 function moveControls(isTop) {
   const controls = document.getElementById('main-controls');
   const player = document.getElementById('main-player');
   const lastNode = isTop ? player : controls;
   controls.parentNode.appendChild(lastNode);
-}
-const topControls = globalSettings.topControls ?? true
-moveControls(topControls);
-const selectedControls = topControls ? controlsTopButton : controlsBottomButton;
-selectedControls.classList.add(redBorder);
-controlsTopButton.onclick = () => {
-  const isTop = true;
-  moveControls(isTop);
-  saveSettings('controls-position', (settings) => settings.topControls = isTop, 'global');
-  controlsTopButton.classList.add(redBorder);
-  controlsBottomButton.classList.remove(redBorder);
-}
-controlsBottomButton.onclick = () => {
-  const isTop = false;
-  moveControls(isTop);
-  saveSettings('controls-position', (settings) => settings.topControls = isTop, 'global');
-  controlsTopButton.classList.remove(redBorder);
-  controlsBottomButton.classList.add(redBorder);
+  saveSettings(globalSettingsKey, 'controls-position', (settings) => settings.topControls = isTop);
+  const selectedControls = isTop ? controlsTopButton : controlsBottomButton;
+  const deselectedControls = isTop ? controlsBottomButton : controlsTopButton;
+  selectedControls.classList.add(redBorder);
+  deselectedControls.classList.remove(redBorder);
 }
 
+const globalSettings = getSettings(globalSettingsKey);
+const topControls = globalSettings.topControls ?? true;
+moveControls(topControls);
+controlsTopButton.onclick = () => moveControls(true);
+controlsBottomButton.onclick = () => moveControls(false);
+
+// .debug enables verbose logs
 OvenPlayer.debug(false);
 setupPage();
