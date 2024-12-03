@@ -53,3 +53,10 @@ sudo apt update
 sudo apt install stress-ng
 stress-ng --cpu 4 --vm 2 --fork 1 --timeout 10s --metrics
 ```
+
+# Convert CRLF line endings into linux format
+
+```bash
+sudo apt install dos2unix
+git ls-files -z | xargs -0 dos2unix
+```
