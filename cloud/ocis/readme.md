@@ -38,7 +38,7 @@ cat <<EOF > ./cloud/ocis/pvc/env/pvc.env
 # so they can share storage if you scale them
 
 metadata_storage_class=fast
-# here are default PVC size from default heml values
+# here are default PVC size from default helm values
 idm_size=10Gi
 nats_size=10Gi
 search_size=10Gi
