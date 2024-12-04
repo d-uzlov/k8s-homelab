@@ -25,9 +25,33 @@ sudo sysctl --system
 sudo sysctl fs.inotify
 ```
 
+# Use up-to-date kernel
+
+By default Debian 12 uses kernel `6.1.0-18-amd64`, which is a bit outdated.
+For example, `netkit` requires 6.8 or newer.
+
+You can install a newer kernel manually. For example, here is how you can install proxmox kernel:
+
+```bash
+echo "deb [arch=amd64] http://download.proxmox.com/debian/pve bookworm pve-no-subscription" | sudo tee /etc/apt/sources.list.d/pve-install-repo.list
+sudo wget https://enterprise.proxmox.com/debian/proxmox-release-bookworm.gpg -O /etc/apt/trusted.gpg.d/proxmox-release-bookworm.gpg
+# verify
+sha512sum /etc/apt/trusted.gpg.d/proxmox-release-bookworm.gpg
+# sha512sum output must be:
+# 7da6fe34168adc6e479327ba517796d4702fa2f8b4f0a9833f5ea6e6b48f6507a6da403a274fe201595edc86a84463d50383d07f64bdde2e3658108db7d6dc87 /etc/apt/trusted.gpg.d/proxmox-release-bookworm.gpg
+sudo apt update && sudo apt full-upgrade -y
+sudo apt install -y proxmox-default-kernel
+sudo reboot now
+
+uname -r
+# adjust for your kernel version prefix
+sudo apt remove -y linux-image-amd64 'linux-image-6.1*'
+sudo update-grub
+```
+
 # Install containerd and its dependencies
 
-As of version v1.7.22 containerd can't work with kernel 6.8.8-4-pve properly.
+As of versions v1.7.22 and v2.0 containerd can't work with kernel 6.8.8-4-pve properly.
 So this guide downloads a modified version which fixes it.
 You may want to switch to the official version
 of just rebuild the containerd binaries yourself.
@@ -37,29 +61,33 @@ of just rebuild the containerd binaries yourself.
 # Check new versions here:
 # https://github.com/containerd/containerd/releases
 # https://github.com/d-uzlov/containerd/releases
-containerd_version=1.7.22m &&
-wget https://github.com/d-uzlov/containerd/releases/download/v$containerd_version/containerd-$containerd_version-linux-amd64.tar.gz &&
+# wget https://github.com/d-uzlov/containerd/releases/download/v$containerd_version/containerd-$containerd_version-linux-amd64.tar.gz
+containerd_version=2.0m &&
+wget https://github.com/d-uzlov/containerd/releases/download/release-$containerd_version/containerd-$containerd_version-linux-amd64.tar.gz
 sudo tar Czxvf /usr/local containerd-$containerd_version-linux-amd64.tar.gz &&
 rm containerd-$containerd_version-linux-amd64.tar.gz &&
 containerd --version &&
 
-wget https://github.com/containerd/containerd/raw/v$containerd_version/containerd.service &&
+wget https://github.com/containerd/containerd/raw/refs/heads/main/containerd.service &&
 sudo mv containerd.service /usr/lib/systemd/system/ &&
 sudo systemctl daemon-reload &&
 sudo systemctl enable containerd &&
 
 # Check new versions here:
 # https://github.com/opencontainers/runc/releases
-runc_version=1.1.13 &&
+runc_version=1.2.2 &&
 wget https://github.com/opencontainers/runc/releases/download/v$runc_version/runc.amd64 &&
 sudo install -m 755 runc.amd64 /usr/local/sbin/runc &&
 rm runc.amd64 &&
 sudo runc --version &&
 
-crictl_version=v1.30.1 && # check latest version in /releases page
+# Check new versions here:
+# https://github.com/kubernetes-sigs/cri-tools/releases
+crictl_version=v1.31.1 &&
 wget https://github.com/kubernetes-sigs/cri-tools/releases/download/$crictl_version/crictl-$crictl_version-linux-amd64.tar.gz &&
 sudo tar zxvf crictl-$crictl_version-linux-amd64.tar.gz -C /usr/local/bin &&
 rm -f crictl-$crictl_version-linux-amd64.tar.gz &&
+crictl --version &&
 sudo crictl config --set runtime-endpoint=unix:///run/containerd/containerd.sock --set image-endpoint=unix:///run/containerd/containerd.sock &&
 
 sudo tee /etc/modules-load.d/containerd.conf <<EOF &&
@@ -121,32 +149,3 @@ so that each node doesn't have to pull image over the internet.
 
 References:
 - [Containerd setup for Harbor proxy](./harbor/containerd-proxy.md)
-
-# Use up-to-date kernel
-
-By default Debian 12 uses kernel `6.1.0-18-amd64`, which is a bit outdated.
-For example, `netkit` requires 6.8 or newer.
-
-You can install a newer kernel manually. For example, here is how you can install proxmox kernel:
-
-```bash
-echo "deb [arch=amd64] http://download.proxmox.com/debian/pve bookworm pve-no-subscription" | sudo tee /etc/apt/sources.list.d/pve-install-repo.list
-sudo wget https://enterprise.proxmox.com/debian/proxmox-release-bookworm.gpg -O /etc/apt/trusted.gpg.d/proxmox-release-bookworm.gpg
-# verify
-sha512sum /etc/apt/trusted.gpg.d/proxmox-release-bookworm.gpg
-# sha512sum output must be:
-# 7da6fe34168adc6e479327ba517796d4702fa2f8b4f0a9833f5ea6e6b48f6507a6da403a274fe201595edc86a84463d50383d07f64bdde2e3658108db7d6dc87 /etc/apt/trusted.gpg.d/proxmox-release-bookworm.gpg
-sudo apt update && sudo apt full-upgrade -y
-sudo apt install -y proxmox-default-kernel
-sudo reboot now
-
-uname -r
-# adjust for your kernel version prefix
-sudo apt remove -y linux-image-amd64 'linux-image-6.1*'
-sudo update-grub
-```
-
-# Misc
-
-References:
-- K8s hangs when deleting pod with failed NFS mount: https://github.com/kubernetes/kubernetes/issues/101622
