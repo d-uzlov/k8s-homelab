@@ -10,6 +10,7 @@ so you only need to run this on your local machine.
 
 ```bash
 kubectl_version=$(curl -L -s https://dl.k8s.io/release/stable.txt)
+echo $kubectl_version
 curl -LO "https://dl.k8s.io/release/$kubectl_version/bin/linux/amd64/kubectl"
 curl -LO "https://dl.k8s.io/release/$kubectl_version/bin/linux/amd64/kubectl.sha256"
 echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check

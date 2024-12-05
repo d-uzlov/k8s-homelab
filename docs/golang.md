@@ -3,6 +3,7 @@
 
 ```bash
 # check out the latest release
+# https://go.dev/doc/devel/release
 release=1.23.0
 filename=go$release.linux-amd64.tar.gz
 curl -OL https://golang.org/dl/$filename &&
@@ -13,6 +14,7 @@ rm $filename
 cat << "EOF" > ~/.bashrc.d/0-gopath.sh
 export PATH=$PATH:/usr/local/go/bin
 EOF
+. ~/.bashrc.d/0-gopath.sh
 
 go install golang.org/x/tools/gopls@latest
 ```

@@ -1,4 +1,13 @@
 
+# Recommended extensions
+
+Format: `Name - "First-line-from-description"`
+
+- Code Spell Checker - "Spelling checker for source code"
+- Kubernetes - "Develop, deploy and debug Kubernetes applications"
+- Better YAML Formatter - "A better YAML formatter"
+- Go - "Rich Go language support for Visual Studio Code"
+
 # Disable yaml autoformat
 
 In settings search for:
