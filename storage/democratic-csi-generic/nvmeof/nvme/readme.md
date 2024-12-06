@@ -101,7 +101,7 @@ kl get pod -o wide
 # if there are issues, you can try to check logs
 kl describe pvc test-nvme
 kl -n pv-nvmeof logs deployments/dnvme-controller csi-driver --tail 20
-kl describe pod -l app=test-nvme
+kl describe pod -l app=test-nvmeof
 
 # check mounted file system
 kl exec deployments/test-nvmeof -- mount | grep /mnt/data
