@@ -1,0 +1,91 @@
+
+nameOverride: dcsi
+fullnameOverride: dcsi
+
+csiDriver:
+  # should be globally unique for a given cluster
+  name: org.democratic-csi.proxy
+
+driver:
+  existingConfigSecret: main-config
+  config:
+    driver: proxy
+
+controller:
+  priorityClassName: system-cluster-critical
+  extraEnv:
+  - name: SSH_REUSE_CONNECTION
+    value: '0'
+  driver:
+    logLevel: debug
+    # image: docker.io/democraticcsi/democratic-csi:v1.9.1
+    image: docker.io/daniluzlov/k8s-snippets:dcsi-proxy-v02
+    imagePullPolicy: IfNotPresent
+    # image: docker.io/democraticcsi/democratic-csi:next
+    # imagePullPolicy: Always
+    # image: docker.io/democraticcsi/democratic-csi@sha256:945cf404d40f719edda62c1889d142bfe8b970c7bfd3e99054869e1dc8efe62a
+    # imagePullPolicy: IfNotPresent
+    resources:
+      requests:
+        memory: 70Mi
+      limits:
+        memory: 250Mi
+  externalAttacher:
+    resources:
+      requests:
+        memory: 20Mi
+      limits:
+        memory: 30Mi
+  externalProvisioner:
+    resources:
+      requests:
+        memory: 25Mi
+      limits:
+        memory: 30Mi
+  externalResizer:
+    resources:
+      requests:
+        memory: 25Mi
+      limits:
+        # it is getting OOMKilled when limit is 25Mi
+        memory: 50Mi
+  externalSnapshotter:
+    resources:
+      requests:
+        memory: 25Mi
+      limits:
+        memory: 25Mi
+
+node:
+  priorityClassName: system-node-critical
+  driver:
+    logLevel: debug
+    # image: docker.io/democraticcsi/democratic-csi:v1.9.1
+    image: docker.io/daniluzlov/k8s-snippets:dcsi-proxy-v01
+    imagePullPolicy: IfNotPresent
+    # image: docker.io/democraticcsi/democratic-csi@sha256:945cf404d40f719edda62c1889d142bfe8b970c7bfd3e99054869e1dc8efe62a
+    # imagePullPolicy: IfNotPresent
+    resources:
+      requests:
+        memory: 70Mi
+      limits:
+        # there are occasional spikes to 150Mi+
+        memory: 250Mi
+  tolerations:
+  - effect: NoSchedule
+    key: node-role.kubernetes.io/control-plane
+  driverRegistrar:
+    resources:
+      requests:
+        cpu: 0m
+        memory: 20Mi
+      limits:
+        memory: 30Mi
+
+csiProxy:
+  resources:
+    requests:
+      cpu: 0m
+      memory: 15Mi
+    limits:
+      memory: 22Mi

@@ -46,7 +46,7 @@ zpool list main -v
 
 ```bash
 # print current ashift
-zpool get all | grep ashift
+sudo zpool get ashift
 sudo zdb -C | grep ashift
 ```
 

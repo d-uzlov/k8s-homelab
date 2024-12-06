@@ -1,0 +1,126 @@
+
+driver: proxy
+
+_private:
+  csi:
+    volume:
+      # the length must NOT exceed 128 characters
+      # must start with an alphanumeric character
+      # must only contain alphanumeric characters or `-` or `_`
+      idTemplate: "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}--{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
+      # when reclaimPolicy=Delete and deleteStrategy=retain,
+      # on PVC deletion k8s PV is deleted but underlying dataset/zvol deletion is skipped
+      # deleteStrategy: retain
+
+zfs:
+  cli:
+   sudoEnabled: true
+
+  # main and snapshot datasets should not be nested in each other
+  datasetParentName: invalid
+  detachedSnapshotsDatasetParentName: invalid
+
+  # set arbitrary values on the dataset/zvol
+  # datasetProperties:
+  #   org.democratic-csi:description: k8s/{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}/{{ parameters.[csi.storage.k8s.io/pvc/name] }}
+
+  # "" (inherit), lz4, gzip-9, etc
+  zvolCompression:
+  # "" (inherit), on, off, verify
+  zvolDedup:
+  zvolEnableReservation: false
+  # 512, 1K, 2K, 4K, 8K, 16K, 64K, 128K default is 16K
+  zvolBlocksize:
+
+  datasetEnableQuotas: true
+  datasetEnableReservation: false
+  datasetPermissionsMode: '0777'
+  datasetPermissionsUser: 0
+  datasetPermissionsGroup: 0
+
+nfs:
+  shareStrategy: setDatasetProperties
+  shareStrategySetDatasetProperties:
+    properties:
+      #sharenfs: rw,no_subtree_check,no_root_squash
+      sharenfs: on
+      # share: ""
+  shareHost: AUTOREPLACE_SERVER_ADDRESS
+
+nvmeof:
+  # MUST ensure uniqueness
+  # full iqn limit is 223 bytes, plan accordingly
+  # default is "{{ name }}"
+  #nameTemplate: "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}-{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
+  namePrefix:
+  nameSuffix:
+
+  # these are for the node/client aspect
+  transports:
+  - tcp://AUTOREPLACE_SERVER_ADDRESS:4420
+
+  shareStrategy: nvmetCli
+  shareStrategyNvmetCli:
+    sudoEnabled: true
+    nvmetcliPath: nvmetcli
+    # prevent startup race conditions
+    configIsImportedFilePath: /var/run/nvmet-config-loaded
+    configPath: /etc/nvmet/config.json
+    basename: nqn.2003-01.org.linux-nvme
+    ports:
+    - "1"
+    subsystem:
+      attributes:
+        allow_any_host: 1
+    # not supported yet in nvmetcli
+    #namespace:
+    #  attributes:
+    #    buffered_io: 1
+
+iscsi:
+  # MUST ensure uniqueness
+  # full iqn limit is 223 bytes, plan accordingly
+  # default is "{{ name }}"
+  #nameTemplate: "{{ parameters.[csi.storage.k8s.io/pvc/namespace] }}-{{ parameters.[csi.storage.k8s.io/pvc/name] }}"
+  namePrefix:
+  nameSuffix:
+
+  targetPortal: AUTOREPLACE_SERVER_ADDRESS
+  # for multipath
+  targetPortals: [] # [ "server[:port]", "server[:port]", ... ]
+  # leave empty to omit usage of -I with iscsiadm
+  interface:
+
+  shareStrategy: targetCli
+  shareStrategyTargetCli:
+    sudoEnabled: true
+    basename: iqn.2003-01.org.linux-iscsi
+    tpg:
+      attributes:
+        # set to 1 to enable CHAP
+        authentication: 0
+        # this is required currently as we do not register all node iqns
+        # the effective outcome of this is, allow all iqns to connect
+        generate_node_acls: 1
+        cache_dynamic_acls: 1
+        # if generate_node_acls is 1 then must turn this off as well (assuming you want write ability)
+        demo_mode_write_protect: 0
+      auth:
+        # CHAP
+        #userid: "foo"
+        #password: "bar"
+        # mutual CHAP
+        #mutual_userid: "baz"
+        #mutual_password: "bar"
+    block:
+      attributes:
+        # set to 1 to enable Thin Provisioning Unmap
+        emulate_tpu: 1
+
+smb:
+  shareStrategy: setDatasetProperties
+  shareStrategySetDatasetProperties:
+    properties:
+      sharesmb: on
+      # share:
+  shareHost: AUTOREPLACE_SERVER_ADDRESS
