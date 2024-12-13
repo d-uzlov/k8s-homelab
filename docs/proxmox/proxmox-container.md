@@ -22,5 +22,5 @@ curl https://get.docker.com | bash
 sudo usermod -aG docker $USER
 newgrp docker
 # check that everything is working
-docker run hello-world
+docker run --rm hello-world
 ```

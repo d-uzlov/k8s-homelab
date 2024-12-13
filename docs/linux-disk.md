@@ -23,17 +23,17 @@ References:
 
 ```bash
 # check if the drive supports 4k sectors
-nvme id-ns -H /dev/nvme0n1 | grep "LBA Format"
+sudo nvme id-ns -H /dev/nvme0n1 | grep "LBA Format"
 
 # format
 # !! this will erase all info from the disk !!
 # either use lbaf=<LBA format index>
-nvme format /dev/nvme0n1 --lbaf=1
+sudo nvme format /dev/nvme0n1 --lbaf=1
 # or directly use block size
-nvme format /dev/nvme0n1 --block-size=4096
+sudo nvme format /dev/nvme0n1 --block-size=4096
 
 # check that sector size changed
-nvme id-ns -H /dev/nvme0n1 | grep "LBA Format"
+sudo nvme id-ns -H /dev/nvme0n1 | grep "LBA Format"
 ```
 
 # NVMe namespaces

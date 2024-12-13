@@ -76,14 +76,9 @@ to account for your local environment.
 kl create ns homepage
 kl label ns homepage pod-security.kubernetes.io/enforce=baseline
 
-# re-apply this after any change
-cat \
-  ./board/homepage/config/env/services-proxmox.yaml \
-  ./board/homepage/config/env/services-truenas.yaml \
-  ./board/homepage/config/env/services-user.yaml \
-  ./board/homepage/config/env/services-network.yaml \
-  > ./board/homepage/config/env/services.yaml \
-&& kl apply -k ./board/homepage/config/
+# regenerate config after any changes
+# Rename files lexicographically to change its order in the page.
+cat ./board/homepage/config/env/services-*.yaml > ./board/homepage/config/env/services.yaml && kl apply -k ./board/homepage/config/
 
 kl apply -k ./board/homepage/
 kl -n homepage get pod -o wide

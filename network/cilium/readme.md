@@ -8,8 +8,6 @@ References:
 
 # Generate deployment
 
-You need to regenerate the deployment if you use control plane endpoint other than `cp.k8s.lan`.
-
 ```bash
 helm repo add cilium https://helm.cilium.io/
 helm repo update cilium
@@ -60,7 +58,8 @@ cat <<EOF > ./network/cilium/env/control-plane-endpoint.env
 control_plane_endpoint=cp.k8s.lan
 EOF
 
-kl create ns cilium cilium-secrets
+kl create ns cilium
+kl create ns cilium-secrets
 
 kl -n cilium apply -f ./network/network-policies/deny-ingress.yaml
 kl -n cilium apply -f ./network/network-policies/allow-same-namespace.yaml

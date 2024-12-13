@@ -8,8 +8,9 @@ Harbor can be used as a registry mirror / proxy.
 Create VM or container.
 
 ```bash
-# node address
-harbor_node=root@harbor1.k8s.lan
+# node address for SSH access
+harbor_node=
+# example: harbor_node=root@harbor1.k8s.lan
 ssh $harbor_node apt update
 ssh $harbor_node apt full-upgrade -y
 ssh $harbor_node apt install curl wget
@@ -18,6 +19,9 @@ ssh $harbor_node sh get-docker.sh
 ```
 
 # Generate certificates
+
+Generate certificates locally.
+You will later copy required files to harbor node and clients.
 
 References:
 - https://goharbor.io/docs/2.10.0/install-config/configure-https/
@@ -80,7 +84,9 @@ References:
 - https://goharbor.io/docs/2.10.0/install-config/download-installer/
 
 ```bash
-harbor_node=root@harbor1.k8s.lan
+# node address for SSH access
+harbor_node=
+# example: harbor_node=root@harbor1.k8s.lan
 harbor_version=v2.10.1
 ssh $harbor_node wget https://github.com/goharbor/harbor/releases/download/$harbor_version/harbor-online-installer-$harbor_version.tgz
 ssh $harbor_node tar xzvf harbor-online-installer-$harbor_version.tgz
@@ -112,22 +118,50 @@ ssh $harbor_node systemctl restart harbor
 - Default user name is: `admin`
 - Password is: set via `harbor_password`
 
+# Test local repo without a cache
+
+Create `local-test` project in Harbor or adjust repo name in commands.
+
+```bash
+sudo mkdir -p /etc/docker/certs.d/harbor.k8s.lan/
+sudo cp ./docs/k8s/harbor/env/ca.crt /etc/docker/certs.d/harbor.k8s.lan/
+sudo systemctl restart docker
+
+docker pull alpine
+docker tag alpine harbor.k8s.lan/local-test/alpine:t1
+# you can use layered slashes in names
+docker tag alpine harbor.k8s.lan/local-test/alpine/suffix:t1
+
+docker login harbor.k8s.lan
+docker push harbor.k8s.lan/local-test/alpine:t1
+# remove local image tag to test downloading
+docker image rm harbor.k8s.lan/local-test/alpine:t1 
+docker pull harbor.k8s.lan/local-test/alpine:t1
+```
+
+References:
+- https://goharbor.io/docs/2.12.0/working-with-projects/working-with-images/pulling-pushing-images/
+
 # Setup Harbor as a proxy
 
 1. `Administration -> Registries -> New Endpoint`, create endpoints for all registries you are interested in
-2. `Projects -> New Project`, switch on `Proxy Cache`, select the endpoint
-
-This readme assumes that proxy registry names will match addresses used by images:
-
-- Docker Hub: `docker.io`
-- GitHub: `ghcr.io`
-- Quay: `quay.io`
-- K8s registry: `registry.k8s.io`
-- - Use generic "Docker registry" endpoint type
-
-You can also add `gcr.io` as a "Docker registry" but there doesn't seems to be any useful images there.
+2. `Projects -> New Project`, switch on `Proxy Cache`, select the corresponding endpoint
 
 Endpoint names don't matter.
+
+Common endpoint:
+- Docker Hub: project name `docker.io`
+- - Provider `Docker Hub`
+- - Provider `Docker Registry`, URL `https://mirror.gcr.io`
+- GitHub: project name `ghcr.io`
+- - Provider `Github GHCR`
+- Quay: project name `quay.io`
+- - Provider `Quay`, URL `https://quay.io`
+- K8s registry: project name `registry.k8s.io`
+- - Provider `Docker Registry`, URL `https://registry.k8s.io`
+- Google own registry: project name `gcr.io`
+- - Provider `Docker Registry`, URL `https://gcr.io`
+- - There doesn't seems to be any useful images there
 
 References:
 - https://goharbor.io/docs/2.10.0/install-config/harbor-compatibility-list/
