@@ -58,6 +58,12 @@ node1=
 node2=
 node3=
 node_common=
+# example:
+# node1=k8s1-etcd1.k8s.lan
+# node2=k8s1-etcd2.k8s.lan
+# node3=k8s1-etcd3.k8s.lan
+# node_common=k8s1-etcd-lb.k8s.lan
+
 cat > ./docs/k8s/etcd/env/etcd-csr.json <<EOF
 {
   "CN": "etcd",
@@ -200,4 +206,40 @@ alias etcdctl="ETCDCTL_API=3 /usr/local/bin/etcdctl \
 etcdctl member list -w table
 etcdctl endpoint status -w table
 etcdctl endpoint health -w table
+```
+
+# Disaster recovery
+
+Imagine `k8s1-etcd1.k8s.lan` is unavailable.
+Cluster is still working but is unhealthy.
+You need to replace it with a new node, or just reinitialize the old one.
+The process is the same for both cases.
+
+Adjust node names and addresses appropriately.
+
+```bash
+alias etcdctl="ETCDCTL_API=3 /usr/local/bin/etcdctl \
+  --endpoints=https://$node2:$client_port,https://$node3:$client_port \
+  --cacert=./docs/k8s/etcd/env/ca.pem \
+  --cert=./docs/k8s/etcd/env/etcd-client.pem \
+  --key=./docs/k8s/etcd/env/etcd-client-key.pem"
+
+etcdctl member list -w table
+# replace ID with your value
+etcdctl member remove b5a71f0b96b3191f
+
+# on the existing member node
+systemctl stop etcd3
+rm -rf /var/lib/etcd/
+nano /etc/systemd/system/etcd3.service
+# change --initial-cluster-state=new to --initial-cluster-state=existing
+
+# for a new node, init it as usual and then run steps above
+
+# choose any name, here I just reuse the old name
+# set correct URL for your new node
+etcdctl member add k8s1-etcd1.k8s.lan --peer-urls=https://k8s1-etcd1.k8s.lan:2380
+
+# on the member node
+systemctl restart etcd3
 ```
