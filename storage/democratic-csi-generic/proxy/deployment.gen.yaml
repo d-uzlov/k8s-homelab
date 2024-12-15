@@ -189,7 +189,7 @@ spec:
       hostPID: false
       containers:
       - name: csi-driver
-        image: docker.io/daniluzlov/k8s-snippets:dcsi-proxy-v01
+        image: docker.io/daniluzlov/k8s-snippets:dcsi-proxy-v04
         imagePullPolicy: IfNotPresent
         args:
         - --csi-version=1.5.0
@@ -197,7 +197,7 @@ spec:
         - --driver-config-file=/config/driver-config-file.yaml
         - --log-level=debug
         - --csi-mode=node
-        - --server-socket=/csi-data/csi.sock.internal
+        - --server-socket=/csi-data/csi.sock
         resources:
           limits:
             memory: 250Mi
@@ -228,7 +228,7 @@ spec:
             command:
             - bin/liveness-probe
             - --csi-version=1.5.0
-            - --csi-address=/csi-data/csi.sock.internal
+            - --csi-address=/csi-data/csi.sock
           initialDelaySeconds: 10
           timeoutSeconds: 15
           periodSeconds: 60
@@ -258,22 +258,6 @@ spec:
           mountPath: /config
         - name: extra-ca-certs
           mountPath: /tmp/certs
-      - name: csi-proxy
-        image: docker.io/democraticcsi/csi-grpc-proxy:v0.5.6
-        resources:
-          limits:
-            memory: 22Mi
-          requests:
-            cpu: 0m
-            memory: 15Mi
-        env:
-        - name: BIND_TO
-          value: "unix:///csi-data/csi.sock"
-        - name: PROXY_TO
-          value: "unix:///csi-data/csi.sock.internal"
-        volumeMounts:
-        - mountPath: /csi-data
-          name: socket-dir
       - name: driver-registrar
         image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.9.0
         args:
@@ -536,7 +520,7 @@ spec:
               apiVersion: v1
               fieldPath: metadata.name
       - name: csi-driver
-        image: docker.io/daniluzlov/k8s-snippets:dcsi-proxy-v03
+        image: docker.io/daniluzlov/k8s-snippets:dcsi-proxy-v04
         imagePullPolicy: IfNotPresent
         args:
         - --csi-version=1.5.0
@@ -544,7 +528,7 @@ spec:
         - --driver-config-file=/config/driver-config-file.yaml
         - --log-level=debug
         - --csi-mode=controller
-        - --server-socket=/csi-data/csi.sock.internal
+        - --server-socket=/csi-data/csi.sock
         resources:
           limits:
             memory: 250Mi
@@ -560,7 +544,7 @@ spec:
             command:
             - bin/liveness-probe
             - --csi-version=1.5.0
-            - --csi-address=/csi-data/csi.sock.internal
+            - --csi-address=/csi-data/csi.sock
           initialDelaySeconds: 10
           timeoutSeconds: 15
           periodSeconds: 60
@@ -571,22 +555,6 @@ spec:
           mountPath: /config
         - name: extra-ca-certs
           mountPath: /tmp/certs
-      - name: csi-proxy
-        image: docker.io/democraticcsi/csi-grpc-proxy:v0.5.6
-        resources:
-          limits:
-            memory: 22Mi
-          requests:
-            cpu: 0m
-            memory: 15Mi
-        env:
-        - name: BIND_TO
-          value: "unix:///csi-data/csi.sock"
-        - name: PROXY_TO
-          value: "unix:///csi-data/csi.sock.internal"
-        volumeMounts:
-        - mountPath: /csi-data
-          name: socket-dir
 
       volumes:
       - name: socket-dir

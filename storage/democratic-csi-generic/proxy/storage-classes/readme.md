@@ -63,7 +63,8 @@ serverAddress=
 
 rm -f ./storage/democratic-csi-generic/proxy/storage-classes/env/resources-$serverAddress.yaml
 rm -f ./storage/democratic-csi-generic/proxy/storage-classes/env/secrets-$serverAddress.yaml
-drivers="zfs-generic-nfs zfs-generic-iscsi zfs-generic-smb zfs-generic-nvmeof"
+# drivers="zfs-generic-nfs zfs-generic-iscsi zfs-generic-smb zfs-generic-nvmeof"
+drivers="zfs-generic-nfs zfs-generic-iscsi zfs-generic-nvmeof"
 for driver in $drivers; do
   shortName=${driver#zfs-generic-}
   scName=$storageClassPrefix$shortName
@@ -112,6 +113,7 @@ mountOptions:
 - rsize=262144
 - wsize=262144
 EOF
+# TODO currently SMB config does not work
 cat << EOF >> ./storage/democratic-csi-generic/proxy/storage-classes/env/sc-$serverAddress-smb.yaml
   fsType: smb3
 mountOptions:

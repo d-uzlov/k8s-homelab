@@ -66,8 +66,11 @@ kl -n pv-dcsi get pod -o wide
 kl -n pv-dcsi logs deployments/dcsi-controller csi-driver > ./controller.log
 kl -n pv-dcsi logs deployments/dcsi-controller external-provisioner > ./controller-external-provisioner.log
 
-node=
-nodePod=$(kl -n pv-dcsi get pod -o name --field-selector spec.nodeName=$node -l app.kubernetes.io/csi-role=node)
+# if some pod is failing to get PVC attached,
+# look at logs of dcsi node pod
+# get node name from the failing workload pod
+nodeName=
+nodePod=$(kl -n pv-dcsi get pod -o name --field-selector spec.nodeName=$nodeName -l app.kubernetes.io/csi-role=node)
 kl -n pv-dcsi logs $nodePod csi-driver > ./node.log
 ```
 

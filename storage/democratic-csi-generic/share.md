@@ -31,10 +31,15 @@ echo "democratic-csi ALL=(ALL:ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/demo
 ssh-keygen -t ed25519 -C "democratic-csi" -N '' -f ./storage/democratic-csi-generic/proxy/env/ssh-key-2
 ssh-keygen -b 4096 -f ./storage/democratic-csi-generic/proxy/env/ssh-key
 
+# copy ssh-key.pub into the authorized_keys on the server
 cat ./storage/democratic-csi-generic/proxy/env/ssh-key.pub
-# copy ssh-key.pub and insert it into authorized_keys on the server
-mkdir -p ~/.ssh
+
+# run on the server
+sudo su - democratic-csi
+mkdir -p ~/.ssh/
 nano ~/.ssh/authorized_keys
+# disable motd
+touch ~/.hushlogin
 
 # test SSH access from the client
 server=
@@ -53,10 +58,9 @@ nvmet-rdma
 EOF
 sudo systemctl restart systemd-modules-load.service
 
-sudo apt install git pip python3-six python3-pyparsing python3-configshell-fb
+sudo apt-get install -y git pip python3-six python3-pyparsing python3-configshell-fb
 
 git clone --depth 1 git://git.infradead.org/users/hch/nvmetcli.git
-cd nvmetcli
 
 ( cd nvmetcli && sudo python3 setup.py install --prefix=/usr )
 # .nvmetcli has excessive logs
@@ -70,14 +74,13 @@ sudo systemctl enable --now nvmet.service
 sudo systemctl status nvmet.service
 
 # create a tcp port listening on all IPs on port 4420
-echo "
+sudo nvmetcli << EOF
 cd /ports
 create 1
 cd 1
 set addr adrfam=ipv4 trtype=tcp traddr=0.0.0.0 trsvcid=4420
-
-saveconfig /etc/nvmet/config.json
-" | sudo nvmetcli
+EOF
+echo saveconfig /etc/nvmet/config.json | sudo nvmetcli
 
 # interactive shell
 sudo nvmetcli
@@ -88,7 +91,7 @@ sudo nvmetcli ls /
 Client setup:
 
 ```bash
-sudo apt-get -y install nvme-cli
+sudo apt-get install -y nvme-cli
 
 # list connections
 sudo nvme list-subsys
@@ -105,7 +108,7 @@ Additional info:
 Server setup:
 
 ```bash
-sudo apt-get -y install targetcli-fb
+sudo apt-get install -y targetcli-fb
 
 # interactive shell
 sudo targetcli
