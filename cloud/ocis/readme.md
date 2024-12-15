@@ -3,6 +3,8 @@
 
 References:
 - https://doc.owncloud.com/ocis/next/deployment/container/orchestration/orchestration.html
+- https://github.com/owncloud/ocis-charts
+- https://github.com/owncloud/ocis
 
 # Prerequisites
 

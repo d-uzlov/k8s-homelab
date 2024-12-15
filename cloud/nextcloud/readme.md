@@ -27,6 +27,22 @@ userdata_size=1Ti
 config=fast
 config_size=1Gi
 EOF
+
+# TODO use this patch
+mkdir -p ./cloud/nextcloud/postgres/env/
+ cat << EOF > ./cloud/nextcloud/postgres/env/patch.yaml
+---
+apiVersion: acid.zalan.do/v1
+kind: postgresql
+metadata:
+  name: postgres
+  namespace: nextcloud
+spec:
+  volume:
+    # default wal max size is 1Gi + 1Gi for the database itself
+    size: 2Gi
+    storageClass: block
+EOF
 ```
 
 # Config setup
@@ -36,9 +52,9 @@ Generate passwords and set up config.
 ```bash
 mkdir -p ./cloud/nextcloud/main-app/env/
 cat <<EOF > ./cloud/nextcloud/main-app/env/passwords.env
-redis_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
+redis_password=$(LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 20)
 admin_name=admin
-admin_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
+admin_password=$(LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 20)
 EOF
 cat <<EOF > ./cloud/nextcloud/main-app/env/nextcloud.env
 # k8s pod CIDR
