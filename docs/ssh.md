@@ -79,10 +79,10 @@ touch ~/.ssh/config
 grep "^Include config.d/\*$" ~/.ssh/config || echo -e "Include config.d/*\n\n$(cat ~/.ssh/config)" >> ~/.ssh/config
 tee << EOF ~/.ssh/config.d/"$server_name".conf
 Host $server_name
-   HostName $server_address
-   User $server_username
-   Port 22
-   IdentityFile $server_key
+  HostName $server_address
+  User $server_username
+  Port 22
+  IdentityFile $server_key
 EOF
 
 # test that you can connect
@@ -123,4 +123,20 @@ cat << EOF | tee /etc/ssh/sshd_config.d/1-enable_root_login.conf
 PermitRootLogin yes
 EOF
 sudo systemctl restart sshd
+```
+
+# SSH port forwarding
+
+```bash
+ssh -L local_port:forwarded_ip:forwarded_port server-address
+# by default ssh client listens on localhost, but you can change it
+ssh -L local_address:local_port:forwarded_ip:forwarded_port server-address
+
+# example: remote machine has access
+# to an HTTP server in its LAN at address 192.168.1.1,
+# you want to access it via localhost:8080
+ssh -L 8080:192.168.1.1:80 server-address
+# example: remote server has a program listening on localhost
+# you want to allow everyone in your local LAN to access it via the ssh client machine
+ssh -L 10.1.2.3:2000:127.0.0.1:2000 server-address
 ```
