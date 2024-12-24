@@ -12,6 +12,11 @@ sed -n '/```bash/,/```/{//!p;}' ./docs/bash-setup.md | bash
 sed -n '/```bash/,/```/{//!p;}' ./docs/bash-setup.md | ssh $remote_hostname
 ```
 
+# Settings for new users
+
+When creating a new user, contents of `/etc/skel/` directory are copied into the user home folder.
+You can adjust `.bashrc` and other files in that directory to change the default settings.
+
 # Docker completion
 
 ```bash

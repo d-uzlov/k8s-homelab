@@ -1,6 +1,9 @@
 
 # Bash setup
 
+This file has a collection of config snippets for various terminal apps.
+All code sections here can be run as-is, without any adjustments.
+
 # Script header
 
 ```bash
@@ -12,6 +15,14 @@ set -eu
 
 Note: the code section above must be the first in the file.
 Commands in it are helpful in automated setups that transform this file into `.sh`.
+
+# Required tools
+
+```bash
+which unzip > /dev/null || { sudo apt update; sudo apt install -y unzip; }
+which curl > /dev/null || { sudo apt update; sudo apt install -y curl; }
+which wget > /dev/null || { sudo apt update; sudo apt install -y wget; }
+```
 
 # Add bashrc directory
 
@@ -31,11 +42,6 @@ fi
 EOF
 grep '\.bashrc\.d' ~/.bashrc > /dev/null || echo '. ~/.bashrc.d/include' >> ~/.bashrc
 ```
-
-# Settings for new users
-
-When creating a new user, contents of `/etc/skel/` directory are copied into the user home folder.
-You can adjust `.bashrc` and other files in that directory to change the default settings.
 
 # Bash autocomplete tweaks
 
@@ -76,7 +82,7 @@ References:
 
 # Bash prompt
 
-This is just an opinionated convenient prompt:
+This is an opinionated convenient prompt:
 - Username and host at the beginning
 - Full path with the last directory highlighted
 - Current date and time
@@ -194,15 +200,16 @@ References:
 # Better `ls`
 
 ```bash
-# use more and better colors for LS
+# use more and better colors for ls
 curl -fsSL "https://github.com/trapd00r/LS_COLORS/raw/refs/heads/master/lscolors.sh" > ~/.bashrc.d/0-ls-colors.sh
 
 # add more default args to ls
  cat << "EOF" > ~/.bashrc.d/0-better-ls.sh
 ! alias ls > /dev/null 2> /dev/null || unalias ls
 ! alias ll > /dev/null 2> /dev/null || unalias ll
+! alias l > /dev/null 2> /dev/null || unalias l
 
-if ls --color -d . >/dev/null 2>&1; then  # GNU ls
+if ls --color -d . > /dev/null 2>&1; then  # GNU ls
   export COLUMNS  # Remember columns for subprocesses.
   eval "$(dircolors)"
   function ls {
@@ -212,7 +219,7 @@ if ls --color -d . >/dev/null 2>&1; then  # GNU ls
     # --author: with -l, print the author of each file
     # -C: list entries by columns instead of just using lines (conflicts with -l)
     command ls -Fhv --color=always --time-style=long-iso -C "$@"
-    # optionally: use less to avoid overflowing the screen
+    # optionally: use less to avoid overflowing the screen while still keeping the color
     # command ls -Fhv --color=always --time-style=long-iso -C "$@" | less -R -X -F
   }
   function ll() {
@@ -232,9 +239,8 @@ References:
 # Nano settings
 
 ```bash
-which unzip > /dev/null || { sudo apt update; sudo apt install -y unzip; }
 # syntax highlights for many languages
-[ -d ~/.nano/ ] || curl https://raw.githubusercontent.com/galenguyer/nano-syntax-highlighting/master/install.sh | bash
+[ -d ~/.nano/ ] || curl https://raw.githubusercontent.com/galenguyer/nano-syntax-highlighting/master/install.sh | bash || rm -rf ~/.nano/
 # installs into ~/.nano/
 
  cat << EOF > ~/.bashrc.d/0-editor.sh
@@ -316,7 +322,7 @@ EOF
 # Unlimited history
 
 ```bash
-sed -i -e 's/^HISTSIZE/# HISTSIZE/' -e 's/^HISTFILESIZE/# HISTFILESIZE/' ~/.bashrc
+sed -i -E 's/^(.*)HISTSIZE/# \1HISTSIZE/' -E 's/^(.*)HISTFILESIZE/# \1HISTFILESIZE/' ~/.bashrc
 
  cat << EOF > ~/.bashrc.d/0-history.sh
 # Eternal bash history.

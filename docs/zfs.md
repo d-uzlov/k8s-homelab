@@ -36,7 +36,7 @@ https://jro.io/capacity/
 # find out PART UUID of a partition
 blkid /dev/nvme1n1p1 -s PARTUUID -o value
 
-zpool add -f main log /dev/disk/by-partuuid/your-partuuid-value
+sudo zpool add -f main log /dev/disk/by-partuuid/your-partuuid-value
 
 # check status
 zpool list main -v
@@ -56,7 +56,7 @@ sudo zdb -C | grep ashift
 zpool list -v
 zfs get compressratio
 zfs list -t filesystem -r -o space,compressratio
-zpool iostat -v 5
+zpool iostat -v 1
 iostat -mx 5
 ```
 
@@ -87,9 +87,10 @@ Summary:
 - > you can use "zle" for the compression type to only compress zeros with no other overhead from attempting to compress blocks with an algorithm
 
 Summary 2:
-- On systems with slow CPU use lz4
+- For generic data use lz4 or zstd-1
 - For already compressed data use lz4
-- For generic data use zstd-1
+- On systems with slow CPU use lz4
+- On systems with _extremely_ slow CPU use zle
 
 # TRIM
 
@@ -97,11 +98,10 @@ Summary 2:
 # automatic trim
 # doesn't do as much as manual trim
 zpool get autotrim
-zpool list
-zpool set autotrim=on <pool-name>
+sudo zpool set autotrim=on pool_name
 
 # manual trim
-zpool trim rpool
+sudo zpool trim rpool
 zpool status -t
 ```
 
@@ -152,7 +152,7 @@ References:
 # Encryption
 
 Any dataset can be encrypted or not encrypted.
-ZFS doesn't prevent you from creating an non-encrypted dataset inside encrypted one.
+ZFS doesn't prevent you from creating a non-encrypted dataset inside an encrypted one.
 
 However, Truenas UI has its own opinion about this. It will give you an error if you try.
 
@@ -182,15 +182,15 @@ As noted in the [`nopwrite`](#nopwrite) section, encryption breaks nopwrite.
 # Set limit for ARC size
 
 ```bash
-cat /sys/module/zfs/parameters/zfs_arc_min /sys/module/zfs/parameters/zfs_arc_max
 cat /sys/module/zfs/parameters/zfs_arc_min /sys/module/zfs/parameters/zfs_arc_max | numfmt --to=iec
 
 # set 8G for current session
-echo 4294967296 >> /sys/module/zfs/parameters/zfs_arc_min
-echo 4294967296 >> /sys/module/zfs/parameters/zfs_arc_max
-# 16G: 17179869184
-# 8G:  8589934592
+echo 8589934592 | sudo tee /sys/module/zfs/parameters/zfs_arc_min
+echo 8589934592 | sudo tee /sys/module/zfs/parameters/zfs_arc_max
+# 2G:  2147483648
 # 4G:  4294967296
+# 8G:  8589934592
+# 16G: 17179869184
 
 # set ARC size automatically after boot
 sudo tee /etc/modprobe.d/50-zfs_arc_size.conf << EOF

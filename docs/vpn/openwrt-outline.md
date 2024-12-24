@@ -146,8 +146,8 @@ wget https://raw.githubusercontent.com/kjokjo/ipcalc/refs/heads/master/ipcalc
 ```
 
 ```bash
-load_ru_cudr=/root/load-ru-ip.sh
- cat << "EOF" > $load_ru_cudr
+load_ru_cidr=/root/load-ru-ip.sh
+ cat << "EOF" > $load_ru_cidr
 #!/bin/bash
 set -e
 
@@ -166,11 +166,11 @@ echo RU CIDR downloaded successfully to $cidr_file
 /root/shadowsocks-bypass-update.sh
 EOF
 
-chmod +x $load_ru_cudr
-$load_ru_cudr
+chmod +x $load_ru_cidr
+$load_ru_cidr
 
 # repeat download every day at 03:07
-echo "7 3 */1 * * $load_ru_cudr" >> /etc/crontabs/root
+echo "7 3 */1 * * $load_ru_cidr" >> /etc/crontabs/root
 ```
 
 # Common bypass lists

@@ -56,7 +56,7 @@ ll ~/.acme.sh/*_ecc/*
 
 - Panel Settings -> Listen IP: 127.0.0.1
 - Panel Settings -> Public Key Path: /path/to/fullchain.cer
-- Panel Settings -> Public Key Path: /path/to/domain.key
+- Panel Settings -> Private Key Path: /path/to/domain.key
 
 ```bash
 # setup ssh port forwarding
@@ -64,11 +64,13 @@ ssh -L local_ip:2053:127.0.0.1:2053 server_address
 ```
 
 - Inbounds -> Add Inbound
+- - Protocol: vless
 - - Port: 443
 - - Security: Reality
 - - Dest (target): 127.0.0.1:port
 - - SNI: your server public domain
 - - Client -> Flow: xtls-rprx-vision
+- - Click "Get new cert" at the bottom
 
 ```bash
 sudo apt-get install -y nginx
@@ -76,9 +78,10 @@ sudo apt-get install -y nginx
 fullchain_cert=
 # example: fullchain_cert=$HOME/.acme.sh/example.com_ecc/fullchain.cer
 cert_key=
-# example: cert_key=$HOME/.acme.sh/example.com_ecc/example.com.cer
+# example: cert_key=$HOME/.acme.sh/example.com_ecc/example.com.key
 redirect=
 # example: redirect=http://127.0.0.1:1234
+# only used in file name, set to user-readable value
 site_name=
 
 ll /etc/nginx/sites-available/ /etc/nginx/sites-enabled/
@@ -109,13 +112,13 @@ server {
 EOF
 
 sudo ln -s /etc/nginx/sites-available/$site_name /etc/nginx/sites-enabled/$site_name
-sudo rm /etc/nginx/sites-enabled/default
+sudo rm -f /etc/nginx/sites-enabled/default
 
 # check config
 sudo nginx -t
 
-sudo systemctl status nginx
 sudo systemctl restart nginx
+sudo systemctl status nginx
 ```
 
 # Android client
