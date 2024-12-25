@@ -50,6 +50,18 @@ function generateDeployment() {
 }
 
 generateDeployment grafana.enabled=true             > ./metrics/kube-prometheus-stack/grafana/grafana.gen.yaml
+mkdir -p ./metrics/kube-prometheus-stack/grafana/env/
+cat <<EOF > ./metrics/kube-prometheus-stack/grafana/env/password-patch.yaml
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kps-grafana
+  namespace: kps-grafana
+type: Opaque
+stringData:
+  admin-password: $(LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 20)
+EOF
 generateDeployment grafana.defaultDashboardsEnabled=true \
                    grafana.forceDeployDashboards=true \
                                                     > ./metrics/kube-prometheus-stack/grafana/grafana-default-dashboards.gen.yaml
