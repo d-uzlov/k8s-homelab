@@ -53,6 +53,15 @@ kl apply -k ./metrics/kube-prometheus-stack/component-monitors/etcd/built-in-etc
 
 Alternatively, you can copy etcd certs manually from any master node.
 
+# Updating dashboards
+
+```bash
+# remove id to avoid collisions
+sed -i 's/^  \"id\": .*,/  \"id\": null,/' ./metrics/kube-prometheus-stack/component-monitors/etcd/dashboards/dashboard.json
+# set dashboard refresh interval to auto
+sed -i 's/^  \"refresh\": \".*s\",/  \"refresh\": \"auto\",/' ./metrics/kube-prometheus-stack/component-monitors/etcd/dashboards/dashboard.json
+```
+
 # Common setup
 
 ```bash
