@@ -2,22 +2,22 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: kps-prometheus-node-exporter
+  name: node-exporter
   namespace: kps-node-exporter
   labels:
     app.kubernetes.io/component: metrics
-    app.kubernetes.io/name: prometheus-node-exporter
+    app.kubernetes.io/name: node-exporter
     release: kps
 automountServiceAccountToken: false
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: kps-prometheus-node-exporter
+  name: node-exporter
   namespace: kps-node-exporter
   labels:
     app.kubernetes.io/component: metrics
-    app.kubernetes.io/name: prometheus-node-exporter
+    app.kubernetes.io/name: node-exporter
     release: kps
     jobLabel: node-exporter
   annotations:
@@ -30,21 +30,21 @@ spec:
       protocol: TCP
       name: http-metrics
   selector:
-    app.kubernetes.io/name: prometheus-node-exporter
+    app.kubernetes.io/name: node-exporter
 ---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: kps-prometheus-node-exporter
+  name: node-exporter
   namespace: kps-node-exporter
   labels:
     app.kubernetes.io/component: metrics
-    app.kubernetes.io/name: prometheus-node-exporter
+    app.kubernetes.io/name: node-exporter
     release: kps
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: prometheus-node-exporter
+      app.kubernetes.io/name: node-exporter
   revisionHistoryLimit: 10
   updateStrategy:
     rollingUpdate:
@@ -56,7 +56,7 @@ spec:
         cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
       labels:
         app.kubernetes.io/component: metrics
-        app.kubernetes.io/name: prometheus-node-exporter
+        app.kubernetes.io/name: node-exporter
         release: kps
         jobLabel: node-exporter
     spec:
@@ -66,7 +66,7 @@ spec:
         runAsGroup: 65534
         runAsNonRoot: true
         runAsUser: 65534
-      serviceAccountName: kps-prometheus-node-exporter
+      serviceAccountName: node-exporter
       containers:
         - name: node-exporter
           image: quay.io/prometheus/node-exporter:v1.8.2
@@ -141,17 +141,17 @@ spec:
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: kps-prometheus-node-exporter
+  name: node-exporter
   namespace: kps-node-exporter
   labels:
     app.kubernetes.io/component: metrics
-    app.kubernetes.io/name: prometheus-node-exporter
+    app.kubernetes.io/name: node-exporter
     release: kps
 spec:
   jobLabel: jobLabel
   selector:
     matchLabels:
-      app.kubernetes.io/name: prometheus-node-exporter
+      app.kubernetes.io/name: node-exporter
   attachMetadata:
     node: false
   endpoints:
