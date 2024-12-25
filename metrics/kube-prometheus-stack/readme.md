@@ -128,8 +128,11 @@ kl -n kps-ksm get pod -o wide
 kl create ns kps-node-exporter
 kl label ns kps-node-exporter pod-security.kubernetes.io/enforce=privileged
 kl apply -k ./metrics/kube-prometheus-stack/node-exporter/
-kl apply -k ./metrics/kube-prometheus-stack/node-exporter/dashboards/ --server-side
 kl -n kps-node-exporter get pod -o wide
+
+sed -i 's/^  \"id\": .*,/  \"id\": null,/' ./metrics/kube-prometheus-stack/node-exporter/dashboards/*.json
+sed -i 's/^  \"refresh\": \".*s\",/  \"refresh\": \"auto\",/' ./metrics/kube-prometheus-stack/node-exporter/dashboards/*.json
+kl apply -k ./metrics/kube-prometheus-stack/node-exporter/dashboards/ --server-side
 
 kl create ns kps-grafana
 kl label ns kps-grafana pod-security.kubernetes.io/enforce=baseline
