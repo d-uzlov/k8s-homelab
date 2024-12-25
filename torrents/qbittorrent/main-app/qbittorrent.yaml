@@ -26,7 +26,7 @@ spec:
         runAsGroup: 65534
       containers:
       - name: qbittorrent
-        image: docker.io/qbittorrentofficial/qbittorrent-nox:5.0.2-1
+        image: docker.io/qbittorrentofficial/qbittorrent-nox:5.0.3-1
         command: ["/sbin/tini", "-g", "--"]
         args:
         - /entrypoint/entrypoint.sh
@@ -97,9 +97,9 @@ spec:
           value: /entrypoint/added-hook-script.sh
         resources:
           requests:
-            memory: 1800Mi
+            memory: 2Gi
           limits:
-            memory: 2000Mi
+            memory: 4Gi
         volumeMounts:
         - mountPath: /entrypoint
           name: entrypoint
@@ -122,24 +122,26 @@ spec:
           timeoutSeconds: 1
           successThreshold: 1
           failureThreshold: 20
-        readinessProbe:
-          httpGet:
-            path: /api/v2/app/version
-            port: web-ui
-            scheme: HTTP
-          periodSeconds: 5
-          timeoutSeconds: 10
-          successThreshold: 1
-          failureThreshold: 1
-        livenessProbe:
-          httpGet:
-            path: /api/v2/app/version
-            port: web-ui
-            scheme: HTTP
-          periodSeconds: 5
-          timeoutSeconds: 10
-          successThreshold: 1
-          failureThreshold: 50
+        # sometimes qbittorrent hangs for a while, and it doesn't help at all
+        # to have k8s kill it or cut traffic to its services
+        # readinessProbe:
+        #   httpGet:
+        #     path: /api/v2/app/version
+        #     port: web-ui
+        #     scheme: HTTP
+        #   periodSeconds: 5
+        #   timeoutSeconds: 10
+        #   successThreshold: 1
+        #   failureThreshold: 10
+        # livenessProbe:
+        #   httpGet:
+        #     path: /api/v2/app/version
+        #     port: web-ui
+        #     scheme: HTTP
+        #   periodSeconds: 5
+        #   timeoutSeconds: 10
+        #   successThreshold: 1
+        #   failureThreshold: 50
       volumes:
       - name: entrypoint
         configMap:
