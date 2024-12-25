@@ -180,12 +180,19 @@ kl -n kps describe httproute prometheus
 kl -n kps exec sts/prometheus-kps -- df -h | grep /prometheus\$
 ```
 
-Default username/password is `admin` / `admin`.
+Default grafana user is `admin`.
+Look up admin password in [password-patch.yaml](./grafana/env/password-patch.yaml).
+
+Don't forget to deploy additional dashboards:
+- [k8s](./component-monitors/k8s/readme.md)
+- [etcd](./component-monitors/etcd/readme.md)
+- [proxmox](./component-monitors/proxmox/readme.md)
 
 # Cleanup
 
 ```bash
 kl delete -k ./metrics/kube-prometheus-stack/kube-state-metrics/
+kl delete -k ./metrics/kube-prometheus-stack/node-exporter/dashboards/
 kl delete -k ./metrics/kube-prometheus-stack/node-exporter/
 kl delete -k ./metrics/kube-prometheus-stack/grafana/
 kl delete -k ./metrics/kube-prometheus-stack/prometheus-default-rules/
