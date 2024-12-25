@@ -18,7 +18,7 @@ You only need to do this if you change `values.yaml` file.
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update prometheus-community
 helm search repo prometheus-community/kube-prometheus-stack --versions --devel | head
-helm show values prometheus-community/kube-prometheus-stack --version 66.2.2 > ./metrics/kube-prometheus-stack/default-values.yaml
+helm show values prometheus-community/kube-prometheus-stack --version 67.4.0 > ./metrics/kube-prometheus-stack/default-values.yaml
 ```
 
 ```bash
@@ -30,7 +30,7 @@ function remove_helm_junk() {
     -e '\|app.kubernetes.io/instance:|d' \
     -e '\|app.kubernetes.io/version|d' \
     -e '\|app.kubernetes.io/part-of|d' \
-    -e '\|66.2.2|d' \
+    -e '\|67.4.0|d' \
     -e '/^ *$/d' \
     -e '\|heritage\:|d' \
     -e '\|httpHeaders\:$|d'
@@ -43,7 +43,7 @@ function generateDeployment() {
   helm template \
     kps \
     prometheus-community/kube-prometheus-stack \
-    --version 66.2.2 \
+    --version 67.4.0 \
     --values ./metrics/kube-prometheus-stack/values.yaml \
     $args \
     | remove_helm_junk

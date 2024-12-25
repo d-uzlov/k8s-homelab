@@ -682,7 +682,7 @@ spec:
         severity: warning
     - alert: KubeDaemonSetRolloutStuck
       annotations:
-        description: DaemonSet {{ $labels.namespace }}/{{ $labels.daemonset }} has not finished or progressed for at least 15 minutes.
+        description: DaemonSet {{ $labels.namespace }}/{{ $labels.daemonset }} has not finished or progressed for at least 15m.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubedaemonsetrolloutstuck
         summary: DaemonSet rollout is stuck.
       expr: |-
@@ -1032,7 +1032,7 @@ spec:
     rules:
     - alert: KubeClientCertificateExpiration
       annotations:
-        description: A client certificate used to authenticate to kubernetes apiserver is expiring in less than 7.0 days.
+        description: A client certificate used to authenticate to kubernetes apiserver is expiring in less than 7.0 days on cluster {{ $labels.cluster }}.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeclientcertificateexpiration
         summary: Client certificate is about to expire.
       expr: |-
@@ -1044,7 +1044,7 @@ spec:
         severity: warning
     - alert: KubeClientCertificateExpiration
       annotations:
-        description: A client certificate used to authenticate to kubernetes apiserver is expiring in less than 24.0 hours.
+        description: A client certificate used to authenticate to kubernetes apiserver is expiring in less than 24.0 hours on cluster {{ $labels.cluster }}.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeclientcertificateexpiration
         summary: Client certificate is about to expire.
       expr: |-
@@ -1056,10 +1056,11 @@ spec:
         severity: critical
     - alert: KubeAggregatedAPIErrors
       annotations:
-        description: Kubernetes aggregated API {{ $labels.name }}/{{ $labels.namespace }} has reported errors. It has appeared unavailable {{ $value | humanize }} times averaged over the past 10m.
+        description: Kubernetes aggregated API {{ $labels.instance }}/{{ $labels.name }} has reported {{ $labels.reason }} errors on cluster {{ $labels.cluster }}.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeaggregatedapierrors
         summary: Kubernetes aggregated API has reported errors.
-      expr: sum by (name, namespace, cluster)(increase(aggregator_unavailable_apiservice_total{job="apiserver"}[10m])) > 4
+      expr: sum by (cluster, instance, name, reason)(increase(aggregator_unavailable_apiservice_total{job="apiserver"}[1m])) > 0
+      for: 10m
       labels:
         severity: warning
     - alert: KubeAggregatedAPIDown
@@ -1569,7 +1570,7 @@ spec:
           '
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/node/nodecpuhighusage
         summary: High CPU usage.
-      expr: sum without(mode) (avg without (cpu) (rate(node_cpu_seconds_total{job="node-exporter", mode!="idle"}[2m]))) * 100 > 90
+      expr: sum without(mode) (avg without (cpu) (rate(node_cpu_seconds_total{job="node-exporter", mode!~"idle|iowait"}[2m]))) * 100 > 90
       for: 15m
       labels:
         severity: info
@@ -1853,9 +1854,9 @@ spec:
         severity: warning
     - alert: PrometheusErrorSendingAlertsToSomeAlertmanagers
       annotations:
-        description: '{{ printf "%.1f" $value }}% errors while sending alerts from Prometheus {{$labels.namespace}}/{{$labels.pod}} to Alertmanager {{$labels.alertmanager}}.'
+        description: '{{ printf "%.1f" $value }}% of alerts sent by Prometheus {{$labels.namespace}}/{{$labels.pod}} to Alertmanager {{$labels.alertmanager}} were affected by errors.'
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/prometheus/prometheuserrorsendingalertstosomealertmanagers
-        summary: Prometheus has encountered more than 1% errors sending alerts to a specific Alertmanager.
+        summary: More than 1% of alerts sent by Prometheus to a specific Alertmanager were affected by errors.
       expr: |-
         (
           rate(prometheus_notifications_errors_total{job="kps-prometheus",namespace="kps-default-rules"}[5m])

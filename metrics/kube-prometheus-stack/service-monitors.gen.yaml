@@ -166,9 +166,17 @@ metadata:
 spec:
   attachMetadata:
     node: false
+  jobLabel: k8s-app
+  namespaceSelector:
+    matchNames:
+    - kube-system
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kubelet
+      k8s-app: kubelet
   endpoints:
   - port: https-metrics
-    scheme: https
+    scheme: https    
     tlsConfig:
       caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
       insecureSkipVerify: true
@@ -177,7 +185,7 @@ spec:
     honorTimestamps: true
     metricRelabelings:
     - action: keep
-      regex: kubelet_node_name|kubelet_volume_stats.*|kubernetes_build_info|kubelet_active_pods|kubelet_desired_pods|kubelet_running_pods|kubelet_working_pods|kubelet_container_log_filesystem_used_bytes|kubelet_pod_worker_.*|
+      regex: kubelet_node_name|kubernetes_build_info|kubelet_active_pods|kubelet_desired_pods|kubelet_running_pods|kubelet_working_pods|kubelet_container_log_filesystem_used_bytes|kubelet_pod_worker_.*|kubelet_volume_stats.*|
       sourceLabels:
       - __name__
     relabelings:
@@ -188,8 +196,10 @@ spec:
   - port: https-metrics
     scheme: https
     path: /metrics/cadvisor
+    interval: 10s
     honorLabels: true
     honorTimestamps: true
+    trackTimestampsStaleness: true    
     tlsConfig:
       caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
       insecureSkipVerify: true
@@ -233,7 +243,7 @@ spec:
     scheme: https
     path: /metrics/probes
     honorLabels: true
-    honorTimestamps: true
+    honorTimestamps: true    
     tlsConfig:
       caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
       insecureSkipVerify: true
@@ -243,11 +253,3 @@ spec:
       sourceLabels:
       - __metrics_path__
       targetLabel: metrics_path
-  jobLabel: k8s-app
-  namespaceSelector:
-    matchNames:
-    - kube-system
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: kubelet
-      k8s-app: kubelet
