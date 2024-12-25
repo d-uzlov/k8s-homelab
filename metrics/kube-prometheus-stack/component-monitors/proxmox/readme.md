@@ -45,6 +45,15 @@ sed \
   > ./metrics/kube-prometheus-stack/component-monitors/proxmox/env/scrape-cluster.yaml
 ```
 
+# Updating dashboards
+
+```bash
+# remove id to avoid collisions
+sed -i 's/^  \"id\": .*,/  \"id\": null,/' ./metrics/kube-prometheus-stack/component-monitors/proxmox/dashboards/*.json
+# set dashboard refresh interval to auto
+sed -i 's/^  \"refresh\": \".*s\",/  \"refresh\": \"auto\",/' ./metrics/kube-prometheus-stack/component-monitors/proxmox/dashboards/*.json
+```
+
 # Deploy
 
 ```bash
@@ -52,6 +61,7 @@ kl create ns pve-exporter
 kl label ns pve-exporter pod-security.kubernetes.io/enforce=baseline
 
 kl apply -k ./metrics/kube-prometheus-stack/component-monitors/proxmox/
+kl apply -k ./metrics/kube-prometheus-stack/component-monitors/proxmox/dashboards/
 kl -n pve-exporter get pod -o wide
 kl -n pve-exporter get scrapeconfig
 ```
@@ -59,6 +69,7 @@ kl -n pve-exporter get scrapeconfig
 # Cleanup
 
 ```bash
+kl delete -k ./metrics/kube-prometheus-stack/component-monitors/proxmox/dashboards/
 kl delete -k ./metrics/kube-prometheus-stack/component-monitors/proxmox/
 kl delete ns pve-exporter
 ```
