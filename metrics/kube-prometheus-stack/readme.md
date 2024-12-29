@@ -254,9 +254,17 @@ prometheus_ingress=$(kl -n kps get httproute prometheus -o go-template --templat
 # metric name
 metric=
 curl -X POST -g "https://$prometheus_ingress/api/v1/admin/tsdb/delete_series?match[]=$metric"
+# delete selected time range for a metric
 curl -X POST -g "https://$prometheus_ingress/api/v1/admin/tsdb/delete_series?match[]={__name__=~\"$metric\"}" --data-urlencode "start=2024-12-29T05:16:42+07:00" --data-urlencode "end=2024-12-29T05:35:45+07:00"
+# delete time series by name regex with additional labels filter
+curl -X POST -g "https://$prometheus_ingress/api/v1/admin/tsdb/delete_series?match[]={__name__=~\"container_network_.*\",interface=~\"lxc.*\"}"
 # run clean_tombstones to actually clean data
 curl -X POST -g "https://$prometheus_ingress/api/v1/admin/tsdb/clean_tombstones"
+
+# Note, that neither delete_series nor clean_tombstones does not clean up list of labels
+# so in autocompletion and tsdb-status you will still see
+# all the deletes time series, even if they don't have any samples.
+# Labels will be cleared automatically later, after a few hours.
 
 # list all metrics that have specified labels
 # source: https://stackoverflow.com/questions/70301131/how-to-get-all-metric-names-from-prometheus-server-filtered-by-a-particular-labe
@@ -289,10 +297,10 @@ References:
 ```bash
 bearer=$(kl -n kps exec sts/prometheus-kps -- cat /var/run/secrets/kubernetes.io/serviceaccount/token)
 kl get node -o wide
-nodeIp=
+nodeIp=10.3.10.3
 curl -k -H "Authorization: Bearer $bearer" https://$nodeIp:10250/metrics
 curl -k -H "Authorization: Bearer $bearer" https://$nodeIp:10250/metrics/cadvisor
-curl -k -H "Authorization: Bearer $bearer" https://$nodeIp:10250/metrics/probes
+curl -k -H "Authorization: Bearer $bearer" https://$nodeIp:10250/metrics/probes > ./probe.log
 
 # watch for some metric
 while true; do

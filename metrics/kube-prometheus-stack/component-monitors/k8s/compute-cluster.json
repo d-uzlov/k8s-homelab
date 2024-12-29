@@ -18,14 +18,14 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
-  "id": 7,
+  "id": null,
   "links": [
     {
       "asDropdown": true,
       "includeVars": true,
       "keepTime": true,
       "tags": [
-        "kubernetes-mixin"
+        "k8s-cluster"
       ],
       "targetBlank": false,
       "title": "Kubernetes",
@@ -33,6 +33,19 @@
     }
   ],
   "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 24,
+      "panels": [],
+      "title": "Compute",
+      "type": "row"
+    },
     {
       "datasource": {
         "type": "prometheus",
@@ -62,7 +75,7 @@
         "h": 3,
         "w": 4,
         "x": 0,
-        "y": 0
+        "y": 1
       },
       "id": 1,
       "options": {
@@ -131,7 +144,7 @@
         "h": 3,
         "w": 4,
         "x": 4,
-        "y": 0
+        "y": 1
       },
       "id": 2,
       "options": {
@@ -199,7 +212,7 @@
         "h": 3,
         "w": 4,
         "x": 8,
-        "y": 0
+        "y": 1
       },
       "id": 3,
       "options": {
@@ -267,7 +280,7 @@
         "h": 3,
         "w": 4,
         "x": 12,
-        "y": 0
+        "y": 1
       },
       "id": 4,
       "options": {
@@ -335,7 +348,7 @@
         "h": 3,
         "w": 4,
         "x": 16,
-        "y": 0
+        "y": 1
       },
       "id": 5,
       "options": {
@@ -403,7 +416,7 @@
         "h": 3,
         "w": 4,
         "x": 20,
-        "y": 0
+        "y": 1
       },
       "id": 6,
       "options": {
@@ -506,7 +519,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 3
+        "y": 4
       },
       "id": 7,
       "maxDataPoints": 300,
@@ -596,7 +609,7 @@
                 "value": [
                   {
                     "title": "Drill down to pods",
-                    "url": "/d/85a562078cdf77779eaa1add43ccec1e/k8s-resources-namespace?${datasource:queryparam}&var-cluster=$cluster&var-namespace=${__data.fields.Namespace}"
+                    "url": "/d/vsl6ot4yad5hedtly8ey/k8s-resources-namespace?${datasource:queryparam}&${cluster:queryparam}&var-namespace=${__data.fields.Namespace}"
                   }
                 ]
               }
@@ -608,9 +621,10 @@
         "h": 11,
         "w": 18,
         "x": 1,
-        "y": 9
+        "y": 10
       },
       "id": 8,
+      "maxDataPoints": 100,
       "options": {
         "cellHeight": "sm",
         "footer": {
@@ -638,7 +652,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum(kube_pod_owner{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=~\"$namespace\"}) by (namespace)",
+          "expr": "sum(last_over_time(kube_pod_owner{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=~\"$namespace\"}[$__range])) by (namespace)",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -670,9 +684,9 @@
           "expr": "sum by(namespace) (rate(container_cpu_usage_seconds_total:with_pod_info{cluster=\"$cluster\", namespace=~\"$namespace\"}[$__rate_interval]))",
           "format": "table",
           "hide": false,
-          "instant": true,
+          "instant": false,
           "legendFormat": "__auto",
-          "range": false,
+          "range": true,
           "refId": "C"
         },
         {
@@ -682,7 +696,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum(namespace_cpu:kube_pod_container_resource_requests:sum{cluster=\"$cluster\", namespace=~\"$namespace\"}) by (namespace)",
+          "expr": "sum(last_over_time(namespace_cpu:kube_pod_container_resource_requests:sum{cluster=\"$cluster\", namespace=~\"$namespace\"}[$__range])) by (namespace)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -700,9 +714,9 @@
           "expr": "sum by(namespace) (rate(container_cpu_usage_seconds_total:with_pod_info{cluster=\"$cluster\", namespace=~\"$namespace\"}[$__rate_interval])) / sum(namespace_cpu:kube_pod_container_resource_requests:sum{cluster=\"$cluster\"}) by (namespace)",
           "format": "table",
           "hide": false,
-          "instant": true,
+          "instant": false,
           "legendFormat": "__auto",
-          "range": false,
+          "range": true,
           "refId": "E"
         },
         {
@@ -712,7 +726,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum(namespace_cpu:kube_pod_container_resource_limits:sum{cluster=\"$cluster\", namespace=~\"$namespace\"}) by (namespace)",
+          "expr": "sum(last_over_time(namespace_cpu:kube_pod_container_resource_limits:sum{cluster=\"$cluster\", namespace=~\"$namespace\"}[$__range])) by (namespace)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -730,10 +744,9 @@
           "expr": "sum by(namespace) (rate(container_cpu_usage_seconds_total:with_pod_info{cluster=\"$cluster\", namespace=~\"$namespace\"}[$__rate_interval])) / sum(namespace_cpu:kube_pod_container_resource_limits:sum{cluster=\"$cluster\"}) by (namespace)",
           "format": "table",
           "hide": false,
-          "instant": true,
-          "interval": "",
+          "instant": false,
           "legendFormat": "__auto",
-          "range": false,
+          "range": true,
           "refId": "G"
         }
       ],
@@ -856,7 +869,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 20
+        "y": 21
       },
       "id": 9,
       "maxDataPoints": 300,
@@ -982,7 +995,7 @@
                 "value": [
                   {
                     "title": "Drill down to pods",
-                    "url": "/d/85a562078cdf77779eaa1add43ccec1e/k8s-resources-namespace?${datasource:queryparam}&var-cluster=$cluster&var-namespace=${__data.fields.Namespace}"
+                    "url": "/d/vsl6ot4yad5hedtly8ey/k8s-resources-namespace?${datasource:queryparam}&${cluster:queryparam}&var-namespace=${__data.fields.Namespace}"
                   }
                 ]
               }
@@ -994,7 +1007,7 @@
         "h": 10,
         "w": 18,
         "x": 1,
-        "y": 26
+        "y": 27
       },
       "id": 10,
       "options": {
@@ -1177,6 +1190,19 @@
       "type": "table"
     },
     {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 37
+      },
+      "id": 23,
+      "panels": [],
+      "title": "Network",
+      "type": "row"
+    },
+    {
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -1195,8 +1221,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1241,7 +1266,7 @@
                 "value": [
                   {
                     "title": "Drill down to pods",
-                    "url": "/d/85a562078cdf77779eaa1add43ccec1e/k8s-resources-namespace?${datasource:queryparam}&var-cluster=$cluster&var-namespace=${__data.fields.Namespace}"
+                    "url": "/d/vsl6ot4yad5hedtly8ey/k8s-resources-namespace?${datasource:queryparam}&${cluster:queryparam}&var-namespace=${__data.fields.Namespace}&${__url_time_range}"
                   }
                 ]
               }
@@ -1253,9 +1278,10 @@
         "h": 13,
         "w": 18,
         "x": 1,
-        "y": 36
+        "y": 38
       },
       "id": 11,
+      "maxDataPoints": 400,
       "options": {
         "cellHeight": "sm",
         "footer": {
@@ -1429,8 +1455,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1446,7 +1471,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 49
+        "y": 51
       },
       "id": 12,
       "maxDataPoints": 300,
@@ -1531,8 +1556,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1548,10 +1572,9 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 55
+        "y": 57
       },
       "id": 13,
-      "interval": "10s",
       "maxDataPoints": 300,
       "options": {
         "legend": {
@@ -1634,212 +1657,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "Bps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 24,
-        "x": 0,
-        "y": 61
-      },
-      "id": 14,
-      "maxDataPoints": 300,
-      "options": {
-        "legend": {
-          "asTable": true,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "11.4.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "avg(irate(container_network_receive_bytes_total{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=~\"$namespace\"}[$__rate_interval])) by (namespace)",
-          "instant": false,
-          "legendFormat": "__auto",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Average Container Bandwidth by Namespace: Received",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "Bps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 24,
-        "x": 0,
-        "y": 67
-      },
-      "id": 15,
-      "maxDataPoints": 300,
-      "options": {
-        "legend": {
-          "asTable": true,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "11.4.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "avg(rate(container_network_transmit_bytes_total{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=~\"$namespace\"}[$__rate_interval])) by (namespace)",
-          "instant": false,
-          "legendFormat": "__auto",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Average Container Bandwidth by Namespace: Transmitted",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1855,7 +1673,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 73
+        "y": 63
       },
       "id": 18,
       "maxDataPoints": 300,
@@ -1940,8 +1758,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1957,7 +1774,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 79
+        "y": 69
       },
       "id": 19,
       "maxDataPoints": 300,
@@ -1995,351 +1812,364 @@
       "type": "timeseries"
     },
     {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "Bps"
-        },
-        "overrides": [
-          {
-            "__systemRef": "hideSeriesFrom",
-            "matcher": {
-              "id": "byNames",
-              "options": {
-                "mode": "exclude",
-                "names": [
-                  "bt-qbittorrent",
-                  "cert-manager",
-                  "cm-acme-dns",
-                  "cm-duckdns",
-                  "csr-approver",
-                  "exdns",
-                  "gateways",
-                  "homepage",
-                  "hw-intel",
-                  "hw-nfd",
-                  "ingress-nginx",
-                  "ingress-test",
-                  "iperf3",
-                  "istio",
-                  "jellyfin",
-                  "juice-shop",
-                  "kps",
-                  "kps-grafana",
-                  "kps-ksm",
-                  "kps-node-exporter",
-                  "kps-operator",
-                  "kube-vip",
-                  "kyverno",
-                  "librespeed",
-                  "metrics",
-                  "mongo-operator",
-                  "ome",
-                  "ome-ovenplayer",
-                  "ome-player",
-                  "postgres-operator",
-                  "pv-discsi",
-                  "pv-dnfsb",
-                  "pv-dnfsf",
-                  "pv-iscsi",
-                  "pv-nfs",
-                  "pve-exporter",
-                  "terraria",
-                  "ubiquiti"
-                ],
-                "prefix": "All except:",
-                "readOnly": true
-              }
-            },
-            "properties": [
-              {
-                "id": "custom.hideFrom",
-                "value": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": true
-                }
-              }
-            ]
-          }
-        ]
-      },
+      "collapsed": true,
       "gridPos": {
-        "h": 6,
+        "h": 1,
         "w": 24,
         "x": 0,
-        "y": 85
+        "y": 75
       },
-      "id": 21,
-      "maxDataPoints": 300,
-      "options": {
-        "legend": {
-          "asTable": true,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Name",
-          "sortDesc": false
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "11.4.0",
-      "targets": [
+      "id": 25,
+      "panels": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "editorMode": "code",
-          "expr": "sum by(namespace) (rate(container_fs_reads_bytes_total{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", container!=\"\", cluster=\"$cluster\", namespace=~\"$namespace\"}[$__rate_interval]) + rate(container_fs_writes_bytes_total{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", container!=\"\", cluster=\"$cluster\", namespace=~\"$namespace\"}[$__rate_interval]))",
-          "instant": false,
-          "legendFormat": "__auto",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "ThroughPut(Read+Write)",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "inspect": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "inspect": false
               },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "binBps"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Namespace"
-            },
-            "properties": [
-              {
-                "id": "links",
-                "value": [
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
                   {
-                    "title": "Drill down to pods",
-                    "url": "/d/85a562078cdf77779eaa1add43ccec1e/k8s-resources-namespace?${datasource:queryparam}&var-cluster=$cluster&var-namespace=${__data.fields.Namespace}"
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "binBps"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Namespace"
+                },
+                "properties": [
+                  {
+                    "id": "links",
+                    "value": [
+                      {
+                        "title": "Drill down to pods",
+                        "url": "/d/vsl6ot4yad5hedtly8ey/k8s-resources-namespace?${datasource:queryparam}&var-cluster=$cluster&var-namespace=${__data.fields.Namespace}"
+                      }
+                    ]
                   }
                 ]
               }
             ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 13,
-        "w": 18,
-        "x": 1,
-        "y": 91
-      },
-      "id": 22,
-      "options": {
-        "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
-        "showHeader": true,
-        "sortBy": [
-          {
-            "desc": true,
-            "displayName": "Throughput(Read + Write)"
-          }
-        ]
-      },
-      "pluginVersion": "11.4.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
           },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "sum by(namespace) (rate(container_fs_reads_bytes_total{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", container!=\"\", cluster=\"$cluster\", namespace!=\"\"}[$__rate_interval]))",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "D"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
+          "gridPos": {
+            "h": 13,
+            "w": 18,
+            "x": 1,
+            "y": 334
           },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "sum by(namespace) (rate(container_fs_writes_bytes_total{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", container!=\"\", cluster=\"$cluster\", namespace!=\"\"}[$__rate_interval]))",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "E"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "sum by(namespace) (rate(container_fs_reads_bytes_total{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", container!=\"\", cluster=\"$cluster\", namespace!=\"\"}[$__rate_interval]) + rate(container_fs_writes_bytes_total{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", container!=\"\", cluster=\"$cluster\", namespace!=\"\"}[$__rate_interval]))",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "F"
-        }
-      ],
-      "title": "Current Storage IO",
-      "transformations": [
-        {
-          "id": "joinByField",
+          "id": 22,
           "options": {
-            "byField": "namespace",
-            "mode": "outer"
-          }
-        },
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time": true,
-              "Time 1": true,
-              "Time 2": true,
-              "Time 3": true,
-              "Time 4": true,
-              "Time 5": true,
-              "Time 6": true
+            "cellHeight": "sm",
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
             },
-            "includeByName": {},
-            "indexByName": {
-              "Time 1": 0,
-              "Time 2": 1,
-              "Time 3": 2,
-              "Time 4": 3,
-              "Time 5": 4,
-              "Time 6": 5,
-              "Value #A": 7,
-              "Value #B": 8,
-              "Value #C": 9,
-              "Value #D": 10,
-              "Value #E": 11,
-              "Value #F": 12,
-              "namespace": 6
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": true,
+                "displayName": "Throughput(Read + Write)"
+              }
+            ]
+          },
+          "pluginVersion": "11.4.0",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "editorMode": "code",
+              "exemplar": false,
+              "expr": "sum by(namespace) (rate(container_fs_reads_bytes_total{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", container!=\"\", cluster=\"$cluster\", namespace!=\"\"}[$__rate_interval]))",
+              "format": "table",
+              "hide": false,
+              "instant": true,
+              "legendFormat": "__auto",
+              "range": false,
+              "refId": "D"
             },
-            "renameByName": {
-              "Value #A": "IOPS(Reads)",
-              "Value #B": "IOPS(Writes)",
-              "Value #C": "IOPS(Reads + Writes)",
-              "Value #D": "Read",
-              "Value #E": "Write",
-              "Value #F": "Read + Write",
-              "namespace": "Namespace"
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "editorMode": "code",
+              "exemplar": false,
+              "expr": "sum by(namespace) (rate(container_fs_writes_bytes_total{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", container!=\"\", cluster=\"$cluster\", namespace!=\"\"}[$__rate_interval]))",
+              "format": "table",
+              "hide": false,
+              "instant": true,
+              "legendFormat": "__auto",
+              "range": false,
+              "refId": "E"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "editorMode": "code",
+              "exemplar": false,
+              "expr": "sum by(namespace) (rate(container_fs_reads_bytes_total{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", container!=\"\", cluster=\"$cluster\", namespace!=\"\"}[$__rate_interval]) + rate(container_fs_writes_bytes_total{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", container!=\"\", cluster=\"$cluster\", namespace!=\"\"}[$__rate_interval]))",
+              "format": "table",
+              "hide": false,
+              "instant": true,
+              "legendFormat": "__auto",
+              "range": false,
+              "refId": "F"
             }
-          }
+          ],
+          "title": "Current Storage IO",
+          "transformations": [
+            {
+              "id": "joinByField",
+              "options": {
+                "byField": "namespace",
+                "mode": "outer"
+              }
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "Time 1": true,
+                  "Time 2": true,
+                  "Time 3": true,
+                  "Time 4": true,
+                  "Time 5": true,
+                  "Time 6": true
+                },
+                "includeByName": {},
+                "indexByName": {
+                  "Time 1": 0,
+                  "Time 2": 1,
+                  "Time 3": 2,
+                  "Time 4": 3,
+                  "Time 5": 4,
+                  "Time 6": 5,
+                  "Value #A": 7,
+                  "Value #B": 8,
+                  "Value #C": 9,
+                  "Value #D": 10,
+                  "Value #E": 11,
+                  "Value #F": 12,
+                  "namespace": 6
+                },
+                "renameByName": {
+                  "Value #A": "IOPS(Reads)",
+                  "Value #B": "IOPS(Writes)",
+                  "Value #C": "IOPS(Reads + Writes)",
+                  "Value #D": "Read",
+                  "Value #E": "Write",
+                  "Value #F": "Read + Write",
+                  "namespace": "Namespace"
+                }
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "Bps"
+            },
+            "overrides": [
+              {
+                "__systemRef": "hideSeriesFrom",
+                "matcher": {
+                  "id": "byNames",
+                  "options": {
+                    "mode": "exclude",
+                    "names": [
+                      "bt-qbittorrent",
+                      "cert-manager",
+                      "cm-acme-dns",
+                      "cm-duckdns",
+                      "csr-approver",
+                      "exdns",
+                      "gateways",
+                      "homepage",
+                      "hw-intel",
+                      "hw-nfd",
+                      "ingress-nginx",
+                      "ingress-test",
+                      "iperf3",
+                      "istio",
+                      "jellyfin",
+                      "juice-shop",
+                      "kps",
+                      "kps-grafana",
+                      "kps-ksm",
+                      "kps-node-exporter",
+                      "kps-operator",
+                      "kube-vip",
+                      "kyverno",
+                      "librespeed",
+                      "metrics",
+                      "mongo-operator",
+                      "ome",
+                      "ome-ovenplayer",
+                      "ome-player",
+                      "postgres-operator",
+                      "pv-discsi",
+                      "pv-dnfsb",
+                      "pv-dnfsf",
+                      "pv-iscsi",
+                      "pv-nfs",
+                      "pve-exporter",
+                      "terraria",
+                      "ubiquiti"
+                    ],
+                    "prefix": "All except:",
+                    "readOnly": true
+                  }
+                },
+                "properties": [
+                  {
+                    "id": "custom.hideFrom",
+                    "value": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": true
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 24,
+            "x": 0,
+            "y": 347
+          },
+          "id": 21,
+          "maxDataPoints": 300,
+          "options": {
+            "legend": {
+              "asTable": true,
+              "calcs": [
+                "lastNotNull"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true,
+              "sortBy": "Name",
+              "sortDesc": false
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "11.4.0",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "editorMode": "code",
+              "expr": "sum by(namespace) (rate(container_fs_reads_bytes_total{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", container!=\"\", cluster=\"$cluster\", namespace=~\"$namespace\"}[$__rate_interval]) + rate(container_fs_writes_bytes_total{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", container!=\"\", cluster=\"$cluster\", namespace=~\"$namespace\"}[$__rate_interval]))",
+              "instant": false,
+              "legendFormat": "__auto",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "ThroughPut(Read+Write)",
+          "type": "timeseries"
         }
       ],
-      "type": "table"
+      "title": "Storage",
+      "type": "row"
     }
   ],
   "preload": false,
   "refresh": "auto",
   "schemaVersion": 40,
   "tags": [
-    "kubernetes-mixin"
+    "maintainer:danil",
+    "k8s-cluster"
   ],
   "templating": {
     "list": [
@@ -2401,8 +2231,8 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Kubernetes / Compute Resources / Cluster",
-  "uid": "efa86fd1d0c121a26444b636a3f509a8",
-  "version": 12,
+  "title": "Kubernetes / Cluster Overview",
+  "uid": "ccc0ky0jwjgoks6632q1",
+  "version": 2,
   "weekStart": ""
 }

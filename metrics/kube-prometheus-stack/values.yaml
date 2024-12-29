@@ -163,6 +163,15 @@ kubelet:
       # for example, network metrics do not have container label by design
       regex: 'container_(cpu_|fs_|blkio_|memory_|oom_|start_time_|threads|processes|sockets|ulimits_soft).*;'
       separator: ;
+    - sourceLabels: 
+      - __name__
+      - interface
+      action: drop
+      # from lxc* interface metrics
+      # they don't seem to have any real traffic reported
+      # but they give huge cardinality for pods with hostNetwork enabled
+      regex: 'container_network_.*;lxc.*'
+      separator: ;
     # iops metrics don't seems to be useful
     # - sourceLabels: [__name__]
     #   action: drop
@@ -178,7 +187,8 @@ kubelet:
     # Drop less useful / always zero container memory metrics.
     - sourceLabels: [__name__]
       action: drop
-      regex: 'container_memory_(mapped_file|swap)'
+      # regex: 'container_memory_swap|container_memory_kernel_usage|container_memory_mapped_file'
+      regex: 'container_memory_swap|container_memory_kernel_usage'
     # Drop less useful container process metrics.
     - sourceLabels: [__name__]
       action: drop
