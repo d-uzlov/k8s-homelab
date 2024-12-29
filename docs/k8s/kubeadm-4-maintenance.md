@@ -36,13 +36,14 @@ References:
 curl -Ls https://dl.k8s.io/release/stable.txt
 
 new_version=v1.30
+sudo rm -f /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+curl -fsSL https://pkgs.k8s.io/core:/stable:/$new_version/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/'"$new_version"'/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
 
 sudo apt-get update
 apt-cache policy kubeadm | head
 
-# first upgrade just kubeadm
-new_package_version=1.30.0
+new_package_version=1.30.8
 sudo apt-mark unhold kubeadm kubelet && \
 sudo apt-get install -y kubeadm="$new_package_version"'-*' kubelet="$new_package_version"'-*' && \
 sudo apt-mark hold kubeadm kubelet &&
@@ -53,9 +54,9 @@ kubeadm version
 # === choose one node of the cluster ===
 # this node must have the /etc/kubernetes/admin.conf file
 # study the upgrade plan manually
-sudo kubeadm upgrade plan --config ./kconf.yaml
+sudo kubeadm upgrade plan
 # choose a version offered by the upgrade plan
-sudo kubeadm upgrade apply v1.30.0 --config ./kconf.yaml
+sudo kubeadm upgrade apply v1.30.8
 # if you disabled kube-proxy for your CNI, you need to re-disable it again after the upgrade
 
 # === on all other nodes ===

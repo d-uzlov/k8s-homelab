@@ -21,7 +21,7 @@ apt-cache policy kubeadm | head -n 15
 apt-cache madison kubeadm | head
 
 # Install kubeadm+kubelet:
-sudo apt-get install -y kubelet=1.30.5-1.1 kubeadm=1.30.5-1.1 --allow-downgrades --allow-change-held-packages &&
+sudo apt-get install -y kubelet=1.30.8-1.1 kubeadm=1.30.8-1.1 --allow-downgrades --allow-change-held-packages &&
 sudo apt-mark hold kubelet kubeadm
 
 # Pull images so you don't have to wait for it when creating the cluster:
