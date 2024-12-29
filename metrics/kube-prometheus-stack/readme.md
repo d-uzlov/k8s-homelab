@@ -251,8 +251,11 @@ Keywords: `housekeeping-interval`.
 # delete a metric
 prometheus_ingress=$(kl -n kps get ingress   prometheus -o go-template --template "{{ (index .spec.rules 0).host}}")
 prometheus_ingress=$(kl -n kps get httproute prometheus -o go-template --template "{{ (index .spec.hostnames 0) }}")
+# metric name
 metric=
 curl -X POST -g "https://$prometheus_ingress/api/v1/admin/tsdb/delete_series?match[]=$metric"
+curl -X POST -g "https://$prometheus_ingress/api/v1/admin/tsdb/delete_series?match[]={__name__=~\"$metric\"}" --data-urlencode "start=2024-12-29T05:16:42+07:00" --data-urlencode "end=2024-12-29T05:35:45+07:00"
+# run clean_tombstones to actually clean data
 curl -X POST -g "https://$prometheus_ingress/api/v1/admin/tsdb/clean_tombstones"
 
 # list all metrics that have specified labels
@@ -266,7 +269,9 @@ kl -n kps exec statefulsets/prometheus-kps -it -- cat /etc/prometheus/config_out
 #     enter the prometheus container
 kl -n kps exec statefulsets/prometheus-kps -it -- sh
 #     inside the container: find recording rule file and run promtool
-promtool tsdb create-blocks-from rules --start 2024-05-29T21:33:40+07:00 --end 2024-06-11T14:40:40+07:00 --output-dir=. --eval-interval=5s /etc/prometheus/rules/prometheus-kps-rulefiles-0/kps-default-rules-etcd-recording-f515cf3e-c48e-4ff4-ab43-d997c9aa4825.yaml
+ls -la /etc/prometheus/rules/prometheus-kps-rulefiles-0/
+# Be careful! Do not overlap time period with existing data!
+promtool tsdb create-blocks-from rules --start 2024-05-29T21:33:40+07:00 --end 2024-06-11T14:40:40+07:00 --output-dir=. --eval-interval=10s /etc/prometheus/rules/prometheus-kps-rulefiles-0/kps-default-rules-etcd-recording-f515cf3e-c48e-4ff4-ab43-d997c9aa4825.yaml
 
 # to delete _all_ data from prometheus, delete /prometheus contents and restart prometheus
 # rm -rf will fail, it's OK, it just can't delete some of the special files
@@ -285,11 +290,15 @@ References:
 bearer=$(kl -n kps exec sts/prometheus-kps -- cat /var/run/secrets/kubernetes.io/serviceaccount/token)
 kl get node -o wide
 nodeIp=
-curl -k -H "Authorization: Bearer $bearer" https://$nodeMetrics:10250/metrics
-curl -k -H "Authorization: Bearer $bearer" https://$nodeMetrics:10250/metrics/cadvisor
-curl -k -H "Authorization: Bearer $bearer" https://$nodeMetrics:10250/metrics/probes
+curl -k -H "Authorization: Bearer $bearer" https://$nodeIp:10250/metrics
+curl -k -H "Authorization: Bearer $bearer" https://$nodeIp:10250/metrics/cadvisor
+curl -k -H "Authorization: Bearer $bearer" https://$nodeIp:10250/metrics/probes
 
-kl exec deployments/alpine -- apk add curl
+# watch for some metric
+while true; do
+curl -k -H "Authorization: Bearer $bearer" https://$nodeIp:10250/metrics/cadvisor | grep immich-postgresql-0 | grep container_fs_writes_bytes_total | grep container=\"postgresql\" | sed "s/^/$(date +%H-%M-%S) /" >> ./cadvisor.log
+sleep 5
+done
 
 kl -n kube-system describe svc kps-coredns
 corednsIp=

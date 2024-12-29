@@ -154,6 +154,19 @@ kubelet:
       sourceLabels:
       - __name__
     cAdvisorMetricRelabelings:
+    # drop metrics for dummy cgroup containers without name
+    - sourceLabels: 
+      - __name__
+      - container
+      action: drop
+      # select only metrics that are linked to containers
+      # for example, network metrics do not have container label by design
+      regex: 'container_(cpu_|fs_|blkio_|memory_|oom_|start_time_|threads|processes|sockets|ulimits_soft).*;'
+      separator: ;
+    # iops metrics don't seems to be useful
+    # - sourceLabels: [__name__]
+    #   action: drop
+    #   regex: 'container_fs_reads_total|container_fs_writes_total'
     # Drop less useful container CPU metrics.
     - sourceLabels: [__name__]
       action: drop
@@ -430,8 +443,8 @@ prometheus:
     podMonitorSelectorNilUsesHelmValues: false
     probeSelectorNilUsesHelmValues: false
     scrapeConfigSelectorNilUsesHelmValues: false
-    scrapeInterval: 5s
-    evaluationInterval: 5s
+    scrapeInterval: 10s
+    evaluationInterval: 10s
     disableCompaction: false
     replicas: 1
     retention: 10y
