@@ -178,7 +178,7 @@ kl get pvc
 # make sure that test pods are running
 kl get pod -o wide
 
-(cd ./storage/democratic-csi-generic/proxy/storage-classes/env/ && ll test-* | sed s~.yaml~~)
+(cd ./storage/democratic-csi-generic/proxy/storage-classes/env/ && ls test-* | sed s~.yaml~~)
 # select one of the tests to get details
 testName=
 echo $testName
@@ -188,11 +188,13 @@ kl describe pvc $testName
 kl -n pv-dcsi logs deployments/dcsi-controller csi-driver --tail 20
 kl describe pod -l app=$testName
 
-# check mounted file system
+# check mounted file system for all test pods
+for testName in $(cd ./storage/democratic-csi-generic/proxy/storage-classes/env/ && /bin/ls test-* | sed s~.yaml~~); do
 kl exec deployments/$testName -- mount | grep /mnt/data
 kl exec deployments/$testName -- df -h /mnt/data
 kl exec deployments/$testName -- touch /mnt/data/test-file
 kl exec deployments/$testName -- ls -laF /mnt/data
+done
 
 # explore container
 kl exec deployments/$testName-root -it -- sh
@@ -200,3 +202,14 @@ kl exec deployments/$testName-root -it -- sh
 # cleanup resources
 cat ./storage/democratic-csi-generic/proxy/storage-classes/env/test-* | kl delete -f -
 ```
+
+
+/mnt/data # cat /sys/fs/cgroup/io.stat
+(unknown) rbytes=0 wbytes=0 rios=0 wios=372 dbytes=0 dios=0
+259:5 rbytes=0 wbytes=361553920 rios=0 wios=372 dbytes=0 dios=0
+8:0 rbytes=983040 wbytes=2111184896 rios=45 wios=4057 dbytes=0 dios=0
+
+/mnt/data # cat /sys/fs/cgroup/io.stat
+(unknown) rbytes=0 wbytes=0 rios=0 wios=1120 dbytes=0 dios=0
+259:5 rbytes=0 wbytes=1084661760 rios=0 wios=1120 dbytes=0 dios=0
+8:0 rbytes=983040 wbytes=2111188992 rios=45 wios=4058 dbytes=0 dios=0
