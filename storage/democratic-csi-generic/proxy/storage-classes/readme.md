@@ -202,14 +202,3 @@ kl exec deployments/$testName-root -it -- sh
 # cleanup resources
 cat ./storage/democratic-csi-generic/proxy/storage-classes/env/test-* | kl delete -f -
 ```
-
-
-/mnt/data # cat /sys/fs/cgroup/io.stat
-(unknown) rbytes=0 wbytes=0 rios=0 wios=372 dbytes=0 dios=0
-259:5 rbytes=0 wbytes=361553920 rios=0 wios=372 dbytes=0 dios=0
-8:0 rbytes=983040 wbytes=2111184896 rios=45 wios=4057 dbytes=0 dios=0
-
-/mnt/data # cat /sys/fs/cgroup/io.stat
-(unknown) rbytes=0 wbytes=0 rios=0 wios=1120 dbytes=0 dios=0
-259:5 rbytes=0 wbytes=1084661760 rios=0 wios=1120 dbytes=0 dios=0
-8:0 rbytes=983040 wbytes=2111188992 rios=45 wios=4058 dbytes=0 dios=0
