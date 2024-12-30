@@ -258,6 +258,7 @@ curl -X POST -g "https://$prometheus_ingress/api/v1/admin/tsdb/delete_series?mat
 curl -X POST -g "https://$prometheus_ingress/api/v1/admin/tsdb/delete_series?match[]={__name__=~\"$metric\"}" --data-urlencode "start=2024-12-29T05:16:42+07:00" --data-urlencode "end=2024-12-29T05:35:45+07:00"
 # delete time series by name regex with additional labels filter
 curl -X POST -g "https://$prometheus_ingress/api/v1/admin/tsdb/delete_series?match[]={__name__=~\"container_network_.*\",interface=~\"lxc.*\"}"
+curl -X POST -g "https://$prometheus_ingress/api/v1/admin/tsdb/delete_series?match[]={__name__=~\"node_network_.*\",device=~\"lxc.*\"}"
 # run clean_tombstones to actually clean data
 curl -X POST -g "https://$prometheus_ingress/api/v1/admin/tsdb/clean_tombstones"
 
