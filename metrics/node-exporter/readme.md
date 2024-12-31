@@ -49,7 +49,7 @@ kl apply -k ./metrics/node-exporter/dashboards/ --server-side
 ```bash
 kl delete -k ./metrics/node-exporter/node-exporter/dashboards/
 kl delete -k ./metrics/node-exporter/node-exporter/
-kl delete ns kps-node-exporter
+kl delete ns node-exporter
 ```
 
 # Updating dashboards
@@ -62,4 +62,14 @@ sed -i '/\"interval\":/d' ./metrics/kube-prometheus-stack/component-monitors/k8s
 sed -i 's/^  \"id\": .*,/  \"id\": null,/' ./metrics/kube-prometheus-stack/component-monitors/k8s/*.json
 # set dashboard refresh interval to auto
 sed -i 's/^  \"refresh\": \".*s\",/  \"refresh\": \"auto\",/' ./metrics/kube-prometheus-stack/component-monitors/k8s/*.json
+```
+
+# Manual metric checking
+
+```bash
+bearer=$(kl -n kps exec sts/prometheus-kps -- cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+
+kl -n node-exporter describe svc node-exporter
+kl get node -o wide
+curl -sS -k -H "Authorization: Bearer $bearer" http://$nodeIp:9100/metrics > ./node-exporter-$nodeIp.log
 ```

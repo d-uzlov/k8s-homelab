@@ -73,8 +73,6 @@ generateDeployment kubeApiServer.enabled=true \
                    coreDns.enabled=false \
                    kubeScheduler.enabled=true       > ./metrics/kube-prometheus-stack/service-monitors.gen.yaml
 
-generateDeployment kubeStateMetrics.enabled=true    > ./metrics/kube-prometheus-stack/kube-state-metrics/kubeStateMetrics.gen.yaml
-
 generateDeployment prometheusOperator.enabled=true \
                    prometheusOperator.admissionWebhooks.certManager.enabled=true \
                    namespaceOverride=kps-operator   > ./metrics/kube-prometheus-stack/prometheus-operator/prometheusOperator.gen.yaml
@@ -126,11 +124,6 @@ EOF
 
 ```bash
 kl apply -f ./metrics/kube-prometheus-stack/crd/ --server-side
-
-kl create ns kps-ksm
-kl label ns kps-ksm pod-security.kubernetes.io/enforce=baseline
-kl apply -k ./metrics/kube-prometheus-stack/kube-state-metrics/
-kl -n kps-ksm get pod -o wide
 
 kl create ns kps-grafana
 kl label ns kps-grafana pod-security.kubernetes.io/enforce=baseline
@@ -189,7 +182,6 @@ Don't forget to deploy additional dashboards:
 # Cleanup
 
 ```bash
-kl delete -k ./metrics/kube-prometheus-stack/kube-state-metrics/
 kl delete -k ./metrics/kube-prometheus-stack/grafana/
 kl delete -k ./metrics/kube-prometheus-stack/prometheus-default-rules/
 kl delete -k ./metrics/kube-prometheus-stack/prometheus-operator/
@@ -199,7 +191,6 @@ kl delete ns kps-default-rules
 kl delete ns kps-grafana
 kl delete ns kps
 kl delete ns kps-operator
-kl delete ns kps-ksm
 kl delete -f ./metrics/kube-prometheus-stack/crd/
 ```
 
@@ -317,9 +308,6 @@ curl -k -H "Authorization: Bearer $bearer" https://$nodeIp:10257/metrics
 kl -n kube-system describe svc kps-kube-scheduler
 curl -k -H "Authorization: Bearer $bearer" https://$nodeIp:10259/metrics
 
-kl -n kps-node-exporter describe svc kps-prometheus-node-exporter
-curl -k -H "Authorization: Bearer $bearer" http://$nodeIp:9100/metrics
-
 kl -n kps-grafana describe svc kps-grafana
 grafanaIp=
 kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" http://$grafanaIp:3000/metrics
@@ -337,11 +325,6 @@ kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" http://
 kl -n kps-operator describe svc prometheus-operator
 prometheusOperatorIp=
 kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" https://$prometheusOperatorIp:10250/metrics
-
-kl -n kps-ksm describe svc kube-state-metrics
-kubeStateMetricsIp=
-kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" http://$kubeStateMetricsIp:8080/metrics
-kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" http://$kubeStateMetricsIp:8081/metrics
 ```
 
 # Alertmanager setup

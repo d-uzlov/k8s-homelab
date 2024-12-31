@@ -58,10 +58,6 @@ bearer=$(kl -n kps exec sts/prometheus-kps -- cat /var/run/secrets/kubernetes.io
 kl -n kube-state-metrics describe svc ksm
 kl exec deployments/alpine -- apk add curl
 kubeStateMetricsIp=$(kl -n kube-state-metrics get svc ksm -o jsonpath='{.spec.clusterIP}')
-kl exec deployments/alpine -- curl -sS -k -H "Authorization: Bearer $bearer" http://$kubeStateMetricsIp:8080/metrics
-kl exec deployments/alpine -- curl -sS -k -H "Authorization: Bearer $bearer" http://$kubeStateMetricsIp:8081/metrics
+kl exec deployments/alpine -- curl -sS -k -H "Authorization: Bearer $bearer" http://$kubeStateMetricsIp:8080/metrics > ./ksm.log
+kl exec deployments/alpine -- curl -sS -k -H "Authorization: Bearer $bearer" http://$kubeStateMetricsIp:8081/metrics > ./ksm-self.log
 ```
-
-# TODO
-
-kube_pod_container_resource_requests: labels: `pod` vs `exported_pod` ??
