@@ -1,0 +1,37 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kube-state-metrics
+  namespace: kube-state-metrics
+  labels:
+    app.kubernetes.io/component: metrics
+    app.kubernetes.io/name: kube-state-metrics
+spec:
+  jobLabel: app.kubernetes.io/name
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kube-state-metrics
+  endpoints:
+  - port: http
+    metricRelabelings:
+    - action: keep
+      sourceLabels:
+      - __name__
+      regex: "\
+        kube_daemonset_.*|\
+        kube_deployment_.*|\
+        kube_namespace_.*|\
+        kube_node_.*|\
+        kube_persistentvolumeclaim_.*|\
+        kube_persistentvolume_.*|\
+        kube_pod_.*|\
+        kube_replicaset_owner|\
+        kube_statefulset_.*|\
+        "
+  - port: metrics
+    metricRelabelings:
+    - action: keep
+      sourceLabels:
+      - __name__
+      regex: kube_state_metrics_.*
