@@ -30,6 +30,7 @@ function remove_helm_junk() {
     -e '\|app.kubernetes.io/instance:|d' \
     -e '\|app.kubernetes.io/version|d' \
     -e '\|app.kubernetes.io/part-of|d' \
+    -e '\|release: kps|d' \
     -e '\|67.4.0|d' \
     -e '/^ *$/d' \
     -e '\|heritage\:|d' \
