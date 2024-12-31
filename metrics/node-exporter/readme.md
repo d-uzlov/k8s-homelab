@@ -37,6 +37,7 @@ helm template \
 kl create ns node-exporter
 # node exporter needs access to host network, host processes, host settings to work properly
 kl label ns node-exporter pod-security.kubernetes.io/enforce=privileged
+
 kl apply -k ./metrics/node-exporter/
 kl -n node-exporter get pod -o wide
 kl -n node-exporter get servicemonitor

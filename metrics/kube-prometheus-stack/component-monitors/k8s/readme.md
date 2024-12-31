@@ -32,3 +32,9 @@ Why do many storage-related queries had `device=~"(/dev/)?(mmcblk.p.+|nvme.+|rbd
 `*volume*` metrics are duplicated between kubelet and kube-state-metrics?
 
 Use `kube_pod_spec_volumes_persistentvolumeclaims_info` to link PVCs to compute resources?
+
+Add node name into pod detailed info.
+
+Add "currently running" status into pod tables.
+
+Add throttling info into pod tables.
