@@ -75,8 +75,6 @@ generateDeployment kubeApiServer.enabled=true \
 
 generateDeployment kubeStateMetrics.enabled=true    > ./metrics/kube-prometheus-stack/kube-state-metrics/kubeStateMetrics.gen.yaml
 
-generateDeployment nodeExporter.enabled=true        > ./metrics/kube-prometheus-stack/node-exporter/nodeExporter.gen.yaml
-
 generateDeployment prometheusOperator.enabled=true \
                    prometheusOperator.admissionWebhooks.certManager.enabled=true \
                    namespaceOverride=kps-operator   > ./metrics/kube-prometheus-stack/prometheus-operator/prometheusOperator.gen.yaml
@@ -133,15 +131,6 @@ kl create ns kps-ksm
 kl label ns kps-ksm pod-security.kubernetes.io/enforce=baseline
 kl apply -k ./metrics/kube-prometheus-stack/kube-state-metrics/
 kl -n kps-ksm get pod -o wide
-
-kl create ns kps-node-exporter
-kl label ns kps-node-exporter pod-security.kubernetes.io/enforce=privileged
-kl apply -k ./metrics/kube-prometheus-stack/node-exporter/
-kl -n kps-node-exporter get pod -o wide
-
-sed -i 's/^  \"id\": .*,/  \"id\": null,/' ./metrics/kube-prometheus-stack/node-exporter/dashboards/*.json
-sed -i 's/^  \"refresh\": \".*s\",/  \"refresh\": \"auto\",/' ./metrics/kube-prometheus-stack/node-exporter/dashboards/*.json
-kl apply -k ./metrics/kube-prometheus-stack/node-exporter/dashboards/ --server-side
 
 kl create ns kps-grafana
 kl label ns kps-grafana pod-security.kubernetes.io/enforce=baseline
@@ -201,8 +190,6 @@ Don't forget to deploy additional dashboards:
 
 ```bash
 kl delete -k ./metrics/kube-prometheus-stack/kube-state-metrics/
-kl delete -k ./metrics/kube-prometheus-stack/node-exporter/dashboards/
-kl delete -k ./metrics/kube-prometheus-stack/node-exporter/
 kl delete -k ./metrics/kube-prometheus-stack/grafana/
 kl delete -k ./metrics/kube-prometheus-stack/prometheus-default-rules/
 kl delete -k ./metrics/kube-prometheus-stack/prometheus-operator/
@@ -213,7 +200,6 @@ kl delete ns kps-grafana
 kl delete ns kps
 kl delete ns kps-operator
 kl delete ns kps-ksm
-kl delete ns kps-node-exporter
 kl delete -f ./metrics/kube-prometheus-stack/crd/
 ```
 
