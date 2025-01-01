@@ -73,10 +73,6 @@ generateDeployment kubeApiServer.enabled=true \
                    coreDns.enabled=false \
                    kubeScheduler.enabled=true       > ./metrics/kube-prometheus-stack/service-monitors.gen.yaml
 
-generateDeployment prometheusOperator.enabled=true \
-                   prometheusOperator.admissionWebhooks.certManager.enabled=true \
-                   namespaceOverride=kps-operator   > ./metrics/kube-prometheus-stack/prometheus-operator/prometheusOperator.gen.yaml
-
 generateDeployment defaultRules.create=true \
                    namespaceOverride=kps-default-rules \
                                                     > ./metrics/kube-prometheus-stack/prometheus-default-rules/rules.gen.yaml
@@ -130,11 +126,6 @@ kl label ns kps-grafana pod-security.kubernetes.io/enforce=baseline
 kl apply -k ./metrics/kube-prometheus-stack/grafana/
 kl -n kps-grafana get pod -o wide
 
-kl create ns kps-operator
-kl label ns kps-operator pod-security.kubernetes.io/enforce=baseline
-kl apply -k ./metrics/kube-prometheus-stack/prometheus-operator/
-kl -n kps-operator get pod -o wide
-
 kl create ns kps
 kl label ns kps pod-security.kubernetes.io/enforce=baseline
 kl apply -k ./metrics/kube-prometheus-stack/prometheus/
@@ -184,13 +175,11 @@ Don't forget to deploy additional dashboards:
 ```bash
 kl delete -k ./metrics/kube-prometheus-stack/grafana/
 kl delete -k ./metrics/kube-prometheus-stack/prometheus-default-rules/
-kl delete -k ./metrics/kube-prometheus-stack/prometheus-operator/
 kl delete -k ./metrics/kube-prometheus-stack/prometheus/
 kl delete -k ./metrics/kube-prometheus-stack/
 kl delete ns kps-default-rules
 kl delete ns kps-grafana
 kl delete ns kps
-kl delete ns kps-operator
 kl delete -f ./metrics/kube-prometheus-stack/crd/
 ```
 
@@ -321,10 +310,6 @@ kl -n kps describe svc prometheus-operated
 prometheusIp=
 kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" http://$prometheusIp:9090/metrics
 kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" http://$prometheusIp:8080/metrics
-
-kl -n kps-operator describe svc prometheus-operator
-prometheusOperatorIp=
-kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" https://$prometheusOperatorIp:10250/metrics
 ```
 
 # Alertmanager setup

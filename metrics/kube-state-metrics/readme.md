@@ -53,11 +53,7 @@ kl delete ns kube-state-metrics
 # Manual metric checking
 
 ```bash
-bearer=$(kl -n kps exec sts/prometheus-kps -- cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-
 kl -n kube-state-metrics describe svc ksm
 kl exec deployments/alpine -- apk add curl
-kubeStateMetricsIp=$(kl -n kube-state-metrics get svc ksm -o jsonpath='{.spec.clusterIP}')
-kl exec deployments/alpine -- curl -sS -k -H "Authorization: Bearer $bearer" http://$kubeStateMetricsIp:8080/metrics > ./ksm.log
-kl exec deployments/alpine -- curl -sS -k -H "Authorization: Bearer $bearer" http://$kubeStateMetricsIp:8081/metrics > ./ksm-self.log
+kl exec deployments/alpine -- curl -sS http://ksm.kube-state-metrics:8080/metrics > ./ksm.log
 ```

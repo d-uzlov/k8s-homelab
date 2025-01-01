@@ -68,9 +68,9 @@ sed -i 's/^  \"refresh\": \".*s\",/  \"refresh\": \"auto\",/' ./metrics/kube-pro
 # Manual metric checking
 
 ```bash
-bearer=$(kl -n kps exec sts/prometheus-kps -- cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-
 kl -n node-exporter describe svc node-exporter
-kl get node -o wide
-curl -sS -k -H "Authorization: Bearer $bearer" http://$nodeIp:9100/metrics > ./node-exporter-$nodeIp.log
+
+# pick some node randomly
+kl exec deployments/alpine -- apk add curl
+kl exec deployments/alpine -- curl -sS --insecure http://node-exporter.node-exporter:9100/metrics > ./node-exporter.log
 ```
