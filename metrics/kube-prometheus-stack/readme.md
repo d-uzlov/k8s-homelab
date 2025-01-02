@@ -226,14 +226,20 @@ Keywords: `housekeeping-interval`.
 # delete a metric
 prometheus_ingress=$(kl -n kps get ingress   prometheus -o go-template --template "{{ (index .spec.rules 0).host}}")
 prometheus_ingress=$(kl -n kps get httproute prometheus -o go-template --template "{{ (index .spec.hostnames 0) }}")
-# metric name
-metric=
-curl -X POST -g "https://$prometheus_ingress/api/v1/admin/tsdb/delete_series?match[]=$metric"
+
+# start and end parameters are optional.
+# By default prometheus will delete time series from all time.
+# delete everything from selected time range
+curl -X POST -g "https://$prometheus_ingress/api/v1/admin/tsdb/delete_series" --data-urlencode 'match[]={__name__=~".*"}' --data-urlencode "start=2025-01-02T02:04:30+07:00" --data-urlencode "end=2025-01-02T02:05:47+07:00"
+# delete all metrics having a certain label
+curl -X POST -g "https://$prometheus_ingress/api/v1/admin/tsdb/delete_series" --data-urlencode 'match[]={service="kps-kubelet"}' --data-urlencode "start=2025-01-02T02:00:30+07:00" --data-urlencode "end=2025-01-02T09:40:29+07:00"
 # delete selected time range for a metric
-curl -X POST -g "https://$prometheus_ingress/api/v1/admin/tsdb/delete_series?match[]={__name__=~\"$metric\"}" --data-urlencode "start=2024-12-29T05:16:42+07:00" --data-urlencode "end=2024-12-29T05:35:45+07:00"
+curl -X POST -g "https://$prometheus_ingress/api/v1/admin/tsdb/delete_series" --data-urlencode '?match[]=metric_name' --data-urlencode "start=2024-12-29T05:16:42+07:00" --data-urlencode "end=2024-12-29T05:35:45+07:00"
+# delete time series within time range
+curl -X POST -g "https://$prometheus_ingress/api/v1/admin/tsdb/delete_series?match[]=container_cpu_usage_seconds_total:with_pod_info" --data-urlencode "start=2025-01-02T02:00:11+07:00" --data-urlencode "end=2025-01-02T09:23:12+07:00"
 # delete time series by name regex with additional labels filter
-curl -X POST -g "https://$prometheus_ingress/api/v1/admin/tsdb/delete_series?match[]={__name__=~\"container_network_.*\",interface=~\"lxc.*\"}"
-curl -X POST -g "https://$prometheus_ingress/api/v1/admin/tsdb/delete_series?match[]={__name__=~\"node_network_.*\",device=~\"lxc.*\"}"
+curl -X POST -g "https://$prometheus_ingress/api/v1/admin/tsdb/delete_series" --data-urlencode 'match[]={__name__=~"container_network_.*",interface=~"lxc.*"}'
+curl -X POST -g "https://$prometheus_ingress/api/v1/admin/tsdb/delete_series" --data-urlencode 'match[]={__name__=~"node_network_.*",device=~"lxc.*"}'
 # run clean_tombstones to actually clean data
 curl -X POST -g "https://$prometheus_ingress/api/v1/admin/tsdb/clean_tombstones"
 

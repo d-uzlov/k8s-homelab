@@ -37,6 +37,7 @@ helm template \
 
 kl create ns kube-state-metrics
 kl label ns node-exporter pod-security.kubernetes.io/enforce=baseline
+
 kl apply -k ./metrics/kube-state-metrics/
 kl -n kube-state-metrics get pod -o wide
 kl -n kube-state-metrics get servicemonitor

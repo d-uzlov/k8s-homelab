@@ -11,7 +11,40 @@
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
         "type": "dashboard"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "enable": true,
+        "expr": "changes(node_boot_time_seconds{instance=\"$node_name\"}[$__interval]) > 0",
+        "hide": false,
+        "iconColor": "red",
+        "name": "Node reboot",
+        "tagKeys": "node_reboot",
+        "textFormat": "{{instance}}",
+        "titleFormat": "Node reboot"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "enable": true,
+        "expr": "(node_boot_time_seconds{instance=\"$node_name\"} offset $__interval unless node_boot_time_seconds{instance=\"$node_name\"}) unless changes(node_boot_time_seconds{instance=\"$node_name\"}[$__interval]) > 0",
+        "hide": false,
+        "iconColor": "light-red",
+        "name": "Node info missing",
+        "textFormat": "{{instance}}",
+        "titleFormat": "Node info missing"
       }
     ]
   },
@@ -41,17 +74,220 @@
       "title": "Namespace",
       "tooltip": "",
       "type": "link",
-      "url": "/d/vsl6ot4yad5hedtly8ey/kubernetes-namespace-pods?${datasource:queryparam}&var-cluster=$cluster&var-namespace=$namespace&var-pod=$pod&from=${__from}&to=${__to}"
+      "url": "/d/vsl6ot4yad5hedtly8ey/kubernetes-namespace-pods?${datasource:queryparam}&${cluster:queryparam}&${namespace:queryparam}&${__url_time_range}"
     }
   ],
   "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "links": [
+            {
+              "title": "Filter container",
+              "url": "/d/mo6wf2ukdv3l72howqnq/k8s-resources-pod?${datasource:queryparam}&${cluster:queryparam}&${namespace:queryparam}&${pod:queryparam}&var-container=${__field.labels.container}&${__url_time_range}"
+            }
+          ],
+          "mappings": [
+            {
+              "options": {
+                "1": {
+                  "color": "green",
+                  "index": 0,
+                  "text": "OK"
+                }
+              },
+              "type": "value"
+            },
+            {
+              "options": {
+                "from": 0,
+                "result": {
+                  "color": "red",
+                  "index": 1,
+                  "text": "Error"
+                },
+                "to": 1
+              },
+              "type": "range"
+            }
+          ],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 6,
+      "maxDataPoints": 500,
+      "options": {
+        "alignValue": "center",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "never",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "min(min_over_time(kube_pod_container_status_ready{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\"}[$__rate_interval])) by (container)",
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Status ready",
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 6
+      },
+      "id": 21,
+      "maxDataPoints": 300,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(max_over_time(kube_pod_container_status_restarts_total{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__rate_interval])) by (container)",
+          "instant": false,
+          "legendFormat": "{{container}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Container restarts",
+      "type": "timeseries"
+    },
     {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 0
+        "y": 12
       },
       "id": 18,
       "panels": [],
@@ -85,7 +321,8 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "sishort"
         },
         "overrides": [
           {
@@ -106,7 +343,7 @@
         "h": 7,
         "w": 18,
         "x": 1,
-        "y": 1
+        "y": 13
       },
       "id": 3,
       "options": {
@@ -306,7 +543,8 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "sishort"
         },
         "overrides": [
           {
@@ -365,7 +603,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 8
+        "y": 20
       },
       "id": 1,
       "maxDataPoints": 300,
@@ -373,11 +611,14 @@
         "legend": {
           "asTable": true,
           "calcs": [
-            "lastNotNull"
+            "lastNotNull",
+            "mean"
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "mode": "multi",
@@ -537,7 +778,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 15
+        "y": 27
       },
       "id": 2,
       "options": {
@@ -579,7 +820,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 22
+        "y": 34
       },
       "id": 20,
       "panels": [],
@@ -724,6 +965,30 @@
                 "value": 113
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Memory Usage (Swap)"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 196
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Swap"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 109
+              }
+            ]
           }
         ]
       },
@@ -731,7 +996,7 @@
         "h": 7,
         "w": 18,
         "x": 1,
-        "y": 23
+        "y": 35
       },
       "id": 5,
       "options": {
@@ -761,7 +1026,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (container, name) (last_over_time(container_memory_working_set_bytes{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container!=\"\", image!=\"\"}[$__range]))",
+          "expr": "sum by (container, name) (last_over_time(container_memory_working_set_bytes{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", image!=\"\"}[$__range]))",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -775,7 +1040,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (container, name) (last_over_time(cluster:namespace:pod_memory:active:kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\"}[$__range]))",
+          "expr": "sum by (container, name) (last_over_time(cluster:namespace:pod_memory:active:kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -790,7 +1055,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (container, name) (last_over_time(container_memory_working_set_bytes{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", image!=\"\"}[$__range])) / sum by (container, name) (last_over_time(cluster:namespace:pod_memory:active:kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\"}[$__range]))",
+          "expr": "sum by (container, name) (last_over_time(container_memory_working_set_bytes{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", image!=\"\"}[$__range])) / sum by (container, name) (last_over_time(cluster:namespace:pod_memory:active:kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -805,7 +1070,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (container, name) (last_over_time(cluster:namespace:pod_memory:active:kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\"}[$__range]))",
+          "expr": "sum by (container, name) (last_over_time(cluster:namespace:pod_memory:active:kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -820,7 +1085,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (container, name) (last_over_time(container_memory_working_set_bytes{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container!=\"\", image!=\"\"}[$__range])) / sum by (container, name) (last_over_time(cluster:namespace:pod_memory:active:kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\"}[$__range]))",
+          "expr": "sum by (container, name) (last_over_time(container_memory_working_set_bytes{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", image!=\"\"}[$__range])) / sum by (container, name) (last_over_time(cluster:namespace:pod_memory:active:kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -835,7 +1100,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (container, name) (last_over_time(container_memory_rss{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container != \"\", container != \"POD\"}[$__range]))",
+          "expr": "sum by (container, name) (last_over_time(container_memory_rss{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -850,7 +1115,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (container, name) (last_over_time(container_memory_cache{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container != \"\", container != \"POD\"}[$__range]))",
+          "expr": "sum by (container, name) (last_over_time(container_memory_cache{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -865,7 +1130,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (container, name) (last_over_time(container_memory_swap{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container != \"\", container != \"POD\"}[$__range]))",
+          "expr": "sum by (container, name) (last_over_time(container_memory_swap{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -880,7 +1145,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (container, name) (last_over_time(container_memory_max_usage_bytes{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container != \"\", container != \"POD\"}[$__range]))",
+          "expr": "sum by (container, name) (last_over_time(container_memory_max_usage_bytes{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -895,7 +1160,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (container, name) (last_over_time(container_memory_usage_bytes{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container!=\"\", image!=\"\"}[$__range]))",
+          "expr": "sum by (container, name) (last_over_time(container_memory_usage_bytes{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -926,10 +1191,12 @@
               "Time 6": true,
               "Time 7": true,
               "Time 8": true,
+              "container 1": false,
               "container 2": true,
               "container 3": true,
               "container 4": true,
-              "container 5": true
+              "container 5": true,
+              "container 6": true
             },
             "includeByName": {},
             "indexByName": {
@@ -937,18 +1204,21 @@
               "Time 2": 1,
               "Time 3": 2,
               "Time 4": 3,
-              "Time 5": 14,
+              "Time 5": 13,
+              "Time 6": 16,
               "Value #A": 6,
               "Value #F": 7,
               "Value #G": 8,
+              "Value #H": 15,
               "Value #I": 12,
               "Value #J": 5,
               "container 1": 4,
               "container 2": 9,
               "container 3": 10,
               "container 4": 11,
-              "container 5": 15,
-              "name": 13
+              "container 5": 14,
+              "container 6": 17,
+              "name": 18
             },
             "renameByName": {
               "Value #A": "WSS",
@@ -962,7 +1232,7 @@
               "Value #I": "Max",
               "Value #J": "Raw",
               "container": "Container",
-              "container 1": "",
+              "container 1": "Container",
               "container 2": "",
               "name": "Raw container name"
             }
@@ -980,7 +1250,7 @@
         "h": 7,
         "w": 4,
         "x": 19,
-        "y": 23
+        "y": 35
       },
       "id": 27,
       "options": {
@@ -1113,7 +1383,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 30
+        "y": 42
       },
       "id": 4,
       "maxDataPoints": 300,
@@ -1140,7 +1410,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(max_over_time(container_memory_usage_bytes{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container!=\"\", container=~\"$container\", image!=\"\"}[$__rate_interval])) by (container, name)",
+          "expr": "sum by (container, name) (max_over_time(container_memory_usage_bytes{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container!=\"\", container=~\"$container\", image!=\"\"}[$__rate_interval]))",
           "instant": false,
           "legendFormat": "{{container}}, name={{name}}",
           "range": true,
@@ -1152,7 +1422,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(\r\n    kube_pod_container_resource_requests{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container!=\"\", container=~\"$container\"}\r\n) by (container)\r\n",
+          "expr": "sum by (container) (kube_pod_container_resource_requests{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container!=\"\", container=~\"$container\"})",
           "hide": false,
           "instant": false,
           "legendFormat": "requests: {{container}}",
@@ -1165,7 +1435,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(\r\n    kube_pod_container_resource_limits{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container!=\"\", container=~\"$container\"}\r\n) by (container)\r\n",
+          "expr": "sum by (container) (kube_pod_container_resource_limits{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container!=\"\", container=~\"$container\"})",
           "hide": false,
           "instant": false,
           "legendFormat": "limits: {{container}}",
@@ -1302,9 +1572,387 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 30
+        "y": 42
       },
-      "id": 23,
+      "id": 30,
+      "maxDataPoints": 300,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (container, name) (max_over_time(container_memory_max_usage_bytes{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container!=\"\", container=~\"$container\", image!=\"\"}[$__rate_interval]))",
+          "instant": false,
+          "legendFormat": "{{container}}, name={{name}}",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (container) (kube_pod_container_resource_requests{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container!=\"\", container=~\"$container\"})",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "requests: {{container}}",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (container) (kube_pod_container_resource_limits{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container!=\"\", container=~\"$container\"})",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "limits: {{container}}",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "Max Memory Usage",
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "(.*), name=(.{8}).*",
+            "renamePattern": "$1, $2"
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "B"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "C"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 50
+      },
+      "id": 25,
+      "maxDataPoints": 300,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(max_over_time(container_memory_working_set_bytes{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container!=\"\", container=~\"$container\", image!=\"\"}[$__rate_interval])) by (container, name)",
+          "instant": false,
+          "legendFormat": "{{container}}, name={{name}}",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (container) (kube_pod_container_resource_requests{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container!=\"\", container=~\"$container\"})\r\n",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "requests: {{container}}",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (container) (kube_pod_container_resource_limits{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container!=\"\", container=~\"$container\"})\r\n",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "limits: {{container}}",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "Memory Usage (WSS)",
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "(.*), name=(.{8})(.*)",
+            "renamePattern": "$1, $2"
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "B"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "C"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 50
+      },
+      "id": 29,
       "maxDataPoints": 300,
       "options": {
         "legend": {
@@ -1465,358 +2113,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 38
-      },
-      "id": 25,
-      "maxDataPoints": 300,
-      "options": {
-        "legend": {
-          "asTable": true,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "pluginVersion": "11.4.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "sum(max_over_time(container_memory_working_set_bytes{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container!=\"\", container=~\"$container\", image!=\"\"}[$__rate_interval])) by (container, name)",
-          "instant": false,
-          "legendFormat": "{{container}}, name={{name}}",
-          "range": true,
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "sum(\r\n    kube_pod_container_resource_requests{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container!=\"\", container=~\"$container\"}\r\n) by (container)\r\n",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "requests: {{container}}",
-          "range": true,
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "sum(\r\n    kube_pod_container_resource_limits{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container!=\"\", container=~\"$container\"}\r\n) by (container)\r\n",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "limits: {{container}}",
-          "range": true,
-          "refId": "C"
-        }
-      ],
-      "title": "Memory Usage (WSS)",
-      "transformations": [
-        {
-          "id": "renameByRegex",
-          "options": {
-            "regex": "(.*), name=(.{8})(.*)",
-            "renamePattern": "$1, $2"
-          }
-        }
-      ],
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "bytes"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "B"
-            },
-            "properties": [
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "fill": "dash"
-                }
-              },
-              {
-                "id": "custom.lineWidth",
-                "value": 2
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "C"
-            },
-            "properties": [
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "fill": "dash"
-                }
-              },
-              {
-                "id": "custom.lineWidth",
-                "value": 2
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "orange",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 38
-      },
-      "id": 26,
-      "maxDataPoints": 300,
-      "options": {
-        "legend": {
-          "asTable": true,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "pluginVersion": "11.4.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "sum(max_over_time(container_memory_mapped_file{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container!=\"\", container=~\"$container\", image!=\"\"}[$__rate_interval])) by (container, name)",
-          "instant": false,
-          "legendFormat": "{{container}}, name={{name}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Memory Usage (Mapped file)",
-      "transformations": [
-        {
-          "id": "renameByRegex",
-          "options": {
-            "regex": "(.*), name=(.{8})(.*)",
-            "renamePattern": "$1, $2"
-          }
-        }
-      ],
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "bytes"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "B"
-            },
-            "properties": [
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "fill": "dash"
-                }
-              },
-              {
-                "id": "custom.lineWidth",
-                "value": 2
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "C"
-            },
-            "properties": [
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "fill": "dash"
-                }
-              },
-              {
-                "id": "custom.lineWidth",
-                "value": 2
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "orange",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 46
+        "y": 58
       },
       "id": 22,
       "maxDataPoints": 300,
@@ -1843,7 +2140,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(max_over_time(container_memory_rss{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container!=\"\", container=~\"$container\", image!=\"\"}[$__rate_interval])) by (container, name)",
+          "expr": "sum by (container, name) (max_over_time(container_memory_rss{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container!=\"\", container=~\"$container\", image!=\"\"}[$__rate_interval]))",
           "instant": false,
           "legendFormat": "{{container}}, name={{name}}",
           "range": true,
@@ -1855,7 +2152,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(\r\n    kube_pod_container_resource_requests{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container!=\"\", container=~\"$container\"}\r\n) by (container)\r\n",
+          "expr": "sum by (container) (kube_pod_container_resource_requests{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container!=\"\", container=~\"$container\"})",
           "hide": false,
           "instant": false,
           "legendFormat": "requests: {{container}}",
@@ -1868,7 +2165,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(\r\n    kube_pod_container_resource_limits{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container!=\"\", container=~\"$container\"}\r\n) by (container)\r\n",
+          "expr": "sum by (container) (kube_pod_container_resource_limits{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container!=\"\", container=~\"$container\"})",
           "hide": false,
           "instant": false,
           "legendFormat": "limits: {{container}}",
@@ -1939,19 +2236,75 @@
               {
                 "color": "green",
                 "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "B"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "C"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
               }
             ]
           }
-        },
-        "overrides": []
+        ]
       },
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 46
+        "y": 58
       },
-      "id": 21,
+      "id": 26,
       "maxDataPoints": 300,
       "options": {
         "legend": {
@@ -1976,14 +2329,23 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(max_over_time(kube_pod_container_status_restarts_total{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__rate_interval])) by (container)",
+          "expr": "sum(max_over_time(container_memory_mapped_file{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container!=\"\", container=~\"$container\", image!=\"\"}[$__rate_interval])) by (container, name)",
           "instant": false,
-          "legendFormat": "{{container}}",
+          "legendFormat": "{{container}}, name={{name}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Container restarts",
+      "title": "Memory Usage (Mapped file)",
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "(.*), name=(.{8})(.*)",
+            "renamePattern": "$1, $2"
+          }
+        }
+      ],
       "type": "timeseries"
     },
     {
@@ -1992,96 +2354,12 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 54
+        "y": 66
       },
       "id": 19,
       "panels": [],
       "title": "Network (shared between containers)",
       "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "fillOpacity": 70,
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineWidth": 0,
-            "spanNulls": false
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 0
-              },
-              {
-                "color": "green",
-                "value": 1
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 24,
-        "x": 0,
-        "y": 55
-      },
-      "id": 6,
-      "maxDataPoints": 500,
-      "options": {
-        "alignValue": "center",
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false
-        },
-        "mergeValues": true,
-        "rowHeight": 0.9,
-        "showValue": "never",
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "11.4.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "sum(min_over_time(kube_pod_container_status_ready{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])) by (container)",
-          "instant": false,
-          "legendFormat": "__auto",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Status ready",
-      "type": "state-timeline"
     },
     {
       "datasource": {
@@ -2149,7 +2427,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 62
+        "y": 67
       },
       "id": 28,
       "maxDataPoints": 200,
@@ -2252,7 +2530,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 62
+        "y": 67
       },
       "id": 7,
       "maxDataPoints": 200,
@@ -2338,8 +2616,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -2355,7 +2632,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 69
+        "y": 74
       },
       "id": 10,
       "maxDataPoints": 200,
@@ -2441,8 +2718,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -2458,7 +2734,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 69
+        "y": 74
       },
       "id": 11,
       "maxDataPoints": 200,
@@ -2501,7 +2777,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 76
+        "y": 81
       },
       "id": 17,
       "panels": [],
@@ -2527,8 +2803,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -2557,7 +2832,7 @@
         "h": 7,
         "w": 17,
         "x": 1,
-        "y": 77
+        "y": 82
       },
       "id": 16,
       "options": {
@@ -2731,7 +3006,7 @@
         "h": 7,
         "w": 4,
         "x": 18,
-        "y": 77
+        "y": 82
       },
       "id": 24,
       "options": {
@@ -2796,8 +3071,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -2813,7 +3087,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 84
+        "y": 89
       },
       "id": 13,
       "maxDataPoints": 200,
@@ -2961,6 +3235,30 @@
         "refresh": 2,
         "sort": 1,
         "type": "query"
+      },
+      {
+        "current": {
+          "text": "m1.k8s.lan",
+          "value": "m1.k8s.lan"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "label_values(container_cpu_usage_seconds_total:with_pod_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\"},node)",
+        "hide": 2,
+        "includeAll": false,
+        "label": "Node name",
+        "name": "node_name",
+        "options": [],
+        "query": {
+          "qryType": 1,
+          "query": "label_values(container_cpu_usage_seconds_total:with_pod_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\"},node)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "type": "query"
       }
     ]
   },
@@ -2972,6 +3270,6 @@
   "timezone": "browser",
   "title": "Kubernetes / Pod (Containers)",
   "uid": "mo6wf2ukdv3l72howqnq",
-  "version": 10,
+  "version": 12,
   "weekStart": ""
 }
