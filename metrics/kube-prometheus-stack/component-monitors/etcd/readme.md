@@ -67,6 +67,7 @@ sed -i 's/^  \"refresh\": \".*s\",/  \"refresh\": \"auto\",/' ./metrics/kube-pro
 ```bash
 kl apply -f ./metrics/kube-prometheus-stack/component-monitors/etcd/rules.yaml
 kl apply -f ./metrics/kube-prometheus-stack/component-monitors/etcd/alerts.yaml
+
 kl apply -k ./metrics/kube-prometheus-stack/component-monitors/etcd/dashboards/
 ```
 

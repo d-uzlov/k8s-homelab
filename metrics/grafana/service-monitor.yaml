@@ -1,0 +1,42 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kps-grafana
+  namespace: kps-grafana
+  labels:
+    app.kubernetes.io/name: grafana
+spec:
+  endpoints:
+  - port: http-web
+    honorLabels: true
+    path: /metrics
+    scheme: http
+    relabelings:
+    - action: replace
+      regex: ^(.*)$
+      replacement: $1
+      separator: ;
+      sourceLabels:
+      - __meta_kubernetes_pod_node_name
+      targetLabel: nodename
+    metricRelabelings:
+    - action: keep
+      regex: "\
+        grafana_alerting_alerts|\
+        grafana_alerting_alerts_invalid_total|\
+        grafana_alerting_alerts_received_total|\
+        grafana_http_request_duration_.*|\
+        grafana_build_info|\
+        grafana_datasource_.*|\
+        grafana_stat_.*|\
+        "
+      sourceLabels:
+      - __name__
+  jobLabel: "kps"
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+  namespaceSelector:
+    matchNames:
+    - kps-grafana

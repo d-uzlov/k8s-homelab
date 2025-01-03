@@ -2,10 +2,10 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: kps-grafana
+namespace: grafana
 
 resources:
-- grafana.yaml
+- httproute.yaml
 - ../../../ingress/manual-certificates/domain-info/
 
 replacements:
@@ -15,20 +15,10 @@ replacements:
     fieldPath: data.domain_suffix
   targets:
   - select:
-      kind: Ingress
+      kind: HTTPRoute
       name: grafana
     options:
       delimiter: .
       index: 1
     fieldPaths:
-    - spec.rules.0.host
-- source:
-    kind: ConfigMap
-    name: main-domain-info
-    fieldPath: data.secret_name
-  targets:
-  - select:
-      kind: Ingress
-      name: grafana
-    fieldPaths:
-    - spec.tls.0.secretName
+    - spec.hostnames.0

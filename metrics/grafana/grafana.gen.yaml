@@ -1,33 +1,20 @@
 ---
 apiVersion: v1
 kind: ServiceAccount
-automountServiceAccountToken: true
+automountServiceAccountToken: false
 metadata:
   labels:
     app.kubernetes.io/name: grafana
-  name: kps-grafana
-  namespace: kps-grafana
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: kps-grafana
-  namespace: kps-grafana
-  labels:
-    app.kubernetes.io/name: grafana
-type: Opaque
-data:
-  admin-user: "YWRtaW4="
-  admin-password: "QVVUT1JFUExBQ0VfQURNSU5fUEFTU1dPUkQ="
-  ldap-toml: ""
+  name: grafana
+  namespace: grafana
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   labels:
     app.kubernetes.io/name: grafana
-  name: kps-grafana-config-dashboards
-  namespace: kps-grafana
+  name: grafana-config-dashboards
+  namespace: grafana
 data:
   provider.yaml: |-
     apiVersion: 1
@@ -47,8 +34,8 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: kps-grafana
-  namespace: kps-grafana
+  name: grafana
+  namespace: grafana
   labels:
     app.kubernetes.io/name: grafana
 data:
@@ -67,99 +54,45 @@ data:
     [server]
     domain = ''
 ---
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: kps-grafana-datasource
-  namespace: kps-grafana
-  labels:
-    grafana_datasource: "1"
-    app: kps-grafana
-    release: "kps"
-data:
-  datasource.yaml: |-
-    apiVersion: 1
-    datasources:
-    - name: "Prometheus"
-      type: prometheus
-      uid: prometheus
-      url: http://kps-prometheus.kps:9090/
-      access: proxy
-      isDefault: true
-      jsonData:
-        httpMethod: POST
-        timeInterval: 10s
-    - name: "Alertmanager"
-      type: alertmanager
-      uid: alertmanager
-      url: http://kps-alertmanager.kps:9093/
-      access: proxy
-      jsonData:
-        handleGrafanaManagedAlerts: false
-        implementation: prometheus
----
-kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
 metadata:
+  name: grafana
+  namespace: grafana
   labels:
     app.kubernetes.io/name: grafana
-  name: kps-grafana-clusterrole
 rules:
   - apiGroups: [""] # "" indicates the core API group
     resources: ["configmaps", "secrets"]
     verbs: ["get", "watch", "list"]
 ---
-kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: kps-grafana-clusterrolebinding
-  labels:
-    app.kubernetes.io/name: grafana
-subjects:
-  - kind: ServiceAccount
-    name: kps-grafana
-    namespace: kps-grafana
-roleRef:
-  kind: ClusterRole
-  name: kps-grafana-clusterrole
-  apiGroup: rbac.authorization.k8s.io
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: kps-grafana
-  namespace: kps-grafana
-  labels:
-    app.kubernetes.io/name: grafana
-rules: []
----
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: kps-grafana
-  namespace: kps-grafana
+  name: grafana
+  namespace: grafana
   labels:
     app.kubernetes.io/name: grafana
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: kps-grafana
+  name: grafana
 subjects:
 - kind: ServiceAccount
-  name: kps-grafana
-  namespace: kps-grafana
+  name: grafana
+  namespace: grafana
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: kps-grafana
-  namespace: kps-grafana
+  name: grafana
+  namespace: grafana
   labels:
     app.kubernetes.io/name: grafana
 spec:
   type: ClusterIP
   ports:
-    - name: http-web
+    - name: service
       port: 80
       protocol: TCP
       targetPort: 3000
@@ -169,8 +102,8 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: kps-grafana
-  namespace: kps-grafana
+  name: grafana
+  namespace: grafana
   labels:
     app.kubernetes.io/name: grafana
 spec:
@@ -188,10 +121,9 @@ spec:
       annotations:
         checksum/config: 0e9cbd0ea8e24e32f7dfca5bab17a2ba05652642f0a09a4882833ae88e4cc4a3
         checksum/sc-dashboard-provider-config: e70bf6a851099d385178a76de9757bb0bef8299da6d8443602590e44f05fdf24
-        checksum/secret: 8103bb00d4f64fecd61db6df43c2ed252c69cd92a5216ba8bfb069e35e1e5adf
         kubectl.kubernetes.io/default-container: grafana
     spec:
-      serviceAccountName: kps-grafana
+      serviceAccountName: grafana
       automountServiceAccountToken: true
       securityContext:
         fsGroup: 472
@@ -207,25 +139,25 @@ spec:
             - name: METHOD
               value: WATCH
             - name: LABEL
-              value: "grafana_dashboard"
+              value: "grafana.com/dashboard"
             - name: LABEL_VALUE
-              value: "1"
+              value: "main"
             - name: FOLDER
               value: "/tmp/dashboards"
             - name: RESOURCE
-              value: "both"
-            - name: NAMESPACE
-              value: "ALL"
+              value: "configmap"
+            - name: UNIQUE_FILENAMES
+              value: "true"
             - name: REQ_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: kps-grafana
-                  key: admin-user
+                  name: grafana-admin
+                  key: username
             - name: REQ_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: kps-grafana
-                  key: admin-password
+                  name: grafana-admin
+                  key: password
             - name: REQ_URL
               value: http://localhost:3000/api/admin/provisioning/dashboards/reload
             - name: REQ_METHOD
@@ -247,23 +179,25 @@ spec:
             - name: METHOD
               value: WATCH
             - name: LABEL
-              value: "grafana_datasource"
+              value: "grafana.com/datasource"
             - name: LABEL_VALUE
-              value: "1"
+              value: "main"
             - name: FOLDER
               value: "/etc/grafana/provisioning/datasources"
             - name: RESOURCE
-              value: "both"
+              value: "configmap"
+            - name: UNIQUE_FILENAMES
+              value: "true"
             - name: REQ_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: kps-grafana
-                  key: admin-user
+                  name: grafana-admin
+                  key: username
             - name: REQ_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: kps-grafana
-                  key: admin-password
+                  name: grafana-admin
+                  key: password
             - name: REQ_URL
               value: http://localhost:3000/api/admin/provisioning/datasources/reload
             - name: REQ_METHOD
@@ -322,13 +256,13 @@ spec:
             - name: GF_SECURITY_ADMIN_USER
               valueFrom:
                 secretKeyRef:
-                  name: kps-grafana
-                  key: admin-user
+                  name: grafana-admin
+                  key: username
             - name: GF_SECURITY_ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: kps-grafana
-                  key: admin-password
+                  name: grafana-admin
+                  key: password
             - name: GF_PATHS_DATA
               value: /var/lib/grafana/
             - name: GF_PATHS_LOGS
@@ -351,7 +285,7 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: kps-grafana
+            name: grafana
         - name: storage
           emptyDir: {}
         - name: sc-dashboard-volume
@@ -359,97 +293,7 @@ spec:
             {}
         - name: sc-dashboard-provider
           configMap:
-            name: kps-grafana-config-dashboards
+            name: grafana-config-dashboards
         - name: sc-datasources-volume
           emptyDir:
             {}
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: kps-grafana
-  namespace: kps-grafana
-  labels:
-    app.kubernetes.io/name: grafana
-spec:
-  endpoints:
-  - port: http-web
-    honorLabels: true
-    path: /metrics
-    scheme: http
-    relabelings:
-      - action: replace
-        regex: ^(.*)$
-        replacement: $1
-        separator: ;
-        sourceLabels:
-        - __meta_kubernetes_pod_node_name
-        targetLabel: nodename
-    metricRelabelings:
-      - action: keep
-        regex: grafana_alerting_alerts|grafana_alerting_alerts_invalid_total|grafana_alerting_alerts_received_total|grafana_http_request_duration_.*|grafana_build_info|grafana_datasource_.*|grafana_stat_.*|
-        sourceLabels:
-        - __name__
-  jobLabel: "kps"
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: grafana
-  namespaceSelector:
-    matchNames:
-      - kps-grafana
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  labels:
-    app.kubernetes.io/name: grafana
-  name: kps-grafana-test
-  namespace: kps-grafana
-  annotations:
-    "helm.sh/hook": test
-    "helm.sh/hook-delete-policy": "before-hook-creation,hook-succeeded"
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: kps-grafana-test
-  namespace: kps-grafana
-  annotations:
-    "helm.sh/hook": test
-    "helm.sh/hook-delete-policy": "before-hook-creation,hook-succeeded"
-  labels:
-    app.kubernetes.io/name: grafana
-data:
-  run.sh: |-
-    @test "Test Health" {
-      url="http://kps-grafana/api/health"
-      code=$(wget --server-response --spider --timeout 90 --tries 10 ${url} 2>&1 | awk '/^  HTTP/{print $2}')
-      [ "$code" == "200" ]
-    }
----
-apiVersion: v1
-kind: Pod
-metadata:
-  name: kps-grafana-test
-  labels:
-    app.kubernetes.io/name: grafana
-  annotations:
-    "helm.sh/hook": test
-    "helm.sh/hook-delete-policy": "before-hook-creation,hook-succeeded"
-  namespace: kps-grafana
-spec:
-  serviceAccountName: kps-grafana-test
-  containers:
-    - name: kps-test
-      image: "docker.io/bats/bats:v1.4.1"
-      imagePullPolicy: "IfNotPresent"
-      command: ["/opt/bats/bin/bats", "-t", "/tests/run.sh"]
-      volumeMounts:
-        - mountPath: /tests
-          name: tests
-          readOnly: true
-  volumes:
-    - name: tests
-      configMap:
-        name: kps-grafana-test
-  restartPolicy: Never

@@ -50,19 +50,6 @@ function generateDeployment() {
     | remove_helm_junk
 }
 
-generateDeployment grafana.enabled=true             > ./metrics/kube-prometheus-stack/grafana/grafana.gen.yaml
-mkdir -p ./metrics/kube-prometheus-stack/grafana/env/
-cat <<EOF > ./metrics/kube-prometheus-stack/grafana/env/password-patch.yaml
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: kps-grafana
-  namespace: kps-grafana
-type: Opaque
-stringData:
-  admin-password: $(LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 20)
-EOF
 generateDeployment grafana.defaultDashboardsEnabled=true \
                    grafana.forceDeployDashboards=true \
                                                     > ./metrics/kube-prometheus-stack/grafana/grafana-default-dashboards.gen.yaml
@@ -121,10 +108,8 @@ EOF
 ```bash
 kl apply -f ./metrics/kube-prometheus-stack/crd/ --server-side
 
-kl create ns kps-grafana
-kl label ns kps-grafana pod-security.kubernetes.io/enforce=baseline
+# deploys default grafana dashboards from kps
 kl apply -k ./metrics/kube-prometheus-stack/grafana/
-kl -n kps-grafana get pod -o wide
 
 kl create ns kps
 kl label ns kps pod-security.kubernetes.io/enforce=baseline
@@ -148,13 +133,8 @@ kl get probe -A
 kl label ns --overwrite kps copy-wild-cert=main
 kl apply -k ./metrics/kube-prometheus-stack/prometheus-ingress-wildcard/
 kl -n kps get ingress
-kl apply -k ./metrics/kube-prometheus-stack/grafana-ingress-wildcard/
-kl -n kps-grafana get ingress
 
 # private gateway
-kl apply -k ./metrics/kube-prometheus-stack/grafana-httproute/
-kl -n kps-grafana get httproute grafana
-kl -n kps-grafana describe httproute grafana
 kl apply -k ./metrics/kube-prometheus-stack/prometheus-httproute/
 kl -n kps get httproute prometheus
 kl -n kps describe httproute prometheus
