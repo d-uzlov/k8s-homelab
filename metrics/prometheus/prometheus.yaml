@@ -1,0 +1,86 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  labels:
+    app: prometheus
+    self-monitor: enable
+spec:
+  selector:
+    # prometheus operator creates pods with app.kubernetes.io/name label
+    app.kubernetes.io/name: prometheus
+  ports:
+  - name: http-web
+    port: 9090
+    targetPort: 9090
+  - name: reloader-web
+    appProtocol: http
+    port: 8080
+    targetPort: reloader-web
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: main
+  labels:
+    app: prometheus
+spec:
+  version: v3.1.0
+  paused: false
+  replicas: 1
+  shards: 1
+  logLevel:  debug
+  logFormat:  logfmt
+  listenLocal: false
+  enableAdminAPI: true
+  scrapeInterval: 10s
+  evaluationInterval: 10s
+  retention: 10y
+  tsdb:
+    outOfOrderTimeWindow: 0s
+  routePrefix: "/"
+  securityContext:
+    fsGroup: 2000
+    runAsGroup: 2000
+    runAsNonRoot: true
+    runAsUser: 1000
+  serviceAccountName: prometheus
+  serviceMonitorSelector:
+    matchLabels:
+      instance: main
+  serviceMonitorNamespaceSelector: {}
+  podMonitorSelector:
+    matchLabels:
+      instance: main
+  podMonitorNamespaceSelector: {}
+  probeSelector:
+    matchLabels:
+      instance: main
+  probeNamespaceSelector: {}
+  ruleSelector:
+    matchLabels:
+      instance: main
+  ruleNamespaceSelector: {}
+  scrapeConfigSelector:
+    matchLabels:
+      instance: main
+  scrapeConfigNamespaceSelector: {}
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          topologyKey: kubernetes.io/hostname
+          labelSelector:
+            matchExpressions:
+            # prometheus operator creates pods with app.kubernetes.io/name label
+            - {key: app.kubernetes.io/name, operator: In, values: [prometheus]}
+  portName: http-web
+  volumes:
+    - emptyDir: {}
+      name: tmp
+  volumeMounts:
+    - mountPath: /tmp
+      name: tmp
+  hostNetwork: false
