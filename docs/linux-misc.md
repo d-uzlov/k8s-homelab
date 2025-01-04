@@ -1,4 +1,10 @@
 
+# Flush dns cache
+
+```bash
+sudo resolvectl flush-caches
+```
+
 # Edit $PATH for sudo
 
 ```bash
