@@ -63,9 +63,7 @@ generateDeployment kubeApiServer.enabled=true \
 generateDeployment defaultRules.create=true \
                    namespaceOverride=kps-default-rules \
                                                     > ./metrics/kube-prometheus-stack/prometheus-default-rules/rules.gen.yaml
-generateDeployment alertmanager.enabled=true        > ./metrics/kube-prometheus-stack/prometheus/alertmanager.gen.yaml
 
-  # | sed -e 's/"interval":"1m"/"interval":"10s"/g'  \
 ```
 
 References:
@@ -168,94 +166,6 @@ curl -k -H "Authorization: Bearer $bearer" https://$nodeIp:10259/metrics
 kl -n kps-grafana describe svc kps-grafana
 grafanaIp=
 kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" http://$grafanaIp:3000/metrics
-
-kl -n kps describe svc alertmanager-operated
-alertManagerIp=
-kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" http://$alertManagerIp:9093/metrics
-kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" http://$alertManagerIp:8080/metrics
-```
-
-# Alertmanager setup
-
-References:
-- Obtain telegram bot token and chat ID: https://gist.github.com/nafiesl/4ad622f344cd1dc3bb1ecbe468ff9f8a
-
-```bash
-# first send a message to bot, to create a private chat with the bot
-botToken=
-curl https://api.telegram.org/bot$botToken/getUpdates
-# look for chat id in the output
-
-mkdir -p ./metrics/kube-prometheus-stack/prometheus/env/telegram/
-cat << EOF > ./metrics/kube-prometheus-stack/prometheus/env/telegram/telegram-secret.yaml
----
-apiVersion: v1
-kind: Secret
-metadata:
-  namespace: kps
-  name: telegram-bot-token
-type: Opaque
-stringData:
-  token: 1234567890:qwertyuiopasdfghj_klzxcvbnmqwertyui
-EOF
-
-cat << EOF > ./metrics/kube-prometheus-stack/prometheus/env/telegram/alert-manager-telegram.yaml
----
-apiVersion: monitoring.coreos.com/v1alpha1
-kind: AlertmanagerConfig
-metadata:
-  namespace: kps
-  name: telegram
-  labels:
-    alert: main
-spec:
-  route:
-    # groupBy: [ 'job' ]
-    groupBy: [ 'alertname' ]
-    # groupBy: [ '...' ] # '...' disables grouping
-    groupWait: 30s
-    groupInterval: 5m
-    repeatInterval: 12h
-    receiver: telegram
-    matchers:
-    - name: severity
-      value: none
-      matchType: '!='
-  receivers:
-  - name: telegram
-    telegramConfigs:
-    - apiURL: https://api.telegram.org
-      botToken:
-        name: telegram-bot-token
-        key: token
-      chatID: 123456789
-      message: |
-        {{ if gt (len .Alerts.Firing) 0 }}
-        📢 {{ (index .Alerts.Firing 0).Labels.alertname}}
-        {{ range .Alerts.Firing }}
-        🚨 {{ .Annotations.description }}
-        {{ end }}
-        {{ end }}
-        {{ if gt (len .Alerts.Resolved) 0 }}
-        🍀 {{ (index .Alerts.Resolved 0).Labels.alertname}}
-        {{ range .Alerts.Resolved }}
-        ✔️ Solved: {{ .Annotations.description }}
-        {{ end }}
-        {{ end }}
-  # inhibitRules:
-  # - sourceMatch:
-  #   - name: severity
-  #     value: critical
-  #     matchType: '!='
-  #   targetMatch:
-  #   - name: severity
-  #     value: warning
-  #     matchType: '='
-  #   equal: [ 'alertname', 'dev', 'instance' ]
-EOF
-
-kl apply -k ./metrics/kube-prometheus-stack/prometheus/env/telegram/
-kl -n kps describe AlertmanagerConfig telegram
 ```
 
 # TODO

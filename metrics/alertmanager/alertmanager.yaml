@@ -1,0 +1,74 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: alertmanager
+  namespace: kps
+automountServiceAccountToken: true
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: alertmanager
+  namespace: kps
+data:
+  alertmanager.yaml: "Z2xvYmFsOgogIHJlc29sdmVfdGltZW91dDogNW0KaW5oaWJpdF9ydWxlczoKLSBlcXVhbDoKICAtIG5hbWVzcGFjZQogIC0gYWxlcnRuYW1lCiAgc291cmNlX21hdGNoZXJzOgogIC0gc2V2ZXJpdHkgPSBjcml0aWNhbAogIHRhcmdldF9tYXRjaGVyczoKICAtIHNldmVyaXR5ID1+IHdhcm5pbmd8aW5mbwotIGVxdWFsOgogIC0gbmFtZXNwYWNlCiAgLSBhbGVydG5hbWUKICBzb3VyY2VfbWF0Y2hlcnM6CiAgLSBzZXZlcml0eSA9IHdhcm5pbmcKICB0YXJnZXRfbWF0Y2hlcnM6CiAgLSBzZXZlcml0eSA9IGluZm8KLSBlcXVhbDoKICAtIG5hbWVzcGFjZQogIHNvdXJjZV9tYXRjaGVyczoKICAtIGFsZXJ0bmFtZSA9IEluZm9JbmhpYml0b3IKICB0YXJnZXRfbWF0Y2hlcnM6CiAgLSBzZXZlcml0eSA9IGluZm8KLSB0YXJnZXRfbWF0Y2hlcnM6CiAgLSBhbGVydG5hbWUgPSBJbmZvSW5oaWJpdG9yCnJlY2VpdmVyczoKLSBuYW1lOiAibnVsbCIKcm91dGU6CiAgZ3JvdXBfYnk6CiAgLSBuYW1lc3BhY2UKICBncm91cF9pbnRlcnZhbDogNW0KICBncm91cF93YWl0OiAzMHMKICByZWNlaXZlcjogIm51bGwiCiAgcmVwZWF0X2ludGVydmFsOiAxMmgKICByb3V0ZXM6CiAgLSBtYXRjaGVyczoKICAgIC0gYWxlcnRuYW1lID0gIldhdGNoZG9nIgogICAgcmVjZWl2ZXI6ICJudWxsIgp0ZW1wbGF0ZXM6Ci0gL2V0Yy9hbGVydG1hbmFnZXIvY29uZmlnLyoudG1wbA=="
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager
+  namespace: kps
+  labels:
+    app: alertmanager
+    self-monitor: enabled
+spec:
+  selector:
+    # prometheus operator creates pods with app.kubernetes.io/name label
+    app.kubernetes.io/name: alertmanager
+  ports:
+  - name: http-web
+    port: 9093
+    targetPort: 9093
+    protocol: TCP
+  - name: reloader-web
+    appProtocol: http
+    port: 8080
+    targetPort: reloader-web
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Alertmanager
+metadata:
+  name: main
+  namespace: kps
+  labels:
+    app: alertmanager
+spec:
+  version: v0.27.0
+  replicas: 1
+  serviceAccountName: alertmanager
+  automountServiceAccountToken: true
+  # externalUrl: http://kps-alertmanager.kps:9093
+  paused: false
+  logFormat: logfmt
+  logLevel: debug
+  retention: 120h
+  alertmanagerConfigSelector:
+    matchLabels:
+      alert: main
+  alertmanagerConfigNamespaceSelector: {}
+  alertmanagerConfigMatcherStrategy:
+    # None: rules of an AlertmanagerConfig apply to all namespaces
+    # OnNamespace: rules of an AlertmanagerConfig apply to alerts with {namespace="AlertmanagerConfig_namespace"}
+    type: None
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          topologyKey: kubernetes.io/hostname
+          labelSelector:
+            matchExpressions:
+            # prometheus operator creates pods with app.kubernetes.io/name label
+            - { key: app.kubernetes.io/name, operator: In, values: [ alertmanager ] }
+  portName: http-web
