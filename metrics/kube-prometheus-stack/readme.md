@@ -60,10 +60,6 @@ generateDeployment kubeApiServer.enabled=true \
                    coreDns.enabled=false \
                    kubeScheduler.enabled=true       > ./metrics/kube-prometheus-stack/service-monitors.gen.yaml
 
-generateDeployment defaultRules.create=true \
-                   namespaceOverride=kps-default-rules \
-                                                    > ./metrics/kube-prometheus-stack/prometheus-default-rules/rules.gen.yaml
-
 ```
 
 References:
@@ -78,7 +74,6 @@ kl apply -k ./metrics/kube-prometheus-stack/grafana/
 kl create ns kps-default-rules
 kl label ns kps-default-rules pod-security.kubernetes.io/enforce=baseline
 kl apply -f ./metrics/kube-prometheus-stack/service-monitors.gen.yaml
-kl apply -k ./metrics/kube-prometheus-stack/prometheus-default-rules/
 kl -n kps-default-rules get prometheusrule
 
 ```
@@ -92,7 +87,6 @@ Don't forget to deploy additional dashboards:
 
 ```bash
 kl delete -k ./metrics/kube-prometheus-stack/grafana/
-kl delete -k ./metrics/kube-prometheus-stack/prometheus-default-rules/
 kl delete ns kps-default-rules
 kl delete ns kps-grafana
 ```
