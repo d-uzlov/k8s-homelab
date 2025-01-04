@@ -2,17 +2,19 @@
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: etcd-recording-disk-quantile
+  name: etcd-recording
   namespace: kps-default-rules
   labels:
     release: kps
 spec:
   groups:
-  - name: etcd-recording
+  - name: etcd-disk-quantile
+    # scrape_interval == rule_evaluation_interval == 10s, therefore irate does not loose any samples
+    # `irate[1m]` is much more precise than `rate[25s]`
     rules:
-    - record: recording:quantile_099:etcd_disk_backend_commit_duration_seconds
+    - record: etcd_disk_backend_commit_duration_seconds:quantile_099_irate
       expr: |-
-        histogram_quantile(0.99, rate(etcd_disk_backend_commit_duration_seconds_bucket[20s]))
-    - record: recording:quantile_099:etcd_disk_wal_fsync_duration_seconds
+        histogram_quantile(0.99, irate(etcd_disk_backend_commit_duration_seconds_bucket[1m]))
+    - record: etcd_disk_wal_fsync_duration_seconds:quantile_099_irate
       expr: |-
-        histogram_quantile(0.99, rate(etcd_disk_wal_fsync_duration_seconds_bucket[20s]))
+        histogram_quantile(0.99, irate(etcd_disk_wal_fsync_duration_seconds_bucket[1m]))

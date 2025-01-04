@@ -2,36 +2,39 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: kps-etcd
-  labels:
-    jobLabel: etcd-built-in
+  name: kube-etcd
   namespace: kube-system
+  labels:
+    app: kube-etcd
+    cluster: kube
+    prometheus.io/job: etcd
 spec:
   type: ClusterIP
   clusterIP: None
+  selector:
+    component: etcd
   ports:
   - name: http-metrics
     port: 2379
     protocol: TCP
     targetPort: 2379
-  selector:
-    component: etcd
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: kps-kube-etcd
+  name: kube-etcd
   labels:
-    release: kps
+    instance: main
 spec:
-  jobLabel: jobLabel
+  jobLabel: prometheus.io/job
   selector:
     matchLabels:
-      app: kps-kube-etcd
-      release: kps
+      app: kube-etcd
   namespaceSelector:
     matchNames:
     - kube-system
+  targetLabels:
+  - cluster
   endpoints:
   - port: http-metrics
     bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
@@ -51,9 +54,22 @@ spec:
         name: built-in-etcd-cert
         key: client.key
     metricRelabelings:
-    - action: drop
-      sourceLabels: [ __name__ ]
-      regex: ^etcd_debugging_.*
+    - action: keep
+      regex: "\
+        etcd_disk_backend_commit_duration_seconds_.*|\
+        etcd_disk_wal_fsync_duration_seconds_.*|\
+        etcd_mvcc_db_.*|\
+        etcd_network_peer_sent_failures_total|\
+        etcd_server_has_leader|\
+        etcd_server_heartbeat_send_failures_total|\
+        etcd_server_is_leader|\
+        etcd_server_leader_changes_seen_total|\
+        etcd_server_proposals_.*|\
+        etcd_server_quota_backend_bytes|\
+        etcd_server_slow_apply_total|\
+        etcd_server_version|\
+        process_resident_memory_bytes|\
+        "
     relabelings:
     - targetLabel: nodename
       action: replace

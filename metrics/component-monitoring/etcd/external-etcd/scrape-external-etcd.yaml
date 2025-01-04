@@ -3,30 +3,28 @@ apiVersion: monitoring.coreos.com/v1alpha1
 kind: ScrapeConfig
 metadata:
   name: external-etcd
-  namespace: kps
   labels:
-    release: kps
+    instance: main
 spec:
   scheme: HTTPS
   tlsConfig:
     insecureSkipVerify: false
     ca:
       secret:
-        name: etcd-client-cert
+        name: external-etcd-client-cert
         key: ca.crt
     cert:
       secret:
-        name: etcd-client-cert
+        name: external-etcd-client-cert
         key: client.crt
     keySecret:
-      name: etcd-client-cert
+      name: external-etcd-client-cert
       key: client.key
   metricRelabelings:
   # - action: drop
   #   sourceLabels: [ __name__ ]
   #   regex: ^etcd_debugging_.*
   - action: keep
-    # relabelings here affect both alertmanager and config-reloader containers
     regex: "\
       etcd_disk_backend_commit_duration_seconds_.*|\
       etcd_disk_wal_fsync_duration_seconds_.*|\
@@ -44,9 +42,3 @@ spec:
       "
     sourceLabels:
     - __name__
-  staticConfigs:
-  - labels:
-      job: external-etcd
-    # ** !! these comments should be the last lines of the template file !! **
-    # targets are expected to be filled in ./env/scrape-external-etcd.yaml
-    # targets:
