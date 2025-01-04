@@ -75,7 +75,8 @@ kl -n prometheus exec sts/prometheus-main -- df -h | grep /prometheus\$
 ```
 
 To use this prometheus instance with `ServiceMonitor` and other resources,
-add `instance: main` label to them.
+add `prometheus.io/instance: main` label to them.
+Prometheus monitors all namespaces for these objects.
 
 # Cleanup
 

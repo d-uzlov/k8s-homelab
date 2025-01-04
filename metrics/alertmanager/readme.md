@@ -26,6 +26,8 @@ kl -n alertmanager describe httproute alertmanager
 
 ```
 
+To use alertmanager, create an `AlertmanagerConfig` object with `alertmanager.prometheus.io/instance: main` label.
+
 # Cleanup
 
 ```bash

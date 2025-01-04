@@ -34,7 +34,7 @@ metadata:
   name: telegram
   namespace: alertmanager
   labels:
-    alert: main
+    alertmanager.prometheus.io/instance: main
 spec:
   route:
     # groupBy: [ 'job' ]

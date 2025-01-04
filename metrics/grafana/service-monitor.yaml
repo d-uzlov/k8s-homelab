@@ -2,24 +2,22 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: kps-grafana
-  namespace: kps-grafana
+  name: grafana
   labels:
-    app.kubernetes.io/name: grafana
+    prometheus.io/instance: main
 spec:
+  jobLabel: app.kubernetes.io/name
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+  namespaceSelector:
+    matchNames:
+    - grafana
   endpoints:
   - port: http-web
     honorLabels: true
     path: /metrics
     scheme: http
-    relabelings:
-    - action: replace
-      regex: ^(.*)$
-      replacement: $1
-      separator: ;
-      sourceLabels:
-      - __meta_kubernetes_pod_node_name
-      targetLabel: nodename
     metricRelabelings:
     - action: keep
       regex: "\
@@ -33,10 +31,3 @@ spec:
         "
       sourceLabels:
       - __name__
-  jobLabel: "kps"
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: grafana
-  namespaceSelector:
-    matchNames:
-    - kps-grafana
