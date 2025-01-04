@@ -9,9 +9,9 @@ Data in proxmox updates every 20 seconds.
 # Local environment
 
 ```bash
-mkdir -p mkdir -p ./metrics/kube-prometheus-stack/component-monitors/proxmox/env/
+mkdir -p mkdir -p ./metrics/component-monitoring/proxmox/env/
 # create this file, create PVE APT token and fill the values
-cat << EOF > ./metrics/kube-prometheus-stack/component-monitors/proxmox/env/pve.yml
+cat << EOF > ./metrics/component-monitoring/proxmox/env/pve.yml
 default:
   # copy from "User name" field
   user: user-name@login-realm
@@ -27,10 +27,10 @@ EOF
 
 # init scrape config using your local environment info
 cp \
-  ./metrics/kube-prometheus-stack/component-monitors/proxmox/scrape-node-template.yaml \
-  ./metrics/kube-prometheus-stack/component-monitors/proxmox/env/scrape-node.yaml
+  ./metrics/component-monitoring/proxmox/scrape-node-template.yaml \
+  ./metrics/component-monitoring/proxmox/env/scrape-node.yaml
 # adjust addresses for your environment
-cat << EOF >> ./metrics/kube-prometheus-stack/component-monitors/proxmox/env/scrape-node.yaml
+cat << EOF >> ./metrics/component-monitoring/proxmox/env/scrape-node.yaml
     targets:
     - pve1.k8s.lan
     - pve2.k8s.lan
@@ -41,17 +41,17 @@ cluster_name=main
 sed \
   -e "s/AUTOMATIC_REPLACE_TARGET/$cluster_endpoint/g" \
   -e "s/AUTOMATIC_REPLACE_CLUSTER_NAME/$cluster_name/g" \
-  ./metrics/kube-prometheus-stack/component-monitors/proxmox/scrape-cluster-template.yaml \
-  > ./metrics/kube-prometheus-stack/component-monitors/proxmox/env/scrape-cluster.yaml
+  ./metrics/component-monitoring/proxmox/scrape-cluster-template.yaml \
+  > ./metrics/component-monitoring/proxmox/env/scrape-cluster.yaml
 ```
 
 # Updating dashboards
 
 ```bash
 # remove id to avoid collisions
-sed -i 's/^  \"id\": .*,/  \"id\": null,/' ./metrics/kube-prometheus-stack/component-monitors/proxmox/dashboards/*.json
+sed -i 's/^  \"id\": .*,/  \"id\": null,/' ./metrics/component-monitoring/proxmox/dashboards/*.json
 # set dashboard refresh interval to auto
-sed -i 's/^  \"refresh\": \".*s\",/  \"refresh\": \"auto\",/' ./metrics/kube-prometheus-stack/component-monitors/proxmox/dashboards/*.json
+sed -i 's/^  \"refresh\": \".*s\",/  \"refresh\": \"auto\",/' ./metrics/component-monitoring/proxmox/dashboards/*.json
 ```
 
 # Deploy
@@ -60,8 +60,8 @@ sed -i 's/^  \"refresh\": \".*s\",/  \"refresh\": \"auto\",/' ./metrics/kube-pro
 kl create ns pve-exporter
 kl label ns pve-exporter pod-security.kubernetes.io/enforce=baseline
 
-kl apply -k ./metrics/kube-prometheus-stack/component-monitors/proxmox/
-kl apply -k ./metrics/kube-prometheus-stack/component-monitors/proxmox/dashboards/
+kl apply -k ./metrics/component-monitoring/proxmox/
+kl apply -k ./metrics/component-monitoring/proxmox/dashboards/
 kl -n pve-exporter get pod -o wide
 kl -n pve-exporter get scrapeconfig
 ```
@@ -69,7 +69,7 @@ kl -n pve-exporter get scrapeconfig
 # Cleanup
 
 ```bash
-kl delete -k ./metrics/kube-prometheus-stack/component-monitors/proxmox/dashboards/
-kl delete -k ./metrics/kube-prometheus-stack/component-monitors/proxmox/
+kl delete -k ./metrics/component-monitoring/proxmox/dashboards/
+kl delete -k ./metrics/component-monitoring/proxmox/
 kl delete ns pve-exporter
 ```

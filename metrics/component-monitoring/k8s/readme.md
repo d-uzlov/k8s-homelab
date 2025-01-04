@@ -4,19 +4,19 @@
 ```bash
 # remove min interval settings from all panels to force them to use the default data source min interval
 # be careful: some panels need bigger interval to work properly
-sed -i '/\"interval\":/d' ./metrics/kube-prometheus-stack/component-monitors/k8s/*.json
+sed -i '/\"interval\":/d' ./metrics/component-monitoring/k8s/*.json
 # remove id to avoid collisions
-sed -i 's/^  \"id\": .*,/  \"id\": null,/' ./metrics/kube-prometheus-stack/component-monitors/k8s/*.json
+sed -i 's/^  \"id\": .*,/  \"id\": null,/' ./metrics/component-monitoring/k8s/*.json
 # set dashboard refresh interval to auto
-sed -i 's/^  \"refresh\": \".*s\",/  \"refresh\": \"auto\",/' ./metrics/kube-prometheus-stack/component-monitors/k8s/*.json
+sed -i 's/^  \"refresh\": \".*s\",/  \"refresh\": \"auto\",/' ./metrics/component-monitoring/k8s/*.json
 
-kl apply -k ./metrics/kube-prometheus-stack/component-monitors/k8s/
+kl apply -k ./metrics/component-monitoring/k8s/
 ```
 
 # Cleanup
 
 ```bash
-kl delete -k ./metrics/kube-prometheus-stack/component-monitors/k8s/
+kl delete -k ./metrics/component-monitoring/k8s/
 ```
 
 # Issues
