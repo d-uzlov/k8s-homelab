@@ -11,7 +11,8 @@ spec:
     rules:
     - alert: KubeVersionMismatch
       annotations:
-        description: There are {{ $value }} different semantic versions of Kubernetes components running.
+        description: >-
+          k8s cluster {{ $labels.cluster }}: There are {{ $value }} different semantic versions of Kubernetes components running.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeversionmismatch
         summary: Different semantic versions of Kubernetes components running.
       expr: count by (cluster) (count by (git_version, cluster) (label_replace(kubernetes_build_info{job!~"kube-dns|coredns"},"git_version","$1","git_version","(v[0-9]*.[0-9]*).*"))) > 1
@@ -20,7 +21,8 @@ spec:
         severity: warning
     - alert: KubeClientErrors
       annotations:
-        description: Kubernetes API server client '{{ $labels.job }}/{{ $labels.instance }}' is experiencing {{ $value | humanizePercentage }} errors.'
+        description: >-
+          k8s cluster {{ $labels.cluster }}: Kubernetes API server client '{{ $labels.job }}/{{ $labels.instance }}' is experiencing {{ $value | humanizePercentage }} errors.'
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeclienterrors
         summary: Kubernetes API server client is experiencing errors.
       expr: |-
@@ -44,18 +46,20 @@ spec:
     rules:
     - alert: KubePodCrashLooping
       annotations:
-        description: 'Pod {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }}) is in waiting state (reason: "CrashLoopBackOff").'
+        description: >-
+          k8s cluster {{ $labels.cluster }}: {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }} is in state CrashLoopBackOff.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubepodcrashlooping
         summary: Pod is crash looping.
       expr: max_over_time(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff", job="kube-state-metrics", namespace=~".*"}[5m]) >= 1
-      for: 15m
+      for: 5m
       labels:
         severity: warning
     - alert: KubePodNotReady
       annotations:
-        description: Pod {{ $labels.namespace }}/{{ $labels.pod }} has been in a non-ready state for longer than 15 minutes.
+        description: >-
+          k8s cluster {{ $labels.cluster }}: {{ $labels.namespace }}/{{ $labels.pod }} has been in a non-ready state for longer than 5 minutes.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubepodnotready
-        summary: Pod has been in a non-ready state for more than 15 minutes.
+        summary: Pod has been in a non-ready state for more than 5 minutes.
       expr: |-
         sum by (namespace, pod, cluster) (
           max by (namespace, pod, cluster) (
@@ -64,12 +68,14 @@ spec:
             1, max by (namespace, pod, owner_kind, cluster) (kube_pod_owner{owner_kind!="Job"})
           )
         ) > 0
-      for: 15m
+      for: 5m
       labels:
         severity: warning
     - alert: KubeDeploymentGenerationMismatch
       annotations:
-        description: Deployment generation for {{ $labels.namespace }}/{{ $labels.deployment }} does not match, this indicates that the Deployment has failed but has not been rolled back.
+        description: >-
+          k8s cluster {{ $labels.cluster }}: {{ $labels.namespace }}/deploy/{{ $labels.deployment }}:
+          generation does not match, this indicates that the Deployment has failed but has not been rolled back.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubedeploymentgenerationmismatch
         summary: Deployment generation mismatch due to possible roll-back
       expr: |-
@@ -81,7 +87,9 @@ spec:
         severity: warning
     - alert: KubeDeploymentReplicasMismatch
       annotations:
-        description: Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has not matched the expected number of replicas for longer than 15 minutes.
+        description: >-
+          k8s cluster {{ $labels.cluster }}: {{ $labels.namespace }}/deploy/{{ $labels.deployment }}
+          has not matched the expected number of replicas for longer than 15 minutes.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubedeploymentreplicasmismatch
         summary: Deployment has not matched the expected number of replicas.
       expr: |-
@@ -99,7 +107,9 @@ spec:
         severity: warning
     - alert: KubeDeploymentRolloutStuck
       annotations:
-        description: Rollout of deployment {{ $labels.namespace }}/{{ $labels.deployment }} is not progressing for longer than 15 minutes.
+        description: >-
+          k8s cluster {{ $labels.cluster }}: {{ $labels.namespace }}/deploy/{{ $labels.deployment }}:
+          rollout is not progressing for longer than 15 minutes.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubedeploymentrolloutstuck
         summary: Deployment rollout is not progressing.
       expr: |-
@@ -110,7 +120,9 @@ spec:
         severity: warning
     - alert: KubeStatefulSetReplicasMismatch
       annotations:
-        description: StatefulSet {{ $labels.namespace }}/{{ $labels.statefulset }} has not matched the expected number of replicas for longer than 15 minutes.
+        description: >-
+          k8s cluster {{ $labels.cluster }}: {{ $labels.namespace }}/sts/{{ $labels.statefulset }}
+          has not matched the expected number of replicas for longer than 15 minutes.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubestatefulsetreplicasmismatch
         summary: StatefulSet has not matched the expected number of replicas.
       expr: |-
@@ -128,7 +140,9 @@ spec:
         severity: warning
     - alert: KubeStatefulSetGenerationMismatch
       annotations:
-        description: StatefulSet generation for {{ $labels.namespace }}/{{ $labels.statefulset }} does not match, this indicates that the StatefulSet has failed but has not been rolled back.
+        description: >-
+          k8s cluster {{ $labels.cluster }}: {{ $labels.namespace }}/sts/{{ $labels.statefulset }}: generation does not match,
+          this indicates that the StatefulSet has failed but has not been rolled back.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubestatefulsetgenerationmismatch
         summary: StatefulSet generation mismatch due to possible roll-back
       expr: |-
@@ -140,7 +154,8 @@ spec:
         severity: warning
     - alert: KubeStatefulSetUpdateNotRolledOut
       annotations:
-        description: StatefulSet {{ $labels.namespace }}/{{ $labels.statefulset }} update has not been rolled out.
+        description: >-
+          k8s cluster {{ $labels.cluster }}: {{ $labels.namespace }}/sts/{{ $labels.statefulset }} update has not been rolled out.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubestatefulsetupdatenotrolledout
         summary: StatefulSet update has not been rolled out.
       expr: |-
@@ -166,7 +181,8 @@ spec:
         severity: warning
     - alert: KubeDaemonSetRolloutStuck
       annotations:
-        description: DaemonSet {{ $labels.namespace }}/{{ $labels.daemonset }} has not finished or progressed for at least 15m.
+        description: >-
+          k8s cluster {{ $labels.cluster }}: {{ $labels.namespace }}/ds/{{ $labels.daemonset }} has not finished or progressed for at least 15m.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubedaemonsetrolloutstuck
         summary: DaemonSet rollout is stuck.
       expr: |-
@@ -198,7 +214,9 @@ spec:
         severity: warning
     - alert: KubeContainerWaiting
       annotations:
-        description: 'pod/{{ $labels.pod }} in namespace {{ $labels.namespace }} on container {{ $labels.container}} has been in waiting state for longer than 1 hour. (reason: "{{ $labels.reason }}").'
+        description: >-
+          k8s cluster {{ $labels.cluster }}: {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container}}
+          has been in waiting state for longer than 1 hour. (reason: "{{ $labels.reason }}").
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubecontainerwaiting
         summary: Pod container waiting longer than 1 hour
       expr: kube_pod_container_status_waiting_reason{reason!="CrashLoopBackOff", job="kube-state-metrics", namespace=~".*"} > 0
@@ -207,7 +225,9 @@ spec:
         severity: warning
     - alert: KubeDaemonSetNotScheduled
       annotations:
-        description: '{{ $value }} Pods of DaemonSet {{ $labels.namespace }}/{{ $labels.daemonset }} are not scheduled.'
+        description: >-
+          k8s cluster {{ $labels.cluster }}: {{ $labels.namespace }}/ds/{{ $labels.daemonset }}:
+          {{ $value }} Pods are not scheduled.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubedaemonsetnotscheduled
         summary: DaemonSet pods are not scheduled.
       expr: |-
@@ -219,7 +239,9 @@ spec:
         severity: warning
     - alert: KubeDaemonSetMisScheduled
       annotations:
-        description: '{{ $value }} Pods of DaemonSet {{ $labels.namespace }}/{{ $labels.daemonset }} are running where they are not supposed to run.'
+        description: >-
+          k8s cluster {{ $labels.cluster }}: {{ $labels.namespace }}/ds/{{ $labels.daemonset }}:
+          {{ $value }} Pods are running where they are not supposed to run.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubedaemonsetmisscheduled
         summary: DaemonSet pods are misscheduled.
       expr: kube_daemonset_status_number_misscheduled{job="kube-state-metrics", namespace=~".*"} > 0
@@ -228,7 +250,8 @@ spec:
         severity: warning
     - alert: KubeJobNotCompleted
       annotations:
-        description: Job {{ $labels.namespace }}/{{ $labels.job_name }} is taking more than {{ "43200" | humanizeDuration }} to complete.
+        description: >-
+          k8s cluster {{ $labels.cluster }}: {{ $labels.namespace }}/job/{{ $labels.job_name }} is taking more than {{ "43200" | humanizeDuration }} to complete.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubejobnotcompleted
         summary: Job did not complete in time
       expr: |-
@@ -239,7 +262,9 @@ spec:
         severity: warning
     - alert: KubeJobFailed
       annotations:
-        description: Job {{ $labels.namespace }}/{{ $labels.job_name }} failed to complete. Removing failed job after investigation should clear this alert.
+        description: >-
+          k8s cluster {{ $labels.cluster }}: {{ $labels.namespace }}/job/{{ $labels.job_name }} failed to complete.
+          Removing failed job after investigation should clear this alert.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubejobfailed
         summary: Job failed to complete.
       expr: kube_job_failed{job="kube-state-metrics", namespace=~".*"}  > 0
@@ -248,7 +273,8 @@ spec:
         severity: warning
     - alert: KubeHpaReplicasMismatch
       annotations:
-        description: HPA {{ $labels.namespace }}/{{ $labels.horizontalpodautoscaler  }} has not matched the desired number of replicas for longer than 15 minutes.
+        description: >-
+          k8s cluster {{ $labels.cluster }}: HPA {{ $labels.namespace }}/{{ $labels.horizontalpodautoscaler  }} has not matched the desired number of replicas for longer than 15 minutes.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubehpareplicasmismatch
         summary: HPA has not matched desired number of replicas.
       expr: |-
@@ -270,7 +296,8 @@ spec:
         severity: warning
     - alert: KubeHpaMaxedOut
       annotations:
-        description: HPA {{ $labels.namespace }}/{{ $labels.horizontalpodautoscaler  }} has been running at max replicas for longer than 15 minutes.
+        description: >-
+          k8s cluster {{ $labels.cluster }}: HPA {{ $labels.namespace }}/{{ $labels.horizontalpodautoscaler  }} has been running at max replicas for longer than 15 minutes.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubehpamaxedout
         summary: HPA is running at max replicas
       expr: |-
@@ -293,7 +320,8 @@ spec:
     rules:
     - alert: KubeCPUOvercommit
       annotations:
-        description: Cluster {{ $labels.cluster }} has overcommitted CPU resource requests for Pods by {{ $value }} CPU shares and cannot tolerate node failure.
+        description: >-
+          k8s cluster {{ $labels.cluster }}: has overcommitted CPU resource requests for Pods by {{ $value }} CPU shares and cannot tolerate node failure.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubecpuovercommit
         summary: Cluster has overcommitted CPU resource requests.
       expr: |-
@@ -305,7 +333,8 @@ spec:
         severity: warning
     - alert: KubeMemoryOvercommit
       annotations:
-        description: Cluster {{ $labels.cluster }} has overcommitted memory resource requests for Pods by {{ $value | humanize }} bytes and cannot tolerate node failure.
+        description: >-
+          k8s cluster {{ $labels.cluster }}: has overcommitted memory resource requests for Pods by {{ $value | humanize }} bytes and cannot tolerate node failure.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubememoryovercommit
         summary: Cluster has overcommitted memory resource requests.
       expr: |-
@@ -317,7 +346,8 @@ spec:
         severity: warning
     - alert: KubeCPUQuotaOvercommit
       annotations:
-        description: Cluster {{ $labels.cluster }}  has overcommitted CPU resource requests for Namespaces.
+        description: >-
+          k8s cluster {{ $labels.cluster }}: has overcommitted CPU resource requests for Namespaces.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubecpuquotaovercommit
         summary: Cluster has overcommitted CPU resource requests.
       expr: |-
@@ -330,7 +360,8 @@ spec:
         severity: warning
     - alert: KubeMemoryQuotaOvercommit
       annotations:
-        description: Cluster {{ $labels.cluster }}  has overcommitted memory resource requests for Namespaces.
+        description: >-
+          k8s cluster {{ $labels.cluster }}: has overcommitted memory resource requests for Namespaces.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubememoryquotaovercommit
         summary: Cluster has overcommitted memory resource requests.
       expr: |-
@@ -343,7 +374,8 @@ spec:
         severity: warning
     - alert: KubeQuotaAlmostFull
       annotations:
-        description: Namespace {{ $labels.namespace }} is using {{ $value | humanizePercentage }} of its {{ $labels.resource }} quota.
+        description: >-
+          k8s cluster {{ $labels.cluster }}: Namespace {{ $labels.namespace }} is using {{ $value | humanizePercentage }} of its {{ $labels.resource }} quota.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubequotaalmostfull
         summary: Namespace quota is going to be full.
       expr: |-
@@ -356,7 +388,9 @@ spec:
         severity: info
     - alert: KubeQuotaFullyUsed
       annotations:
-        description: Namespace {{ $labels.namespace }} is using {{ $value | humanizePercentage }} of its {{ $labels.resource }} quota.
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          Namespace {{ $labels.namespace }} is using {{ $value | humanizePercentage }} of its {{ $labels.resource }} quota.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubequotafullyused
         summary: Namespace quota is fully used.
       expr: |-
@@ -369,7 +403,9 @@ spec:
         severity: info
     - alert: KubeQuotaExceeded
       annotations:
-        description: Namespace {{ $labels.namespace }} is using {{ $value | humanizePercentage }} of its {{ $labels.resource }} quota.
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          Namespace {{ $labels.namespace }} is using {{ $value | humanizePercentage }} of its {{ $labels.resource }} quota.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubequotaexceeded
         summary: Namespace quota has exceeded the limits.
       expr: |-
@@ -382,7 +418,10 @@ spec:
         severity: warning
     - alert: CPUThrottlingHigh
       annotations:
-        description: '{{ $value | humanizePercentage }} throttling of CPU in namespace {{ $labels.namespace }} for container {{ $labels.container }} in pod {{ $labels.pod }}.'
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }}:
+          {{ $value | humanizePercentage }} CPU throttling.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/cputhrottlinghigh
         summary: Processes experience elevated CPU throttling.
       expr: |-
@@ -406,7 +445,10 @@ spec:
     rules:
     - alert: KubePersistentVolumeFillingUp
       annotations:
-        description: The PersistentVolume claimed by {{ $labels.persistentvolumeclaim }} in Namespace {{ $labels.namespace }} {{ with $labels.cluster -}} on Cluster {{ . }} {{- end }} is only {{ $value | humanizePercentage }} free.
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          {{ $labels.namespace }}/pvc/{{ $labels.persistentvolumeclaim }}:
+          {{ $value | humanizePercentage }} free space.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubepersistentvolumefillingup
         summary: PersistentVolume is filling up.
       expr: |-
@@ -426,7 +468,11 @@ spec:
         severity: critical
     - alert: KubePersistentVolumeFillingUp
       annotations:
-        description: Based on recent sampling, the PersistentVolume claimed by {{ $labels.persistentvolumeclaim }} in Namespace {{ $labels.namespace }} {{ with $labels.cluster -}} on Cluster {{ . }} {{- end }} is expected to fill up within four days. Currently {{ $value | humanizePercentage }} is available.
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          {{ $labels.namespace }}/pvc/{{ $labels.persistentvolumeclaim }}:
+          PVC is expected to fill up within four days.
+          Currently {{ $value | humanizePercentage }} is available.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubepersistentvolumefillingup
         summary: PersistentVolume is filling up.
       expr: |-
@@ -448,7 +494,10 @@ spec:
         severity: warning
     - alert: KubePersistentVolumeInodesFillingUp
       annotations:
-        description: The PersistentVolume claimed by {{ $labels.persistentvolumeclaim }} in Namespace {{ $labels.namespace }} {{ with $labels.cluster -}} on Cluster {{ . }} {{- end }} only has {{ $value | humanizePercentage }} free inodes.
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          {{ $labels.namespace }}/pvc/{{ $labels.persistentvolumeclaim }}:
+          {{ $value | humanizePercentage }} free inodes.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubepersistentvolumeinodesfillingup
         summary: PersistentVolumeInodes are filling up.
       expr: |-
@@ -468,7 +517,11 @@ spec:
         severity: critical
     - alert: KubePersistentVolumeInodesFillingUp
       annotations:
-        description: Based on recent sampling, the PersistentVolume claimed by {{ $labels.persistentvolumeclaim }} in Namespace {{ $labels.namespace }} {{ with $labels.cluster -}} on Cluster {{ . }} {{- end }} is expected to run out of inodes within four days. Currently {{ $value | humanizePercentage }} of its inodes are free.
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          {{ $labels.namespace }}/pvc/{{ $labels.persistentvolumeclaim }}:
+          PVC is expected to run out of inodes within four days.
+          Currently {{ $value | humanizePercentage }} inodes are free.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubepersistentvolumeinodesfillingup
         summary: PersistentVolumeInodes are filling up.
       expr: |-
@@ -490,7 +543,10 @@ spec:
         severity: warning
     - alert: KubePersistentVolumeErrors
       annotations:
-        description: The persistent volume {{ $labels.persistentvolume }} {{ with $labels.cluster -}} on Cluster {{ . }} {{- end }} has status {{ $labels.phase }}.
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          pv/{{ $labels.persistentvolume }}:
+          status {{ $labels.phase }}.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubepersistentvolumeerrors
         summary: PersistentVolume is having issues with provisioning.
       expr: kube_persistentvolume_status_phase{phase=~"Failed|Pending",job="kube-state-metrics"} > 0
@@ -510,7 +566,9 @@ spec:
     rules:
     - alert: KubeClientCertificateExpiration
       annotations:
-        description: A client certificate used to authenticate to kubernetes apiserver is expiring in less than 7.0 days on cluster {{ $labels.cluster }}.
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          A client certificate used to authenticate to kubernetes apiserver is expiring in less than 7.0 days.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeclientcertificateexpiration
         summary: Client certificate is about to expire.
       expr: |-
@@ -522,7 +580,9 @@ spec:
         severity: warning
     - alert: KubeClientCertificateExpiration
       annotations:
-        description: A client certificate used to authenticate to kubernetes apiserver is expiring in less than 24.0 hours on cluster {{ $labels.cluster }}.
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          A client certificate used to authenticate to kubernetes apiserver is expiring in less than 24.0 hours.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeclientcertificateexpiration
         summary: Client certificate is about to expire.
       expr: |-
@@ -534,7 +594,9 @@ spec:
         severity: critical
     - alert: KubeAggregatedAPIErrors
       annotations:
-        description: Kubernetes aggregated API {{ $labels.instance }}/{{ $labels.name }} has reported {{ $labels.reason }} errors on cluster {{ $labels.cluster }}.
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          Kubernetes aggregated API {{ $labels.instance }}/{{ $labels.name }} has reported {{ $labels.reason }} errors.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeaggregatedapierrors
         summary: Kubernetes aggregated API has reported errors.
       expr: sum by (cluster, instance, name, reason)(increase(aggregator_unavailable_apiservice_total{job="apiserver"}[1m])) > 0
@@ -543,16 +605,20 @@ spec:
         severity: warning
     - alert: KubeAggregatedAPIDown
       annotations:
-        description: Kubernetes aggregated API {{ $labels.name }}/{{ $labels.namespace }} has been only {{ $value | humanize }}% available over the last 10m.
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          Kubernetes aggregated API {{ $labels.name }}/{{ $labels.namespace }} has been only {{ $value | humanizePercentage }} available over the last 10m.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeaggregatedapidown
         summary: Kubernetes aggregated API is down.
-      expr: (1 - max by (name, namespace, cluster)(avg_over_time(aggregator_unavailable_apiservice{job="apiserver"}[10m]))) * 100 < 85
+      expr: (1 - max by (name, namespace, cluster)(avg_over_time(aggregator_unavailable_apiservice{job="apiserver"}[10m]))) < 0.85
       for: 5m
       labels:
         severity: warning
     - alert: KubeAPITerminatedRequests
       annotations:
-        description: The kubernetes apiserver has terminated {{ $value | humanizePercentage }} of its incoming requests.
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          The kubernetes apiserver has terminated {{ $value | humanizePercentage }} of its incoming requests.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeapiterminatedrequests
         summary: The kubernetes apiserver has terminated {{ $value | humanizePercentage }} of its incoming requests.
       expr: sum by (cluster) (rate(apiserver_request_terminations_total{job="apiserver"}[10m])) / ( sum by (cluster) (rate(apiserver_request_total{job="apiserver"}[10m])) + sum by (cluster) (rate(apiserver_request_terminations_total{job="apiserver"}[10m])) ) > 0.20
@@ -572,7 +638,9 @@ spec:
     rules:
     - alert: KubeNodeNotReady
       annotations:
-        description: '{{ $labels.node }} has been unready for more than 15 minutes.'
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          {{ $labels.node }} has been unready for more than 15 minutes.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubenodenotready
         summary: Node is not ready.
       expr: kube_node_status_condition{job="kube-state-metrics",condition="Ready",status="true"} == 0
@@ -581,7 +649,9 @@ spec:
         severity: warning
     - alert: KubeNodeUnreachable
       annotations:
-        description: '{{ $labels.node }} is unreachable and some workloads may be rescheduled.'
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          {{ $labels.node }} is unreachable and some workloads may be rescheduled.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubenodeunreachable
         summary: Node is unreachable.
       expr: (kube_node_spec_taint{job="kube-state-metrics",key="node.kubernetes.io/unreachable",effect="NoSchedule"} unless ignoring(key,value) kube_node_spec_taint{job="kube-state-metrics",key=~"ToBeDeletedByClusterAutoscaler|cloud.google.com/impending-node-termination|aws-node-termination-handler/spot-itn"}) == 1
@@ -590,7 +660,9 @@ spec:
         severity: warning
     - alert: KubeletTooManyPods
       annotations:
-        description: Kubelet '{{ $labels.node }}' is running at {{ $value | humanizePercentage }} of its Pod capacity.
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          Kubelet '{{ $labels.node }}' is running at {{ $value | humanizePercentage }} of its Pod capacity.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubelettoomanypods
         summary: Kubelet is running at capacity.
       expr: |-
@@ -606,7 +678,9 @@ spec:
         severity: info
     - alert: KubeNodeReadinessFlapping
       annotations:
-        description: The readiness status of node {{ $labels.node }} has changed {{ $value }} times in the last 15 minutes.
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          The readiness status of node {{ $labels.node }} has changed {{ $value }} times in the last 15 minutes.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubenodereadinessflapping
         summary: Node readiness status is flapping.
       expr: sum(changes(kube_node_status_condition{job="kube-state-metrics",status="true",condition="Ready"}[15m])) by (cluster, node) > 2
@@ -615,7 +689,9 @@ spec:
         severity: warning
     - alert: KubeletPlegDurationHigh
       annotations:
-        description: The Kubelet Pod Lifecycle Event Generator has a 99th percentile duration of {{ $value }} seconds on node {{ $labels.node }}.
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          The Kubelet Pod Lifecycle Event Generator has a 99th percentile duration of {{ $value }} seconds on node {{ $labels.node }}.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeletplegdurationhigh
         summary: Kubelet Pod Lifecycle Event Generator is taking too long to relist.
       expr: node_quantile:kubelet_pleg_relist_duration_seconds:histogram_quantile{quantile="0.99"} >= 10
@@ -624,7 +700,9 @@ spec:
         severity: warning
     - alert: KubeletPodStartUpLatencyHigh
       annotations:
-        description: Kubelet Pod startup 99th percentile latency is {{ $value }} seconds on node {{ $labels.node }}.
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          Kubelet Pod startup 99th percentile latency is {{ $value }} seconds on node {{ $labels.node }}.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeletpodstartuplatencyhigh
         summary: Kubelet Pod startup latency is too high.
       expr: histogram_quantile(0.99, sum(rate(kubelet_pod_worker_duration_seconds_bucket{job="kubelet", metrics_path="/metrics"}[5m])) by (cluster, instance, le)) * on (cluster, instance) group_left(node) kubelet_node_name{job="kubelet", metrics_path="/metrics"} > 60
@@ -633,7 +711,9 @@ spec:
         severity: warning
     - alert: KubeletClientCertificateExpiration
       annotations:
-        description: Client certificate for Kubelet on node {{ $labels.node }} expires in {{ $value | humanizeDuration }}.
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          Client certificate for Kubelet on node {{ $labels.node }} expires in {{ $value | humanizeDuration }}.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeletclientcertificateexpiration
         summary: Kubelet client certificate is about to expire.
       expr: kubelet_certificate_manager_client_ttl_seconds < 604800
@@ -641,7 +721,9 @@ spec:
         severity: warning
     - alert: KubeletClientCertificateExpiration
       annotations:
-        description: Client certificate for Kubelet on node {{ $labels.node }} expires in {{ $value | humanizeDuration }}.
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          Client certificate for Kubelet on node {{ $labels.node }} expires in {{ $value | humanizeDuration }}.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeletclientcertificateexpiration
         summary: Kubelet client certificate is about to expire.
       expr: kubelet_certificate_manager_client_ttl_seconds < 86400
@@ -649,7 +731,9 @@ spec:
         severity: critical
     - alert: KubeletServerCertificateExpiration
       annotations:
-        description: Server certificate for Kubelet on node {{ $labels.node }} expires in {{ $value | humanizeDuration }}.
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          Server certificate for Kubelet on node {{ $labels.node }} expires in {{ $value | humanizeDuration }}.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeletservercertificateexpiration
         summary: Kubelet server certificate is about to expire.
       expr: kubelet_certificate_manager_server_ttl_seconds < 604800
@@ -657,7 +741,9 @@ spec:
         severity: warning
     - alert: KubeletServerCertificateExpiration
       annotations:
-        description: Server certificate for Kubelet on node {{ $labels.node }} expires in {{ $value | humanizeDuration }}.
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          Server certificate for Kubelet on node {{ $labels.node }} expires in {{ $value | humanizeDuration }}.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeletservercertificateexpiration
         summary: Kubelet server certificate is about to expire.
       expr: kubelet_certificate_manager_server_ttl_seconds < 86400
@@ -665,7 +751,9 @@ spec:
         severity: critical
     - alert: KubeletClientCertificateRenewalErrors
       annotations:
-        description: Kubelet on node {{ $labels.node }} has failed to renew its client certificate ({{ $value | humanize }} errors in the last 5 minutes).
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          Kubelet on node {{ $labels.node }} has failed to renew its client certificate ({{ $value | humanize }} errors in the last 5 minutes).
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeletclientcertificaterenewalerrors
         summary: Kubelet has failed to renew its client certificate.
       expr: increase(kubelet_certificate_manager_client_expiration_renew_errors[5m]) > 0
@@ -674,7 +762,9 @@ spec:
         severity: warning
     - alert: KubeletServerCertificateRenewalErrors
       annotations:
-        description: Kubelet on node {{ $labels.node }} has failed to renew its server certificate ({{ $value | humanize }} errors in the last 5 minutes).
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          Kubelet on node {{ $labels.node }} has failed to renew its server certificate ({{ $value | humanize }} errors in the last 5 minutes).
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeletservercertificaterenewalerrors
         summary: Kubelet has failed to renew its server certificate.
       expr: increase(kubelet_server_expiration_renew_errors[5m]) > 0
@@ -683,7 +773,9 @@ spec:
         severity: warning
     - alert: KubeletDown
       annotations:
-        description: Kubelet has disappeared from Prometheus target discovery.
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          Kubelet has disappeared from Prometheus target discovery.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeletdown
         summary: Target disappeared from Prometheus target discovery.
       expr: absent(up{job="kubelet", metrics_path="/metrics"} == 1)
