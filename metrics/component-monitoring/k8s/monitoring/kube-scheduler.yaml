@@ -1,0 +1,51 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kube-scheduler
+  namespace: kube-system
+  labels:
+    app: kube-scheduler
+    prometheus.io/job: kube-scheduler
+spec:
+  clusterIP: None
+  selector:
+    component: kube-scheduler
+  ports:
+  - name: http-metrics
+    port: 10259
+    protocol: TCP
+    targetPort: 10259
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kube-scheduler
+  namespace: kube-system
+  labels:
+    prometheus.io/instance: main
+spec:
+  jobLabel: prometheus.io/job
+  selector:
+    matchLabels:
+      app: kube-scheduler
+  endpoints:
+  - port: http-metrics
+    bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+    scheme: https
+    tlsConfig:
+      caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      insecureSkipVerify: true
+    metricRelabelings:
+    - action: keep
+      regex: kubernetes_build_info
+      sourceLabels:
+      - __name__
+    relabelings:
+    - action: replace
+      regex: ^(.*)$
+      replacement: $1
+      separator: ;
+      sourceLabels:
+      - __meta_kubernetes_pod_node_name
+      targetLabel: nodename

@@ -75,3 +75,9 @@ Grafana automatically imports data from configmaps with certain labels:
 - Dashboards: label `grafana.com/dashboard: main`
 
 Only the own `grafana` namespace is monitored.
+
+# Manual metric checking
+
+```bash
+kl exec deployments/alpine -- curl -sS http://grafana.grafana/metrics
+```

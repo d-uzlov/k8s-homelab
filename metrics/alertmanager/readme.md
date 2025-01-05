@@ -4,6 +4,8 @@
 
 References:
 - https://github.com/prometheus/alertmanager/releases
+- https://github.com/prometheus/alertmanager/blob/main/template/default.tmpl
+- https://github.com/prometheus/alertmanager/blob/main/doc/examples/simple.yml
 
 # Prerequisites
 

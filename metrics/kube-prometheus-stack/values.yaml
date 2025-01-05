@@ -49,212 +49,24 @@ grafana:
 
 kubeApiServer:
   enabled: false
-  tlsConfig:
-    serverName: kubernetes
-    insecureSkipVerify: false
-  serviceMonitor:
-    relabelings:
-    - sourceLabels:
-      - __meta_kubernetes_namespace
-      - __meta_kubernetes_service_name
-      - __meta_kubernetes_endpoint_port_name
-      action: keep
-      regex: default;kubernetes;https
-    - targetLabel: __address__
-      replacement: kubernetes.default.svc:443
-    metricRelabelings:
-    - action: keep
-      sourceLabels:
-        - __name__
-      regex: "\
-        apiserver_client_certificate_expiration_.*|\
-        apiserver_request_terminations_total|\
-        apiserver_request_total|\
-        apiserver_storage_objects|\
-        apiserver_storage_size_bytes|\
-        apiserver_tls_handshake_errors_total|\
-        kubernetes_build_info|\
-        rest_client_requests_total\
-        "
 
 kubelet:
   enabled: false
-  serviceMonitor:
-    metricRelabelings:
-    - action: keep
-      regex: "\
-        kubelet_node_name|\
-        kubernetes_build_info|\
-        kubelet_active_pods|\
-        kubelet_desired_pods|\
-        kubelet_running_pods|\
-        kubelet_working_pods|\
-        kubelet_container_log_filesystem_used_bytes|\
-        kubelet_pod_worker_.*|\
-        kubelet_volume_stats.*|\
-        "
-      sourceLabels:
-      - __name__
-    cAdvisorMetricRelabelings:
-    # drop metrics for dummy cgroup containers without name
-    - sourceLabels:
-      - __name__
-      - container
-      action: drop
-      # select only metrics that are linked to containers
-      # for example, network metrics do not have container label by design
-      regex: 'container_(cpu_|fs_|blkio_|memory_|oom_|start_time_|threads|processes|sockets|ulimits_soft).*;'
-      separator: ;
-    - sourceLabels:
-      - __name__
-      - interface
-      action: drop
-      # drop lxc* interface metrics
-      # they are kinda impossible to correlate with k8s objects
-      # they don't seem to have any real traffic reported
-      # but they give huge cardinality for pods with hostNetwork enabled
-      regex: 'container_network_.*;lxc.*'
-      separator: ;
-    # iops metrics don't seems to be useful
-    # - sourceLabels: [__name__]
-    #   action: drop
-    #   regex: 'container_fs_reads_total|container_fs_writes_total'
-    # Drop less useful container CPU metrics.
-    - sourceLabels: [__name__]
-      action: drop
-      regex: 'container_cpu_(cfs_throttled_seconds_total|load_average_10s|system_seconds_total|user_seconds_total)'
-    # Drop less useful container / always zero filesystem metrics.
-    - sourceLabels: [__name__]
-      action: drop
-      regex: 'container_fs_(io_current|io_time_seconds_total|io_time_weighted_seconds_total|reads_merged_total|sector_reads_total|sector_writes_total|writes_merged_total)'
-    # Drop less useful / always zero container memory metrics.
-    - sourceLabels: [__name__]
-      action: drop
-      # regex: 'container_memory_swap|container_memory_kernel_usage|container_memory_mapped_file'
-      regex: 'container_memory_swap|container_memory_kernel_usage'
-    # Drop less useful container process metrics.
-    - sourceLabels: [__name__]
-      action: drop
-      regex: 'container_(file_descriptors|tasks_state|threads_max)'
-    # Drop container spec metrics that overlap with kube-state-metrics.
-    - sourceLabels: [__name__]
-      action: drop
-      regex: 'container_spec.*'
-    # Drop cgroup metrics with no pod.
-    - sourceLabels: [id, pod]
-      action: drop
-      regex: '.+;'
-    - action: drop
-      regex: container_last_seen
-      sourceLabels:
-      - __name__
-    # cAdvisorRelabelings:
-    # - action: replace
-    #   sourceLabels: [__metrics_path__]
-    #   targetLabel: metrics_path
-    # - sourceLabels: [__meta_kubernetes_pod_node_name]
-    #   separator: ;
-    #   regex: ^(.*)$
-    #   targetLabel: nodename
-    #   replacement: $1
-    #   action: replace
-    # probesRelabelings:
-    # - action: replace
-    #   sourceLabels: [__metrics_path__]
-    #   targetLabel: metrics_path
-    # - sourceLabels: [__meta_kubernetes_pod_node_name]
-    #   separator: ;
-    #   regex: ^(.*)$
-    #   targetLabel: nodename
-    #   replacement: $1
-    #   action: replace
-    # resourceRelabelings:
-    # - action: replace
-    #   sourceLabels: [__metrics_path__]
-    #   targetLabel: metrics_path
-    # - sourceLabels: [__meta_kubernetes_pod_node_name]
-    #   separator: ;
-    #   regex: ^(.*)$
-    #   targetLabel: nodename
-    #   replacement: $1
-    #   action: replace
-    # relabelings:
-    # - action: replace
-    #   sourceLabels: [__metrics_path__]
-    #   targetLabel: metrics_path
-    # - sourceLabels: [__meta_kubernetes_pod_node_name]
-    #   separator: ;
-    #   regex: ^(.*)$
-    #   targetLabel: nodename
-    #   replacement: $1
-    #   action: replace
 
 kubeControllerManager:
   enabled: false
-  serviceMonitor:
-    relabelings:
-    - sourceLabels: [__meta_kubernetes_pod_node_name]
-      separator: ;
-      regex: ^(.*)$
-      targetLabel: nodename
-      replacement: $1
-      action: replace
-    metricRelabelings:
-    - action: keep
-      sourceLabels:
-      - __name__
-      regex: kubernetes_build_info
 
 coreDns:
   enabled: false
-  serviceMonitor:
-    relabelings:
-    - sourceLabels: [__meta_kubernetes_pod_node_name]
-      separator: ;
-      regex: ^(.*)$
-      targetLabel: nodename
-      replacement: $1
-      action: replace
 
 kubeDns:
   enabled: false
 
 kubeEtcd:
   enabled: false
-  service:
-    enabled: true
-    port: 2379
-    targetPort: 2379
-  serviceMonitor:
-    scheme: https
-    insecureSkipVerify: false
-    serverName: localhost
-    caFile: /etc/prometheus/secrets/etcd-client-cert/ca.crt
-    certFile: /etc/prometheus/secrets/etcd-client-cert/healthcheck-client.crt
-    keyFile: /etc/prometheus/secrets/etcd-client-cert/healthcheck-client.key
-    relabelings:
-    - sourceLabels: [__meta_kubernetes_pod_node_name]
-      separator: ;
-      regex: ^(.*)$
-      targetLabel: nodename
-      replacement: $1
-      action: replace
 
 kubeScheduler:
   enabled: false
-  serviceMonitor:
-    relabelings:
-    - sourceLabels: [__meta_kubernetes_pod_node_name]
-      separator: ;
-      regex: ^(.*)$
-      targetLabel: nodename
-      replacement: $1
-      action: replace
-    metricRelabelings:
-    - action: keep
-      sourceLabels:
-        - __name__
-      regex: kubernetes_build_info
 
 kubeProxy:
   enabled: false

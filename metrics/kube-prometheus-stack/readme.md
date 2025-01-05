@@ -54,27 +54,13 @@ generateDeployment grafana.defaultDashboardsEnabled=true \
                    grafana.forceDeployDashboards=true \
                                                     > ./metrics/kube-prometheus-stack/grafana/grafana-default-dashboards.gen.yaml
 
-generateDeployment kubeApiServer.enabled=true \
-                   kubelet.enabled=true \
-                   kubeControllerManager.enabled=true \
-                   coreDns.enabled=false \
-                   kubeScheduler.enabled=true       > ./metrics/kube-prometheus-stack/service-monitors.gen.yaml
-
 ```
-
-References:
-- https://stackoverflow.com/questions/68409322/prometheus-cannot-scrape-kubernetes-metrics
 
 # Deploy
 
 ```bash
 # deploys default grafana dashboards from kps
 kl apply -k ./metrics/kube-prometheus-stack/grafana/
-
-kl create ns kps-default-rules
-kl label ns kps-default-rules pod-security.kubernetes.io/enforce=baseline
-kl apply -f ./metrics/kube-prometheus-stack/service-monitors.gen.yaml
-kl -n kps-default-rules get prometheusrule
 
 ```
 
@@ -87,37 +73,7 @@ Don't forget to deploy additional dashboards:
 
 ```bash
 kl delete -k ./metrics/kube-prometheus-stack/grafana/
-kl delete ns kps-default-rules
 kl delete ns kps-grafana
-```
-
-# kube-controller-manager and kube-scheduler metrics
-
-If you want to see metrics from kube-controller-manager and kube-scheduler,
-you need to change its configs to bind to node IP instead of localhost.
-
-If you use kubeadm for cluster setup,
-you can edit kubeadm config to make changes persistent:
-
-```bash
-kl edit -n kube-system cm kubeadm-config
-```
-
-Make sure you have the following additional `extraArgs` values listed:
-
-```yaml
-controllerManager:
-  extraArgs:
-    bind-address: 0.0.0.0
-scheduler:
-  extraArgs:
-    bind-address: 0.0.0.0
-```
-
-After you change kubeadm-config, you need to apply new config on all master nodes:
-
-```bash
-sudo kubeadm upgrade node
 ```
 
 # TODO
@@ -127,40 +83,6 @@ Even if prometheus polls metrics each second,
 k8s metrics are updated only once every 10 seconds, or slower.
 
 Keywords: `housekeeping-interval`.
-
-# Manual metric checking
-
-```bash
-bearer=$(kl -n kps exec sts/prometheus-kps -- cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-kl get node -o wide
-nodeIp=10.3.10.3
-curl -k -H "Authorization: Bearer $bearer" https://$nodeIp:10250/metrics
-curl -k -H "Authorization: Bearer $bearer" https://$nodeIp:10250/metrics/cadvisor
-curl -k -H "Authorization: Bearer $bearer" https://$nodeIp:10250/metrics/probes > ./probe.log
-
-# watch for some metric
-while true; do
-curl -k -H "Authorization: Bearer $bearer" https://$nodeIp:10250/metrics/cadvisor | grep immich-postgresql-0 | grep container_fs_writes_bytes_total | grep container=\"postgresql\" | sed "s/^/$(date +%H-%M-%S) /" >> ./cadvisor.log
-sleep 5
-done
-
-kl -n kube-system describe svc kps-coredns
-corednsIp=
-kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" http://$corednsIp:9153/metrics
-
-kl describe svc kubernetes
-curl -k -H "Authorization: Bearer $bearer" https://$nodeIp:6443/metrics
-
-kl -n kube-system describe svc kps-kube-controller-manager
-curl -k -H "Authorization: Bearer $bearer" https://$nodeIp:10257/metrics
-
-kl -n kube-system describe svc kps-kube-scheduler
-curl -k -H "Authorization: Bearer $bearer" https://$nodeIp:10259/metrics
-
-kl -n kps-grafana describe svc kps-grafana
-grafanaIp=
-kl exec deployments/alpine -- curl -k -H "Authorization: Bearer $bearer" http://$grafanaIp:3000/metrics
-```
 
 # TODO
 

@@ -1,0 +1,51 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kube-controller-manager
+  namespace: kube-system
+  labels:
+    app: kube-controller-manager
+    prometheus.io/job: kube-controller-manager
+spec:
+  clusterIP: None
+  selector:
+    component: kube-controller-manager
+  ports:
+  - name: http-metrics
+    port: 10257
+    protocol: TCP
+    targetPort: 10257
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kube-controller-manager
+  namespace: kube-system
+  labels:
+    prometheus.io/instance: main
+spec:
+  jobLabel: prometheus.io/job
+  selector:
+    matchLabels:
+      app: kube-controller-manager
+  endpoints:
+  - port: http-metrics
+    bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+    scheme: https
+    tlsConfig:
+      caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      insecureSkipVerify: true
+    metricRelabelings:
+    - action: keep
+      regex: kubernetes_build_info
+      sourceLabels:
+      - __name__
+    relabelings:
+    - action: replace
+      regex: ^(.*)$
+      replacement: $1
+      separator: ;
+      sourceLabels:
+      - __meta_kubernetes_pod_node_name
+      targetLabel: nodename
