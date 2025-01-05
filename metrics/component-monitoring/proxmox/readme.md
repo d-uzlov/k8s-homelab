@@ -25,24 +25,39 @@ EOF
 # for this you can either add this permission on the token itself
 # or set this permission on the user and disable privilege separation on the token
 
-# init scrape config using your local environment info
-cp \
-  ./metrics/component-monitoring/proxmox/scrape-node-template.yaml \
-  ./metrics/component-monitoring/proxmox/env/scrape-node.yaml
-# adjust addresses for your environment
-cat << EOF >> ./metrics/component-monitoring/proxmox/env/scrape-node.yaml
+# adjust list of nodes and cluster name
+cat << EOF > ./metrics/component-monitoring/proxmox/env/scrape-node-patch.yaml
+---
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: proxmox-node
+spec:
+  staticConfigs:
+  - labels:
+      job: proxmox
+      cluster: proxmox-cluster-name
     targets:
     - pve1.k8s.lan
     - pve2.k8s.lan
     - pve3.k8s.lan
 EOF
-cluster_endpoint_address=pve1.k8s.lan
-cluster_name=main
-sed \
-  -e "s/AUTOMATIC_REPLACE_TARGET/$cluster_endpoint/g" \
-  -e "s/AUTOMATIC_REPLACE_CLUSTER_NAME/$cluster_name/g" \
-  ./metrics/component-monitoring/proxmox/scrape-cluster-template.yaml \
-  > ./metrics/component-monitoring/proxmox/env/scrape-cluster.yaml
+# for the cluster scrape set only 1 address
+cat << EOF > ./metrics/component-monitoring/proxmox/env/scrape-cluster-patch.yaml
+---
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: proxmox-cluster
+spec:
+  staticConfigs:
+  - labels:
+      job: proxmox
+      cluster: proxmox-cluster-name
+    targets:
+    - pve1.k8s.lan
+EOF
+
 ```
 
 # Updating dashboards
@@ -52,6 +67,8 @@ sed \
 sed -i 's/^  \"id\": .*,/  \"id\": null,/' ./metrics/component-monitoring/proxmox/dashboards/*.json
 # set dashboard refresh interval to auto
 sed -i 's/^  \"refresh\": \".*s\",/  \"refresh\": \"auto\",/' ./metrics/component-monitoring/proxmox/dashboards/*.json
+# remove local variable values
+sed -i '/        \"current\": {/,/        }\,/d' ./metrics/component-monitoring/proxmox/dashboards/*.json
 ```
 
 # Deploy
@@ -66,10 +83,27 @@ kl -n pve-exporter get pod -o wide
 kl -n pve-exporter get scrapeconfig
 ```
 
+TODO: remove node scraping?
+Almost all info is in the cluster scrape. Metrics from node scrape seem borderline useless.
+
 # Cleanup
 
 ```bash
 kl delete -k ./metrics/component-monitoring/proxmox/dashboards/
 kl delete -k ./metrics/component-monitoring/proxmox/
 kl delete ns pve-exporter
+```
+
+# Manual metric checking
+
+```bash
+kl -n pve-exporter describe svc pve-exporter
+
+# pick some node randomly
+kl exec deployments/alpine -- apk add curl
+target=ryzen.proxmox.wrq.duckdns.org
+# example: target=pve1.k8s.lan
+kl exec deployments/alpine -- curl -sS "http://pve-exporter.pve-exporter:9221/pve?target=$target&cluster=1&node=0" > ./pve-cluster.log
+kl exec deployments/alpine -- curl -sS "http://pve-exporter.pve-exporter:9221/pve?target=$target&cluster=0&node=1" > ./pve-node.log
+
 ```
