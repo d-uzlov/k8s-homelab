@@ -174,7 +174,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (pod) (min by(pod, container) (min_over_time(kube_pod_container_status_ready{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval]))) / sum by (pod) (kube_pod_container_info{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"})",
+          "expr": "# min by(pod, container) shoud fix overlapping data on container restarts\r\nsum by (pod) (min by(pod, container) (min_over_time(kube_pod_container_status_ready{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval]))) / sum by (pod) (kube_pod_container_info{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"})",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -419,14 +419,14 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum (rate(container_cpu_usage_seconds_total:with_pod_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])) / sum(kube_pod_container_resource_requests{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"cpu\"})",
+          "expr": "sum (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])) / sum(kube_pod_container_resource_requests{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"cpu\"})",
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
           "refId": "A"
         }
       ],
-      "title": "CPU Utilisation (from requests)",
+      "title": "CPU Utilization (from requests)",
       "type": "stat"
     },
     {
@@ -488,7 +488,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum (rate(container_cpu_usage_seconds_total:with_pod_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])) / sum(kube_pod_container_resource_limits{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"cpu\"})",
+          "expr": "sum (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])) / sum(kube_pod_container_resource_limits{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"cpu\"})",
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
@@ -814,7 +814,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(pod) (rate(container_cpu_usage_seconds_total:with_pod_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval]))",
+          "expr": "sum by(pod) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -948,7 +948,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by(pod) (rate(container_cpu_usage_seconds_total:with_pod_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval]))",
+          "expr": "sum by(pod) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval]))",
           "format": "table",
           "instant": false,
           "legendFormat": "__auto",
@@ -977,7 +977,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by(pod) (rate(container_cpu_usage_seconds_total:with_pod_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])) / sum(cluster:namespace:pod_cpu:active:kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}) by (pod)",
+          "expr": "sum by(pod) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])) / sum(cluster:namespace:pod_cpu:active:kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}) by (pod)",
           "format": "table",
           "hide": false,
           "instant": false,
@@ -1007,7 +1007,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by(pod) (rate(container_cpu_usage_seconds_total:with_pod_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])) / sum(cluster:namespace:pod_cpu:active:kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}) by (pod)",
+          "expr": "sum by(pod) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])) / sum(cluster:namespace:pod_cpu:active:kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}) by (pod)",
           "format": "table",
           "hide": false,
           "instant": false,
@@ -1016,7 +1016,7 @@
           "refId": "E"
         }
       ],
-      "title": "CPU Quota",
+      "title": "CPU Usage",
       "transformations": [
         {
           "id": "joinByField",
@@ -1176,7 +1176,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum(last_over_time(container_memory_working_set_bytes{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container!=\"\", image!=\"\"}[$__range])) by (pod)",
+          "expr": "sum(last_over_time(container_memory_rss{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container!=\"\", image!=\"\"}[$__range])) by (pod)",
           "format": "table",
           "instant": true,
           "legendFormat": "",
@@ -1205,7 +1205,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum(last_over_time(container_memory_working_set_bytes{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container!=\"\", image!=\"\"}[$__range])) by (pod) / sum(last_over_time(cluster:namespace:pod_memory:active:kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__range])) by (pod)",
+          "expr": "sum by (pod) (last_over_time(container_memory_rss{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__range])) / sum  by (pod) (last_over_time(cluster:namespace:pod_memory:active:kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -1220,7 +1220,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum(last_over_time(cluster:namespace:pod_memory:active:kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__range])) by (pod)",
+          "expr": "sum by (pod) (last_over_time(cluster:namespace:pod_memory:active:kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -1235,7 +1235,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum(last_over_time(container_memory_working_set_bytes{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container!=\"\", image!=\"\"}[$__range])) by (pod) / sum(last_over_time(cluster:namespace:pod_memory:active:kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__range])) by (pod)",
+          "expr": "sum(last_over_time(container_memory_working_set_bytes{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__range])) by (pod) / sum(last_over_time(cluster:namespace:pod_memory:active:kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__range])) by (pod)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -1250,28 +1250,13 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum(last_over_time(container_memory_rss{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container!=\"\"}[$__range])) by (pod)",
+          "expr": "sum(last_over_time(container_memory_usage_bytes{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container!=\"\"}[$__range])) by (pod)",
           "format": "table",
           "hide": false,
           "instant": true,
           "legendFormat": "",
           "range": false,
           "refId": "F"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "sum(last_over_time(container_memory_cache{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container!=\"\"}[$__range])) by (pod)",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "",
-          "range": false,
-          "refId": "G"
         },
         {
           "datasource": {
@@ -1289,7 +1274,7 @@
           "refId": "H"
         }
       ],
-      "title": "Memory Quota",
+      "title": "Memory Usage (last value)",
       "transformations": [
         {
           "id": "joinByField",
@@ -1333,12 +1318,12 @@
               "pod": 8
             },
             "renameByName": {
-              "Value #A": "Memory Usage",
+              "Value #A": "RSS",
               "Value #B": "Memory Requests",
-              "Value #C": "Memory Requests %",
+              "Value #C": "RSS / Requests %",
               "Value #D": "Memory Limits",
-              "Value #E": "Memory Limits %",
-              "Value #F": "Memory Usage (RSS)",
+              "Value #E": "RSS / Limits %",
+              "Value #F": "Raw",
               "Value #G": "Memory Usage (Cache)",
               "Value #H": "Memory Usage (Swap)",
               "pod": "Pod"
@@ -1538,7 +1523,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (pod) (max by(pod, container) (max_over_time(container_memory_usage_bytes{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container!=\"\", image!=\"\"}[$__rate_interval])))",
+          "expr": "# max by(pod, container) shoud fix overlapping data on container restarts\r\nsum by (pod) (max by(pod, container) (max_over_time(container_memory_usage_bytes{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])))",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -1740,7 +1725,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (pod) (max by(pod, container) (max_over_time(container_memory_max_usage_bytes{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container!=\"\", image!=\"\"}[$__rate_interval])))",
+          "expr": "# max by(pod, container) shoud fix overlapping data on container restarts\r\nsum by (pod) (max by(pod, container) (max_over_time(container_memory_max_usage_bytes{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])))",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -1827,8 +1812,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1942,7 +1926,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (pod) (max by(pod, container) (max_over_time(container_memory_working_set_bytes{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container!=\"\", image!=\"\"}[$__rate_interval])))",
+          "expr": "# max by(pod, container) shoud fix overlapping data on container restarts\r\nsum by (pod) (max by(pod, container) (max_over_time(container_memory_working_set_bytes{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])))",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -2029,8 +2013,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -2144,38 +2127,12 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (pod) (max by(pod, container) (max_over_time(container_memory_cache{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container!=\"\", image!=\"\"}[$__rate_interval])))",
+          "expr": "# max by(pod, container) shoud fix overlapping data on container restarts\r\nsum by (pod) (max by(pod, container) (max_over_time(container_memory_cache{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])))",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "scalar(max(kube_resourcequota{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", type=\"hard\", resource=\"requests.memory\"}))",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "quota - requests",
-          "range": true,
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "scalar(max(kube_resourcequota{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", type=\"hard\", resource=\"limits.memory\"}))",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "quota - limits",
-          "range": true,
-          "refId": "C"
         }
       ],
       "title": "Memory Usage (Cache)",
@@ -2231,8 +2188,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -2346,7 +2302,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (pod) (max by(pod, container) (max_over_time(container_memory_rss{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container!=\"\", image!=\"\"}[$__rate_interval])))",
+          "expr": "# max by(pod, container) shoud fix overlapping data on container restarts\r\nsum by (pod) (max by(pod, container) (max_over_time(container_memory_rss{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])))",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -2433,8 +2389,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -2548,38 +2503,12 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (pod) (max by(pod, container) (max_over_time(container_memory_mapped_file{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container!=\"\", image!=\"\"}[$__rate_interval])))",
+          "expr": "# max by(pod, container) shoud fix overlapping data on container restarts\r\nsum by (pod) (max by(pod, container) (max_over_time(container_memory_mapped_file{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container!=\"\", image!=\"\"}[$__rate_interval])))",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "scalar(max(kube_resourcequota{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", type=\"hard\", resource=\"requests.memory\"}))",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "quota - requests",
-          "range": true,
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "scalar(max(kube_resourcequota{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", type=\"hard\", resource=\"limits.memory\"}))",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "quota - limits",
-          "range": true,
-          "refId": "C"
         }
       ],
       "title": "Memory Usage (Mapped file)",
@@ -3642,10 +3571,6 @@
   "templating": {
     "list": [
       {
-        "current": {
-          "text": "default",
-          "value": "default"
-        },
         "label": "Data source",
         "name": "datasource",
         "query": "prometheus",
@@ -3659,7 +3584,6 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "hide": 2,
         "label": "cluster",
         "name": "cluster",
         "query": "label_values(up{job=\"kube-state-metrics\"}, cluster)",
@@ -3680,10 +3604,6 @@
         "type": "query"
       },
       {
-        "current": {
-          "text": "All",
-          "value": "$__all"
-        },
         "datasource": {
           "type": "prometheus",
           "uid": "${datasource}"

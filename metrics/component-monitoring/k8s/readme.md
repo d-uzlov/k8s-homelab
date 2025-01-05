@@ -9,6 +9,8 @@ sed -i '/\"interval\":/d' ./metrics/component-monitoring/k8s/*.json
 sed -i 's/^  \"id\": .*,/  \"id\": null,/' ./metrics/component-monitoring/k8s/*.json
 # set dashboard refresh interval to auto
 sed -i 's/^  \"refresh\": \".*s\",/  \"refresh\": \"auto\",/' ./metrics/component-monitoring/k8s/*.json
+# remove local variable values
+sed -i '/        \"current\": {/,/        }\,/d' ./metrics/component-monitoring/k8s/*.json
 
 kl apply -k ./metrics/component-monitoring/k8s/
 ```
