@@ -19,9 +19,10 @@ References:
 
 ```bash
 
-kl apply -f ./metrics/component-monitoring/etcd/rules.yaml
-kl apply -f ./metrics/component-monitoring/etcd/alerts.yaml
+kl -n prometheus apply -f ./metrics/component-monitoring/etcd/rules.yaml
+kl -n prometheus apply -f ./metrics/component-monitoring/etcd/alerts.yaml
 
+# dashboards should be in the grafana namespace
 kl apply -k ./metrics/component-monitoring/etcd/dashboards/
 
 ```
@@ -41,7 +42,7 @@ sed -i 's/^  \"refresh\": \".*s\",/  \"refresh\": \"auto\",/' ./metrics/componen
 
 ```bash
 etcdIp=k8s1-etcd1.k8s.lan
-curl \
+curl -sS \
   --cert ./metrics/component-monitoring/etcd/external-etcd/env/client.crt \
   --key ./metrics/component-monitoring/etcd/external-etcd/env/client.key \
   --cacert ./metrics/component-monitoring/etcd/external-etcd/env/ca.crt \
