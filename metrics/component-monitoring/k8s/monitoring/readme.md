@@ -34,7 +34,7 @@ References:
 # Manual metric checking
 
 ```bash
-bearer=$(kl -n kps exec sts/prometheus-kps -- cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+bearer=$(kl -n prometheus exec sts/prometheus-main -- cat /var/run/secrets/kubernetes.io/serviceaccount/token)
 kl get node -o wide
 nodeIp=10.3.10.3
 # these metrics are not monitored here

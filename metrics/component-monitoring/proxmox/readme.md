@@ -60,8 +60,8 @@ sed -i 's/^  \"refresh\": \".*s\",/  \"refresh\": \"auto\",/' ./metrics/componen
 kl create ns pve-exporter
 kl label ns pve-exporter pod-security.kubernetes.io/enforce=baseline
 
-kl apply -k ./metrics/component-monitoring/proxmox/
-kl apply -k ./metrics/component-monitoring/proxmox/dashboards/
+kl -n pve-exporter apply -k ./metrics/component-monitoring/proxmox/
+kl -n grafana apply -k ./metrics/component-monitoring/proxmox/dashboards/
 kl -n pve-exporter get pod -o wide
 kl -n pve-exporter get scrapeconfig
 ```

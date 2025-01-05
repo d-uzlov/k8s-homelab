@@ -3,8 +3,8 @@
 
 ```bash
 # delete a metric
-prometheus_ingress=$(kl -n kps get ingress   prometheus -o go-template --template "{{ (index .spec.rules 0).host}}")
-prometheus_ingress=$(kl -n kps get httproute prometheus -o go-template --template "{{ (index .spec.hostnames 0) }}")
+prometheus_ingress=$(kl -n prometheus get ingress   prometheus -o go-template --template "{{ (index .spec.rules 0).host}}")
+prometheus_ingress=$(kl -n prometheus get httproute prometheus -o go-template --template "{{ (index .spec.hostnames 0) }}")
 
 # start and end parameters are optional.
 # By default prometheus will delete time series from all time.
@@ -32,21 +32,21 @@ curl -X POST -g "https://$prometheus_ingress/api/v1/admin/tsdb/clean_tombstones"
 curl -X GET -G "https://$prometheus_ingress/api/v1/label/__name__/values" --data-urlencode 'match[]={__name__=~".+", job="kubelet"}'
 
 # show current config
-kl -n kps exec statefulsets/prometheus-kps -it -- cat /etc/prometheus/config_out/prometheus.env.yaml
+kl -n prometheus exec sts/prometheus-main -it -- cat /etc/prometheus/config_out/prometheus.env.yaml
 
 # generate missing past metrics for a new recording rule
 #     enter the prometheus container
-kl -n kps exec statefulsets/prometheus-kps -it -- sh
+kl -n prometheus exec statefulsets/prometheus-main -it -- sh
 #     inside the container: find recording rule file and run promtool
-ls -la /etc/prometheus/rules/prometheus-kps-rulefiles-0/
+ls -la /etc/prometheus/rules/prometheus-main-rulefiles-0/
 # Be careful! Do not overlap time period with existing data!
-promtool tsdb create-blocks-from rules --start 2024-05-29T21:33:40+07:00 --end 2024-06-11T14:40:40+07:00 --output-dir=. --eval-interval=10s /etc/prometheus/rules/prometheus-kps-rulefiles-0/kps-default-rules-etcd-recording-f515cf3e-c48e-4ff4-ab43-d997c9aa4825.yaml
+promtool tsdb create-blocks-from rules --start 2024-05-29T21:33:40+07:00 --end 2024-06-11T14:40:40+07:00 --output-dir=. --eval-interval=10s /etc/prometheus/rules/prometheus-main-rulefiles-0/kps-default-rules-etcd-recording-f515cf3e-c48e-4ff4-ab43-d997c9aa4825.yaml
 
 # to delete _all_ data from prometheus, delete /prometheus contents and restart prometheus
 # rm -rf will fail, it's OK, it just can't delete some of the special files
-kl -n kps exec statefulsets/prometheus-kps -it -- rm -rf /prometheus
-kl -n kps delete pod prometheus-kps-0
-kl -n kps get pod -o wide
+kl -n prometheus exec sts/prometheus-main -it -- rm -rf /prometheus
+kl -n prometheus delete pod prometheus-main-0
+kl -n prometheus get pod -o wide
 ```
 
 References:

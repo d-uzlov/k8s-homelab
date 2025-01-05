@@ -27,5 +27,6 @@ spec:
     - k8s1-etcd3.k8s.lan:2379
 EOF
 
-kl apply -k ./metrics/component-monitoring/etcd/external-etcd/
+# TODO is there a better namespace for this?
+kl -n prometheus apply -k ./metrics/component-monitoring/etcd/external-etcd/
 ```

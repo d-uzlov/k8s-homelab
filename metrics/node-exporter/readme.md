@@ -13,11 +13,13 @@ helm show values prometheus-community/prometheus-node-exporter --version 4.43.0 
 ```
 
 ```bash
+
 helm template \
-  kps \
+  node-exporter \
   prometheus-community/prometheus-node-exporter \
   --version 4.43.0 \
   --values ./metrics/node-exporter/values.yaml \
+  --namespace node-exporter \
   | sed \
     -e '\|helm.sh/chart|d' \
     -e '\|# Source:|d' \
@@ -28,6 +30,7 @@ helm template \
     -e '/^ *$/d' \
     -e '\|httpHeaders\:$|d' \
   > ./metrics/node-exporter/nodeExporter.gen.yaml
+
 ```
 
 # Deploy
