@@ -1,0 +1,143 @@
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: alert-k8s-container-cpu-throttling
+  namespace: kube-system
+  labels:
+    prometheus.io/instance: main
+spec:
+  groups:
+  - name: k8s-container-cpu-throttling
+    rules:
+    - alert: CPUThrottlingHigh
+      annotations:
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }}:
+          {{ $value | humanizePercentage }} CPU throttling.
+        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/cputhrottlinghigh
+        summary: Processes experience elevated CPU throttling.
+      expr: |-
+        sum(increase(container_cpu_cfs_throttled_periods_total{container!="", job="kubelet", metrics_path="/metrics/cadvisor", }[5m])) without (id, metrics_path, name, image, endpoint, job, node)
+          /
+        sum(increase(container_cpu_cfs_periods_total{job="kubelet", metrics_path="/metrics/cadvisor", }[5m])) without (id, metrics_path, name, image, endpoint, job, node)
+          > ( 25 / 100 )
+      for: 15m
+      labels:
+        severity: info
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: alert-kubelet-system
+  namespace: kube-system
+  labels:
+    prometheus.io/instance: main
+spec:
+  groups:
+  - name: kubelet-system
+    rules:
+    - alert: KubeletPlegDurationHigh
+      annotations:
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          The Kubelet Pod Lifecycle Event Generator has a 99th percentile duration of {{ $value }} seconds on node {{ $labels.node }}.
+        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeletplegdurationhigh
+        summary: Kubelet Pod Lifecycle Event Generator is taking too long to relist.
+      expr: node_quantile:kubelet_pleg_relist_duration_seconds:histogram_quantile{quantile="0.99"} >= 10
+      for: 5m
+      labels:
+        severity: warning
+    - alert: KubeletPodStartUpLatencyHigh
+      annotations:
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          Kubelet Pod startup 99th percentile latency is {{ $value }} seconds on node {{ $labels.node }}.
+        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeletpodstartuplatencyhigh
+        summary: Kubelet Pod startup latency is too high.
+      expr: |-
+        histogram_quantile(0.99,
+          sum(rate(kubelet_pod_worker_duration_seconds_bucket{job="kubelet", metrics_path="/metrics"}[5m]))
+          by (cluster, instance, le)
+        ) * on (cluster, instance)
+        group_left(node)
+        kubelet_node_name{job="kubelet", metrics_path="/metrics"} > 60
+      for: 15m
+      labels:
+        severity: warning
+    - alert: KubeletClientCertificateExpiration
+      annotations:
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          Client certificate for Kubelet on node {{ $labels.node }} expires in {{ $value | humanizeDuration }}.
+        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeletclientcertificateexpiration
+        summary: Kubelet client certificate is about to expire.
+      expr: kubelet_certificate_manager_client_ttl_seconds < 604800
+      labels:
+        severity: warning
+    - alert: KubeletClientCertificateExpiration
+      annotations:
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          Client certificate for Kubelet on node {{ $labels.node }} expires in {{ $value | humanizeDuration }}.
+        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeletclientcertificateexpiration
+        summary: Kubelet client certificate is about to expire.
+      expr: kubelet_certificate_manager_client_ttl_seconds < 86400
+      labels:
+        severity: critical
+    - alert: KubeletServerCertificateExpiration
+      annotations:
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          Server certificate for Kubelet on node {{ $labels.node }} expires in {{ $value | humanizeDuration }}.
+        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeletservercertificateexpiration
+        summary: Kubelet server certificate is about to expire.
+      expr: kubelet_certificate_manager_server_ttl_seconds < 604800
+      labels:
+        severity: warning
+    - alert: KubeletServerCertificateExpiration
+      annotations:
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          Server certificate for Kubelet on node {{ $labels.node }} expires in {{ $value | humanizeDuration }}.
+        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeletservercertificateexpiration
+        summary: Kubelet server certificate is about to expire.
+      expr: kubelet_certificate_manager_server_ttl_seconds < 86400
+      labels:
+        severity: critical
+    - alert: KubeletClientCertificateRenewalErrors
+      annotations:
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          Kubelet on node {{ $labels.node }} has failed to renew its client certificate ({{ $value | humanize }} errors in the last 5 minutes).
+        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeletclientcertificaterenewalerrors
+        summary: Kubelet has failed to renew its client certificate.
+      expr: increase(kubelet_certificate_manager_client_expiration_renew_errors[5m]) > 0
+      for: 15m
+      labels:
+        severity: warning
+    - alert: KubeletServerCertificateRenewalErrors
+      annotations:
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          Kubelet on node {{ $labels.node }} has failed to renew its server certificate ({{ $value | humanize }} errors in the last 5 minutes).
+        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeletservercertificaterenewalerrors
+        summary: Kubelet has failed to renew its server certificate.
+      expr: increase(kubelet_server_expiration_renew_errors[5m]) > 0
+      for: 15m
+      labels:
+        severity: warning
+    - alert: KubeletDown
+      annotations:
+        description: >-
+          k8s cluster {{ $labels.cluster }}:
+          Kubelet has disappeared from Prometheus target discovery.
+        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeletdown
+        summary: Target disappeared from Prometheus target discovery.
+      expr: absent(up{job="kubelet", metrics_path="/metrics"} == 1)
+      for: 15m
+      labels:
+        severity: critical
