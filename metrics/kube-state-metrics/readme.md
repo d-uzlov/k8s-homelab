@@ -31,6 +31,27 @@ helm template \
   > ./metrics/kube-state-metrics/kube-state-metrics.gen.yaml
 ```
 
+# Local config setup
+
+```bash
+
+mkdir -p ./metrics/kube-state-metrics/env/
+clusterName=
+cat << EOF > ./metrics/kube-state-metrics/env/patch-cluster-tag.yaml
+- op: add
+  path: /spec/endpoints/0/relabelings/-
+  value:
+    targetLabel: cluster
+    replacement: $clusterName
+- op: add
+  path: /spec/endpoints/1/relabelings/-
+  value:
+    targetLabel: cluster
+    replacement: $clusterName
+EOF
+
+```
+
 # Deploy
 
 ```bash
