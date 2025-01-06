@@ -3,7 +3,6 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: node-exporter
-  namespace: node-exporter
   labels:
     prometheus.io/instance: main
 spec:
@@ -25,6 +24,8 @@ spec:
       sourceLabels:
       - __meta_kubernetes_endpoint_node_name
       targetLabel: instance
+    - action: labeldrop
+      regex: container|endpoint|namespace|pod|service
     metricRelabelings:
     - action: keep
       sourceLabels:
@@ -66,4 +67,12 @@ spec:
       # they are kinda impossible to correlate with k8s objects
       # they don't seem to have any real traffic reported
       regex: node_network_.*;lxc.*
+      separator: ;
+    - action: drop
+      sourceLabels:
+      - __name__
+      - mountpoint
+      # /run/containerd/ is ephemeral container filesystems
+      # /run/credentials/ is systemd credentials
+      regex: node_filesystem_.*;(/run/containerd/.+|/run/credentials/systemd-.+)
       separator: ;
