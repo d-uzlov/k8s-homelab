@@ -75,18 +75,3 @@ Don't forget to deploy additional dashboards:
 kl delete -k ./metrics/kube-prometheus-stack/grafana/
 kl delete ns kps-grafana
 ```
-
-# TODO
-
-Maybe it's better to change default k8s metrics polling interval.
-Even if prometheus polls metrics each second,
-k8s metrics are updated only once every 10 seconds, or slower.
-
-Keywords: `housekeeping-interval`.
-
-# TODO
-
-cadvisor high cardinality:
-- prober_probe_duration_seconds
-
-Need to check out kubelet metrics.

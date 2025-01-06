@@ -1,5 +1,9 @@
 
-# Setup
+# Monitoring setup
+
+See here: [monitoring](./monitoring/readme.md).
+
+# Dashboards
 
 ```bash
 # remove min interval settings from all panels to force them to use the default data source min interval
@@ -12,10 +16,10 @@ sed -i 's/^  \"refresh\": \".*s\",/  \"refresh\": \"auto\",/' ./metrics/componen
 # remove local variable values
 sed -i '/        \"current\": {/,/        }\,/d' ./metrics/component-monitoring/k8s/*.json
 
-kl apply -k ./metrics/component-monitoring/k8s/
+kl apply -k ./metrics/component-monitoring/k8s/dashboards
 ```
 
-# Cleanup
+# Dashboards cleanup
 
 ```bash
 kl delete -k ./metrics/component-monitoring/k8s/
@@ -40,3 +44,14 @@ Add node name into pod detailed info.
 Add "currently running" status into pod tables.
 
 Add throttling info into pod tables.
+
+Maybe it's better to change default k8s metrics polling interval.
+Even if prometheus polls metrics each second,
+k8s metrics are updated only once every 10 seconds, or slower.
+
+Keywords: `housekeeping-interval`.
+
+cadvisor high cardinality:
+- prober_probe_duration_seconds
+
+Need to check out kubelet metrics.
