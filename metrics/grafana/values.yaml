@@ -1,4 +1,3 @@
-
 rbac:
   create: true
   namespaced: true
@@ -18,11 +17,6 @@ automountServiceAccountToken: true
 deploymentStrategy:
   type: RollingUpdate
 
-## Use an alternate scheduler, e.g. "stork".
-## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
-##
-# schedulerName: "default-scheduler"
-
 testFramework:
   enabled: false
 
@@ -37,13 +31,13 @@ gossipPortName: gossip
 ## Deployment annotations
 # annotations: {}
 
-resources: {}
-#  limits:
-#    cpu: 100m
-#    memory: 128Mi
-#  requests:
-#    cpu: 100m
-#    memory: 128Mi
+resources:
+  limits:
+    cpu: 300m
+    memory: 200Mi
+  requests:
+    cpu: 50m
+    memory: 128Mi
 
 ## Enable persistence using Persistent Volume Claims
 ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
@@ -53,7 +47,7 @@ persistence:
   enabled: false
   # storageClassName: default
   accessModes:
-    - ReadWriteOnce
+  - ReadWriteOnce
   size: 10Gi
   ## Name of an existing PVC. Can be templated.
   # existingClaim:
@@ -72,36 +66,18 @@ admin:
   userKey: username
   passwordKey: password
 
-## Pass the plugins you want installed as a list.
-##
-plugins: []
-  # - digrich-bubblechart-panel
-  # - grafana-clock-panel
-  ## You can also use other plugin download URL, as long as they are valid zip files,
-  ## and specify the name of the plugin after the semicolon. Like this:
-  # - https://grafana.com/api/plugins/marcusolsson-json-datasource/versions/1.3.2/download;marcusolsson-json-datasource
-
-## Reference to external ConfigMap per provider. Use provider name as key and ConfigMap name as value.
-## A provider dashboards must be defined either by external ConfigMaps or in values.yaml, not in both.
-## ConfigMap data example:
-##
-## data:
-##   example-dashboard.json: |
-##     RAW_JSON
-##
-dashboardsConfigMaps: {}
-#  default: ""
-
 ## Sidecars that collect the configmaps with specified label and stores the included files them into the respective folders
 ## Requires at least Grafana 5 to work and can't be used together with parameters dashboardProviders, datasources and dashboards
 sidecar:
-  resources: {}
-#   limits:
-#     cpu: 100m
-#     memory: 100Mi
-#   requests:
-#     cpu: 50m
-#     memory: 50Mi
+  resources:
+    limits:
+      # there is an initial surge on startup, but most of the time sidecars do nothing
+      cpu: 100m
+      # memory usage per sidecar is consistent but high :-(
+      memory: 100Mi
+    requests:
+      cpu: 1m
+      memory: 85Mi
   enableUniqueFilenames: true
   # Log level default for all sidecars. Can be one of: DEBUG, INFO, WARN, ERROR, CRITICAL. Defaults to INFO
   # logLevel: INFO
@@ -235,13 +211,5 @@ sidecar:
     # this is how long your client waits before realizing & dropping the connection.
     # defaults to 66sec (sic!)
     # watchClientTimeout: 60
-
-## Override the deployment namespace
-##
-namespaceOverride: ""
-
-## Number of old ReplicaSets to retain
-##
-revisionHistoryLimit: 10
 
 useStatefulSet: false
