@@ -10,19 +10,6 @@ spec:
   - name: node.rules
     rules:
     - expr: |-
-        topk by (cluster, namespace, pod) (1,
-          max by (cluster, node, namespace, pod) (
-            label_replace(kube_pod_info{job="kube-state-metrics",node!=""}, "pod", "$1", "pod", "(.*)")
-        ))
-      record: 'node_namespace_pod:kube_pod_info:'
-    - expr: |-
-        count by (cluster, node) (
-          node_cpu_seconds_total{mode="idle",job="node-exporter"}
-          * on (cluster, namespace, pod) group_left(node)
-          topk by (cluster, namespace, pod) (1, node_namespace_pod:kube_pod_info:)
-        )
-      record: node:node_num_cpu:sum
-    - expr: |-
         sum(
           node_memory_MemAvailable_bytes{job="node-exporter"} or
           (
@@ -33,6 +20,7 @@ spec:
           )
         ) by (cluster)
       record: :node_memory_MemAvailable_bytes:sum
+      # TODO this is bullshit, there isn't even "node" label on metrics
     - expr: |-
         avg by (cluster, node) (
           sum without (mode) (
