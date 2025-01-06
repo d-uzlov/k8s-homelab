@@ -5,11 +5,32 @@ Kubelet provides all of the container metrics,
 so it can be considered mandatory for deployment.
 
 ```bash
-kl apply -f ./metrics/component-monitoring/k8s/monitoring/kubelet-service-monitor.yaml
-kl apply -f ./metrics/component-monitoring/k8s/monitoring/kubelet-alerts.yaml
+
+mkdir -p ./metrics/component-monitoring/kubelet/env/
+clusterName=
+cat << EOF > ./metrics/component-monitoring/kubelet/env/patch-cluster-tag.yaml
+- op: add
+  path: /spec/endpoints/0/relabelings/-
+  value:
+    targetLabel: cluster
+    replacement: $clusterName
+EOF
+
+kl apply -k ./metrics/component-monitoring/kubelet/
 ```
 
-Manual metric checking:
+For alerts and dashboards to work properly,
+you need to also deploy [kube-state-metrics](../../../kube-state-metrics/readme.md).
+
+Don't forget to deploy grafana dashboards: [dashboards](./dashboards/readme.md).
+
+# Cleanup
+
+```bash
+kl delete -k ./metrics/component-monitoring/kubelet/
+```
+
+# Manual metric checking
 
 ```bash
 bearer=$(kl -n prometheus exec sts/prometheus-main -- cat /var/run/secrets/kubernetes.io/serviceaccount/token)
