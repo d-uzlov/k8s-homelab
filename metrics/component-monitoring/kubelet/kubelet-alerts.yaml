@@ -19,9 +19,9 @@ spec:
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/cputhrottlinghigh
         summary: Processes experience elevated CPU throttling.
       expr: |-
-        sum(increase(container_cpu_cfs_throttled_periods_total{container!="", job="kubelet", metrics_path="/metrics/cadvisor", }[5m])) without (id, metrics_path, name, image, endpoint, job, node)
+        sum(increase(container_cpu_cfs_throttled_periods_total{}[5m])) without (id, metrics_path, name, image, endpoint, job, node)
           /
-        sum(increase(container_cpu_cfs_periods_total{job="kubelet", metrics_path="/metrics/cadvisor", }[5m])) without (id, metrics_path, name, image, endpoint, job, node)
+        sum(increase(container_cpu_cfs_periods_total{}[5m])) without (id, metrics_path, name, image, endpoint, job, node)
           > ( 25 / 100 )
       for: 15m
       labels:
@@ -58,11 +58,11 @@ spec:
         summary: Kubelet Pod startup latency is too high.
       expr: |-
         histogram_quantile(0.99,
-          sum(rate(kubelet_pod_worker_duration_seconds_bucket{job="kubelet", metrics_path="/metrics"}[5m]))
+          sum(rate(kubelet_pod_worker_duration_seconds_bucket{}[5m]))
           by (cluster, instance, le)
         ) * on (cluster, instance)
         group_left(node)
-        kubelet_node_name{job="kubelet", metrics_path="/metrics"} > 60
+        kubelet_node_name{} > 60
       for: 15m
       labels:
         severity: warning
@@ -135,7 +135,7 @@ spec:
           Kubelet has disappeared from Prometheus target discovery.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeletdown
         summary: Target disappeared from Prometheus target discovery.
-      expr: absent(up{job="kubelet", metrics_path="/metrics"} == 1)
+      expr: absent(up{job="kubelet-main"} == 1)
       for: 15m
       labels:
         severity: critical
