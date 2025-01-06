@@ -7,7 +7,7 @@ metadata:
     prometheus.io/instance: main
 spec:
   groups:
-  - name: k8s.rules.container_cpu_usage_seconds_total
+  - name: record-k8s-container-cpu-usage-seconds-total
     rules:
     - expr: |-
         sum by (cluster, namespace, pod, container) (
@@ -20,80 +20,12 @@ spec:
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: record-k8s-container-memory-cache
-  labels:
-    prometheus.io/instance: main
-spec:
-  groups:
-  - name: k8s.rules.container_memory_cache
-    rules:
-    - expr: |-
-        container_memory_cache{job="kubelet", metrics_path="/metrics/cadvisor", image!=""}
-        * on (cluster, namespace, pod) group_left(node) topk by (cluster, namespace, pod) (1,
-          max by (cluster, namespace, pod, node) (kube_pod_info{node!=""})
-        )
-      record: node_namespace_pod_container:container_memory_cache
----
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: record-k8s-container-memory-rss
-  labels:
-    prometheus.io/instance: main
-spec:
-  groups:
-  - name: k8s.rules.container_memory_rss
-    rules:
-    - expr: |-
-        container_memory_rss{job="kubelet", metrics_path="/metrics/cadvisor", image!=""}
-        * on (cluster, namespace, pod) group_left(node) topk by (cluster, namespace, pod) (1,
-          max by (cluster, namespace, pod, node) (kube_pod_info{node!=""})
-        )
-      record: node_namespace_pod_container:container_memory_rss
----
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: record-k8s-container-memory-swap
-  labels:
-    prometheus.io/instance: main
-spec:
-  groups:
-  - name: k8s.rules.container_memory_swap
-    rules:
-    - expr: |-
-        container_memory_swap{job="kubelet", metrics_path="/metrics/cadvisor", image!=""}
-        * on (cluster, namespace, pod) group_left(node) topk by (cluster, namespace, pod) (1,
-          max by (cluster, namespace, pod, node) (kube_pod_info{node!=""})
-        )
-      record: node_namespace_pod_container:container_memory_swap
----
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: record-k8s-container-memory-working-set-bytes
-  labels:
-    prometheus.io/instance: main
-spec:
-  groups:
-  - name: k8s.rules.container_memory_working_set_bytes
-    rules:
-    - expr: |-
-        container_memory_working_set_bytes{job="kubelet", metrics_path="/metrics/cadvisor", image!=""}
-        * on (cluster, namespace, pod) group_left(node) topk by (cluster, namespace, pod) (1,
-          max by (cluster, namespace, pod, node) (kube_pod_info{node!=""})
-        )
-      record: node_namespace_pod_container:container_memory_working_set_bytes
----
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
   name: record-k8s-container-resource
   labels:
     prometheus.io/instance: main
 spec:
   groups:
-  - name: k8s.rules.container_resource
+  - name: record-k8s-container-resource
     rules:
     - expr: |-
         kube_pod_container_resource_requests{resource="memory",job="kube-state-metrics"}  * on (namespace, pod, cluster)

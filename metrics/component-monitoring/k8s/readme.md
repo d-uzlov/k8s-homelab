@@ -16,7 +16,7 @@ sed -i 's/^  \"refresh\": \".*s\",/  \"refresh\": \"auto\",/' ./metrics/componen
 # remove local variable values
 sed -i '/        \"current\": {/,/        }\,/d' ./metrics/component-monitoring/k8s/*.json
 
-kl apply -k ./metrics/component-monitoring/k8s/dashboards
+kl apply -k ./metrics/component-monitoring/k8s/dashboards/
 ```
 
 # Dashboards cleanup
