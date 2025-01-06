@@ -77,11 +77,15 @@ kl delete ns node-exporter
 ```bash
 # remove min interval settings from all panels to force them to use the default data source min interval
 # be careful: some panels need bigger interval to work properly
-sed -i '/\"interval\":/d' ./metrics/kube-prometheus-stack/component-monitors/k8s/*.json
+sed -i '/\"interval\":/d' ./metrics/node-exporter/dashboards/*.json
 # remove id to avoid collisions
-sed -i 's/^  \"id\": .*,/  \"id\": null,/' ./metrics/kube-prometheus-stack/component-monitors/k8s/*.json
+sed -i 's/^  \"id\": .*,/  \"id\": null,/' ./metrics/node-exporter/dashboards/*.json
 # set dashboard refresh interval to auto
-sed -i 's/^  \"refresh\": \".*s\",/  \"refresh\": \"auto\",/' ./metrics/kube-prometheus-stack/component-monitors/k8s/*.json
+sed -i 's/^  \"refresh\": \".*s\",/  \"refresh\": \"auto\",/' ./metrics/node-exporter/dashboards/*.json
+# remove local variable values
+sed -i '/        \"current\": {/,/        }\,/d' ./metrics/node-exporter/dashboards/*.json
+# remove hardcoded timezone
+sed -i 's/^  \"timezone\": \".*s\",/  \"timezone\": \"browser\",/' ./metrics/node-exporter/dashboards/*.json
 ```
 
 # Manual metric checking
