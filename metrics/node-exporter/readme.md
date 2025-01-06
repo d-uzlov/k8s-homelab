@@ -93,7 +93,3 @@ kl -n node-exporter describe svc node-exporter
 kl exec deployments/alpine -- apk add curl
 kl exec deployments/alpine -- curl -sS --insecure http://node-exporter.node-exporter:9100/metrics > ./node-exporter.log
 ```
-
-# TODO
-
-drop fstype="tmpfs" and fstype="ramfs" filesystem info?

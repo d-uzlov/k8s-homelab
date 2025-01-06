@@ -104,7 +104,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "cluster:node_cpu:ratio_rate5m{cluster=\"$cluster\", namespace=~\"$namespace\"}",
+          "expr": "avg (sum without (mode) (\r\n  rate(node_cpu_seconds_total{mode!=\"idle\", mode!=\"iowait\", mode!=\"steal\", job=\"node-exporter\", cluster=\"$cluster\", namespace=~\"$namespace\"}[5m])\r\n))",
           "format": "time_series",
           "instant": true,
           "legendFormat": "__auto",
@@ -309,14 +309,14 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "1 - sum(:node_memory_MemAvailable_bytes:sum{cluster=\"$cluster\"}) / sum(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=\"$cluster\"})",
+          "expr": "1 - sum(node_memory_MemAvailable_bytes{cluster=\"$cluster\"}) / sum(node_memory_MemTotal_bytes{job=\"node-exporter\",cluster=\"$cluster\"})",
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
           "refId": "A"
         }
       ],
-      "title": "Memory Utilisation",
+      "title": "Memory Utilization",
       "type": "stat"
     },
     {
@@ -2169,7 +2169,6 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "hide": 2,
         "label": "cluster",
         "name": "cluster",
         "query": "label_values(up{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\"}, cluster)",
