@@ -8,13 +8,15 @@ See here: [monitoring](./monitoring/readme.md).
 ```bash
 # remove min interval settings from all panels to force them to use the default data source min interval
 # be careful: some panels need bigger interval to work properly
-sed -i '/\"interval\":/d' ./metrics/component-monitoring/k8s/*.json
+sed -i '/\"interval\":/d' ./metrics/component-monitoring/k8s/dashboards/*.json
 # remove id to avoid collisions
-sed -i 's/^  \"id\": .*,/  \"id\": null,/' ./metrics/component-monitoring/k8s/*.json
+sed -i 's/^  \"id\": .*,/  \"id\": null,/' ./metrics/component-monitoring/k8s/dashboards/*.json
 # set dashboard refresh interval to auto
-sed -i 's/^  \"refresh\": \".*s\",/  \"refresh\": \"auto\",/' ./metrics/component-monitoring/k8s/*.json
+sed -i 's/^  \"refresh\": \".*s\",/  \"refresh\": \"auto\",/' ./metrics/component-monitoring/k8s/dashboards/*.json
 # remove local variable values
-sed -i '/        \"current\": {/,/        }\,/d' ./metrics/component-monitoring/k8s/*.json
+sed -i '/        \"current\": {/,/        }\,/d' ./metrics/component-monitoring/k8s/dashboards/*.json
+# remove hardcoded timezone
+sed -i 's/^  \"timezone\": \".*s\",/  \"timezone\": \"browser\",/' ./metrics/component-monitoring/k8s/dashboards/*.json
 
 kl apply -k ./metrics/component-monitoring/k8s/dashboards/
 ```

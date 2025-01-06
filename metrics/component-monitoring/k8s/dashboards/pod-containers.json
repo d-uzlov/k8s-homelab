@@ -646,7 +646,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(container) (\r\n    kube_pod_container_resource_requests{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\",container=~\"$container\"}\r\n)\r\n",
+          "expr": "sum by(container) (\r\n    kube_pod_container_resource_requests{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\",container=~\"$container\", invalid=$enableLimits}\r\n)\r\n",
           "hide": false,
           "instant": false,
           "legendFormat": "requests: {{container}}",
@@ -659,7 +659,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(container) (\r\n    kube_pod_container_resource_limits{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\", container=~\"$container\"}\r\n)\r\n",
+          "expr": "sum by(container) (\r\n    kube_pod_container_resource_limits{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\", container=~\"$container\", invalid=$enableLimits}\r\n)\r\n",
           "hide": false,
           "instant": false,
           "legendFormat": "limits: {{container}}",
@@ -1422,7 +1422,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (container) (kube_pod_container_resource_requests{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container!=\"\", container=~\"$container\"})",
+          "expr": "sum by (container) (kube_pod_container_resource_requests{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\", invalid=$enableLimits})",
           "hide": false,
           "instant": false,
           "legendFormat": "requests: {{container}}",
@@ -1435,7 +1435,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (container) (kube_pod_container_resource_limits{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container!=\"\", container=~\"$container\"})",
+          "expr": "sum by (container) (kube_pod_container_resource_limits{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\", invalid=$enableLimits})",
           "hide": false,
           "instant": false,
           "legendFormat": "limits: {{container}}",
@@ -1611,7 +1611,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (container) (kube_pod_container_resource_requests{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container!=\"\", container=~\"$container\"})",
+          "expr": "sum by (container) (kube_pod_container_resource_requests{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\", invalid=$enableLimits})",
           "hide": false,
           "instant": false,
           "legendFormat": "requests: {{container}}",
@@ -1624,7 +1624,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (container) (kube_pod_container_resource_limits{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container!=\"\", container=~\"$container\"})",
+          "expr": "sum by (container) (kube_pod_container_resource_limits{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\", invalid=$enableLimits})",
           "hide": false,
           "instant": false,
           "legendFormat": "limits: {{container}}",
@@ -1800,7 +1800,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (container) (kube_pod_container_resource_requests{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container!=\"\", container=~\"$container\"})\r\n",
+          "expr": "sum by (container) (kube_pod_container_resource_requests{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\", invalid=$enableLimits})\r\n",
           "hide": false,
           "instant": false,
           "legendFormat": "requests: {{container}}",
@@ -1813,7 +1813,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (container) (kube_pod_container_resource_limits{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container!=\"\", container=~\"$container\"})\r\n",
+          "expr": "sum by (container) (kube_pod_container_resource_limits{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\", invalid=$enableLimits})\r\n",
           "hide": false,
           "instant": false,
           "legendFormat": "limits: {{container}}",
@@ -1952,7 +1952,7 @@
         "x": 12,
         "y": 50
       },
-      "id": 29,
+      "id": 22,
       "maxDataPoints": 300,
       "options": {
         "legend": {
@@ -1977,19 +1977,45 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(max_over_time(container_memory_cache{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container!=\"\", container=~\"$container\", image!=\"\"}[$__rate_interval])) by (container, name)",
+          "expr": "sum by (container, name) (max_over_time(container_memory_rss{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container!=\"\", container=~\"$container\", image!=\"\"}[$__rate_interval]))",
           "instant": false,
           "legendFormat": "{{container}}, name={{name}}",
           "range": true,
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (container) (kube_pod_container_resource_requests{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\", invalid=$enableLimits})",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "requests: {{container}}",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (container) (kube_pod_container_resource_limits{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\", invalid=$enableLimits})",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "limits: {{container}}",
+          "range": true,
+          "refId": "C"
         }
       ],
-      "title": "Memory Usage (Cache)",
+      "title": "Memory Usage (RSS)",
       "transformations": [
         {
           "id": "renameByRegex",
           "options": {
-            "regex": "(.*), name=(.{8})(.*)",
+            "regex": "(.*), name=(.{8}).*",
             "renamePattern": "$1, $2"
           }
         }
@@ -2115,7 +2141,7 @@
         "x": 0,
         "y": 58
       },
-      "id": 22,
+      "id": 29,
       "maxDataPoints": 300,
       "options": {
         "legend": {
@@ -2140,45 +2166,19 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (container, name) (max_over_time(container_memory_rss{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container!=\"\", container=~\"$container\", image!=\"\"}[$__rate_interval]))",
+          "expr": "sum(max_over_time(container_memory_cache{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container!=\"\", container=~\"$container\", image!=\"\"}[$__rate_interval])) by (container, name)",
           "instant": false,
           "legendFormat": "{{container}}, name={{name}}",
           "range": true,
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "sum by (container) (kube_pod_container_resource_requests{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container!=\"\", container=~\"$container\"})",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "requests: {{container}}",
-          "range": true,
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "sum by (container) (kube_pod_container_resource_limits{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container!=\"\", container=~\"$container\"})",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "limits: {{container}}",
-          "range": true,
-          "refId": "C"
         }
       ],
-      "title": "Memory Usage (RSS)",
+      "title": "Memory Usage (Cache)",
       "transformations": [
         {
           "id": "renameByRegex",
           "options": {
-            "regex": "(.*), name=(.{8}).*",
+            "regex": "(.*), name=(.{8})(.*)",
             "renamePattern": "$1, $2"
           }
         }
@@ -2410,7 +2410,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -2512,7 +2513,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -2614,7 +2616,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -2716,7 +2719,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -2801,7 +2805,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -3069,7 +3074,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -3233,6 +3239,25 @@
         "refresh": 2,
         "sort": 1,
         "type": "query"
+      },
+      {
+        "description": "",
+        "label": "Show limits",
+        "name": "enableLimits",
+        "options": [
+          {
+            "selected": true,
+            "text": "Show",
+            "value": "\"\""
+          },
+          {
+            "selected": false,
+            "text": "Hide",
+            "value": "\"invalid123\""
+          }
+        ],
+        "query": "Show : \"\", Hide : \"invalid123\"",
+        "type": "custom"
       }
     ]
   },
