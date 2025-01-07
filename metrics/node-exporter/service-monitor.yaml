@@ -17,20 +17,15 @@ spec:
     scheme: http
     scrapeTimeout: 10s
     relabelings:
-    # turn instance from ip:port into node name
-    - action: replace
-      regex: ^(.*)$
-      replacement: $1
-      separator: ;
-      sourceLabels:
-      - __meta_kubernetes_endpoint_node_name
-      targetLabel: instance
+    - targetLabel: instance # turn instance from ip:port into node name
+      sourceLabels: [ __meta_kubernetes_endpoint_node_name ]
     - action: labeldrop
       regex: container|endpoint|namespace|pod|service
+    - targetLabel: cluster_type
+      replacement: k8s
     metricRelabelings:
     - action: keep
-      sourceLabels:
-      - __name__
+      sourceLabels: [ __name__ ]
       regex: "\
         node_arp_entries|\
         node_boot_time_seconds|\
@@ -61,18 +56,14 @@ spec:
         node_vmstat_.*|\
         "
     - action: drop
-      sourceLabels:
-      - __name__
-      - device
+      sourceLabels: [ __name__, device ]
       # drop lxc* interface metrics
       # they are kinda impossible to correlate with k8s objects
       # they don't seem to have any real traffic reported
       regex: node_network_.*;lxc.*
       separator: ;
     - action: drop
-      sourceLabels:
-      - __name__
-      - mountpoint
+      sourceLabels: [ __name__, mountpoint ]
       # /run/containerd/ is ephemeral container filesystems
       # /run/credentials/ is systemd credentials
       regex: node_filesystem_.*;(/run/containerd/.+|/run/credentials/systemd-.+)

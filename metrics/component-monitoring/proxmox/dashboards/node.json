@@ -67,8 +67,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           },
@@ -277,6 +276,11 @@
               "cluster 3": true,
               "cluster 4": true,
               "cluster 5": true,
+              "cluster_type 1": true,
+              "cluster_type 2": true,
+              "cluster_type 3": true,
+              "cluster_type 4": true,
+              "cluster_type 5": true,
               "id": true,
               "instance": true,
               "instance 1": true,
@@ -363,8 +367,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "orange",
@@ -480,8 +483,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "yellow",
@@ -570,8 +572,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           }
@@ -952,7 +953,6 @@
           "expr": "sum by (id, name, type) (pve_guest_info{cluster=\"$cluster\", node=~\"$node_name\"})",
           "format": "table",
           "instant": true,
-          "interval": "",
           "legendFormat": "",
           "range": false,
           "refId": "id, name and type"
@@ -1156,8 +1156,7 @@
             "mode": "percentage",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "yellow",
@@ -1208,7 +1207,6 @@
           "expr": "(pve_disk_usage_bytes{cluster=\"$cluster\", id=~\"storage/$node_name/.+\"} / pve_disk_size_bytes) * on (id, cluster) group_left(storage) pve_storage_info",
           "format": "time_series",
           "instant": true,
-          "interval": "",
           "intervalFactor": 1,
           "legendFormat": "{{id}}",
           "refId": "A"
@@ -1315,7 +1313,6 @@
           "editorMode": "code",
           "expr": "(max_over_time(pve_cpu_usage_ratio{cluster=\"$cluster\"}[$__rate_interval]) * on(id, cluster) group_left(name, type) pve_guest_info{cluster=\"$cluster\", node=~\"$node_name\"}) and on(id, cluster) pve_up == 1",
           "format": "time_series",
-          "interval": "",
           "intervalFactor": 1,
           "legendFormat": "{{name}} ({{type}})",
           "range": true,
@@ -1423,7 +1420,6 @@
           "editorMode": "code",
           "expr": "(pve_memory_usage_bytes{cluster=\"$cluster\"} / pve_memory_size_bytes * on(id, cluster) group_left(name, type) pve_guest_info{cluster=\"$cluster\", node=~\"$node_name\"}) and on(id, cluster) pve_up == 1",
           "format": "time_series",
-          "interval": "",
           "intervalFactor": 1,
           "legendFormat": "{{name}} ({{type}})",
           "range": true,
@@ -1503,7 +1499,6 @@
         "y": 60
       },
       "id": 13,
-      "interval": "15",
       "maxDataPoints": 200,
       "options": {
         "legend": {
@@ -1533,7 +1528,6 @@
           "expr": "((rate(pve_network_receive_bytes{cluster=\"$cluster\"}[$__rate_interval])+rate(pve_network_transmit_bytes{cluster=\"$cluster\"}[$__rate_interval])) * on(id, cluster) group_left(name, type) pve_guest_info{cluster=\"$cluster\", node=~\"$node_name\"}) and on(id, cluster) pve_up == 1",
           "format": "time_series",
           "hide": false,
-          "interval": "",
           "intervalFactor": 1,
           "legendFormat": "{{name}} ({{type}})",
           "range": true,
@@ -1614,7 +1608,6 @@
         "y": 71
       },
       "id": 12,
-      "interval": "30",
       "maxDataPoints": 200,
       "options": {
         "legend": {
@@ -1642,7 +1635,6 @@
           "editorMode": "code",
           "expr": "(\r\n        (\r\n            rate(pve_disk_write_bytes{cluster=\"$cluster\"}[$__rate_interval])\r\n            +\r\n            rate(pve_disk_read_bytes[$__rate_interval])\r\n        )\r\n        *\r\n        on(id, cluster) group_left(name, type) pve_guest_info{cluster=\"$cluster\", node=~\"$node_name\"}\r\n        \r\n    \r\n) and on(id, cluster) pve_up == 1",
           "format": "time_series",
-          "interval": "",
           "intervalFactor": 1,
           "legendFormat": "{{name}} ({{type}})",
           "range": true,
@@ -1676,19 +1668,19 @@
           "type": "prometheus",
           "uid": "${data_source}"
         },
-        "definition": "label_values(pve_node_info,cluster)",
+        "definition": "query_result(label_join(up{job=\"proxmox\"}, \"human_name\", \"/\", \"cluster_type\", \"cluster\"))",
         "description": "",
         "includeAll": false,
         "label": "Cluster",
         "name": "cluster",
         "options": [],
         "query": {
-          "qryType": 1,
-          "query": "label_values(pve_node_info,cluster)",
+          "qryType": 3,
+          "query": "query_result(label_join(up{job=\"proxmox\"}, \"human_name\", \"/\", \"cluster_type\", \"cluster\"))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
-        "regex": "",
+        "regex": "/human_name=\"(?<text>[^\"]+)|cluster=\"(?<value>[^\"]+)/g",
         "sort": 1,
         "type": "query"
       },
@@ -1723,6 +1715,5 @@
   "timezone": "",
   "title": "Proxmox / Nodes",
   "uid": "cdnsz3qi9ybk0f",
-  "version": 4,
   "weekStart": ""
 }
