@@ -75,6 +75,7 @@ kl delete ns node-exporter
 # Updating dashboards
 
 ```bash
+
 # remove min interval settings from all panels to force them to use the default data source min interval
 # be careful: some panels need bigger interval to work properly
 sed -i '/\"interval\":/d' ./metrics/node-exporter/dashboards/*.json
@@ -86,6 +87,7 @@ sed -i 's/^  \"refresh\": \".*s\",/  \"refresh\": \"auto\",/' ./metrics/node-exp
 sed -i '/        \"current\": {/,/        }\,/d' ./metrics/node-exporter/dashboards/*.json
 # remove hardcoded timezone
 sed -i 's/^  \"timezone\": \".*s\",/  \"timezone\": \"browser\",/' ./metrics/node-exporter/dashboards/*.json
+
 ```
 
 # Manual metric checking
