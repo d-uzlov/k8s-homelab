@@ -12,7 +12,12 @@ sudo tar -C /usr/local -xzf $filename &&
 rm $filename
 
 cat << "EOF" > ~/.bashrc.d/0-gopath.sh
+if [[ $PATH != *"/usr/local/go/bin"* ]];then
 export PATH=$PATH:/usr/local/go/bin
+fi
+if [[ $PATH != *"$HOME/go/bin/"* ]];then
+export PATH=$PATH:$HOME/go/bin/
+fi
 EOF
 . ~/.bashrc.d/0-gopath.sh
 

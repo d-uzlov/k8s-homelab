@@ -19,9 +19,9 @@ Commands in it are helpful in automated setups that transform this file into `.s
 # Required tools
 
 ```bash
-which unzip > /dev/null || { sudo apt update; sudo apt install -y unzip; }
-which curl > /dev/null || { sudo apt update; sudo apt install -y curl; }
-which wget > /dev/null || { sudo apt update; sudo apt install -y wget; }
+which unzip > /dev/null || { sudo apt-get update; sudo apt-get install -y unzip; }
+which curl  > /dev/null || { sudo apt-get update; sudo apt-get install -y curl; }
+which wget  > /dev/null || { sudo apt-get update; sudo apt-get install -y wget; }
 ```
 
 # Add bashrc directory
@@ -322,7 +322,7 @@ EOF
 # Unlimited history
 
 ```bash
-sed -i -E 's/^(.*)HISTSIZE/# \1HISTSIZE/' -E 's/^(.*)HISTFILESIZE/# \1HISTFILESIZE/' ~/.bashrc
+sed -i -E -e 's/^(.*)HISTSIZE/# \1HISTSIZE/' -e 's/^(.*)HISTFILESIZE/# \1HISTFILESIZE/' ~/.bashrc
 
  cat << EOF > ~/.bashrc.d/0-history.sh
 # Eternal bash history.
