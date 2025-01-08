@@ -13,26 +13,26 @@ curl https://api.telegram.org/bot$botToken/getUpdates
 # look for chat id in the output
 chatId=
 
-mkdir -p ./metrics/alertmanager/env/telegram/
-cat << EOF > ./metrics/alertmanager/env/telegram/telegram-secret.yaml
+mkdir -p ./metrics/prometheus/alertmanager/env/telegram/
+cat << EOF > ./metrics/prometheus/alertmanager/env/telegram/telegram-secret.yaml
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  namespace: alertmanager
   name: telegram-bot-token
+  namespace: prometheus
 type: Opaque
 stringData:
   token: 1234567890:qwertyuiopasdfghj_klzxcvbnmqwertyui
 EOF
 
-cat << EOF > ./metrics/alertmanager/env/telegram/alert-manager-telegram.yaml
+cat << EOF > ./metrics/prometheus/alertmanager/env/telegram/alert-manager-telegram.yaml
 ---
 apiVersion: monitoring.coreos.com/v1alpha1
 kind: AlertmanagerConfig
 metadata:
   name: telegram
-  namespace: alertmanager
+  namespace: prometheus
   labels:
     alertmanager.prometheus.io/instance: main
 spec:
@@ -81,6 +81,8 @@ spec:
   #   equal: [ 'alertname', 'dev', 'instance' ]
 EOF
 
-kl apply -k ./metrics/alertmanager/env/telegram/
-kl -n alertmanager describe AlertmanagerConfig telegram
+kl apply -f ./metrics/prometheus/alertmanager/env/telegram-secret.yaml
+kl apply -f ./metrics/prometheus/alertmanager/env/telegram-alert.yaml
+kl -n prometheus get AlertmanagerConfig
+kl -n prometheus describe AlertmanagerConfig telegram
 ```
