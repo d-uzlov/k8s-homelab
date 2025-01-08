@@ -1,0 +1,46 @@
+---
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: telegram-route-critical
+  labels:
+    alertmanager.prometheus.io/instance: main
+    alertmanager.prometheus.io/integration: telegram
+spec:
+  receivers:
+  - name: telegram
+    telegramConfigs: []
+  route:
+    # groupBy: [ 'job' ]
+    groupBy: [ 'alertname' ]
+    # groupBy: [ '...' ] # '...' disables grouping
+    groupWait: 10s
+    groupInterval: 10s
+    repeatInterval: 3h
+    receiver: telegram
+    matchers:
+    - name: severity
+      value: critical
+      matchType: '='
+---
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: telegram-route-general
+  labels:
+    alertmanager.prometheus.io/instance: main
+    alertmanager.prometheus.io/integration: telegram
+spec:
+  receivers:
+  - name: telegram
+    telegramConfigs: []
+  route:
+    groupBy: [ 'alertname' ]
+    groupWait: 30s
+    groupInterval: 5m
+    repeatInterval: 12h
+    receiver: telegram
+    matchers:
+    - name: severity
+      value: warning|info
+      matchType: '=~'
