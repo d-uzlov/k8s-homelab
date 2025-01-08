@@ -17,6 +17,10 @@ References:
 sudo apt install -y build-* dkms git
 sudo apt install -y pve-headers-$(uname -r)
 
+wget https://github.com/strongtz/i915-sriov-dkms/releases/download/2024.12.30/i915-sriov-dkms_2024.12.30_amd64.deb
+sudo dpkg -i ./i915-sriov-dkms_2024.12.30_amd64.deb
+
+# alt: manual installation
 git clone https://github.com/strongtz/i915-sriov-dkms.git
 
 sudo dkms add ./i915-sriov-dkms/
@@ -31,6 +35,7 @@ sudo nano /etc/kernel/cmdline
 
 # pin the kernel (optional)
 sudo proxmox-boot-tool kernel pin $(uname -r)
+sudo proxmox-boot-tool kernel pin 6.8.12-5-pve
 sudo proxmox-boot-tool kernel list
 # when you want to update, unpin:
 # sudo proxmox-boot-tool kernel unpin
@@ -70,6 +75,7 @@ sha512sum /etc/apt/trusted.gpg.d/proxmox-release-bookworm.gpg
 # 7da6fe34168adc6e479327ba517796d4702fa2f8b4f0a9833f5ea6e6b48f6507a6da403a274fe201595edc86a84463d50383d07f64bdde2e3658108db7d6dc87 /etc/apt/trusted.gpg.d/proxmox-release-bookworm.gpg
 sudo apt update && sudo apt full-upgrade -y
 sudo apt install -y proxmox-default-kernel
+sudo apt-mark hold proxmox-default-kernel
 sudo reboot now
 # adjust for your kernel version prefix
 sudo apt remove -y linux-image-amd64 'linux-image-6.1*'
@@ -81,6 +87,9 @@ sudo update-grub
 ```bash
 sudo apt install -y build-* dkms git
 sudo apt install -y pve-headers-$(uname -r)
+
+wget https://github.com/strongtz/i915-sriov-dkms/releases/download/2024.12.30/i915-sriov-dkms_2024.12.30_amd64.deb
+sudo dpkg -i ./i915-sriov-dkms_2024.12.30_amd64.deb
 
 git clone https://github.com/strongtz/i915-sriov-dkms.git
 

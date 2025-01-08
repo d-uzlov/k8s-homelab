@@ -6,8 +6,8 @@ clusterDomain: cluster.local
 resolvConf: /run/systemd/resolve/resolv.conf
 # k8s first evicts all non-critical pods, kills remaining ones on timeout, then starts evicting critical ones
 # shutdown timeout for non-critical pods is calculated as 'shutdownGracePeriod - shutdownGracePeriodCriticalPods'
-shutdownGracePeriod: 60s
-shutdownGracePeriodCriticalPods: 20s
+shutdownGracePeriod: 20s
+shutdownGracePeriodCriticalPods: 10s
 staticPodPath: /etc/kubernetes/manifests
 # reduce time of config map synchronization at expense of increased apiserver load
 # default value is 60s
@@ -18,3 +18,9 @@ cgroupDriver: systemd
 maxPods: 250
 # kubeAPIQPS: 50 # default is 50
 # kubeAPIBurst: 100 # default is 100
+# seems like evented pleg is broken until 1.32:
+# - https://github.com/kubernetes/kubernetes/pull/124297
+# and there are other issues:
+# - https://github.com/kubernetes/enhancements/issues/3386
+# featureGates:
+#   EventedPLEG: true

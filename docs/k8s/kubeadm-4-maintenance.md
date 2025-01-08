@@ -3,6 +3,31 @@
 
 This file is a cheat sheet for various maintenance tasks for a cluster created using kubeadm.
 
+# Change kubeadm config
+
+References:
+- https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-reconfigure/
+
+```bash
+# etcd, scheduler, apiserver, controllerManager
+kl -n kube-system get cm kubeadm-config -o 'go-template={{index .data "ClusterConfiguration"}}' > ./docs/k8s/env/cluster-config.yaml
+kl -n kube-system edit cm kubeadm-config
+
+# kubelet
+kl -n kube-system get cm kubelet-config -o 'go-template={{index .data "kubelet"}}' > ./docs/k8s/env/kubelet-config.yaml
+# edit the file, then push it back to cluster
+kl create cm kubelet-config --dry-run=client -o yaml --from-file kubelet=./docs/k8s/env/kubelet-config.yaml | kl -n kube-system replace cm kubelet-config -f -
+# or just edit it in place
+kl -n kube-system edit cm kubelet-config
+
+# ssh into each node and run:
+sudo kubeadm upgrade node phase kubelet-config
+# if something is broken, and you can't connect from node to cluster, you can edit kubelet locally
+sudo nano /var/lib/kubelet/config.yaml
+# apply new config
+sudo systemctl restart kubelet
+```
+
 # Remove node from cluster
 
 First remove pods and the node itself using kubectl:
@@ -33,17 +58,20 @@ References:
 ```bash
 # check out the latest stable release
 # see also: https://kubernetes.io/releases/
-curl -Ls https://dl.k8s.io/release/stable.txt
+echo $(curl -Ls https://dl.k8s.io/release/stable.txt)
 
-new_version=v1.30
+# you need to upgrade one major version at a time
+
+new_version=v1.32
 sudo rm -f /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 curl -fsSL https://pkgs.k8s.io/core:/stable:/$new_version/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/'"$new_version"'/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
 
 sudo apt-get update
+sudo apt full-upgrade
 apt-cache policy kubeadm | head
 
-new_package_version=1.30.8
+new_package_version=1.32.0
 sudo apt-mark unhold kubeadm kubelet && \
 sudo apt-get install -y kubeadm="$new_package_version"'-*' kubelet="$new_package_version"'-*' && \
 sudo apt-mark hold kubeadm kubelet &&
@@ -51,12 +79,14 @@ sudo systemctl daemon-reload && sudo systemctl restart kubelet
 
 kubeadm version
 
+# `kubeadm upgrade plan` may fail immediately after kubelet upgrade, wait a bit if this happens
+
 # === choose one node of the cluster ===
 # this node must have the /etc/kubernetes/admin.conf file
 # study the upgrade plan manually
 sudo kubeadm upgrade plan
 # choose a version offered by the upgrade plan
-sudo kubeadm upgrade apply v1.30.8
+sudo kubeadm upgrade apply v1.32.0
 # if you disabled kube-proxy for your CNI, you need to re-disable it again after the upgrade
 
 # === on all other nodes ===

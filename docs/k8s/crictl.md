@@ -22,7 +22,8 @@ sudo crictl ps
 # list all
 sudo crictl ps -a
 
-sudo crictl logs container_id
+container_id=aa84f2c75afac
+sudo crictl logs $container_id
 
 # list and remove stopped containers
 sudo crictl ps -s exited |
