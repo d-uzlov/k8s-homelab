@@ -20,6 +20,24 @@ spec:
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
+  name: record-k8s-kubelet-pleg
+  labels:
+    prometheus.io/instance: main
+spec:
+  groups:
+  - name: record-k8s-kubelet-pleg
+    rules:
+    # scrape_interval == rule_evaluation_interval == 10s, therefore irate does not lose any samples
+    # `irate[1m]` is much more precise than `rate[25s]`
+    - record: kubelet_pleg_relist_duration_seconds:quantile_irate
+      expr: |-
+        histogram_quantile(0.99, irate(kubelet_pleg_relist_duration_seconds_bucket[1m]))
+      labels:
+        quantile: '0.99'
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
   name: record-k8s-container-resource
   labels:
     prometheus.io/instance: main
