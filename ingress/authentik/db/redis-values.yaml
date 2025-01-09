@@ -1,0 +1,117 @@
+
+## @param global.imageRegistry Global Docker image registry
+## @param global.imagePullSecrets Global Docker registry secret names as an array
+## @param global.defaultStorageClass Global default StorageClass for Persistent Volume(s)
+## @param global.storageClass DEPRECATED: use global.defaultStorageClass instead
+## @param global.redis.password Global Redis password (overrides `auth.password`)
+##
+global:
+  defaultStorageClass: ""
+  storageClass: ""
+  redis:
+    password: ""
+
+kubeVersion: ""
+nameOverride: ""
+fullnameOverride: ""
+clusterDomain: cluster.local
+
+## @param architecture Redis architecture. Allowed values: `standalone` or `replication`
+##
+architecture: standalone
+
+auth:
+  ## @param auth.enabled Enable password authentication
+  enabled: true
+  ## @param auth.sentinel Enable password authentication on sentinels too
+  sentinel: true
+  existingSecret: redis-password
+  existingSecretPasswordKey: redis_password
+
+master:
+  ## @param master.count Number of Redis master instances to deploy (experimental, requires additional configuration)
+  count: 1
+  containerPorts:
+    redis: 6379
+
+  ## resources:
+  ##   requests:
+  ##     cpu: 2
+  ##     memory: 512Mi
+  ##   limits:
+  ##     cpu: 3
+  ##     memory: 1024Mi
+  ##
+  resources: {}
+  
+  kind: StatefulSet
+  persistence:
+    enabled: true
+    storageClass: AUTOREPLACE_STORAGE_CLASS
+    ## @param master.persistence.accessModes Persistent Volume access modes
+    ##
+    accessModes:
+    - ReadWriteOnce
+    size: 1Gi
+  persistentVolumeClaimRetentionPolicy:
+    enabled: true
+    whenScaled: Retain
+    whenDeleted: Retain
+  terminationGracePeriodSeconds: 30
+  serviceAccount:
+    # these shitheads forgot to change the name of service account when create is false
+    # so now I _have_ to create one, eve if I want to use the default service account
+    create: true
+    # name: default
+
+networkPolicy:
+  enabled: false
+  allowExternal: false
+  allowExternalEgress: false
+  metrics:
+    allowExternal: true
+    ingressNSMatchLabels: {}
+    ingressNSPodMatchLabels: {}
+
+rbac:
+  create: false
+
+serviceAccount:
+  ## @param serviceAccount.create Specifies whether a ServiceAccount should be created
+  ##
+  create: true
+  ## @param serviceAccount.name The name of the ServiceAccount to use.
+  ## If not set and create is true, a name is generated using the common.names.fullname template
+  ##
+  name: ""
+  ## @param serviceAccount.automountServiceAccountToken Whether to auto mount the service account token
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#use-the-default-service-account-to-access-the-api-server
+  ##
+  automountServiceAccountToken: false
+  ## @param serviceAccount.annotations Additional custom annotations for the ServiceAccount
+  ##
+  annotations: {}
+
+tls:
+  enabled: false
+
+metrics:
+  enabled: false
+  containerPorts:
+    http: 9121
+  resources: {}
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9121"
+  service:
+    ## @param metrics.service.enabled Create Service resource(s) for scraping metrics using PrometheusOperator ServiceMonitor, can be disabled when using a PodMonitor
+    enabled: true
+  serviceMonitor:
+    enabled: false
+    namespace: ""
+  podMonitor:
+    enabled: false
+    namespace: ""
+  prometheusRule:
+    enabled: false
+    namespace: ""

@@ -1,0 +1,201 @@
+---
+# -- Provide a name in place of `authentik`. Prefer using global.nameOverride if possible
+nameOverride: ""
+# -- String to fully override `"authentik.fullname"`. Prefer using global.fullnameOverride if possible
+fullnameOverride: ""
+# -- Override the Kubernetes version, which is used to evaluate certain manifests
+kubeVersionOverride: ""
+
+authentik:
+  log_level: info
+  # -- Secret key used for cookie singing and unique user IDs,
+  # don't change this after the first install
+  secret_key: AUTOREPLACE_AUTHENTIK_SEED
+  email:
+    # -- SMTP Server emails are sent from, fully optional
+    host: ""
+    # -- SMTP server port
+    port: 587
+    # -- SMTP credentials, when left empty, no authentication will be done
+    username: ""
+    # -- SMTP credentials, when left empty, no authentication will be done
+    password: ""
+    # -- Enable either use_tls or use_ssl, they can't be enabled at the same time.
+    use_tls: false
+    # -- Enable either use_tls or use_ssl, they can't be enabled at the same time.
+    use_ssl: false
+    # -- Connection timeout
+    timeout: 30
+    # -- Email from address, can either be in the format "foo@bar.baz" or "authentik <foo@bar.baz>"
+    from: ""
+  error_reporting:
+    # -- This sends anonymous usage-data, stack traces on errors and
+    # performance data to sentry.beryju.org, and is fully opt-in
+    enabled: false
+    # -- This is a string that is sent to sentry with your error reports
+    environment: "k8s"
+    # -- Send PII (Personally identifiable information) data to sentry
+    send_pii: false
+  postgresql:
+    host: postgres
+    # -- postgresql Database name
+    name: authentik
+    user: authentik
+    password: AUTOREPLACE_POSTGRES_PASSWORD
+    port: 5432
+  redis:
+    host: redis-master
+    password: AUTOREPLACE_REDIS_PASSWORD
+
+server:
+  name: server
+
+  # -- The number of server pods to run
+  replicas: 1
+
+  ## authentik server Horizontal Pod Autoscaler
+  autoscaling:
+    enabled: false
+
+  # -- Resource limits and requests for the authentik server
+  resources: {}
+    # requests:
+    #   cpu: 100m
+    #   memory: 512Mi
+    # limits:
+    #   memory: 512Mi
+
+  # authentik server container ports
+  containerPorts:
+    # -- http container port
+    http: 9000
+    # -- https container port
+    https: 9443
+    # -- metrics container port
+    metrics: 9300
+
+  # -- authentik server pod-level security context
+  # @default -- `{}` (See [values.yaml])
+  securityContext: {}
+    # runAsUser: 1000
+    # runAsGroup: 1000
+    # fsGroup: 1000
+
+  livenessProbe:
+    failureThreshold: 10
+    initialDelaySeconds: 0
+    periodSeconds: 1
+
+  readinessProbe:
+    failureThreshold: 3
+    initialDelaySeconds: 0
+    periodSeconds: 1
+
+  startupProbe:
+    failureThreshold: 60
+    initialDelaySeconds: 1
+    periodSeconds: 1
+
+  # -- terminationGracePeriodSeconds for container lifecycle hook
+  terminationGracePeriodSeconds: 30
+
+  # -- Deployment strategy to be added to the authentik server Deployment
+  # @default -- `{}` (defaults to global.deploymentStrategy)
+  deploymentStrategy: {}
+    # type: RollingUpdate
+    # rollingUpdate:
+    #   maxSurge: 25%
+    #   maxUnavailable: 25%
+
+  metrics:
+    enabled: false
+
+  ingress:
+    enabled: false
+
+worker:
+  name: worker
+
+  replicas: 1
+
+  autoscaling:
+    enabled: false
+
+  livenessProbe:
+    failureThreshold: 10
+    initialDelaySeconds: 0
+    periodSeconds: 1
+
+  readinessProbe:
+    failureThreshold: 3
+    initialDelaySeconds: 0
+    periodSeconds: 1
+
+  startupProbe:
+    failureThreshold: 60
+    initialDelaySeconds: 1
+    periodSeconds: 1
+
+  terminationGracePeriodSeconds: 30
+
+  # -- Deployment strategy to be added to the authentik worker Deployment
+  # @default -- `{}` (defaults to global.deploymentStrategy)
+  deploymentStrategy: {}
+    # type: RollingUpdate
+    # rollingUpdate:
+    #   maxSurge: 25%
+    #   maxUnavailable: 25%
+
+serviceAccount:
+  # -- Create service account. Needed for managed outposts
+  create: true
+  # -- additional service account annotations
+  annotations: {}
+  serviceAccountSecret:
+    # As we use the authentik-remote-cluster chart as subchart, and that chart
+    # creates a service account secret by default which we don't need here,
+    # disable its creation
+    enabled: false
+  fullnameOverride: authentik
+
+geoip:
+  # -- enable GeoIP sidecars for the authentik server and worker pods
+  enabled: false
+
+  editionIds: "GeoLite2-City GeoLite2-ASN"
+  # -- GeoIP update frequency, in hours
+  updateInterval: 8
+  # -- sign up under https://www.maxmind.com/en/geolite2/signup
+  accountId: ""
+  # -- sign up under https://www.maxmind.com/en/geolite2/signup
+  licenseKey: ""
+  ## use existing secret instead of values above
+  existingSecret:
+    # -- name of an existing secret to use instead of values above
+    secretName: ""
+    # -- key in the secret containing the account ID
+    accountId: "account_id"
+    # -- key in the secret containing the license key
+    licenseKey: "license_key"
+
+  # -- Resource limits and requests for GeoIP containers
+  resources: {}
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # limits:
+    #   memory: 128Mi
+
+prometheus:
+  rules:
+    enabled: false
+    namespace: ""
+    # -- PrometheusRule selector
+    selector: {} # prometheus: kube-prometheus
+    labels: {}
+
+postgresql:
+  enabled: false
+
+redis:
+  enabled: false

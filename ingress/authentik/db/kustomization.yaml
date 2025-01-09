@@ -1,0 +1,52 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: authentik
+
+resources:
+- ./redis.gen.yaml
+- ./postgres.yaml
+
+secretGenerator:
+- name: redis-password
+  envs:
+  - ./env/redis-password.env
+  options:
+    disableNameSuffixHash: true
+
+configMapGenerator:
+- name: redis-sc
+  envs:
+  - ./env/redis-sc.env
+  options:
+    annotations:
+      config.kubernetes.io/local-config: 'true'
+- name: postgres-sc
+  envs:
+  - ./env/postgres-sc.env
+  options:
+    annotations:
+      config.kubernetes.io/local-config: 'true'
+
+replacements:
+- source:
+    kind: ConfigMap
+    name: redis-sc
+    fieldPath: data.redis_storage_class
+  targets:
+  - select:
+      kind: StatefulSet
+      name: redis-master
+    fieldPaths:
+    - spec.volumeClaimTemplates.0.spec.storageClassName
+- source:
+    kind: ConfigMap
+    name: postgres-sc
+    fieldPath: data.postgres_storage_class
+  targets:
+  - select:
+      kind: postgresql
+      name: postgres
+    fieldPaths:
+    - spec.volume.storageClass
