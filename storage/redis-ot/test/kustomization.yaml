@@ -1,0 +1,33 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- ./test-redis.yaml
+
+secretGenerator:
+- name: redis-password
+  envs:
+  - ./env/redis-password.env
+  options:
+    disableNameSuffixHash: true
+
+configMapGenerator:
+- name: pvc
+  envs:
+  - ./env/pvc.env
+  options:
+    annotations:
+      config.kubernetes.io/local-config: 'true'
+
+replacements:
+- source:
+    kind: ConfigMap
+    name: pvc
+    fieldPath: data.storage_class
+  targets:
+  - select:
+      kind: Redis
+      name: redis
+    fieldPaths:
+    - spec.storage.volumeClaimTemplate.spec.storageClassName
