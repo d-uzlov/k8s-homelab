@@ -16,7 +16,8 @@ kl -n prometheus get pod -o wide
 
 # private gateway
 kl apply -k ./metrics/prometheus/alertmanager/httproute/
-kl -n prometheus get httproute alertmanager
+kl apply -k ./metrics/prometheus/alertmanager/httproute-protected/
+kl -n prometheus get httproute
 kl -n prometheus describe httproute alertmanager
 
 ```

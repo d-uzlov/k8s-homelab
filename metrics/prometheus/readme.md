@@ -68,7 +68,8 @@ kl -n prometheus get ingress
 
 # private gateway
 kl apply -k ./metrics/prometheus/httproute/
-kl -n prometheus get httproute prometheus
+kl apply -k ./metrics/prometheus/httproute-protected/
+kl -n prometheus get httproute
 kl -n prometheus describe httproute prometheus
 
 kl -n prometheus exec sts/prometheus-main -- df -h | grep /prometheus\$
