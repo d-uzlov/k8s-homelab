@@ -106,4 +106,39 @@ kl delete ns immich
 
 Smart search:
 - default: ViT-B-32__openai
-- best? (multi-lang): XLM-Roberta-Large-ViT-H-14__frozen_laion5b_s13b_b90k ?? XLM-Roberta-Large-Vit-B-16Plus
+- best? (multi-lang):
+- - XLM-Roberta-Large-ViT-H-14__frozen_laion5b_s13b_b90k
+- - XLM-Roberta-Large-Vit-B-16Plus
+
+References:
+- https://github.com/immich-app/immich/discussions/11830#discussioncomment-10351544
+- https://github.com/immich-app/immich/discussions/11862
+- https://www.reddit.com/r/immich/comments/1gph4ay/how_to_pick_a_multilingual_ml_model_for_immich/
+
+# Authentik SSO
+
+Prerequisites:
+- [Istio gateway](../../ingress/istio/readme.md)
+- [Authentik](../../ingress/authentik/readme.md)
+
+References:
+- https://immich.app/docs/administration/oauth/
+- https://docs.goauthentik.io/integrations/services/immich/
+
+In authentik:
+
+- Create provider of type OAuth2/OpenID
+- Add `Redirect URIs/Origins` domains (change `immich.example.com` to your ingress domain):
+- - https://immich.example.com/auth/login
+- - https://immich.example.com/user-settings
+- - app.immich:///oauth-callback (required for the immich mobile app)
+- Create immich application linked to this provider
+- Go to immich settings: `Administration -> Authentication Settings -> OAuth`
+- Set `Issuer URL` to value from Provider (open provider details to see it)
+- Set `Client ID` to value from Provider
+- Set `Client Secret` to value from Provider (click `edit` to see it)
+- Don't forget to click the `Save` button
+
+# Merge classic and OAuth users
+
+`Account Settings -> OAuth -> Link to OAuth`

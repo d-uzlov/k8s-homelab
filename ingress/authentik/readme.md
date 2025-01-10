@@ -7,6 +7,8 @@ It can also be used as a proxy, adding auth to simple applications that don't ha
 
 References:
 - https://goauthentik.io/#comparison
+- https://xpufx.com/posts/protecting-your-first-app-with-authentik/
+- https://medium.com/@wessel__/istio-with-authentik-securing-your-cluster-and-providing-authentication-and-authorization-b5e48b331920
 
 # Generate config
 
