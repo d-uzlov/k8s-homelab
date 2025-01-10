@@ -169,8 +169,12 @@ and list all domains that you want to have auth.
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
-  name: authentik-policy
-  namespace: istio
+  # namespace.httproute_name to avoid name collisions in the gateways namespace
+  name: namespace.route
+  # when auth policy is in the root namespace (where istiod is located) it is applied to the whole cluster
+  # namespace: istio
+  # when auth policy is in custom namespace, it only applies to this namespace
+  namespace: gateways
 spec:
   selector:
     matchLabels:
@@ -184,6 +188,9 @@ spec:
         hosts:
         - example.com
 ```
+
+References:
+- https://istio.io/latest/docs/reference/config/security/authorization-policy/
 
 Policy above will enable auth for `example.com` domain.
 

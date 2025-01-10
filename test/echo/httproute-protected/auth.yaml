@@ -1,0 +1,22 @@
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  # namespace.httproute_name to avoid name collisions
+  name: echo.echo-protected
+  # when auth policy is in the root namespace (where istiod is located) it is applied to the whole cluster
+  # namespace: istio
+  # when auth policy is in custom namespace, it only applies to this namespace
+  namespace: gateways
+spec:
+  selector:
+    matchLabels:
+      gateway.istio.io/managed: istio.io-gateway-controller
+  action: CUSTOM
+  provider:
+    name: authentik
+  rules:
+  - to:
+    - operation:
+        hosts:
+        - echo2p.suffix-automatic-replace

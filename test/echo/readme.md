@@ -13,7 +13,8 @@ kl label ns echo pod-security.kubernetes.io/enforce=baseline
 kl apply -k ./test/echo/
 kl -n echo get pod -o wide
 
-kl apply -k ./test/echo/httproute/
+kl apply -k ./test/echo/httproute-public/
+kl apply -k ./test/echo/httproute-protected/
 kl -n echo get httproute
 
 ```
