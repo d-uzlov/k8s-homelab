@@ -97,11 +97,14 @@ EOF
 kl apply -k ./ingress/authentik/
 kl -n authentik get pod -o wide -L spilo-role
 
-kl apply -k ./ingress/authentik/httproute/
+kl apply -k ./ingress/authentik/httproute-private/
 kl -n authentik get httproute
 
 # go here to set up access
 echo "https://"$(kl -n authentik get httproute authentik -o go-template --template "{{ (index .spec.hostnames 0)}}")/if/flow/initial-setup/
+# after you finished the initial set up process, it's safe to open public access to authentik
+kl apply -k ./ingress/authentik/httproute-public/
+kl -n authentik get httproute
 
 ```
 
@@ -130,7 +133,11 @@ References:
 
 # Istio setup
 
-Add authentik extension into istio config:
+1. Add new outpost with name `public`: `Admin interface -> Applications -> Outposts`
+
+Enable the k8s integration.
+
+2. Add authentik extension into istio config:
 
 ```bash
 
@@ -138,9 +145,8 @@ mkdir -p ./ingress/istio/mesh-config/env/
 cat << EOF > ./ingress/istio/mesh-config/env/extension-authentik.yaml
 - name: authentik
   envoyExtAuthzHttp:
-    # Replace with <service-name>.<namespace>.svc.cluster.local
-    service: authentik-server.authentik.svc.cluster.local
-    port: "80"
+    service: ak-outpost-public.authentik.svc.cluster.local
+    port: "9000"
     pathPrefix: /outpost.goauthentik.io/auth/envoy
     headersToDownstreamOnAllow:
     - cookie
@@ -202,7 +208,7 @@ Policy above will enable auth for `example.com` domain.
 - [optional] Set up application permission: `Admin interface -> Applications -> Applications -> "YourApp" -> Policy/Group/User bindings`
 - - When there are no bindings, every registered user can access the app
 - - When app has any bindings, user must succeed policy check to access the app
-- Bind app to outpost (=listener): `Admin interface -> Applications -> Outposts -> authentik Embedded Outpost -> Edit (button on the right) -> Add app into the list`
+- Bind app to outpost (=listener): `Admin interface -> Applications -> Outposts -> public -> Edit (button on the right) -> Add app into the list`
 
 # Provider: proxy
 
@@ -212,3 +218,5 @@ You can create one provider per app. This way each app will use its own set of c
 
 You can create a single provider for parent domain, so they all will use single set of cookies.
 This way you will only need to log in once.
+However, you can no longer control app access separately. The whole parent domain counts as a single app.
+If user have access to any subdomain, it will have access to all subdomains.
