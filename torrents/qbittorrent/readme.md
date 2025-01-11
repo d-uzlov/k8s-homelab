@@ -99,9 +99,10 @@ kl label ns --overwrite bt-qbittorrent copy-wild-cert=main
 kl apply -k ./torrents/qbittorrent/ingress-wildcard/
 kl -n bt-qbittorrent get ingress
 
-# private gateway
-kl apply -k ./torrents/qbittorrent/httproute/
-kl -n bt-qbittorrent get httproute qbittorrent
+kl apply -k ./torrents/qbittorrent/httproute-private/
+# requires istio and authentik
+kl apply -k ./torrents/qbittorrent/httproute-protected/
+kl -n bt-qbittorrent get httproute
 kl -n bt-qbittorrent describe httproute qbittorrent
 
 # deploy main app
