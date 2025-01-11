@@ -83,15 +83,17 @@ cat ./board/homepage/config/env/services-*.yaml > ./board/homepage/config/env/se
 kl apply -k ./board/homepage/
 kl -n homepage get pod -o wide
 
-kl apply -k ./board/homepage/httproute/
-kl -n homepage describe httproute
+kl apply -k ./board/homepage/httproute-private/
+kl apply -k ./board/homepage/httproute-protected/
 kl -n homepage get httproute
+kl -n homepage describe httproute
 ```
 
 # Cleanup
 
 ```bash
-kl delete -k ./board/homepage/httproute/
+kl delete -k ./board/homepage/httproute-protected/
+kl delete -k ./board/homepage/httproute-private/
 kl delete -k ./board/homepage/
 kl delete ns homepage
 ```
