@@ -118,7 +118,6 @@ References:
 # Authentik SSO
 
 Prerequisites:
-- [Istio gateway](../../ingress/istio/readme.md)
 - [Authentik](../../ingress/authentik/readme.md)
 
 References:
@@ -132,8 +131,8 @@ In authentik:
 - - https://immich.example.com/auth/login
 - - https://immich.example.com/user-settings
 - - app.immich:///oauth-callback (required for the immich mobile app)
-- Create immich application linked to this provider
-- Go to immich settings: `Administration -> Authentication Settings -> OAuth`
+- Create `immich` application linked to this provider
+- Go to settings in Immich web UI: `Administration -> Authentication Settings -> OAuth`
 - Set `Issuer URL` to value from Provider (open provider details to see it)
 - Set `Client ID` to value from Provider
 - Set `Client Secret` to value from Provider (click `edit` to see it)
