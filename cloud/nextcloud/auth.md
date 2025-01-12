@@ -3,6 +3,8 @@
 
 References:
 - https://docs.goauthentik.io/integrations/services/nextcloud/
+- [OpenID Connect user backend](https://github.com/nextcloud/user_oidc)
+- - **Note**: `OpenID Connect Login` is a different plugin with a very different config.
 
 # Authentik
 
@@ -38,10 +40,10 @@ return {
 
 # Nextcloud setup
 
-Install the plugin:
-- [OpenID Connect user backend](https://github.com/nextcloud/user_oidc)
+```bash
 
-**Note**: `OpenID Connect Login` is a different plugin with a very different config.
+kl -n nextcloud exec deployments/nextcloud -- php occ app:enable user_oidc
+```
 
 Set up OIDC: `Administration settings -> OpenID Connect -> Registered Providers -> +`
 
@@ -55,6 +57,8 @@ Set up OIDC: `Administration settings -> OpenID Connect -> Registered Providers 
 - ! Disable `Use provider identifier as prefix for ids`
 - Enable `Use group provisioning`
 
+# Tips for oidc maintenance
+
 ```bash
 # check list of existing groups and their users
 # format is:
@@ -66,4 +70,6 @@ kl -n nextcloud exec deployments/nextcloud -- php occ group:list
 kl -n nextcloud exec deployments/nextcloud -- php occ config:app:set --value=0 user_oidc allow_multiple_user_backends
 # allow users to use native login
 kl -n nextcloud exec deployments/nextcloud -- php occ config:app:set --value=1 user_oidc allow_multiple_user_backends
+# alternatively, use `direct=1` to bypass this setting
+# https://nextcloud.example.com/login?direct=1
 ```
