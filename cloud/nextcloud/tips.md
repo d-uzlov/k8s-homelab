@@ -1,4 +1,25 @@
 
+# Brute-force protection FAQ
+
+Nextcloud will temporarily lock you out of web UI if you fail several login attempts.
+
+You can reset this:
+
+```bash
+# list throttled ips
+db_password=$(kl -n nextcloud get secret -l nextcloud=passwords --template "{{ (index .items 0).data.mariadb_user_password}}" | base64 --decode)
+kl -n nextcloud exec deployments/mariadb -c mariadb -- mysql -u nextcloud -p"$db_password" --database nextcloud -e "select * from oc_bruteforce_attempts;"
+# unblock an ip-address
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ security:bruteforce:reset <ip-address>
+# enable a disabled user
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ user:enable <name of user>
+```
+
+TODO: update this to use postgres.
+
+References:
+- https://docs.nextcloud.com/server/latest/admin_manual/configuration_server/occ_command.html#security
+
 # Changing PHP settings
 
 ```bash
@@ -14,7 +35,7 @@ kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php-fpm -tt 2>&1
 kl -n nextcloud exec deployments/nextcloud -c nextcloud -- cat /usr/local/etc/php-fpm.conf | grep include=
 # by default php-fpm configs are located here:
 kl -n nextcloud exec deployments/nextcloud -c nextcloud -- ls /usr/local/etc/php-fpm.d/ -la
-# you can place an addition file in the include directory
+# you can place an additional file into the include directory
 # after you do, you can check that the value you are interested in has really changed
 kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php-fpm -tt 2>&1 | grep pm
 ```

@@ -29,6 +29,10 @@ php occ config:system:set memcache.local --value "\OC\Memcache\APCu"
 php occ config:system:set memcache.locking --value "\OC\Memcache\Redis"
 php occ config:system:set memcache.distributed --value "\OC\Memcache\Redis"
 
+# allow_local_remote_servers is required for sane existence in homelab
+# otherwise nextcloud will refuse oidc login, for example
+php occ config:system:set allow_local_remote_servers --value true --type bool
+
 echo "Configure settings..."
 echo "Set background job to Cron"
 php occ background:cron
