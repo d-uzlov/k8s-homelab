@@ -21,6 +21,21 @@ mkdir -p ./cloud/onlyoffice/main-app/env/
 cat <<EOF > ./cloud/onlyoffice/main-app/env/api.env
 jwt_secret=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 EOF
+
+mkdir -p ./cloud/onlyoffice/postgres/env/
+ cat << EOF > ./cloud/onlyoffice/postgres/env/postgres-patch.yaml
+---
+apiVersion: acid.zalan.do/v1
+kind: postgresql
+metadata:
+  name: postgres
+spec:
+  volume:
+    # 1Gi for WAL (default size)
+    # 1Gi for database itself (seems to be fine for small nextcloud instance)
+    size: 2Gi
+    storageClass: $storageClass
+EOF
 ```
 
 # Deploy
@@ -34,8 +49,15 @@ kl label ns --overwrite onlyoffice copy-wild-cert=main
 kl apply -k ./cloud/onlyoffice/ingress-wildcard/
 kl -n onlyoffice get ingress
 
-kl apply -k ./cloud/onlyoffice/main-app/
+kl apply -k ./cloud/onlyoffice/httproute-public/
+kl -n onlyoffice get httproute
+
+kl apply -k ./cloud/onlyoffice/postgres/
+kl -n onlyoffice get pvc
 kl -n onlyoffice describe postgresqls.acid.zalan.do postgres
+kl -n onlyoffice get pod -o wide -L spilo-role
+
+kl apply -k ./cloud/onlyoffice/main-app/
 kl -n onlyoffice get pod -o wide -L spilo-role
 ```
 

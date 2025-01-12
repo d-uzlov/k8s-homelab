@@ -13,6 +13,8 @@ kl -n onlyoffice get all
 
 onlyoffice_jwt_secret=$(kl -n onlyoffice get secret onlyoffice-api --template {{.data.jwt_secret}} | base64 --decode)
 onlyoffice_public_domain=$(kl -n onlyoffice get ingress onlyoffice -o go-template "{{ (index .spec.rules 0).host}}")
+onlyoffice_public_domain=$(kl -n onlyoffice get httproute onlyoffice-public -o go-template --template "{{ (index .spec.hostnames 0)}}")
+
 kl -n nextcloud exec deployments/nextcloud -c nextcloud -i -- bash - << EOF
 set -eu
 php occ app:enable onlyoffice
@@ -24,4 +26,5 @@ php occ config:system:set onlyoffice DocumentServerInternalUrl --value "http://o
 php occ config:system:set onlyoffice DocumentServerUrl --value "https://${onlyoffice_public_domain}/"
 php -f /var/www/html/cron.php
 EOF
+
 ```
