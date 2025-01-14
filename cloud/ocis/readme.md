@@ -3,8 +3,11 @@
 
 References:
 - https://doc.owncloud.com/ocis/next/deployment/container/orchestration/orchestration.html
+- https://doc.owncloud.com/ocis/7.0/quickguide/quickguide.html
 - https://github.com/owncloud/ocis-charts
 - https://github.com/owncloud/ocis
+
+Alt guide: https://helgeklein.com/blog/owncloud-infinite-scale-with-openid-connect-authentication-for-home-networks/#docker-compose-file
 
 # Prerequisites
 

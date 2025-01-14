@@ -35,6 +35,10 @@ kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ notify_push:s
 kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ notify_push:metrics
 # send a test notifications to user with id "admin"
 kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ notification:test-push admin
+# when using oidc provider, user id is uuid@provider.domain
+# to test push notification, use only the uuid
+# uuid can be found in personal settings -> sharing, or at nextcloud.example.com/settings/user/sharing
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ notification:test-push 99b556c5-2ae5-4bb9-a445-24b5346855ab
 ```
 
 **Note**: Mobile app should register itself when connecting to server.

@@ -18,7 +18,7 @@ Set storage classes for different data types:
 
 ```bash
 mkdir -p ./cloud/nextcloud/pvc/env/
-cat <<EOF > ./cloud/nextcloud/pvc/env/pvc.env
+ cat << EOF > ./cloud/nextcloud/pvc/env/pvc.env
 # userdata uses ReadWriteMany type volumes
 userdata=fast
 userdata_size=1Ti
@@ -50,12 +50,12 @@ Generate passwords and set up config.
 
 ```bash
 mkdir -p ./cloud/nextcloud/main-app/env/
-cat <<EOF > ./cloud/nextcloud/main-app/env/passwords.env
+ cat << EOF > ./cloud/nextcloud/main-app/env/passwords.env
 redis_password=$(LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 20)
 admin_name=admin
 admin_password=$(LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 20)
 EOF
-cat <<EOF > ./cloud/nextcloud/main-app/env/nextcloud.env
+ cat << EOF > ./cloud/nextcloud/main-app/env/nextcloud.env
 # k8s pod CIDR
 trusted_proxies=10.201.0.0/16
 EOF

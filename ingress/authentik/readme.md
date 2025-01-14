@@ -82,6 +82,7 @@ auth_smtp_username=AUTOREPLACE_SMTP_USERNAME
 auth_smtp_password=AUTOREPLACE_SMTP_PASSWORD
 auth_smtp_use_tls=false
 auth_smtp_use_ssl=true
+# example: "Authentik <user@example.com>"
 auth_smtp_from="AUTOREPLACE_SMTP_FROM"
 EOF
 
@@ -151,6 +152,11 @@ kl delete -k ./ingress/authentik/
 kl delete ns authentik
 ```
 
+# Authentik logout doesn't affect application cookies
+
+References:
+- https://github.com/goauthentik/authentik/issues/2023
+
 # Set dark theme by default
 
 > In admin panel, open the last settings of one of these items
@@ -177,6 +183,14 @@ References:
 - https://github.com/goauthentik/authentik/discussions/2419
 
 # email settings
+
+**Note**: there is a regression in 2024.12 which prevents you
+from sending emails and generating recover links as admin.
+- https://github.com/goauthentik/authentik/issues/12445
+
+You can bypass this by removing the `Authentication` requirement from the `default-recovery-flow`.
+
+---
 
 References:
 - https://docs.goauthentik.io/docs/troubleshooting/emails

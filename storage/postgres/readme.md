@@ -36,6 +36,8 @@ kl apply -k ./storage/postgres/crd/ --server-side --force-conflicts
 kl apply -f ./storage/postgres/roles/
 
 kl create ns postgres-operator
+kl label ns postgres-operator pod-security.kubernetes.io/enforce=baseline
+
 kl apply -k ./storage/postgres/
 kl -n postgres-operator get pod -o wide
 ```
