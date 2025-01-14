@@ -1,0 +1,95 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vaultwarden
+spec:
+  selector:
+    matchLabels:
+      app: vaultwarden
+  template:
+    metadata:
+      labels:
+        app: vaultwarden
+    spec:
+      containers:
+      - name: vaultwarden
+        # official vaultwarden image doesn't support OAuth or any other form of SSO
+        # image: docker.io/vaultwarden/server:1.32.7
+        image: docker.io/timshel/vaultwarden:1.32.7-1
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: postgres-url
+              key: pg_url
+        - name: SIGNUPS_ALLOWED
+          valueFrom:
+            secretKeyRef:
+              name: config
+              key: signups_allowed
+        - name: SSO_ENABLED
+          valueFrom:
+            secretKeyRef:
+              name: sso
+              key: sso_enable
+        - name: SSO_ONLY
+          valueFrom:
+            secretKeyRef:
+              name: sso
+              key: force_sso
+        - name: DOMAIN
+          valueFrom:
+            secretKeyRef:
+              name: domain
+              key: domain
+        - name: SSO_AUTHORITY
+          valueFrom:
+            secretKeyRef:
+              name: sso
+              key: sso_authority
+        - name: SSO_SCOPES
+          value: email profile offline_access
+        - name: SSO_SIGNUPS_MATCH_EMAIL
+          value: 'false'
+        - name: SSO_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: sso
+              key: client_id
+        - name: SSO_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: sso
+              key: client_secret
+        - name: ADMIN_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: admin-token
+              key: admin_token
+        # resources:
+        #   limits:
+        #     memory: "128Mi"
+        #     cpu: "500m"
+        ports:
+        - name: http
+          containerPort: 80
+        volumeMounts:
+        - mountPath: /data
+          name: data
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vaultwarden
+spec:
+  selector:
+    app: vaultwarden
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
