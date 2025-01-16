@@ -9,27 +9,19 @@ serviceAccount:
 
 replicas: 1
 
-## Should the service account be auto mounted on the pod
 automountServiceAccountToken: true
 
-## See `kubectl explain deployment.spec.strategy` for more
-## ref: https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy
 deploymentStrategy:
   type: RollingUpdate
 
 testFramework:
   enabled: false
 
-# Enable creating the grafana configmap
-createConfigmap: true
-
-## Assign a PriorityClassName to pods if set
-# priorityClassName:
+# grafana.ini configmap
+createConfigmap: false
 
 podPortName: grafana
 gossipPortName: gossip
-## Deployment annotations
-# annotations: {}
 
 resources:
   limits:
@@ -49,9 +41,6 @@ livenessProbe:
   timeoutSeconds: 3
   failureThreshold: 20
 
-## Enable persistence using Persistent Volume Claims
-## ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
-##
 persistence:
   type: pvc
   enabled: false
@@ -59,30 +48,23 @@ persistence:
   accessModes:
   - ReadWriteOnce
   size: 10Gi
-  ## Name of an existing PVC. Can be templated.
-  # existingClaim:
-  ## Extra labels to apply to a PVC.
-  extraPvcLabels: {}
+  existingClaim: ''
   disableWarning: false
 
   ## If 'lookupVolumeName' is set to true, Helm will attempt to retrieve
   ## the current value of 'spec.volumeName' and incorporate it into the template.
   lookupVolumeName: true
 
-# Use an existing secret for the admin user.
 admin:
-  ## Name of the secret. Can be templated.
   existingSecret: grafana-admin
   userKey: username
   passwordKey: password
 
 ## Sidecars that collect the configmaps with specified label and stores the included files them into the respective folders
-## Requires at least Grafana 5 to work and can't be used together with parameters dashboardProviders, datasources and dashboards
 sidecar:
   resources:
     limits:
-      # there is an initial surge on startup, but most of the time sidecars do nothing
-      cpu: 150m
+      cpu: 200m
       # memory usage per sidecar is consistently high :-(
       memory: 100Mi
     requests:
@@ -93,20 +75,16 @@ sidecar:
   # logLevel: INFO
   alerts:
     enabled: false
-    # label that the configmaps with alert are marked with
+    # watch resources only with following label
     label: grafana_alert
-    # value of label that the configmaps with alert are set to
     labelValue: ""
-    # If specified, the sidecar will search for alert config-maps inside this namespace.
-    # Otherwise the namespace in which the sidecar is running will be used.
-    # It's also possible to specify ALL to search in all namespaces
+    # null for own namespace, ALL for all, otherwise match name
     searchNamespace: null
     # search in configmap, secret or both
     resource: both
     # watchServerTimeout: request to the server, asking it to cleanly close the connection after that.
     # defaults to 60sec; much higher values like 3600 seconds (1h) are feasible for non-Azure K8S
     # watchServerTimeout: 3600
-    #
     # watchClientTimeout: is a client-side timeout, configuring your local socket.
     # If you have a network outage dropping all packets with no RST/FIN,
     # this is how long your client waits before realizing & dropping the connection.
@@ -115,15 +93,11 @@ sidecar:
   dashboards:
     enabled: true
     SCProvider: true
-    # label that the configmaps with dashboards are marked with
+    # watch resources only with following label
     label: grafana.com/dashboard
-    # value of label that the configmaps with dashboards are set to
     labelValue: main
-    # folder in the pod that should hold the collected dashboards (unless `defaultFolderName` is set)
     folder: /tmp/dashboards
-    # Namespaces list. If specified, the sidecar will search for config-maps/secrets inside these namespaces.
-    # Otherwise the namespace in which the sidecar is running will be used.
-    # It's also possible to specify ALL to search in all namespaces.
+    # null for own namespace, ALL for all, otherwise match name
     searchNamespace: null
     # search in configmap, secret or both
     resource: configmap
@@ -133,7 +107,6 @@ sidecar:
     # watchServerTimeout: request to the server, asking it to cleanly close the connection after that.
     # defaults to 60sec; much higher values like 3600 seconds (1h) are feasible for non-Azure K8S
     # watchServerTimeout: 3600
-    #
     # watchClientTimeout: is a client-side timeout, configuring your local socket.
     # If you have a network outage dropping all packets with no RST/FIN,
     # this is how long your client waits before realizing & dropping the connection.
@@ -160,20 +133,16 @@ sidecar:
       foldersFromFilesStructure: false
   datasources:
     enabled: true
-    # label that the configmaps with datasources are marked with
+    # watch resources only with following label
     label: grafana.com/datasource
-    # value of label that the configmaps with datasources are set to
     labelValue: main
-    # If specified, the sidecar will search for datasource config-maps inside this namespace.
-    # Otherwise the namespace in which the sidecar is running will be used.
-    # It's also possible to specify ALL to search in all namespaces
+    # null for own namespace, ALL for all, otherwise match name
     searchNamespace: null
     # search in configmap, secret or both
     resource: configmap
     # watchServerTimeout: request to the server, asking it to cleanly close the connection after that.
     # defaults to 60sec; much higher values like 3600 seconds (1h) are feasible for non-Azure K8S
     # watchServerTimeout: 3600
-    #
     # watchClientTimeout: is a client-side timeout, configuring your local socket.
     # If you have a network outage dropping all packets with no RST/FIN,
     # this is how long your client waits before realizing & dropping the connection.
@@ -181,41 +150,33 @@ sidecar:
     # watchClientTimeout: 60
   plugins:
     enabled: false
+    # watch resources only with following label
     label: grafana_plugin
-    # value of label that the configmaps with plugins are set to
     labelValue: ""
-    # If specified, the sidecar will search for plugin config-maps inside this namespace.
-    # Otherwise the namespace in which the sidecar is running will be used.
-    # It's also possible to specify ALL to search in all namespaces
+    # null for own namespace, ALL for all, otherwise match name
     searchNamespace: null
     # search in configmap, secret or both
     resource: both
     # watchServerTimeout: request to the server, asking it to cleanly close the connection after that.
     # defaults to 60sec; much higher values like 3600 seconds (1h) are feasible for non-Azure K8S
     # watchServerTimeout: 3600
-    #
     # watchClientTimeout: is a client-side timeout, configuring your local socket.
     # If you have a network outage dropping all packets with no RST/FIN,
     # this is how long your client waits before realizing & dropping the connection.
     # defaults to 66sec (sic!)
     # watchClientTimeout: 60
-    #
   notifiers:
     enabled: false
-    # label that the configmaps with notifiers are marked with
+    # watch resources only with following label
     label: grafana_notifier
-    # value of label that the configmaps with notifiers are set to
     labelValue: ""
-    # If specified, the sidecar will search for notifier config-maps inside this namespace.
-    # Otherwise the namespace in which the sidecar is running will be used.
-    # It's also possible to specify ALL to search in all namespaces
+    # null for own namespace, ALL for all, otherwise match name
     searchNamespace: null
     # search in configmap, secret or both
     resource: both
     # watchServerTimeout: request to the server, asking it to cleanly close the connection after that.
     # defaults to 60sec; much higher values like 3600 seconds (1h) are feasible for non-Azure K8S
     # watchServerTimeout: 3600
-    #
     # watchClientTimeout: is a client-side timeout, configuring your local socket.
     # If you have a network outage dropping all packets with no RST/FIN,
     # this is how long your client waits before realizing & dropping the connection.

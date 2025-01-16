@@ -25,7 +25,6 @@ helm template \
   --namespace grafana \
   | sed \
     -e '\|helm.sh/chart|d' \
-    -e '/# Source: grafana\/templates\/configmap.yaml/,/---/d' \
     -e '\|# Source:|d' \
     -e '\|app.kubernetes.io/managed-by:|d' \
     -e '\|app.kubernetes.io/instance:|d' \
