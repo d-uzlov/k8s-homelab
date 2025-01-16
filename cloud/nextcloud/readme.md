@@ -38,7 +38,7 @@ metadata:
 spec:
   volume:
     # 1Gi for WAL (default size)
-    # 1Gi for database itself (seems to be fine for small nextcloud instance)
+    # 1Gi for database itself (seems to be fine for small instance)
     size: 2Gi
     storageClass: $storageClass
 EOF

@@ -1,0 +1,68 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gotify
+spec:
+  selector:
+    matchLabels:
+      app: gotify
+  template:
+    metadata:
+      labels:
+        app: gotify
+    spec:
+      containers:
+      - name: gotify
+        image: docker.io/gotify/server:2.6.1
+        ports:
+        - name: http
+          containerPort: 80
+        env:
+        - name: GOTIFY_SERVER_PORT
+          value: '80'
+        - name: GOTIFY_SERVER_SSL_ENABLED
+          value: 'false'
+        - name: GOTIFY_SERVER_SSL_LETSENCRYPT_ENABLED
+          value: 'false'
+        - name: GOTIFY_SERVER_TRUSTEDPROXIES
+          value: '[10.201.0.0/16]'
+        - name: GOTIFY_DATABASE_DIALECT
+          value: postgres
+        - name: GOTIFY_DATABASE_CONNECTION
+          valueFrom:
+            secretKeyRef:
+              name: postgres-connection
+              key: postgres_connection
+        - name: GOTIFY_DEFAULTUSER_NAME
+          value: admin
+        - name: GOTIFY_DEFAULTUSER_PASS
+          valueFrom:
+            secretKeyRef:
+              name: admin-password
+              key: admin_password
+        - name: GOTIFY_UPLOADEDIMAGESDIR
+          value: /app/data/images
+        - name: GOTIFY_PLUGINSDIR
+          value: /app/data/plugins
+        - name: GOTIFY_REGISTRATION
+          value: 'false'
+        volumeMounts:
+        - mountPath: /app/data
+          name: data
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gotify
+spec:
+  selector:
+    app: gotify
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
