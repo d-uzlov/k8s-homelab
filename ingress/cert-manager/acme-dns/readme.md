@@ -40,7 +40,7 @@ acme-dns uses [ACME challenge redirection](../acme.md#acme-delegation-for-dns01)
 
 ```bash
 mkdir -p ./ingress/cert-manager/acme-dns/env/
-cat << EOF > ./ingress/cert-manager/acme-dns/env/acme-dns.env
+ cat << EOF > ./ingress/cert-manager/acme-dns/env/acme-dns.env
 # acme-dns will serve on this domain
 # all generated validation URLs will use this as a suffix,
 # so set it to something public that will allow letsencrypt to connect to acme-dns via port 53

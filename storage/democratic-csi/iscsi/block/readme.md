@@ -37,7 +37,7 @@ helm template \
 - - In this example: `tank/k8s/iscsi`
 - Setup local config:
 ```bash
-cat <<EOF > ./storage/democratic-csi/iscsi/block/env/truenas.env
+ cat << EOF > ./storage/democratic-csi/iscsi/block/env/truenas.env
 host=truenas.lan
 # you get the api key when you create it in the truenas web ui
 api_key=1-qwertyuiiopasdfghjklzxcvbnm

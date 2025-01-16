@@ -57,7 +57,7 @@ domain_admin_email=
 # example: domain_admin_email=user@example.org
 secret_name=${domain_admin_email/@/-at-}
 secret_name=${secret_name/_/-}
-cat << EOF > ./ingress/cert-manager/acme-dns/env/$managed_domain-issuer-staging.yaml
+ cat << EOF > ./ingress/cert-manager/acme-dns/env/$managed_domain-issuer-staging.yaml
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:

@@ -36,7 +36,7 @@ wsl -d UbuntuNewName
 # by default WSL will use the root account
 # add config file to change it
 # fill in the name of your windows account
-cat > /etc/wsl.conf <<EOF
+ cat << EOF > /etc/wsl.conf
 [user]
 default=<yourAccount>
 EOF

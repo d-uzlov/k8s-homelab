@@ -8,7 +8,7 @@ so it can be considered mandatory for deployment.
 
 mkdir -p ./metrics/component-monitoring/kubelet/env/
 clusterName=
-cat << EOF > ./metrics/component-monitoring/kubelet/env/patch-cluster-tag.yaml
+ cat << EOF > ./metrics/component-monitoring/kubelet/env/patch-cluster-tag.yaml
 - op: add
   path: /spec/endpoints/0/relabelings/-
   value:

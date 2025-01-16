@@ -16,7 +16,7 @@ and to delete application data that doesn't enable write access to world
 
 ```bash
 mkdir -p ./storage/nfs-csi/storage-classes/nfs-folder/env
-cat <<EOF > ./storage/nfs-csi/storage-classes/nfs-folder/env/nfs.env
+ cat << EOF > ./storage/nfs-csi/storage-classes/nfs-folder/env/nfs.env
 server=truenas.lan
 path=/mnt/main/k8s/nfs
 EOF

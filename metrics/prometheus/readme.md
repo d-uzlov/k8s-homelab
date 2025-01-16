@@ -19,7 +19,7 @@ mkdir -p ./metrics/prometheus/env/
 externalUrl=
 # example: externalUrl=prometheus.example.com
 # get externalUrl from ingress of httproute
-cat << EOF > ./metrics/prometheus/env/patch.yaml
+ cat << EOF > ./metrics/prometheus/env/patch.yaml
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: Prometheus

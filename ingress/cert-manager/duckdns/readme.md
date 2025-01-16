@@ -29,12 +29,12 @@ helm template duckdns-webhook \
 
 ```bash
 mkdir -p ./ingress/cert-manager/duckdns/env
-echo <<EOF > ./ingress/cert-manager/duckdns/env/duckdns.env
+ cat << EOF > ./ingress/cert-manager/duckdns/env/duckdns.env
 # Authentication token that allows you to set up DNS entries.
 # You can find token on the DuckDNS website.
 token=<token>
 EOF
-echo <<EOF > ./ingress/cert-manager/duckdns/env/letsencrypt.env
+ cat << EOF > ./ingress/cert-manager/duckdns/env/letsencrypt.env
 # Can be any valid email.
 # Letsencrypt will send you a warning on this address
 # a few days before any of your certificates expire.

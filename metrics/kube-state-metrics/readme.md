@@ -37,7 +37,7 @@ helm template \
 
 mkdir -p ./metrics/kube-state-metrics/env/
 clusterName=
-cat << EOF > ./metrics/kube-state-metrics/env/patch-cluster-tag.yaml
+ cat << EOF > ./metrics/kube-state-metrics/env/patch-cluster-tag.yaml
 - op: add
   path: /spec/endpoints/0/relabelings/-
   value:

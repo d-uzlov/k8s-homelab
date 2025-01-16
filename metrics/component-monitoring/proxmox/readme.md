@@ -11,7 +11,7 @@ Data in proxmox updates every 20 seconds.
 ```bash
 mkdir -p mkdir -p ./metrics/component-monitoring/proxmox/env/
 # create this file, create PVE APT token and fill the values
-cat << EOF > ./metrics/component-monitoring/proxmox/env/pve.yml
+ cat << EOF > ./metrics/component-monitoring/proxmox/env/pve.yml
 default:
   # copy from "User name" field
   user: user-name@login-realm
@@ -26,7 +26,7 @@ EOF
 # or set this permission on the user and disable privilege separation on the token
 
 # adjust list of nodes and cluster name
-cat << EOF > ./metrics/component-monitoring/proxmox/env/scrape-node-patch.yaml
+ cat << EOF > ./metrics/component-monitoring/proxmox/env/scrape-node-patch.yaml
 ---
 apiVersion: monitoring.coreos.com/v1alpha1
 kind: ScrapeConfig
@@ -43,7 +43,7 @@ spec:
     - pve3.k8s.lan
 EOF
 # for the cluster scrape set only 1 address
-cat << EOF > ./metrics/component-monitoring/proxmox/env/scrape-cluster-patch.yaml
+ cat << EOF > ./metrics/component-monitoring/proxmox/env/scrape-cluster-patch.yaml
 ---
 apiVersion: monitoring.coreos.com/v1alpha1
 kind: ScrapeConfig

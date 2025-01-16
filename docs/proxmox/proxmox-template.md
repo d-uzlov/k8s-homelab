@@ -62,11 +62,11 @@ EOF
 runcmd:
 - /usr/sbin/dhclient
 EOF
-'   --run-command 'sudo tee /etc/sysctl.d/inotify.conf <<EOF
+'   --run-command 'sudo tee /etc/sysctl.d/inotify.conf << EOF
 fs.inotify.max_user_watches = 4194304
 fs.inotify.max_user_instances = 65536
 EOF
-'   --run-command 'sudo tee /etc/sysctl.d/max_map_count.conf <<EOF
+'   --run-command 'sudo tee /etc/sysctl.d/max_map_count.conf << EOF
 vm.max_map_count = 262144
 EOF
 '   --run-command 'sudo cloud-init clean; sudo journalctl --rotate; sudo journalctl -m --vacuum-time=1s; true' \

@@ -38,7 +38,7 @@ helm template \
 - - It seems like it's not possible to enable the service if you don't have shares yet
 - Setup local config:
 ```bash
-cat <<EOF > ./storage/democratic-csi/nfs/fast/env/truenas.env
+ cat << EOF > ./storage/democratic-csi/nfs/fast/env/truenas.env
 host=truenas.lan
 # you get the api key when you create it in the truenas web ui
 api_key=1-qwertyuiiopasdfghjklzxcvbnm

@@ -51,19 +51,19 @@ Generate passwords and set up config.
 
 ```bash
 mkdir -p ./ingress/authentik/db/env/
-cat << EOF > ./ingress/authentik/db/env/redis-password.env
+ cat << EOF > ./ingress/authentik/db/env/redis-password.env
 redis_password=$(LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 20)
 EOF
-cat << EOF > ./ingress/authentik/db/env/redis-sc.env
+ cat << EOF > ./ingress/authentik/db/env/redis-sc.env
 # authentik keeps session info in redis, so we need PVC for to avoid resetting sessions on restart
 redis_storage_class=nvmeof
 EOF
-cat << EOF > ./ingress/authentik/db/env/postgres-sc.env
+ cat << EOF > ./ingress/authentik/db/env/postgres-sc.env
 postgres_storage_class=nvmeof
 EOF
 
 mkdir -p ./ingress/authentik/env/
-cat << EOF > ./ingress/authentik/env/authentik-seed.env
+ cat << EOF > ./ingress/authentik/env/authentik-seed.env
 # Secret key used for cookie signing. Changing this will invalidate active sessions.
 # Prior to 2023.6.0 the secret key was also used for unique user IDs.
 # When running a pre-2023.6.0 version of authentik the key should not be changed after the first install.
@@ -75,7 +75,7 @@ EOF
 # for example:
 # - yandex: https://yandex.ru/support/yandex-360/customers/mail/ru/mail-clients/others.html#smtpsetting
 # - google: https://support.google.com/a/answer/176600?hl=en
-cat << EOF > ./ingress/authentik/env/authentik-smtp.env
+ cat << EOF > ./ingress/authentik/env/authentik-smtp.env
 auth_smtp_host=AUTOREPLACE_SMTP_HOST
 auth_smtp_port=AUTOREPLACE_SMTP_PORT
 auth_smtp_username=AUTOREPLACE_SMTP_USERNAME
@@ -100,7 +100,7 @@ kl -n authentik get pod -o wide -L spilo-role
 authentik_seed=$(. ./ingress/authentik/env/authentik-seed.env; echo $authentik_seed)
 redis_password=$(. ingress/authentik/db/env/redis-password.env; echo $redis_password)
 postgres_password=$(kl -n authentik get secret authentik.postgres.credentials.postgresql.acid.zalan.do --template='{{.data.password | base64decode | printf "%s\n" }}')
-cat << EOF > ./ingress/authentik/env/authentik-passwords-patch.yaml
+ cat << EOF > ./ingress/authentik/env/authentik-passwords-patch.yaml
 ---
 apiVersion: v1
 kind: Secret
@@ -113,7 +113,7 @@ stringData:
   AUTHENTIK_SECRET_KEY: $authentik_seed
 EOF
 ( . ./ingress/authentik/env/authentik-smtp.env;
-cat << EOF > ./ingress/authentik/env/authentik-smtp-patch.yaml
+ cat << EOF > ./ingress/authentik/env/authentik-smtp-patch.yaml
 ---
 apiVersion: v1
 kind: Secret
@@ -239,7 +239,7 @@ Enable the k8s integration.
 ```bash
 
 mkdir -p ./ingress/istio/mesh-config/env/
-cat << EOF > ./ingress/istio/mesh-config/env/extension-authentik.yaml
+ cat << EOF > ./ingress/istio/mesh-config/env/extension-authentik.yaml
 - name: authentik
   envoyExtAuthzHttp:
     service: ak-outpost-public.authentik.svc.cluster.local

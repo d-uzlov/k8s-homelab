@@ -64,7 +64,7 @@ node_common=
 # node3=k8s1-etcd3.k8s.lan
 # node_common=k8s1-etcd-lb.k8s.lan
 
-cat > ./docs/k8s/etcd/env/etcd-csr.json <<EOF
+ cat << EOF > ./docs/k8s/etcd/env/etcd-csr.json
 {
   "CN": "etcd",
   "hosts": [

@@ -15,7 +15,7 @@ Set storage classes for different data types:
 kl get sc
 # set values in env file
 mkdir -p ./torrents/qbittorrent/pvc/env/
-cat <<EOF > ./torrents/qbittorrent/pvc/env/pvc.env
+ cat << EOF > ./torrents/qbittorrent/pvc/env/pvc.env
 # where qbittorrent internal configs should be located
 config=bulk
 config_size=1Gi
@@ -43,7 +43,7 @@ can only be changed via web-UI.
 
 ```bash
 mkdir -p ./torrents/qbittorrent/main-app/env/
-cat <<EOF > ./torrents/qbittorrent/main-app/env/settings.env
+ cat << EOF > ./torrents/qbittorrent/main-app/env/settings.env
 # set to true if you want to discard all changes in settings when the app is restarted
 force_overwrite_config=false
 

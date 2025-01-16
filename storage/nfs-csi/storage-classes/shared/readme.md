@@ -17,7 +17,7 @@
 
 ```bash
 mkdir -p ./storage/nfs-csi/storage-classes/shared/env
-cat <<EOF > ./storage/nfs-csi/storage-classes/shared/env/nfs.env
+ cat << EOF > ./storage/nfs-csi/storage-classes/shared/env/nfs.env
 server=truenas.lan
 path=/mnt/main/k8s/media
 EOF

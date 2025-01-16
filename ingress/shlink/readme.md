@@ -78,7 +78,7 @@ When in doubt, edit ingress config to use `letsencrypt-staging` instead, and tes
 
 ```bash
 mkdir -p ./ingress/shlink/ingress-custom-letsencrypt/env/
-cat <<EOF > ./ingress/shlink/ingress-custom-letsencrypt/env/domain.env
+ cat << EOF > ./ingress/shlink/ingress-custom-letsencrypt/env/domain.env
 domain=my.domain.example
 EOF
 

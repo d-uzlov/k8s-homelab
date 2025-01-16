@@ -38,7 +38,7 @@ Set up storage for OCIS components:
 
 ```bash
 mkdir -p ./cloud/ocis/pvc/env/
-cat <<EOF > ./cloud/ocis/pvc/env/pvc.env
+ cat << EOF > ./cloud/ocis/pvc/env/pvc.env
 # all components use ReadWriteMany volumes
 # so they can share storage if you scale them
 
@@ -64,37 +64,37 @@ Generate secrets and certificates:
 
 ```bash
 mkdir -p ./cloud/ocis/secrets/env/
-cat <<EOF > ./cloud/ocis/secrets/env/jwt-secret.env
+ cat << EOF > ./cloud/ocis/secrets/env/jwt-secret.env
 jwt-secret=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 50)
 EOF
-cat <<EOF > ./cloud/ocis/secrets/env/machine-auth-api-key.env
+ cat << EOF > ./cloud/ocis/secrets/env/machine-auth-api-key.env
 machine-auth-api-key=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 50)
 EOF
-cat <<EOF > ./cloud/ocis/secrets/env/storage-system.env
+ cat << EOF > ./cloud/ocis/secrets/env/storage-system.env
 user-id=$(cat /proc/sys/kernel/random/uuid | tr -d '\n')
 api-key=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 50)
 EOF
-cat <<EOF > ./cloud/ocis/secrets/env/storage-system-jwt-secret.env
+ cat << EOF > ./cloud/ocis/secrets/env/storage-system-jwt-secret.env
 storage-system-jwt-secret=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 50)
 EOF
-cat <<EOF > ./cloud/ocis/secrets/env/transfer-secret.env
+ cat << EOF > ./cloud/ocis/secrets/env/transfer-secret.env
 transfer-secret=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 50)
 EOF
-cat <<EOF > ./cloud/ocis/secrets/env/thumbnails-transfer-secret.env
+ cat << EOF > ./cloud/ocis/secrets/env/thumbnails-transfer-secret.env
 thumbnails-transfer-secret=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 50)
 EOF
-cat <<EOF > ./cloud/ocis/secrets/env/storage-users.env
+ cat << EOF > ./cloud/ocis/secrets/env/storage-users.env
 storage-uuid=$(cat /proc/sys/kernel/random/uuid | tr -d '\n')
 EOF
-cat <<EOF > ./cloud/ocis/secrets/env/graph.env
+ cat << EOF > ./cloud/ocis/secrets/env/graph.env
 application-id=$(cat /proc/sys/kernel/random/uuid | tr -d '\n')
 EOF
-cat <<EOF > ./cloud/ocis/secrets/env/ldap-bind-secrets.env
+ cat << EOF > ./cloud/ocis/secrets/env/ldap-bind-secrets.env
 reva-ldap-bind-password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 50)
 idp-ldap-bind-password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 50)
 graph-ldap-bind-password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 50)
 EOF
-cat <<EOF > ./cloud/ocis/secrets/env/admin-user.env
+ cat << EOF > ./cloud/ocis/secrets/env/admin-user.env
 user-id=$(cat /proc/sys/kernel/random/uuid | tr -d '\n')
 password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 50)
 EOF

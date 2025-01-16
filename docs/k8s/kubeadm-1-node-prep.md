@@ -15,7 +15,7 @@ sudo dnf remove -y zram-generator-defaults
 # Fix inotify limits
 
 ```bash
-sudo tee /etc/sysctl.d/inotify.conf <<EOF
+sudo tee /etc/sysctl.d/inotify.conf << EOF
 fs.inotify.max_user_watches = 4194304
 fs.inotify.max_user_instances = 65536
 EOF
@@ -90,7 +90,7 @@ rm -f crictl-$crictl_version-linux-amd64.tar.gz &&
 crictl --version &&
 sudo crictl config --set runtime-endpoint=unix:///run/containerd/containerd.sock --set image-endpoint=unix:///run/containerd/containerd.sock &&
 
-sudo tee /etc/modules-load.d/containerd.conf <<EOF &&
+sudo tee /etc/modules-load.d/containerd.conf << EOF &&
 overlay
 br_netfilter
 EOF
@@ -133,7 +133,7 @@ EOF
   sudo sed -i '/ swap / s/^/#/' /etc/fstab
 }
 
-sudo tee /etc/sysctl.d/kubernetes.conf <<EOF &&
+sudo tee /etc/sysctl.d/kubernetes.conf << EOF &&
 net.bridge.bridge-nf-call-ip6tables = 1
 net.bridge.bridge-nf-call-iptables = 1
 net.ipv4.ip_forward = 1

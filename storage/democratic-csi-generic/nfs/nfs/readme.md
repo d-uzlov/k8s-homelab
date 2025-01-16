@@ -46,7 +46,7 @@ Setup local config:
 
 ```bash
 mkdir -p ./storage/democratic-csi-generic/nfs/nfs/env/
-cat <<EOF > ./storage/democratic-csi-generic/nfs/nfs/env/config.env
+ cat << EOF > ./storage/democratic-csi-generic/nfs/nfs/env/config.env
 host=server.address
 ssh_user=democratic-csi
 

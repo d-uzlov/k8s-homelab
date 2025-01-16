@@ -10,7 +10,7 @@ You can set a list of default keys that are used when page arg list is empty:
 
 ```bash
 mkdir -p ./video/custom-player/content/env/
-cat << EOF > ./video/custom-player/content/env/data-sources.js
+ cat << EOF > ./video/custom-player/content/env/data-sources.js
 export function getDataSources() {
   const res = {};
   res.main = 'https://ome-streams.domain';

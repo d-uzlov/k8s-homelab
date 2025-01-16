@@ -19,7 +19,7 @@ proxmox_api_endpoint=
 proxmox_username=
 proxmox_password=
 # sum over all cluster nodes
-cat << EOF >> ./board/homepage/config/env/services-proxmox.yaml
+ cat << EOF >> ./board/homepage/config/env/services-proxmox.yaml
   - Cluster:
       icon: proxmox.png
       widget:
@@ -32,7 +32,7 @@ EOF
 readable_node_name=
 exact_node_name=
 node_address=
-cat << EOF >> ./board/homepage/config/env/services-proxmox.yaml
+ cat << EOF >> ./board/homepage/config/env/services-proxmox.yaml
   - $readable_node_name:
       href: https://$node_address:8006/
       icon: proxmox.png
@@ -48,7 +48,7 @@ EOF
 echo "- Truenas:" >> ./board/homepage/config/env/services-truenas.yaml
 truenas_address=
 truenas_api_key=
-cat << EOF >> ./board/homepage/config/env/services-truenas.yaml
+ cat << EOF >> ./board/homepage/config/env/services-truenas.yaml
   - Truenas SSD:
       href: http://$truenas_address/
       icon: truenas.png

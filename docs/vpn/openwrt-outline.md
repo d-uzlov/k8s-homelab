@@ -42,7 +42,7 @@ PASSWORD_REGEX='([a-z0-9-]+):([A-Za-z0-9]+)'
 OUTLINE_METHOD=${BASH_REMATCH[1]}
 OUTLINE_PASSWORD=${BASH_REMATCH[2]}
 
-cat << EOF > /etc/config/shadowsocks-libev
+ cat << EOF > /etc/config/shadowsocks-libev
 config server 'sss0'
         option server '$OUTLINE_IP'
         option server_port '$OUTLINE_PORT'
@@ -177,14 +177,14 @@ echo "7 3 */1 * * $load_ru_cidr" >> /etc/crontabs/root
 
 ```bash
 # reddit blocks VPNs
-cat << EOF > /etc/shadowsocks-libev/bypass-reddit.lst
+ cat << EOF > /etc/shadowsocks-libev/bypass-reddit.lst
 151.101.193.140
 151.101.1.140
 151.101.129.140
 151.101.65.140
 EOF
 # ubisoft: https://ipinfo.io/AS22634
-cat << EOF > /etc/shadowsocks-libev/bypass-ubisoft1.lst
+ cat << EOF > /etc/shadowsocks-libev/bypass-ubisoft1.lst
 130.254.64.0/19
 130.254.80.0/23
 130.254.82.0/23
@@ -208,7 +208,7 @@ cat << EOF > /etc/shadowsocks-libev/bypass-ubisoft1.lst
 216.98.48.0/20
 EOF
 # ubisoft: https://www.netify.ai/resources/applications/ubisoft
-cat << EOF > /etc/shadowsocks-libev/bypass-ubisoft2.lst
+ cat << EOF > /etc/shadowsocks-libev/bypass-ubisoft2.lst
 185.38.20.0/22
 194.2.155.0/24
 194.169.249.0/24

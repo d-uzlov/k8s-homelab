@@ -58,7 +58,7 @@ kl apply -f ./ingress/istio/base/istio-base.gen.yaml --server-side --force-confl
 # check out if this issue is fixed, maybe we can stop doing this shit just to enable some extensions:
 # - https://github.com/istio/istio/issues/35165
 mkdir -p ./ingress/istio/mesh-config/env/
-cat << EOF > ./ingress/istio/mesh-config/env/mesh-config.yaml
+ cat << EOF > ./ingress/istio/mesh-config/env/mesh-config.yaml
 $(cat ./ingress/istio/mesh-config/default-mesh-config.yaml)
 extensionProviders:
 $(cat ./ingress/istio/mesh-config/env/extension-*.yaml)

@@ -10,7 +10,7 @@ References:
 
 ```bash
 mkdir -p ./test/speedtest/librespeed/env/
-cat <<EOF > ./test/speedtest/librespeed/env/passwords.env
+ cat << EOF > ./test/speedtest/librespeed/env/passwords.env
 results_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 EOF
 ```

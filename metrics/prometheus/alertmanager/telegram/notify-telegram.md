@@ -21,7 +21,7 @@ chatId=$(curl https://api.telegram.org/bot$botToken/getUpdates | jq .result[0].m
 echo $chatId
 
 mkdir -p ./metrics/prometheus/alertmanager/telegram/env/
-cat << EOF > ./metrics/prometheus/alertmanager/telegram/env//telegram-secret.yaml
+ cat << EOF > ./metrics/prometheus/alertmanager/telegram/env//telegram-secret.yaml
 ---
 apiVersion: v1
 kind: Secret
@@ -31,7 +31,7 @@ stringData:
   token: $botToken
 EOF
 
-cat << EOF > ./metrics/prometheus/alertmanager/env/telegram/alert-manager-telegram.yaml
+ cat << EOF > ./metrics/prometheus/alertmanager/env/telegram/alert-manager-telegram.yaml
 - op: add
   path: /spec/receivers/0/telegramConfigs/0/chatID
   value: $chatId

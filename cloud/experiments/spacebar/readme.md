@@ -20,7 +20,7 @@ Generate passwords and set up config.
 
 ```bash
 mkdir -p ./cloud/onlyoffice/main-app/env/
-cat <<EOF > ./cloud/onlyoffice/main-app/env/api.env
+ cat << EOF > ./cloud/onlyoffice/main-app/env/api.env
 jwt_secret=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 EOF
 

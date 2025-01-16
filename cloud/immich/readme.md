@@ -43,7 +43,7 @@ helm template \
 
 ```bash
 mkdir -p ./cloud/immich/pvc/env/
-cat <<EOF > ./cloud/immich/pvc/env/pvc.env
+ cat << EOF > ./cloud/immich/pvc/env/pvc.env
 # userdata uses ReadWriteMany type volumes
 userdata_sc=fast
 userdata_size=1Ti

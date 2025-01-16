@@ -29,7 +29,7 @@ kl -n calico-apiserver get pod -o wide
 
 ```bash
 # Local init
-cat <<EOF > ./network/calico/cm/env/api.env
+ cat << EOF > ./network/calico/cm/env/api.env
 KUBERNETES_SERVICE_HOST=kcp.lan
 KUBERNETES_SERVICE_PORT=6443
 EOF

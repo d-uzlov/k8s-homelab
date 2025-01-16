@@ -37,7 +37,7 @@ Define CIDR or range of IPs that LoadBalancer services are allowed to use:
 
 ```bash
 mkdir -p ./network/kube-vip-load-balancer/ccm/cm/env/
-cat <<EOF > ./network/kube-vip-load-balancer/ccm/cm/env/ccm.env
+ cat << EOF > ./network/kube-vip-load-balancer/ccm/cm/env/ccm.env
 cidr-global=10.0.2.0/24
 range-global=
 EOF

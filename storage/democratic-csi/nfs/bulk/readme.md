@@ -36,7 +36,7 @@ helm template \
 - Go to `Top Bar -> Settings -> API Keys` and create a new key
 - Setup local config:
 ```bash
-cat <<EOF > ./storage/democratic-csi/nfs/bulk/env/truenas.env
+ cat << EOF > ./storage/democratic-csi/nfs/bulk/env/truenas.env
 host=truenas.lan
 # you get the api key when you create it in the truenas web ui
 api_key=1-qwertyuiiopasdfghjklzxcvbnm

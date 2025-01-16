@@ -21,7 +21,7 @@ kl create ns radium
 kl label ns --overwrite radium copy-wild-cert=main
 
 # Init once
-cat <<EOF > ./torrents/qbittorrent/env/ingress.env
+ cat << EOF > ./torrents/qbittorrent/env/ingress.env
 public_domain=radium.example.duckdns.org
 public_link=https://radium.example.duckdns.org
 

@@ -40,12 +40,12 @@ You can create many gateways but ingress routes in this repo are configured to u
 
 ```bash
 mkdir -p ./ingress/gateway-api/public/env/
-cat <<EOF > ./ingress/gateway-api/public/env/gateway-class.env
+ cat << EOF > ./ingress/gateway-api/public/env/gateway-class.env
 # set to your preferred gateway class
 gateway_class=cilium
 EOF
 mkdir -p ./ingress/gateway-api/private/env/
-cat <<EOF > ./ingress/gateway-api/private/env/gateway-class.env
+ cat << EOF > ./ingress/gateway-api/private/env/gateway-class.env
 # set to your preferred gateway class
 gateway_class=cilium
 EOF

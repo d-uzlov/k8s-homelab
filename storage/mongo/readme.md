@@ -42,7 +42,7 @@ kl apply -f ./storage/mongo/mongo-crds.gen.yaml --server-side
 
 # set the storage class for mongo PVCs
 mkdir -p ./storage/mongo/pvc-config/env/
-cat << EOF > ./storage/mongo/test-cluster/pvc/env/pvc.env
+ cat << EOF > ./storage/mongo/test-cluster/pvc/env/pvc.env
 data_class=block
 logs_class=block
 EOF
@@ -66,7 +66,7 @@ kl delete -f ./storage/mongo/mongo-crds.gen.yaml
 
 ```bash
 mkdir -p ./storage/mongo/test-cluster/env/
-cat << EOF > ./storage/mongo/test-cluster/env/password.env
+ cat << EOF > ./storage/mongo/test-cluster/env/password.env
 password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 EOF
 

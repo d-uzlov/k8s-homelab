@@ -18,7 +18,7 @@ is accessible via VPN by any client connected. In short, we need to:
 # Step 1. Enable IP forwarding on Proxmox
 
 ```shell
-sudo tee /etc/sysctl.d/ip_forward.conf <<EOF
+sudo tee /etc/sysctl.d/ip_forward.conf << EOF
 net.ipv4.ip_forward=1
 EOF
 # reload rules from /etc/sysctl.d/
@@ -64,7 +64,7 @@ apt update
 apt full-upgrade -y
 apt install -y curl htop
 
-tee /etc/sysctl.d/ip_forward.conf <<EOF
+tee /etc/sysctl.d/ip_forward.conf << EOF
 net.ipv4.ip_forward=1
 EOF
 # reload rules from /etc/sysctl.d

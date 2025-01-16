@@ -46,7 +46,7 @@ sed \
   ./storage/democratic-csi-generic/proxy/storage-classes/connection.template.yaml \
   > ./storage/democratic-csi-generic/proxy/storage-classes/env/$serverAddress-connection.yaml
 
-cat << EOF > ./storage/democratic-csi-generic/proxy/storage-classes/env/$serverAddress-ssh-key.yaml
+ cat << EOF > ./storage/democratic-csi-generic/proxy/storage-classes/env/$serverAddress-ssh-key.yaml
 sshConnection:
   privateKey: |
 EOF
@@ -65,7 +65,7 @@ rm -f ./storage/democratic-csi-generic/proxy/storage-classes/env/resources-$serv
 rm -f ./storage/democratic-csi-generic/proxy/storage-classes/env/secrets-$serverAddress.yaml
 # drivers="zfs-generic-nfs zfs-generic-iscsi zfs-generic-smb zfs-generic-nvmeof"
 drivers="zfs-generic-nfs zfs-generic-iscsi zfs-generic-nvmeof"
-for driver in $drivers; do
+ for driver in $drivers; do
   shortName=${driver#zfs-generic-}
   scName=$storageClassPrefix$shortName
   secretName=$serverAddress-$scName-config
@@ -93,19 +93,19 @@ for driver in $drivers; do
     disableNameSuffixHash: true
 EOF
 done
-cat << EOF >> ./storage/democratic-csi-generic/proxy/storage-classes/env/sc-$serverAddress-iscsi.yaml
+ cat << EOF >> ./storage/democratic-csi-generic/proxy/storage-classes/env/sc-$serverAddress-iscsi.yaml
   fsType: ext4
 mountOptions:
 - noatime
 - discard
 EOF
-cat << EOF >> ./storage/democratic-csi-generic/proxy/storage-classes/env/sc-$serverAddress-nvmeof.yaml
+ cat << EOF >> ./storage/democratic-csi-generic/proxy/storage-classes/env/sc-$serverAddress-nvmeof.yaml
   fsType: ext4
 mountOptions:
 - noatime
 - discard
 EOF
-cat << EOF >> ./storage/democratic-csi-generic/proxy/storage-classes/env/sc-$serverAddress-nfs.yaml
+ cat << EOF >> ./storage/democratic-csi-generic/proxy/storage-classes/env/sc-$serverAddress-nfs.yaml
   fsType: nfs
 mountOptions:
 - soft
@@ -114,7 +114,7 @@ mountOptions:
 - wsize=262144
 EOF
 # TODO currently SMB config does not work
-cat << EOF >> ./storage/democratic-csi-generic/proxy/storage-classes/env/sc-$serverAddress-smb.yaml
+ cat << EOF >> ./storage/democratic-csi-generic/proxy/storage-classes/env/sc-$serverAddress-smb.yaml
   fsType: smb3
 mountOptions:
 # - file_mode=0777

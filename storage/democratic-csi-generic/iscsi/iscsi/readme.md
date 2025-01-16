@@ -44,7 +44,7 @@ Setup local config:
 
 ```bash
 mkdir -p ./storage/democratic-csi-generic/iscsi/iscsi/env/
-cat << EOF > ./storage/democratic-csi-generic/iscsi/iscsi/env/config.env
+ cat << EOF > ./storage/democratic-csi-generic/iscsi/iscsi/env/config.env
 host=server.address
 ssh_user=democratic-csi
 

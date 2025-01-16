@@ -4,7 +4,7 @@ sudo mkdir -p /jellyfin/ /jellyfin/config/ /jellyfin/cache/ /jellyfin/media/
 sudo chmod 777 /jellyfin/ /jellyfin/config/ /jellyfin/cache/ /jellyfin/media/
 
 mkdir -p ~/jellyfin/
-cat << EOF > ~/jellyfin/docker-compose.yaml
+ cat << EOF > ~/jellyfin/docker-compose.yaml
 services:
   jellyfin:
     image: jellyfin/jellyfin

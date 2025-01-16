@@ -14,7 +14,7 @@ References:
 kl get sc
 # set values in env file
 mkdir -p ./video/jellyfin/pvc/base-env/env/
-cat << EOF > ./video/jellyfin/pvc/base-env/env/pvc.env
+ cat << EOF > ./video/jellyfin/pvc/base-env/env/pvc.env
 # type: RWO
 db_class=block
 db_size=1Gi
@@ -38,7 +38,7 @@ EOF
 # here is an example patch for local data
 # adjust for your needs
 mkdir -p ./video/jellyfin/generic/env/
-cat << EOF > ./video/jellyfin/generic/env/patch.yaml
+ cat << EOF > ./video/jellyfin/generic/env/patch.yaml
 ---
 apiVersion: apps/v1
 kind: Deployment

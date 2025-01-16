@@ -15,7 +15,7 @@
 
 ```bash
 mkdir -p ./storage/smb-csi/storage-classes/fast/env
-cat <<EOF > ./storage/smb-csi/storage-classes/fast/env/smb.env
+ cat << EOF > ./storage/smb-csi/storage-classes/fast/env/smb.env
 server=truenas.lan
 share=k8s
 EOF

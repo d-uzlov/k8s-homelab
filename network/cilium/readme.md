@@ -52,7 +52,7 @@ kl -n kube-system patch ds kube-proxy --type=json -p='[{"op": "remove", "path": 
 # Also, `l2lb` doesn't work without kube-proxy replacement.
 
 mkdir -p ./network/cilium/env/
-cat <<EOF > ./network/cilium/env/control-plane-endpoint.env
+ cat << EOF > ./network/cilium/env/control-plane-endpoint.env
 # ip or domain that points to your control plane nodes
 # same as what you set during cluster creation
 control_plane_endpoint=cp.k8s.lan
@@ -102,7 +102,7 @@ and services with class `io.cilium/l2-announcer`.
 
 ```bash
 mkdir -p ./network/cilium/loadbalancer/env/
-cat <<EOF > ./network/cilium/loadbalancer/env/ip-pool.env
+ cat << EOF > ./network/cilium/loadbalancer/env/ip-pool.env
 pool=10.0.2.0/24
 EOF
 ```

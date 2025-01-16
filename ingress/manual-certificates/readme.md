@@ -29,7 +29,7 @@ issuer_prefix=$domain_name
 mkdir -p ./ingress/manual-certificates/env/
 # if you don't need the wildcard domain, remove it manually
 # remember that you _have_ to remove if when using HTTP01 challenge
-cat << EOF > ./ingress/manual-certificates/env/$domain_name-cert-staging.yaml
+ cat << EOF > ./ingress/manual-certificates/env/$domain_name-cert-staging.yaml
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -50,7 +50,7 @@ EOF
 # useful for classic k8s ingress
 # you don't need it for gateway API
 replicator_label=copy-wild-cert=main
-cat << EOF >> ./ingress/manual-certificates/env/$domain_name-cert-staging.yaml
+ cat << EOF >> ./ingress/manual-certificates/env/$domain_name-cert-staging.yaml
   secretTemplate:
     annotations:
       replicator.v1.mittwald.de/replicate-to-matching: >
@@ -66,12 +66,12 @@ Save environment info to automate ingress deployment:
 
 ```bash
 mkdir -p ./ingress/manual-certificates/domain-info/env/
-cat <<EOF > ./ingress/manual-certificates/domain-info/env/main-domain.env
+ cat << EOF > ./ingress/manual-certificates/domain-info/env/main-domain.env
 # used to deploy environment-agnostic ingress
 domain_suffix=$domain_name
 secret_name=cert-$domain_name-production
 EOF
-cat <<EOF > ./ingress/manual-certificates/domain-info/env/main-domain-replicator.env
+ cat << EOF > ./ingress/manual-certificates/domain-info/env/main-domain-replicator.env
 # label for the certificate secret
 # used by the 'replicator' deployment
 # this is just so you don't forget the value

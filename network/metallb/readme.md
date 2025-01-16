@@ -5,7 +5,7 @@ Define CIDR or range of IPs that LoadBalancer services are allowed to use:
 
 ```bash
 mkdir -p ./network/metallb/env/
-cat <<EOF > ./network/metallb/env/ip-pool.env
+ cat << EOF > ./network/metallb/env/ip-pool.env
 pool=10.0.2.0/24
 EOF
 ```

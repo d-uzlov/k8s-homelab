@@ -70,10 +70,10 @@ TODO this doesn't work because redis password secret is missing
 ```bash
 
 mkdir -p ./storage/redis-ot/test/env/
-cat << EOF > ./storage/redis-ot/test/env/redis-password.env
+ cat << EOF > ./storage/redis-ot/test/env/redis-password.env
 password=$(LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 20)
 EOF
-cat << EOF > ./storage/redis-ot/test/env/pvc.env
+ cat << EOF > ./storage/redis-ot/test/env/pvc.env
 storage_class=nvmeof
 EOF
 

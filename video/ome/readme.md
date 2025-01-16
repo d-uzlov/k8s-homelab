@@ -14,13 +14,13 @@ Generate passwords and set up config.
 
 ```bash
 mkdir -p ./video/ome/common-env/env/
-cat << EOF > ./video/ome/common-env/env/redis.env
+ cat << EOF > ./video/ome/common-env/env/redis.env
 redis_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 EOF
-cat << EOF > ./video/ome/common-env/env/access-token.env
+ cat << EOF > ./video/ome/common-env/env/access-token.env
 token=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 EOF
-cat << EOF > ./video/ome/common-env/env/webrtc-address.env
+ cat << EOF > ./video/ome/common-env/env/webrtc-address.env
 # public address, resolvable from outside world
 public=example.duckdns.org
 # LAN address, in case you are behind NAT

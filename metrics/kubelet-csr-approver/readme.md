@@ -34,7 +34,7 @@ helm template \
 
 ```bash
 mkdir -p ./metrics/kubelet-csr-approver/env
-cat <<EOF > ./metrics/kubelet-csr-approver/env/rules.env
+ cat << EOF > ./metrics/kubelet-csr-approver/env/rules.env
 # set to true if your node names don't resolve as valid DNS names
 BYPASS_DNS_RESOLUTION=false
 # pattern for allowed node names

@@ -10,7 +10,7 @@ cp ./docs/k8s/etcd/env/etcd-client.pem      ./metrics/component-monitoring/etcd/
 cp ./docs/k8s/etcd/env/etcd-client-key.pem  ./metrics/component-monitoring/etcd/external-etcd/env/client.key
 
 # adjust list of addresses and ports for your environment
-cat << EOF > ./metrics/component-monitoring/etcd/external-etcd/env/etcd-targets-patch.yaml
+ cat << EOF > ./metrics/component-monitoring/etcd/external-etcd/env/etcd-targets-patch.yaml
 ---
 apiVersion: monitoring.coreos.com/v1alpha1
 kind: ScrapeConfig

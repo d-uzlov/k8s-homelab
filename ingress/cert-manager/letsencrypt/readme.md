@@ -13,7 +13,7 @@ These issuers use HTTP-01 challenge:
 ```bash
 # Init once
 mkdir -p ./ingress/cert-manager/letsencrypt/env/
-echo <<EOF > ./ingress/cert-manager/letsencrypt/env/letsencrypt.env
+ cat << EOF > ./ingress/cert-manager/letsencrypt/env/letsencrypt.env
 # Can be any valid email.
 # Letsencrypt will send you a warning on this address
 # a few days before any of your certificates expire.

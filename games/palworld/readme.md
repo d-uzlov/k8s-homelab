@@ -9,17 +9,17 @@ References:
 
 ```bash
 mkdir -p ./games/palworld/pvc/env/
-cat << EOF > ./games/palworld/pvc/env/pvc.env
+ cat << EOF > ./games/palworld/pvc/env/pvc.env
 data_class=fast
 data_size=15Gi
 EOF
 
 mkdir -p ./games/palworld/main-app/env/
-cat << EOF > ./games/palworld/main-app/env/passwords.env
+ cat << EOF > ./games/palworld/main-app/env/passwords.env
 server_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 admin_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
 EOF
-cat << EOF > ./games/palworld/main-app/env/settings.env
+ cat << EOF > ./games/palworld/main-app/env/settings.env
 # set to true to add your serve to the list of community servers
 # don't forget to set a secure password
 use_community=false

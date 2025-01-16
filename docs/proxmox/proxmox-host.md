@@ -132,7 +132,7 @@ chmod 600 /etc/postfix/sasl_passwd
 postmap hash:/etc/postfix/sasl_passwd # generate /etc/postfix/sasl_passwd.db
 
 # edit email config
-cat << EOF >> /etc/postfix/main.cf
+ cat << EOF >> /etc/postfix/main.cf
 relayhost = smtp.gmail.com:587
 smtp_use_tls = yes
 smtp_sasl_auth_enable = yes

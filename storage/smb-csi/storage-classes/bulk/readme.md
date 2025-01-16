@@ -13,7 +13,7 @@
 
 ```bash
 mkdir -p ./storage/smb-csi/storage-classes/bulk/env
-cat <<EOF > ./storage/smb-csi/storage-classes/bulk/env/smb.env
+ cat << EOF > ./storage/smb-csi/storage-classes/bulk/env/smb.env
 server=truenas.lan
 share=k8s
 EOF
