@@ -72,7 +72,7 @@ sed -i 's/^  \"id\": .*,/  \"id\": null,/' ./metrics/component-monitoring/proxmo
 sed -i 's/^  \"refresh\": \".*s\",/  \"refresh\": \"auto\",/' ./metrics/component-monitoring/proxmox/dashboards/*.json
 # remove local variable values
 sed -i '/        \"current\": {/,/        }\,/d' ./metrics/component-monitoring/proxmox/dashboards/*.json
-sed -i 's/^  \"timezone\": \".*s\",/  \"timezone\": \"browser\",/' ./metrics/component-monitoring/proxmox/dashboards/*.json
+sed -i 's/^  \"timezone\": \".*\",/  \"timezone\": \"browser\",/' ./metrics/component-monitoring/proxmox/dashboards/*.json
 # grafana likes to flip some values between {"color":"green","value": null} and {"color":"green"}
 # this forces them all to lose "value": null, so that there are less changes in commits
 sed -i -z -r 's/,\n *\"value\": null(\n *})/\1/g' ./metrics/component-monitoring/proxmox/dashboards/*.json

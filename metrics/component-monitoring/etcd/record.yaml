@@ -2,7 +2,7 @@
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: etcd-record
+  name: record-etcd-disk-quantile
   labels:
     prometheus.io/instance: main
 spec:
@@ -11,9 +11,13 @@ spec:
     # scrape_interval == rule_evaluation_interval == 10s, therefore irate does not lose any samples
     # `irate[1m]` is much more precise than `rate[25s]`
     rules:
-    - record: etcd_disk_backend_commit_duration_seconds:quantile_099_irate
+    - record: etcd_disk_backend_commit_duration_seconds:quantile_irate
       expr: |-
         histogram_quantile(0.99, irate(etcd_disk_backend_commit_duration_seconds_bucket[1m]))
-    - record: etcd_disk_wal_fsync_duration_seconds:quantile_099_irate
+      labels:
+        quantile: '0.99'
+    - record: etcd_disk_wal_fsync_duration_seconds:quantile_irate
       expr: |-
         histogram_quantile(0.99, irate(etcd_disk_wal_fsync_duration_seconds_bucket[1m]))
+      labels:
+        quantile: '0.99'
