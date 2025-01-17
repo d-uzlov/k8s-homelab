@@ -19,5 +19,7 @@ ln -s --target-directory /tmp/user-skeleton/\
   /usr/src/nextcloud/core/skeleton/Photos/Vineyard.jpg \
 
 php occ config:system:set skeletondirectory --value /tmp/user-skeleton/
+php occ maintenance:repair --include-expensive
+php occ db:add-missing-indices
 
 exec php-fpm

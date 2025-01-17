@@ -19,12 +19,27 @@ kl -n nextcloud get httproute
 
 nextcloud_push_domain=$(kl -n nextcloud get ingress push-notifications -o go-template "{{ (index .spec.rules 0).host}}")
 nextcloud_push_domain=$(kl -n nextcloud get httproute nextcloud-push-public -o go-template --template "{{ (index .spec.hostnames 0)}}")
-echo $nextcloud_push_domain
-kl -n nextcloud create configmap push --from-literal push_address="https://${nextcloud_push_domain}" -o yaml --dry-run=client | kl apply -f -
+
+ kl -n nextcloud exec deployments/nextcloud -c nextcloud -i -- bash - << EOF
+set -eu
+php occ app:enable notify_push
+php occ app:update notify_push
+php occ config:app:set notify_push base_endpoint --value "https://$nextcloud_push_domain"
+EOF
 
 kl apply -k ./cloud/nextcloud/notifications/
 kl -n nextcloud get pod -o wide
+
 ```
+
+# Cleanup
+
+```bash
+kl delete -k ./cloud/nextcloud/notifications/
+kl delete -k ./cloud/nextcloud/notifications/httproute-public/
+```
+
+# Test
 
 You can run test commands to trigger push notifications manually:
 

@@ -19,7 +19,7 @@ spec:
         runAsUser: 33
         runAsGroup: 33
       initContainers:
-      - name: wait-filesystem-ready
+      - name: wait-backend-ready
         image: busybox
         command:
         - sh
@@ -32,33 +32,6 @@ spec:
             sleep 1
           done
           echo connected to backend:9000 successfully!
-      - name: install
-        image: docker.io/nextcloud:30.0.4-fpm
-        command:
-        - bash
-        - -c
-        - |
-          set -eu
-          trap : TERM INT
-          ln -s /usr/src/nextcloud/* /var/www/html/
-          php occ app:enable notify_push
-          php occ app:update notify_push
-          php occ config:app:set notify_push base_endpoint --value "$PUSH_ADDRESS"
-        env:
-        - name: PUSH_ADDRESS
-          valueFrom:
-            configMapKeyRef:
-              name: push
-              key: push_address
-        volumeMounts:
-        - mountPath: /mnt/user-data
-          name: user-data
-        - mountPath: /usr/src/nextcloud/config
-          name: config
-          subPath: config
-        - mountPath: /usr/src/nextcloud/custom_apps
-          name: config
-          subPath: custom_apps
       containers:
       - name: notify
         image: docker.io/fpco/pid1:22.04
