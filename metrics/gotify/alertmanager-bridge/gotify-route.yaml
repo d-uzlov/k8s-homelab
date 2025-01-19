@@ -1,0 +1,49 @@
+---
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: gotify-route-critical
+  labels:
+    alertmanager.prometheus.io/instance: main
+    alertmanager.prometheus.io/integration: gotify
+spec:
+  receivers:
+  - name: gotify
+    webhookConfigs:
+    - url: http://alertmanager-bridge.gotify/gotify_webhook
+  route:
+    # groupBy: [ 'job' ]
+    groupBy: [ 'alertname' ]
+    # groupBy: [ '...' ] # '...' disables grouping
+    groupWait: 10s
+    groupInterval: 10s
+    repeatInterval: 3h
+    receiver: gotify
+    matchers:
+    - name: severity
+      value: critical
+      matchType: '='
+---
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: gotify-route-general
+  namespace: prometheus
+  labels:
+    alertmanager.prometheus.io/instance: main
+    alertmanager.prometheus.io/integration: gotify
+spec:
+  receivers:
+  - name: gotify
+    webhookConfigs:
+    - url: http://alertmanager-bridge.gotify/gotify_webhook
+  route:
+    groupBy: [ 'alertname' ]
+    groupWait: 30s
+    groupInterval: 5m
+    repeatInterval: 12h
+    receiver: gotify
+    matchers:
+    - name: severity
+      value: warning|info
+      matchType: '=~'

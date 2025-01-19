@@ -84,10 +84,7 @@ kl delete -k ./metrics/gotify/postgres/
 kl delete ns gotify
 ```
 
-# Manual metric checking
+# OAuth2 / OIDC / SSO
 
-```bash
-kl -n prometheus describe svc prometheus
-kl exec deployments/alpine -- curl -sS http://prometheus-operated.prometheus:9090/metrics
-kl exec deployments/alpine -- curl -sS http://prometheus-operated.prometheus:8080/metrics
-```
+Gotify doesn't support SSO and it doesn't seem like it will support it in foreseeable future:
+- https://github.com/gotify/server/issues/203

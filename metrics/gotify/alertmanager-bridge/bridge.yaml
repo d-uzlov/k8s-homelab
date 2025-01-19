@@ -1,0 +1,42 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alertmanager-bridge
+  namespace: gotify
+spec:
+  selector:
+    matchLabels:
+      app: alertmanager-bridge
+  template:
+    metadata:
+      labels:
+        app: alertmanager-bridge
+    spec:
+      containers:
+      - name: alertmanager-bridge
+        image: ghcr.io/druggeri/alertmanager_gotify_bridge:2.3.1
+        ports:
+        - name: http
+          containerPort: 8080
+        env:
+        - name: GOTIFY_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: alertmanager-gotify-token
+              key: token
+        - name: GOTIFY_ENDPOINT
+          value: http://gotify/message
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager-bridge
+  namespace: gotify
+spec:
+  selector:
+    app: alertmanager-bridge
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
