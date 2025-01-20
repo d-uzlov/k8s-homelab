@@ -31,3 +31,8 @@ But it has a "compatibility mode", which seemingly does nothing, except allowing
 
 References:
 - https://github.com/goauthentik/authentik/discussions/2419
+
+# Icons for apps
+
+References:
+- https://github.com/homarr-labs/dashboard-icons

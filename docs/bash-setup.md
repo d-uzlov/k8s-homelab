@@ -316,6 +316,7 @@ References:
 ```bash
  cat << EOF > ~/.bashrc.d/0-colors.sh
 alias ip='ip --color=auto'
+alias grep='grep --color=auto'
 EOF
 ```
 

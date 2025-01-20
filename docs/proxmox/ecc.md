@@ -17,7 +17,7 @@ You will not get correct results from a VM.
 
 ```bash
 sudo apt-get install -y lshw
-sudo lshw -class memory | grep "description: System Memory" -A 5
+sudo lshw -class memory | grep "description: System Memory" -A 6
 #      description: System Memory
 #      physical id: f
 #      slot: System board or motherboard
@@ -60,11 +60,11 @@ sudo dmesg --color=always | grep -e EDAC
 sudo dmesg --color=always | grep -e EDAC -e rasdaemon -e "Memory failure" -e edac -e "DRAM ECC error"
 sudo dmesg --color=always | grep -e EDAC -e rasdaemon -e "Memory failure" -e edac -e "DRAM ECC error" -e "Hardware Error" -e mce
 # show error summary
-sudo ras-mc-ctl --error-count
-sudo ras-mc-ctl --layout
+/usr/sbin/ras-mc-ctl --error-count
+/usr/sbin/ras-mc-ctl --layout
 # commands below usually don't have anything
-# sudo ras-mc-ctl --summary
-# sudo ras-mc-ctl --errors
+# /usr/sbin/ras-mc-ctl --summary
+# /usr/sbin/ras-mc-ctl --errors
 ```
 
 Example of a corrected error in `dmesg`:

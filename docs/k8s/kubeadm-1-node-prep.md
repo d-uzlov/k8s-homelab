@@ -97,6 +97,8 @@ EOF
 sudo systemctl restart systemd-modules-load.service &&
 
 sudo mkdir -p /etc/containerd &&
+# containerd doesn't support config merge:
+# - https://github.com/containerd/containerd/issues/5837
 containerd config default | 
     sed 's/SystemdCgroup \= false/SystemdCgroup \= true/g' | 
     sudo tee /etc/containerd/config.toml > /dev/null 2>&1 &&

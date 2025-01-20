@@ -101,7 +101,7 @@ In 2023 `containerd` got support for `cpu-burst` param:
 - https://github.com/containerd/containerd/issues/9078
 
 In 2025 k8s started _considering_ to add some support,
-_maybe_, _some time in the future_, _if something want to work on this_:
+_maybe_, _some time in the future_, _if someone wants to work on this_:
 - https://github.com/kubernetes/kubernetes/issues/104516
 
 # Alt solutions

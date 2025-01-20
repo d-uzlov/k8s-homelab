@@ -1,0 +1,67 @@
+---
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: external-node-exporter
+  labels:
+    prometheus.io/instance: main
+spec:
+  scheme: HTTP
+  relabelings:
+  - targetLabel: instance # remove port from instance
+    sourceLabels: [ instance ]
+    regex: (.*):9100
+  metricRelabelings:
+  - action: keep
+    sourceLabels: [ __name__ ]
+    regex: "\
+      node_arp_entries|\
+      node_boot_time_seconds|\
+      node_cpu_.*|\
+      node_disk_.*|\
+      node_dmi_info|\
+      node_edac_.*|\
+      node_entropy_.*|\
+      node_exporter_build_info|\
+      node_filefd_allocated|\
+      node_filefd_maximum|\
+      node_filesystem_.*|\
+      node_forks_total|\
+      node_hwmon_.*|\
+      node_intr_total|\
+      node_load.*|\
+      node_memory_.*|\
+      node_network_carrier|\
+      node_network_carrier_changes_total|\
+      node_network_(receive|transmit)_(bytes|packets|drop|errs)_total|\
+      node_network_up|\
+      node_nf_conntrack_entries|\
+      node_nf_conntrack_entries_limit|\
+      node_nvme_info|\
+      node_os_info|\
+      node_pressure_.*|\
+      node_schedstat_.*|\
+      node_scrape_collector_.*|\
+      node_selinux_enabled|\
+      node_time_seconds|\
+      node_time_zone_offset_seconds|\
+      node_uname_info|\
+      node_vmstat_.*|\
+      node_zfs_arc_.*|\
+      node_zfs_zfetch_.*|\
+      node_zfs_zpool_dataset_.*|\
+      node_zfs_zpool_state|\
+      "
+  - action: drop
+    sourceLabels: [ __name__ ]
+    regex: node_cpu_scaling_governor
+  - action: drop
+    # drop zfs block devices
+    sourceLabels: [ __name__, device ]
+    regex: node_disk_.*;zd.*
+  - action: drop
+    sourceLabels: [ __name__, device ]
+    regex: node_network_.*;(fwbr.*|fwln.*|fwpr.*|tap.*|veth.*)
+  - action: drop
+    sourceLabels: [ __name__ ]
+    regex: node_zfs_zpool_dataset_zil_.*

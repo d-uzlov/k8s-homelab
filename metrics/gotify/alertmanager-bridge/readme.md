@@ -5,6 +5,7 @@ References:
 - https://github.com/DRuggeri/alertmanager_gotify_bridge
 - https://ghcr.io/druggeri/alertmanager_gotify_bridge
 - https://github.com/prometheus/alertmanager/issues/2120
+- https://prometheus.io/docs/alerting/latest/configuration/#webhook_config
 
 # Deploy
 
