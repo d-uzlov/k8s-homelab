@@ -4,7 +4,7 @@
 ```bash
 # check out the latest release
 # https://go.dev/doc/devel/release
-release=1.23.0
+release=1.23.5
 filename=go$release.linux-amd64.tar.gz
 curl -OL https://golang.org/dl/$filename &&
 rm -rf /usr/local/go &&
@@ -21,6 +21,7 @@ fi
 EOF
 . ~/.bashrc.d/0-gopath.sh
 
+# if doing development in golang
 go install golang.org/x/tools/gopls@latest
 ```
 

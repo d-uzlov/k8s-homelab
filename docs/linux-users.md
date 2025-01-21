@@ -26,7 +26,7 @@ cat /etc/passwd
 # Delete a user
 
 ```bash
-sudo userdel USERNAME
+sudo userdel "$username"
 ```
 
 # `sudo` without password

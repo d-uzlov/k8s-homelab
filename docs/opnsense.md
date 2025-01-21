@@ -4,6 +4,13 @@
 References:
 - https://opnsense.org
 
+# Logs
+
+You can enable firewall logs in `Firewall -> Settings -> Advanced -> Logging`.
+Beware that these logs can consume a lot of space. Even if have a big dis, you can run out of space.
+
+You can limit the size of these logs here: `System -> Settings -> Logging -> Maximum file size`.
+
 # Useful plugins
 
 - `os-iperf`
