@@ -373,3 +373,25 @@ spec:
       for: 2m
       labels:
         severity: warning
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: alert-node-zfs-pool
+  labels:
+    prometheus.io/instance: main
+spec:
+  groups:
+  - name: node-zfs-pool
+    rules:
+    - alert: ZfsOfflinePool
+      expr: node_zfs_zpool_state{state!="online"} > 0
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: ZFS pool is not online
+        description: >-
+          cluster {{ $labels.cluster_type }}/{{ $labels.cluster }}:
+          instance {{ $labels.instance }}: pool {{ $labels.zpool }}:
+          ZFS pool is in an unexpected state: {{ $labels.state }}.

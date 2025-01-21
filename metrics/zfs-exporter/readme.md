@@ -109,6 +109,11 @@ sed -i -z -r 's/,\n *\"value\": null(\n *})/\1/g' ./metrics/zfs-exporter/dashboa
 
 ```
 
+# Alerts
+
+References:
+- https://samber.github.io/awesome-prometheus-alerts/rules.html#zfs
+
 # TODO
 
 Another ZFS exporter with more detailed iostat info:

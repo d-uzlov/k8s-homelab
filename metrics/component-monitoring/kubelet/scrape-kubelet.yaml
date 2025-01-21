@@ -123,10 +123,14 @@ spec:
   - sourceLabels: [id, pod]
     action: drop
     regex: '.+;'
-  - action: drop
+  - sourceLabels: [__name__]
+    action: drop
     regex: container_last_seen
-    sourceLabels:
-    - __name__
+  - sourceLabels: [ __name__, scope ]
+    action: drop
+    # container_memory_failures_total{scope="container"} == container_memory_failures_total{scope="hierarchy"}
+    regex: container_memory_failures_total;hierarchy
+    separator: ;
 # ---
 # apiVersion: monitoring.coreos.com/v1alpha1
 # kind: ScrapeConfig
