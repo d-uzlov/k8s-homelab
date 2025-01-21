@@ -71,10 +71,50 @@ EOF
 kl apply -k ./metrics/zfs-exporter/
 kl -n prometheus describe scrapeconfig external-zfs-exporter
 
+kl apply -k ./metrics/zfs-exporter/dashboards/
+
 ```
 
 # Cleanup
 
 ```bash
+kl delete -k ./metrics/zfs-exporter/dashboards/
 kl delete -k ./metrics/zfs-exporter/
 ```
+
+# Manual metric checking
+
+```bash
+# ip or domain name
+node=
+curl -sS --insecure http://$node:9134/metrics > ./zfs-exporter.log
+```
+
+# Updating dashboards
+
+```bash
+
+# force all panels to use the default data source min interval
+sed -i '/\"interval\":/d' ./metrics/zfs-exporter/dashboards/*.json
+sed -i '/\"version\":/d' ./metrics/zfs-exporter/dashboards/*.json
+# avoid id collisions
+sed -i 's/^  \"id\": .*,/  \"id\": null,/' ./metrics/zfs-exporter/dashboards/*.json
+sed -i 's/^  \"refresh\": \".*s\",/  \"refresh\": \"auto\",/' ./metrics/zfs-exporter/dashboards/*.json
+# remove local variable values
+sed -i '/        \"current\": {/,/        }\,/d' ./metrics/zfs-exporter/dashboards/*.json
+sed -i 's/^  \"timezone\": \".*\",/  \"timezone\": \"browser\",/' ./metrics/zfs-exporter/dashboards/*.json
+# grafana likes to flip some values between {"color":"green","value": null} and {"color":"green"}
+# this forces them all to lose "value": null, so that there are less changes in commits
+sed -i -z -r 's/,\n *\"value\": null(\n *})/\1/g' ./metrics/zfs-exporter/dashboards/*.json
+
+```
+
+# TODO
+
+Another ZFS exporter with more detailed iostat info:
+- per-vdev info
+- read errors
+- latency
+
+References:
+- https://github.com/siebenmann/zfs_exporter/blob/cks-upstream/main.go

@@ -77,3 +77,11 @@ EOF
 kl apply -k ./metrics/node-exporter/scrape/
 
 ```
+
+# Manual metric checking
+
+```bash
+# ip or domain name
+node=
+curl -sS --insecure http://$node:9100/metrics > ./node-exporter.log
+```

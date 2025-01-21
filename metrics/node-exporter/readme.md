@@ -100,3 +100,16 @@ kl -n node-exporter describe svc node-exporter
 kl exec deployments/alpine -- apk add curl
 kl exec deployments/alpine -- curl -sS --insecure http://node-exporter.node-exporter:9100/metrics > ./node-exporter.log
 ```
+
+# ZFS stats
+
+Metric explanation:
+- `nread` and `nwrite` are read/write bytes.
+- `reads` and `writes` are number of read/write operations.
+- Source: https://utcc.utoronto.ca/~cks/space/blog/linux/ZFSPerDatasetStats
+
+ZFS IO stats are mostly removed from node-exporter:
+- https://github.com/prometheus/node_exporter/issues/2068
+
+Additional stats are gathered here:
+- [zfs-exporter](../zfs-exporter/readme.md)
