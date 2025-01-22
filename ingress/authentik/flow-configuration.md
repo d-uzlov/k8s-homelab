@@ -15,13 +15,38 @@ Show password field on the same page instead of checking username first:
 - - `Stage Bindings -> default-authentication-identification -> Edit Stage`
 - - - `Password stage`: select `default-authentication-password`
 
-# Enrollment (creating account)
-
-I didn't do this.
-This link is here because the official documentation seems to be lackluster.
+# Enrollment
 
 References:
 - https://www.youtube.com/watch?v=mGOTpRfulfQ
+- https://docs.goauthentik.io/docs/users-sources/user/invitations
+- https://github.com/goauthentik/authentik/issues/9719
+
+Create account via invitation:
+
+- Download enrollment flow: https://docs.goauthentik.io/assets/files/flows-enrollment-2-stage-11d645d45ab0c1b157aa2f5a9907af4e.yaml
+- - Import downloaded flow: `Admin interface -> Flows and Stages -> Flows -> Import`
+- - Don't forget to enable compatibility mode for the imported flow
+- Create Invitation stage
+- - `Admin interface -> Flows and Stages -> Stages -> Create`
+- - - Name: `invitation`
+- - - Select `Invitation Stage`
+- `Admin interface -> Flows and Stages -> Flows -> default-enrollment-flow -> Stage bindings -> Bind existing stage`
+- - Stage: `invitation`
+- - Order: `0`
+- Make newly created users internal (only internal users have access to app list and MFA settings):
+- - `Admin interface -> Flows and Stages -> Stages -> Create`
+- - - Name: `invitation-user-write`
+- - - Type: `User Write Stage`
+- - - Select `Always create new users`
+- - - Select `User type` to `Internal`
+
+Now you can invite new users to your authentik instance:
+
+- `Admin interface -> Directory -> Invitations -> Create`
+- Select your `default-enrollment-flow`
+- After invitation is created, it should have arrow to open it on the left
+- Open the invitation, copy the `Link to use the invitation`, send it to someone
 
 # email settings
 

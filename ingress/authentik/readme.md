@@ -18,7 +18,7 @@ You only need to do this when updating the app.
 helm repo add authentik https://charts.goauthentik.io
 helm repo update authentik
 helm search repo authentik/authentik --versions --devel | head
-helm show values authentik/authentik --version 2024.12.1 > ./ingress/authentik/default-values.yaml
+helm show values authentik/authentik --version 2024.12.2 > ./ingress/authentik/default-values.yaml
 ```
 
 ```bash
@@ -28,7 +28,7 @@ helm show values oci://registry-1.docker.io/bitnamicharts/redis --version 20.6.2
 helm template \
   authentik \
   authentik/authentik \
-  --version 2024.12.1 \
+  --version 2024.12.2 \
   --namespace authentik \
   --values ./ingress/authentik/values.yaml \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/part-of|d' -e '\|app.kubernetes.io/version|d' \
@@ -112,7 +112,7 @@ stringData:
   AUTHENTIK_REDIS__PASSWORD: $redis_password
   AUTHENTIK_SECRET_KEY: $authentik_seed
 EOF
-( . ./ingress/authentik/env/authentik-smtp.env;
+ ( . ./ingress/authentik/env/authentik-smtp.env;
  cat << EOF > ./ingress/authentik/env/authentik-smtp-patch.yaml
 ---
 apiVersion: v1
