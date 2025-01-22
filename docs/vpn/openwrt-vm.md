@@ -19,6 +19,27 @@ Important settings when creating a VM:
 
 IF needed, add more network interfaces.
 
+# Allow access via non-private IPs
+
+By default OpenWRT disables web UI access if it thinks you are accessing it from WAN.
+If you are running OpenWRT behind an external firewall,
+there is usually no reason to do it.
+
+For example, when using `netbird`, it assigns a CGNAT address to client,
+which prevents you from using web UI via VPN.
+
+You can fix the issue like this:
+
+```bash
+uci set uhttpd.main.rfc1918_filter=0
+uci show uhttpd.main
+uci commit uhttpd
+/etc/init.d/uhttpd restart
+```
+
+References:
+- https://openwrt.org/docs/guide-user/services/webserver/uhttpd
+
 # Add OpenWRT disk to a VM
 
 OpenWRT doesn't have installation disks,
