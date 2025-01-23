@@ -6,16 +6,36 @@ Nextcloud will temporarily lock you out of web UI if you fail several login atte
 You can reset this:
 
 ```bash
-# list throttled ips
-db_password=$(kl -n nextcloud get secret -l nextcloud=passwords --template "{{ (index .items 0).data.mariadb_user_password}}" | base64 --decode)
-kl -n nextcloud exec deployments/mariadb -c mariadb -- mysql -u nextcloud -p"$db_password" --database nextcloud -e "select * from oc_bruteforce_attempts;"
-# unblock an ip-address
-kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ security:bruteforce:reset <ip-address>
-# enable a disabled user
-kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ user:enable <name of user>
-```
 
-TODO: update this to use postgres.
+# this is used to contain useful settings in older versions of nextcloud :-(
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ config:list brute_force_protection
+
+# show status for an ip
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ security:bruteforce:attempts $ip_address
+# unblock an ip-address
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ security:bruteforce:reset $ip_address
+
+# It doesn't seem like there is a proper way to list all throttled IPs
+
+# list throttled ips via DB
+# apparently, this can be empty because redis is used?
+# but I don't see anything in redis
+kl -n nextcloud exec pods/postgres-0 -- psql --username=nextcloud -c 'SELECT * from oc_bruteforce_attempts'
+
+redis_password=$(kl -n nextcloud get secret -l nextcloud=passwords --template "{{ (index .items 0).data.redis_password}}" | base64 --decode)
+kl -n nextcloud exec deployments/redis -- redis-cli -a "$redis_password" KEYS '*' | grep -i brute
+# for example:
+kl -n nextcloud exec deployments/redis -- redis-cli -a "$redis_password" GET '3a3b047e3d074beac4385ef47fea7764/OC\Security\Bruteforce\Backend\MemoryCacheBackend94ba2723aa73ca1d9bbca3638888eaccb289619a'
+# the format is unreadable :-(
+
+# the only sane way to deal with this is to disable brute force protection altogether :-(
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ config:system:set auth.bruteforce.protection.enabled --value false --type bool
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ config:system:set auth.bruteforce.protection.enabled --value true --type bool
+# alternatively, you can whitelist 0.0.0.0/0 in the web UI
+
+# enable a disabled user
+kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ user:enable $username
+```
 
 References:
 - https://docs.nextcloud.com/server/latest/admin_manual/configuration_server/occ_command.html#security

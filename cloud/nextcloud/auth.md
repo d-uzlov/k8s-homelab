@@ -34,9 +34,14 @@ return {
 }
 ```
 
-- `Admin Interface -> Applications -> Providers -> nextcloud -> Edit -> Advanced protocol settings -> Scopes`: add `Nextcloud Profile` into `Selected Scopes`
+- `Admin Interface -> Applications -> Providers -> nextcloud -> Edit -> Advanced protocol settings -> Scopes`:
+- - add `Nextcloud Profile` into `Selected Scopes`
+- - add `offline_access` into `Selected Scopes`
 
-- For each required user set quota: `Admin Interface -> Directory -> Users -> username -> Edit -> Attributes`: set `nextcloud_quota: 100 GB`
+- For each required user set attributes: `Admin Interface -> Directory -> Users -> username -> Edit -> Attributes`:
+- - Set `nextcloud_quota: 100 GB`
+- - Set `nextcloud_user_id: custom_username`
+- - It doesn't seem possible to use nested values in authentik attributes, you have to use prefixes (property mapping can't read nested values)
 
 # Nextcloud setup
 
@@ -51,8 +56,9 @@ Set up OIDC: `Administration settings -> OpenID Connect -> Registered Providers 
 - `identifier` can't be changed after initial creation
 - Fill in `Client ID` and `Client secret` from authentik provider page
 - Set `Discovery endpoint` to `OpenID Configuration URL` value from authentik provider page
-- Set scope to `email profile nextcloud-profile`
+- Set scope to `email profile offline_access nextcloud-profile`
 - Set `Groups mapping` to `nc-groups`
+- Set `User ID mapping` to `user_id`
 - ! Disable `Use unique user id`
 - ! Disable `Use provider identifier as prefix for ids`
 - Enable `Use group provisioning`
@@ -72,4 +78,24 @@ kl -n nextcloud exec deployments/nextcloud -- php occ config:app:set --value=0 u
 kl -n nextcloud exec deployments/nextcloud -- php occ config:app:set --value=1 user_oidc allow_multiple_user_backends
 # alternatively, use `direct=1` to bypass this setting
 # https://nextcloud.example.com/login?direct=1
+```
+
+# WebDAV access
+
+To access your files via WebDAV, generate a new app password:
+`Personal settings -> Security -> Devices & sessions -> Create new app password`
+
+```bash
+# get login value from the `New app password` window
+login=
+
+nextcloud_public_domain=$(kl -n nextcloud get httproute nextcloud-public -o go-template --template "{{ (index .spec.hostnames 0)}}")
+
+# main webdav 
+echo https://$nextcloud_public_domain/remote.php/dav/files/$login/
+
+# access certain file
+file_path=
+echo https://$nextcloud_public_domain/remote.php/dav/files/$login/$file_path
+
 ```
