@@ -38,14 +38,6 @@ you need to enable NAT in the gateway,
 so packets from remote netbird host can return to the gateway LAN.
 
 ```bash
-for t in filter nat mangle raw security; do
-   echo "table $t:"
-   sudo iptables -t $t -S -v
-done
-
-cat /etc/iproute2/rt_tables
-ip r s t all
-
 sudo iptables -t nat -A POSTROUTING -o wt0 -j MASQUERADE
 # in case you want more granularity:
 # sudo iptables -t nat -A POSTROUTING -o wt0 -j MASQUERADE --source IP/mast --destination IP/mask
@@ -57,9 +49,6 @@ sudo iptables -t nat -L POSTROUTING
 sudo iptables -t nat -S POSTROUTING
 # delete
 sudo iptables -t nat -D POSTROUTING -o wt0 -j MASQUERADE
-
-# to avoid redoing this on startup
-sudo apt install iptables-persistent
-# edit persistent iptables' rules
-sudo nano /etc/iptables/rules.v4
 ```
+
+Don't forget to set up persistence: [iptables-persistence](../linux-iptables.md#iptables-persistence)

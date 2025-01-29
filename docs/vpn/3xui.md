@@ -1,13 +1,25 @@
 
-# Install via docker
+# 3x-ui
 
 References:
 - https://github.com/MHSanaei/3x-ui
+- https://github.com/XTLS/Xray-core
+- https://xtls.github.io/en/config/routing.html#routingobject
+- https://xtls.github.io/en/config/inbounds/wireguard.html
+
+Additional links:
+- https://github.com/XTLS/RealiTLScanner
+- https://github.com/v2fly/geoip
+- https://github.com/v2fly/domain-list-community
+- https://github.com/v2ray/discussion/issues/148
+- https://github.com/InvisibleManVPN/InvisibleMan-XRayClient
+
+# Install via docker
 
 ```bash
 curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh | sudo bash
 
-sudo systemctl status x-ui
+sudo systemctl status x-ui --no-pager
 sudo journalctl -u x-ui
 sudo x-ui help
 # print config for access
@@ -36,8 +48,9 @@ Look here for instructions for your DNS provider:
 - https://github.com/acmesh-official/acme.sh/wiki/dnsapi#dns_dynu
 
 ```bash
-# acme.sh complains about missing socat in logs
-sudo apt install socat
+sudo apt install -y cron
+# acme.sh seems to work without socat but complains in logs
+sudo apt install -y socat
 
 email=
 curl https://get.acme.sh | sh -s "email=$email"
@@ -46,7 +59,7 @@ curl https://get.acme.sh | sh -s "email=$email"
 export Dynu_ClientId=
 export Dynu_Secret=
 domain=
-acme.sh --issue --dns dns_dynu -d "$domain" -d "*.$domain"
+acme.sh --issue --server letsencrypt --dns dns_dynu -d "$domain" -d "*.$domain"
 
 # show currently existing certificates
 ll ~/.acme.sh/*_ecc/*
@@ -57,6 +70,10 @@ ll ~/.acme.sh/*_ecc/*
 - Panel Settings -> Listen IP: 127.0.0.1
 - Panel Settings -> Public Key Path: /path/to/fullchain.cer
 - Panel Settings -> Private Key Path: /path/to/domain.key
+- Xray Configs -> General -> Overall Routing Strategy:
+- - `AsIs`: ignore all IP rules
+- - `IPIfNonMatch`: if no domain match found in rules, resolve domain and re-match using IP
+- - (recommended for sanity) `IPOnDemand`: if there are any IP rules, resolve domain and match both IP and domain rules
 
 ```bash
 # setup ssh port forwarding
@@ -118,7 +135,7 @@ sudo rm -f /etc/nginx/sites-enabled/default
 sudo nginx -t
 
 sudo systemctl restart nginx
-sudo systemctl status nginx
+sudo systemctl status nginx --no-pager
 ```
 
 # Android client
