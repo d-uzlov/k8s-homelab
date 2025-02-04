@@ -141,10 +141,6 @@ This is required even if you only want local traffic forwarding.
 
 ```bash
 sudo iptables -t mangle -N XRAY_PREROUTING
-# Skip traffic already handled by TProxy 
-sudo iptables -t mangle -A XRAY_PREROUTING --protocol tcp --match socket --transparent -j MARK --set-mark 0x2
-sudo iptables -t mangle -A XRAY_PREROUTING --protocol udp --match socket --transparent -j MARK --set-mark 0x2
-sudo iptables -t mangle -A XRAY_PREROUTING --match socket -j RETURN
 # skip chain for connections with special ranges as destination
 sudo iptables -t mangle -A XRAY_PREROUTING --destination 0.0.0.0/8 -j RETURN
 sudo iptables -t mangle -A XRAY_PREROUTING --destination 10.0.0.0/8 -j RETURN
@@ -171,6 +167,40 @@ sudo iptables -t mangle -F XRAY_PREROUTING
 ```
 
 Don't forget to set up persistence: [iptables-persistence](../linux-iptables.md#iptables-persistence)
+
+# Traffic optimization?
+
+hysteria documentation claims that adding the lines below
+at the beginning of the XRAY_PREROUTING chain is beneficial for performance.
+
+For me it completely broke routing. I don't fully understand why.
+I leave it here for a historical reference, but I don't recommend using it.
+
+```bash
+sudo iptables -t mangle -A XRAY_PREROUTING --protocol tcp --match socket --transparent -j MARK --set-mark 0x2
+sudo iptables -t mangle -A XRAY_PREROUTING --protocol udp --match socket --transparent -j MARK --set-mark 0x2
+sudo iptables -t mangle -A XRAY_PREROUTING --match socket -j RETURN
+```
+
+Explanation for `--match socket`:
+
+Source: https://ipset.netfilter.org/iptables-extensions.man.html
+
+> socket
+> This matches if an open TCP/UDP socket can be found
+> by doing a socket lookup on the packet.
+> It matches if there is an established or non-zero bound listening socket
+> (possibly with a non-local address).
+> The lookup is performed using the packet tuple of TCP/UDP packets,
+> or the original TCP/UDP header embedded in an ICMP/ICPMv6 error packet.
+>   --transparent Ignore non-transparent sockets.
+>   --nowildcard  Do not ignore sockets bound to 'any' address.
+>                 The socket match won't accept zero-bound listeners by default,
+>                 since then local services could intercept traffic that would otherwise be forwarded.
+>                 This option therefore has security implications when used
+>                 to match traffic being forwarded to redirect such packets to local machine with policy routing.
+>                 When using the socket match to implement fully transparent proxies bound to non-local addresses
+>                 it is recommended to use the --transparent option instead.
 
 # iptables for local traffic
 
