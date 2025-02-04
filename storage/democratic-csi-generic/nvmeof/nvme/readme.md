@@ -11,6 +11,7 @@ helm show values democratic-csi/democratic-csi --version 0.14.7 > ./storage/demo
 ```
 
 ```bash
+
 helm template \
   dnvme \
   democratic-csi/democratic-csi \
@@ -24,6 +25,7 @@ helm template \
   --set storageClasses[0].name=nvme \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' \
   > ./storage/democratic-csi-generic/nvmeof/nvme/deployment.gen.yaml
+
 ```
 
 # Environment setup

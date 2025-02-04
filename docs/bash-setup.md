@@ -264,6 +264,9 @@ set indicator
 set minibar
 set nowrap
 
+# alt+shift+Z to switch word wrap
+bind M-z softwrap all
+
 bind ^Z undo all
 bind ^Y redo all
 bind M-f whereis all
@@ -300,8 +303,9 @@ unbind F4 all
 # cut from current to the end of file
 unbind M-T all
 
-include ~/.nano/*.nanorc
+include $HOME/.nano/*.nanorc
 EOF
+sudo cp ~/.nanorc /root/.nanorc
 ```
 
 Toggle lines with `ctrl + L` if you want to select multiple lines with mouse.

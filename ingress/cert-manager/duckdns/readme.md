@@ -58,6 +58,13 @@ Kustomize doesn't change namespace of ClusterRoleBinding and in cert-manager.io/
 After deployment you can go here to test certificate creation:
 - [manual-certificates](../../manual-certificates/readme.md)
 
+# Cleanup
+
+```bash
+kl delete -k ./ingress/cert-manager/duckdns/
+kl delete ns cm-duckdns
+```
+
 # Check duckdns TXT manually
 
 You can use these commands to check that you are using the correct DuckDNS token,

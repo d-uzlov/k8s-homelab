@@ -112,4 +112,5 @@ ZFS IO stats are mostly removed from node-exporter:
 - https://github.com/prometheus/node_exporter/issues/2068
 
 Additional stats are gathered here:
-- [zfs-exporter](../zfs-exporter/readme.md)
+- [zfs-exporter-pdf](../zfs-exporter/pdf/readme.md)
+- [zfs-exporter-chris](../zfs-exporter/chris-siebenmann/readme.md)

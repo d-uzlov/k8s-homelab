@@ -86,3 +86,14 @@ Manual `sysctl` call fixes it until the next reboot.
 ```bash
 sudo apt-get -y remove unattended-upgrades
 ```
+
+# Remove old kernels
+
+```bash
+sudo apt autoremove
+
+# list remaining versions
+dpkg -S /boot/vm*
+sudo apt remove kernel-1.2.3 kernel-2.3.4
+# if there are kernel-2.3.4-signed entries, remove both kernel-2.3.4 and kernel-2.3.4-signed at the same time
+```
