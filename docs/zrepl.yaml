@@ -1,0 +1,82 @@
+global:
+  logging:
+    # use syslog instead of stdout because it makes journald happy
+    - type: syslog
+      format: human
+      level: warn
+
+jobs:
+# this job takes care of snapshot creation + pruning
+- name: snapjob
+  type: snap
+  filesystems: {
+      "nvme/test/backup": true,
+  }
+  # create snapshots with prefix `zrepl_` every 15 minutes
+  snapshotting:
+    type: periodic
+    interval: 15m
+    prefix: zrepl_
+  pruning:
+    keep:
+    # fade-out scheme for snapshots starting with `zrepl_`
+    # - keep all created in the last hour
+    # - then destroy snapshots such that we keep 24 each 1 hour apart
+    # - then destroy snapshots such that we keep 14 each 1 day apart
+    # - then destroy all older snapshots
+    - type: grid
+      grid: 1x1h(keep=all) | 24x1h | 14x1d
+      regex: "^zrepl_.*"
+    # keep all snapshots that don't have the `zrepl_` prefix
+    - type: regex
+      negate: true
+      regex: "^zrepl_.*"
+
+- type: pull
+  name: pull_from_source
+  connect:
+    type: local
+    listener_name: backuppool_source
+    client_identity: myhostname
+  root_fs: nvme/test/backup
+  interval: 10m
+  recv:
+    placeholder:
+      encryption: inherit
+  pruning:
+    # no-op prune rule on sender (keep all snapshots), job `snapshot` takes care of this
+    keep_sender:
+    - type: regex
+      regex: ".*"
+    # retain 
+    keep_receiver:
+    # longer retention on the backup drive, we have more space there
+    - type: grid
+      grid: 1x1h(keep=all) | 24x1h | 360x1d
+      regex: "^zrepl_.*"
+    # retain all non-zrepl snapshots on the backup drive
+    - type: regex
+      negate: true
+      regex: "^zrepl_.*"
+
+# This job receives from job `push_to_drive` into `backuppool/zrepl/sink/myhostname`
+- type: source
+  name: backuppool_source
+  filesystems:
+    nvme/test/data: true
+  serve:
+    type: local
+    listener_name: backuppool_source
+  snapshotting:
+    type: periodic
+    interval: 10m
+    prefix: zrepl_
+  # replication:
+  #   protection:
+  #     initial: guarantee_resumability
+  #     # Downgrade protection to guarantee_incremental which uses zfs bookmarks instead of zfs holds.
+  #     # Thus, when we yank out the backup drive during replication
+  #     # - we might not be able to resume the interrupted replication step because the partially received `to` snapshot of a `from`->`to` step may be pruned any time
+  #     # - but in exchange we get back the disk space allocated by `to` when we prune it
+  #     # - and because we still have the bookmarks created by `guarantee_incremental`, we can still do incremental replication of `from`->`to2` in the future
+  #     incremental: guarantee_incremental

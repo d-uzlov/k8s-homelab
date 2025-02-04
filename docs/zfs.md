@@ -47,17 +47,34 @@ zpool list main -v
 ```bash
 # print current ashift
 sudo zpool get ashift
+# if property ashift is missing, you can try checking zdb
 sudo zdb -C | grep ashift
 ```
 
 # Statistics
 
 ```bash
+# list pools
+zpool list
+# list pools with drive info
 zpool list -v
+# monitoring compression effectiveness
 zfs get compressratio
+zfs list -r -o space,compressratio
 zfs list -t filesystem -r -o space,compressratio
-zpool iostat -v 1
-iostat -mx 5
+
+# print statistics for current operations
+# see also: zpool help iostat
+# print once:
+zpool iostat -y rpool
+# print separated for different block size:
+zpool iostat -y rpool -r
+# print average statistics from the start of the system
+zpool iostat rpool
+# similar to `watch --interval 2 zpool iostat -y rpool`
+zpool iostat -y rpool 2
+# generic linux iostat for drives
+iostat -mx 2
 ```
 
 # Compression benchmark
