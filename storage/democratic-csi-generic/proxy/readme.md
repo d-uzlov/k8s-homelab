@@ -40,6 +40,7 @@ helm show values democratic-csi/democratic-csi --version 0.14.7 > ./storage/demo
 ```
 
 ```bash
+
 helm template \
   dcsi \
   democratic-csi/democratic-csi \
@@ -48,6 +49,7 @@ helm template \
   --namespace pv-dcsi \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' -e '\|^#|d' \
   > ./storage/democratic-csi-generic/proxy/deployment.gen.yaml
+
 ```
 
 # Deploy
