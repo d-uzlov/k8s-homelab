@@ -162,11 +162,12 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
           "sort": "desc"
         }
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "11.5.1",
       "targets": [
         {
           "datasource": {
@@ -247,7 +248,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "11.5.1",
       "targets": [
         {
           "datasource": {
@@ -315,7 +316,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "11.5.1",
       "targets": [
         {
           "datasource": {
@@ -382,7 +383,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "11.5.1",
       "targets": [
         {
           "datasource": {
@@ -449,7 +450,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "11.5.1",
       "targets": [
         {
           "datasource": {
@@ -585,11 +586,12 @@
           "sortDesc": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
           "sort": "desc"
         }
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "11.5.1",
       "targets": [
         {
           "datasource": {
@@ -679,7 +681,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Pod"
+              "options": "workload"
             },
             "properties": [
               {
@@ -687,45 +689,9 @@
                 "value": [
                   {
                     "title": "Drill down to pods",
-                    "url": "/d/mo6wf2ukdv3l72howqnq/k8s-resources-pod?${datasource:queryparam}&${cluster:queryparam}&${namespace:queryparam}&var-pod=${__data.fields.Pod}&${__url_time_range}"
+                    "url": "/d/fec9lovz7k6bkf2/kubernetes-workload-containers?${datasource:queryparam}&${cluster:queryparam}&${namespace:queryparam}&var-workload=${__data.fields.workload}&${__url_time_range}"
                   }
                 ]
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "workload_type"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 138
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "workload"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 243
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Workload"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 321
               }
             ]
           }
@@ -752,7 +718,7 @@
         "showHeader": true,
         "sortBy": []
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "11.5.1",
       "targets": [
         {
           "datasource": {
@@ -767,7 +733,22 @@
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
-          "refId": "A"
+          "refId": "cpu_sum"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "max by (workload_type, workload) (avg_over_time(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate{cluster=\"$cluster\", namespace=\"$namespace\"}[$__range]) * on(cluster, namespace, pod) group_left(workload, workload_type) namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", workload=~\"$workload\"})",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "cpu_max"
         },
         {
           "datasource": {
@@ -782,7 +763,7 @@
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
-          "refId": "B"
+          "refId": "request"
         },
         {
           "datasource": {
@@ -797,7 +778,7 @@
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
-          "refId": "C"
+          "refId": "request_percent"
         },
         {
           "datasource": {
@@ -812,7 +793,7 @@
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
-          "refId": "D"
+          "refId": "limit"
         },
         {
           "datasource": {
@@ -827,7 +808,7 @@
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
-          "refId": "E"
+          "refId": "limit_percent"
         }
       ],
       "title": "CPU Usage",
@@ -891,8 +872,9 @@
               "Time 3": true,
               "Time 4": true,
               "Time 5": true,
-              "workload": true,
-              "workload_type": true,
+              "Workload": true,
+              "workload": false,
+              "workload_type": false,
               "workload_type 2": true,
               "workload_type 3": true,
               "workload_type 4": true,
@@ -911,9 +893,15 @@
               "Value #C": "CPU Requests %",
               "Value #D": "CPU Limits",
               "Value #E": "CPU Limits %",
+              "Value #cpu_max": "Max",
+              "Value #cpu_sum": "Sum",
+              "Value #limit": "Limit",
+              "Value #limit_percent": "Limit %",
+              "Value #request": "Request",
+              "Value #request_percent": "Request %",
               "pod": "Pod",
               "workload": "",
-              "workload_type": "",
+              "workload_type": "type",
               "workload_type 1": "type"
             }
           }
@@ -979,7 +967,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Pod"
+              "options": "workload"
             },
             "properties": [
               {
@@ -987,7 +975,7 @@
                 "value": [
                   {
                     "title": "Drill down to pods",
-                    "url": "/d/mo6wf2ukdv3l72howqnq/k8s-resources-pod?${datasource:queryparam}&${cluster:queryparam}&${namespace:queryparam}&var-pod=${__data.fields.Pod}&${__url_time_range}"
+                    "url": "/d/fec9lovz7k6bkf2/kubernetes-workload-containers?${datasource:queryparam}&${cluster:queryparam}&${namespace:queryparam}&var-workload=${__data.fields.workload}&${__url_time_range}"
                   }
                 ]
               },
@@ -1032,7 +1020,7 @@
         "showHeader": true,
         "sortBy": []
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "11.5.1",
       "targets": [
         {
           "datasource": {
@@ -1046,7 +1034,7 @@
           "instant": true,
           "legendFormat": "",
           "range": false,
-          "refId": "rss"
+          "refId": "rss_sum"
         },
         {
           "datasource": {
@@ -1070,7 +1058,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (workload_type, workload) (container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\"} / on(cluster, namespace, pod, container) group_left kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", resource=\"memory\"} * on(cluster, namespace, pod) group_left(workload, workload_type) namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", workload=~\"$workload\"})",
+          "expr": "max by (workload_type, workload) (container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\"} / on(cluster, namespace, pod, container) group_left kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", resource=\"memory\"} * on(cluster, namespace, pod) group_left(workload, workload_type) namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", workload=~\"$workload\"})",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -1100,7 +1088,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (workload_type, workload) (container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\"} / on(cluster, namespace, pod, container) group_left kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", resource=\"memory\"} * on(cluster, namespace, pod) group_left(workload, workload_type) namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", workload=~\"$workload\"})",
+          "expr": "max by (workload_type, workload) (container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\"} / on(cluster, namespace, pod, container) group_left kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", resource=\"memory\"} * on(cluster, namespace, pod) group_left(workload, workload_type) namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", workload=~\"$workload\"})",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -1121,47 +1109,14 @@
           "instant": true,
           "legendFormat": "",
           "range": false,
-          "refId": "F"
+          "refId": "raw_sum"
         }
       ],
-      "title": "Memory Usage (last value)",
+      "title": "Memory",
       "transformations": [
         {
           "id": "merge",
           "options": {}
-        },
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {},
-            "includeByName": {},
-            "indexByName": {
-              "Time": 0,
-              "Value #F": 8,
-              "Value #limit": 6,
-              "Value #request": 4,
-              "Value #rss": 3,
-              "Value #rss_per_limit": 7,
-              "Value #rss_per_request": 5,
-              "workload": 2,
-              "workload_type": 1
-            },
-            "renameByName": {}
-          }
-        },
-        {
-          "id": "calculateField",
-          "options": {
-            "alias": "Workload",
-            "mode": "reduceRow",
-            "reduce": {
-              "include": [
-                "workload_type",
-                "workload"
-              ],
-              "reducer": "allValues"
-            }
-          }
         },
         {
           "id": "organize",
@@ -1176,8 +1131,8 @@
               "Time 6": true,
               "Time 7": true,
               "Time 8": true,
-              "workload": true,
-              "workload_type": true,
+              "workload": false,
+              "workload_type": false,
               "workload_type 2": true,
               "workload_type 3": true,
               "workload_type 4": true,
@@ -1186,16 +1141,15 @@
             },
             "includeByName": {},
             "indexByName": {
-              "Time": 2,
-              "Value #F": 9,
-              "Value #limit": 7,
-              "Value #request": 5,
-              "Value #rss": 4,
-              "Value #rss_per_limit": 8,
-              "Value #rss_per_request": 6,
-              "Workload": 1,
-              "workload": 0,
-              "workload_type": 3
+              "Time": 0,
+              "Value #limit": 6,
+              "Value #raw_sum": 8,
+              "Value #request": 4,
+              "Value #rss_per_limit": 7,
+              "Value #rss_per_request": 5,
+              "Value #rss_sum": 3,
+              "workload": 2,
+              "workload_type": 1
             },
             "renameByName": {
               "Time 4": "",
@@ -1207,23 +1161,22 @@
               "Value #F": "Raw",
               "Value #G": "Memory Usage (Cache)",
               "Value #H": "Memory Usage (Swap)",
-              "Value #limit": "Limit",
-              "Value #request": "Request",
-              "Value #rss": "RSS",
-              "Value #rss_per_limit": "RSS Limit %",
-              "Value #rss_per_request": "RSS request %",
+              "Value #limit": "Limit Sum",
+              "Value #raw_sum": "Raw Sum",
+              "Value #request": "Request Sum",
+              "Value #rss": "RSS Sum",
+              "Value #rss_per_limit": "RSS Limit % (max)",
+              "Value #rss_per_request": "RSS request % (max)",
+              "Value #rss_sum": "RSS Sum",
               "Value #wss_per_limit": "WSS / Limit %",
               "pod": "Pod",
               "workload": "",
+              "workload_type": "",
               "workload_type 1": "type",
               "workload_type 3": "",
               "workload_type 5": ""
             }
           }
-        },
-        {
-          "id": "convertFieldType",
-          "options": {}
         }
       ],
       "type": "table"
@@ -1249,7 +1202,7 @@
         "content": "- Raw usage = RSS + Cache\n- RSS is actually allocated memory\n- Cache = Active + Inactive file\n- WSS = Raw usage - Inactive file = RSS + Active file\n\nWhat to look for:\n- WSS reaching limit causes file garbage collection\n- RSS reaching limit causes OOM\n",
         "mode": "markdown"
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "11.5.1",
       "title": "Memory notes",
       "type": "text"
     },
@@ -1355,11 +1308,12 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
           "sort": "desc"
         }
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "11.5.1",
       "targets": [
         {
           "datasource": {
@@ -1472,136 +1426,6 @@
         "x": 12,
         "y": 38
       },
-      "id": 25,
-      "maxDataPoints": 300,
-      "options": {
-        "legend": {
-          "asTable": true,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "pluginVersion": "11.4.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nsum by (workload_type, workload) (max by(cluster, namespace, pod, container) (max_over_time(container_memory_max_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\"}[$__rate_interval])) * on(cluster, namespace, pod) group_left(workload, workload_type) namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", workload=~\"$workload\", invalid=$workloadSum})",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{workload_type}}/{{workload}} (sum)",
-          "range": true,
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\navg by (workload_type, workload) (max by(cluster, namespace, pod, container) (max_over_time(container_memory_max_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\"}[$__rate_interval])) * on(cluster, namespace, pod) group_left(workload, workload_type) namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", workload=~\"$workload\", invalid=$workloadAvg})",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{workload_type}}/{{workload}} (avg)",
-          "range": true,
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nmax by (workload_type, workload) (max by(cluster, namespace, pod, container) (max_over_time(container_memory_max_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\"}[$__rate_interval])) * on(cluster, namespace, pod) group_left(workload, workload_type) namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", workload=~\"$workload\", invalid=$workloadAvg})",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{workload_type}}/{{workload}} (max)",
-          "range": true,
-          "refId": "C"
-        }
-      ],
-      "title": "Max Memory Usage",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "fieldMinMax": false,
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "bytes"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 46
-      },
       "id": 26,
       "maxDataPoints": 300,
       "options": {
@@ -1615,11 +1439,12 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
           "sort": "desc"
         }
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "11.5.1",
       "targets": [
         {
           "datasource": {
@@ -1665,402 +1490,12 @@
       "type": "timeseries"
     },
     {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "fieldMinMax": false,
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "bytes"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 46
-      },
-      "id": 28,
-      "maxDataPoints": 300,
-      "options": {
-        "legend": {
-          "asTable": true,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "pluginVersion": "11.4.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "sum by (workload_type, workload) (max by(cluster, namespace, pod, container) (max_over_time(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\"}[$__rate_interval])) * on(cluster, namespace, pod) group_left(workload, workload_type) namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", workload=~\"$workload\", invalid=$workloadSum})",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{workload_type}}/{{workload}} (sum)",
-          "range": true,
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\navg by (workload_type, workload) (max by(cluster, namespace, pod, container) (max_over_time(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\"}[$__rate_interval])) * on(cluster, namespace, pod) group_left(workload, workload_type) namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", workload=~\"$workload\", invalid=$workloadAvg})",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{workload_type}}/{{workload}} (avg)",
-          "range": true,
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nmax by (workload_type, workload) (max by(cluster, namespace, pod, container) (max_over_time(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\"}[$__rate_interval])) * on(cluster, namespace, pod) group_left(workload, workload_type) namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", workload=~\"$workload\", invalid=$workloadAvg})",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{workload_type}}/{{workload}} (max)",
-          "range": true,
-          "refId": "C"
-        }
-      ],
-      "title": "Memory Usage (WSS)",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "fieldMinMax": false,
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "bytes"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 54
-      },
-      "id": 32,
-      "maxDataPoints": 300,
-      "options": {
-        "legend": {
-          "asTable": true,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "pluginVersion": "11.4.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nsum by (workload_type, workload) (max by(cluster, namespace, pod, container) (max_over_time(container_memory_cache{cluster=\"$cluster\", namespace=\"$namespace\"}[$__rate_interval])) * on(cluster, namespace, pod) group_left(workload, workload_type) namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", workload=~\"$workload\", invalid=$workloadSum})",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{workload_type}}/{{workload}} (sum)",
-          "range": true,
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\navg by (workload_type, workload) (max by(cluster, namespace, pod, container) (max_over_time(container_memory_cache{cluster=\"$cluster\", namespace=\"$namespace\"}[$__rate_interval])) * on(cluster, namespace, pod) group_left(workload, workload_type) namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", workload=~\"$workload\", invalid=$workloadAvg})",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{workload_type}}/{{workload}} (avg)",
-          "range": true,
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nmax by (workload_type, workload) (max by(cluster, namespace, pod, container) (max_over_time(container_memory_cache{cluster=\"$cluster\", namespace=\"$namespace\"}[$__rate_interval])) * on(cluster, namespace, pod) group_left(workload, workload_type) namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", workload=~\"$workload\", invalid=$workloadAvg})",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{workload_type}}/{{workload}} (max)",
-          "range": true,
-          "refId": "C"
-        }
-      ],
-      "title": "Memory Usage (Cache)",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "fieldMinMax": false,
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "bytes"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 54
-      },
-      "id": 27,
-      "maxDataPoints": 300,
-      "options": {
-        "legend": {
-          "asTable": true,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "pluginVersion": "11.4.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nsum by (workload_type, workload) (max by(cluster, namespace, pod, container) (max_over_time(container_memory_mapped_file{cluster=\"$cluster\", namespace=\"$namespace\"}[$__rate_interval])) * on(cluster, namespace, pod) group_left(workload, workload_type) namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", workload=~\"$workload\", invalid=$workloadSum})",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{workload_type}}/{{workload}} (sum)",
-          "range": true,
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\navg by (workload_type, workload) (max by(cluster, namespace, pod, container) (max_over_time(container_memory_mapped_file{cluster=\"$cluster\", namespace=\"$namespace\"}[$__rate_interval])) * on(cluster, namespace, pod) group_left(workload, workload_type) namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", workload=~\"$workload\", invalid=$workloadAvg})",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{workload_type}}/{{workload}} (avg)",
-          "range": true,
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nmax by (workload_type, workload) (max by(cluster, namespace, pod, container) (max_over_time(container_memory_mapped_file{cluster=\"$cluster\", namespace=\"$namespace\"}[$__rate_interval])) * on(cluster, namespace, pod) group_left(workload, workload_type) namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", workload=~\"$workload\", invalid=$workloadAvg})",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{workload_type}}/{{workload}} (max)",
-          "range": true,
-          "refId": "C"
-        }
-      ],
-      "title": "Memory Usage (Mapped file)",
-      "type": "timeseries"
-    },
-    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 62
+        "y": 46
       },
       "id": 23,
       "panels": [],
@@ -2147,7 +1582,7 @@
         "h": 10,
         "w": 17,
         "x": 1,
-        "y": 63
+        "y": 47
       },
       "id": 9,
       "maxDataPoints": 100,
@@ -2169,7 +1604,7 @@
           }
         ]
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "11.5.1",
       "targets": [
         {
           "datasource": {
@@ -2347,7 +1782,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 73
+        "y": 57
       },
       "id": 10,
       "maxDataPoints": 200,
@@ -2362,11 +1797,12 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
           "sort": "desc"
         }
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "11.5.1",
       "targets": [
         {
           "datasource": {
@@ -2449,7 +1885,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 73
+        "y": 57
       },
       "id": 11,
       "maxDataPoints": 200,
@@ -2464,11 +1900,12 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
           "sort": "desc"
         }
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "11.5.1",
       "targets": [
         {
           "datasource": {
@@ -2551,7 +1988,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 80
+        "y": 64
       },
       "id": 14,
       "maxDataPoints": 200,
@@ -2566,11 +2003,12 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
           "sort": "desc"
         }
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "11.5.1",
       "targets": [
         {
           "datasource": {
@@ -2653,7 +2091,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 80
+        "y": 64
       },
       "id": 15,
       "maxDataPoints": 200,
@@ -2668,11 +2106,12 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
           "sort": "desc"
         }
       },
-      "pluginVersion": "11.4.0",
+      "pluginVersion": "11.5.1",
       "targets": [
         {
           "datasource": {
