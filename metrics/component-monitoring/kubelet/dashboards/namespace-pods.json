@@ -347,7 +347,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(max_over_time(kube_pod_container_status_restarts_total{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])) by (pod)",
+          "expr": "sum by (pod) (max_over_time(kube_pod_container_status_restarts_total{job=\"kube-state-metrics\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -366,6 +366,8 @@
       "fieldConfig": {
         "defaults": {
           "mappings": [],
+          "max": 1,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -433,6 +435,8 @@
       "fieldConfig": {
         "defaults": {
           "mappings": [],
+          "max": 1,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -500,6 +504,8 @@
       "fieldConfig": {
         "defaults": {
           "mappings": [],
+          "max": 1,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -566,6 +572,8 @@
       "fieldConfig": {
         "defaults": {
           "mappings": [],
+          "max": 1,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -935,12 +943,12 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by(pod) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval]))",
+          "expr": "max by(pod) (sum without(container) (avg_over_time(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__range])))",
           "format": "table",
-          "instant": false,
+          "instant": true,
           "legendFormat": "__auto",
-          "range": true,
-          "refId": "A"
+          "range": false,
+          "refId": "cpu"
         },
         {
           "datasource": {
@@ -949,13 +957,13 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum(last_over_time(kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"cpu\"}[$__range])) by (pod)",
+          "expr": "# sum without(container) fixes issues if job labels has changed\r\nmax by (pod) (sum without(container) (last_over_time(kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"cpu\"}[$__range])))",
           "format": "table",
           "hide": false,
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
-          "refId": "B"
+          "refId": "request"
         },
         {
           "datasource": {
@@ -964,13 +972,13 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by(pod) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])) / sum(kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"cpu\"}) by (pod)",
+          "expr": "max by(pod) (avg_over_time(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__range]) / on(pod, container) group_left kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"cpu\"})",
           "format": "table",
           "hide": false,
-          "instant": false,
+          "instant": true,
           "legendFormat": "__auto",
-          "range": true,
-          "refId": "C"
+          "range": false,
+          "refId": "request_percent"
         },
         {
           "datasource": {
@@ -979,7 +987,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum(last_over_time(kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"cpu\"}[$__range])) by (pod)",
+          "expr": "# sum without(container) fixes issues if job labels has changed\r\nmax by (pod) (sum without(container) (last_over_time(kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"cpu\"}[$__range])))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -994,18 +1002,23 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by(pod) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])) / sum(kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"cpu\"}) by (pod)",
+          "expr": "max by(pod) (avg_over_time(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__range]) / on(pod, container) group_left kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"cpu\"})",
           "format": "table",
           "hide": false,
-          "instant": false,
+          "instant": true,
           "legendFormat": "__auto",
-          "range": true,
-          "refId": "E"
+          "range": false,
+          "refId": "limit_percent"
         }
       ],
       "title": "CPU Usage",
       "transformations": [
         {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "disabled": true,
           "id": "joinByField",
           "options": {
             "byField": "pod",
@@ -1023,18 +1036,15 @@
               "Time 4": true,
               "Time 5": true
             },
+            "includeByName": {},
             "indexByName": {
-              "Time 1": 0,
-              "Time 2": 1,
-              "Time 3": 2,
-              "Time 4": 3,
-              "Time 5": 4,
-              "Value #A": 6,
-              "Value #B": 7,
-              "Value #C": 8,
-              "Value #D": 9,
-              "Value #E": 10,
-              "pod": 5
+              "Time": 0,
+              "Value #D": 5,
+              "Value #cpu": 2,
+              "Value #limit_percent": 6,
+              "Value #request": 3,
+              "Value #request_percent": 4,
+              "pod": 1
             },
             "renameByName": {
               "Value #A": "CPU Usage",
@@ -1042,6 +1052,12 @@
               "Value #C": "CPU Requests %",
               "Value #D": "CPU Limits",
               "Value #E": "CPU Limits %",
+              "Value #cpu": "CPU (avg)",
+              "Value #limit_percent": "Limit % (avg)",
+              "Value #limit_percent_max": "Limit % (max)",
+              "Value #request": "Request",
+              "Value #request_percent": "Request % (avg)",
+              "Value #request_percent_max": "Request % (max)",
               "pod": "Pod"
             }
           }
@@ -1161,12 +1177,12 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum(last_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container!=\"\", image!=\"\"}[$__range])) by (pod)",
+          "expr": "max by(pod) (sum without(container) (max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__range])))",
           "format": "table",
           "instant": true,
           "legendFormat": "",
           "range": false,
-          "refId": "A"
+          "refId": "rss"
         },
         {
           "datasource": {
@@ -1235,13 +1251,13 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum(last_over_time(container_memory_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container!=\"\"}[$__range])) by (pod)",
+          "expr": "max by(pod) (sum without(container) (max_over_time(container_memory_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__range])))",
           "format": "table",
           "hide": false,
           "instant": true,
           "legendFormat": "",
           "range": false,
-          "refId": "F"
+          "refId": "raw"
         },
         {
           "datasource": {
@@ -1262,11 +1278,8 @@
       "title": "Memory Usage (last value)",
       "transformations": [
         {
-          "id": "joinByField",
-          "options": {
-            "byField": "pod",
-            "mode": "outer"
-          }
+          "id": "merge",
+          "options": {}
         },
         {
           "id": "organize",
@@ -1284,23 +1297,15 @@
             },
             "includeByName": {},
             "indexByName": {
-              "Time 1": 0,
-              "Time 2": 1,
-              "Time 3": 2,
-              "Time 4": 3,
-              "Time 5": 4,
-              "Time 6": 5,
-              "Time 7": 6,
-              "Time 8": 7,
-              "Value #A": 9,
-              "Value #B": 10,
-              "Value #C": 11,
-              "Value #D": 12,
-              "Value #E": 13,
-              "Value #F": 14,
-              "Value #G": 15,
-              "Value #H": 16,
-              "pod": 8
+              "Time": 8,
+              "Value #B": 2,
+              "Value #C": 3,
+              "Value #D": 4,
+              "Value #E": 5,
+              "Value #F": 6,
+              "Value #H": 7,
+              "Value #rss": 1,
+              "pod": 0
             },
             "renameByName": {
               "Value #A": "RSS",
@@ -1311,6 +1316,9 @@
               "Value #F": "Raw",
               "Value #G": "Memory Usage (Cache)",
               "Value #H": "Memory Usage (Swap)",
+              "Value #RSS": "RSS",
+              "Value #raw": "Raw",
+              "Value #rss": "RSS",
               "pod": "Pod"
             }
           }
@@ -1533,7 +1541,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nsum by (pod) (max by(pod, container) (max_over_time(kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"memory\"}[$__rate_interval])))",
+          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nsum by (pod) (max by(pod, container) (max_over_time(kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"memory\"}[$__interval])))",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -1735,7 +1743,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nsum by (pod) (max by(pod, container) (max_over_time(kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"memory\"}[$__rate_interval])))",
+          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nsum by (pod) (max by(pod, container) (max_over_time(kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"memory\"}[$__interval])))",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
