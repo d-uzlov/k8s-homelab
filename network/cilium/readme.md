@@ -9,26 +9,27 @@ References:
 # Generate deployment
 
 ```bash
+
 helm repo add cilium https://helm.cilium.io/
 helm repo update cilium
 helm search repo cilium/cilium --versions --devel | head
-helm show values cilium/cilium --version 1.17.0-pre.2 > ./network/cilium/default-values.yaml
+helm show values cilium/cilium --version 1.17.0 > ./network/cilium/default-values.yaml
 
 helm template cilium cilium/cilium \
-  --version 1.17.0-pre.2 \
+  --version 1.17.0 \
   --values ./network/cilium/values.yaml \
   --namespace cilium \
   --api-versions gateway.networking.k8s.io/v1/GatewayClass \
   > ./network/cilium/cilium-native.gen.yaml
 helm template cilium cilium/cilium \
-  --version 1.17.0-pre.2 \
+  --version 1.17.0 \
   --values ./network/cilium/values.yaml \
   --namespace cilium \
   --set l2announcements.enable=true \
   --api-versions gateway.networking.k8s.io/v1/GatewayClass \
   > ./network/cilium/cilium-native-l2lb.gen.yaml
 helm template cilium cilium/cilium \
-  --version 1.17.0-pre.2 \
+  --version 1.17.0 \
   --values ./network/cilium/values.yaml \
   --namespace cilium \
   --set routingMode=tunnel \
@@ -37,6 +38,7 @@ helm template cilium cilium/cilium \
   --set ipv4NativeRoutingCIDR= \
   --api-versions gateway.networking.k8s.io/v1/GatewayClass \
   > ./network/cilium/cilium-tunnel.gen.yaml
+
 ```
 
 # Deploy

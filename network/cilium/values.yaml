@@ -4,6 +4,20 @@ kubeProxyReplacement: true
 k8sServiceHost: cp-address-automatic-replace
 k8sServicePort: 6443
 
+resources:
+# cilium memory includes BPF data (which apparently counts as cache, as far as cadvisor is concerned)
+# it depends on the number on pods on the node
+# apparently, on startup it need more memory than when running
+# considering all of the above, cilium recommends to run cilium without memory limit
+# https://docs.cilium.io/en/stable/operations/performance/scalability/report/
+# https://github.com/cilium/cilium/issues/23436
+#   limits:
+#     cpu: 4000m
+#     memory: 4Gi
+  requests:
+    cpu: 50m
+    memory: 512Mi
+
 # native or tunnel
 routingMode: native
 tunnelProtocol: geneve
@@ -13,6 +27,8 @@ autoDirectNodeRoutes: true
 # geneve or vxlan
 # vxlan doesn't support DSR
 ipam:
+  # TODO use k8s CIDR pools
+  # mode: kubernetes
   mode: cluster-pool
   operator:
     clusterPoolIPv4PodCIDRList: 10.201.0.0/16
@@ -27,6 +43,8 @@ encryption:
   # https://github.com/cilium/cilium/issues/28413
   # also see test/iperf3 folder in this repo
   type: wireguard
+
+endpointLockdownOnMapOverflow: true
 
 # Use "kubernetes.io/egress-bandwidth" pod annotation
 bandwidthManager:
@@ -80,8 +98,31 @@ gatewayAPI:
     name: cilium-secrets
     # -- Enable secret sync, which will make sure all TLS secrets used by Ingress are synced to secretsNamespace.name.
     # If disabled, TLS secrets must be maintained externally.
-    sync: true
+    sync: false
   externalTrafficPolicy: Local
+
+ingressController:
+  enabled: false
+  secretsNamespace:
+    create: false
+    name: cilium-secrets
+    sync: false
+
+envoyConfig:
+  enabled: false
+  secretsNamespace:
+    create: false
+    name: cilium-secrets
+    sync: false
+
+tls:
+  secretsBackend: k8s
+  secretsNamespace:
+    create: false
+    name: cilium-secrets
+    sync: false
+  secretSync:
+    enabled: false
 
 hubble:
   enabled: true
