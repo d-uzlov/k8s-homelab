@@ -68,10 +68,13 @@ curl -fsSL https://pkgs.k8s.io/core:/stable:/$new_version/deb/Release.key | sudo
 echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/'"$new_version"'/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
 
 sudo apt-get update
-sudo apt full-upgrade
+sudo apt autoremove -y
+sudo apt full-upgrade -y
+sudo apt autoremove -y
+
 apt-cache policy kubeadm | head
 
-new_package_version=1.32.0
+new_package_version=1.32.1
 sudo apt-mark unhold kubeadm kubelet && \
 sudo apt-get install -y kubeadm="$new_package_version"'-*' kubelet="$new_package_version"'-*' && \
 sudo apt-mark hold kubeadm kubelet &&
@@ -86,15 +89,19 @@ kubeadm version
 # study the upgrade plan manually
 sudo kubeadm upgrade plan
 # choose a version offered by the upgrade plan
-sudo kubeadm upgrade apply v1.32.0
+sudo kubeadm upgrade apply v1.32.1 --patches ./patches/
+sudo kubeadm upgrade apply v1.32.1 --patches ./patches/ --skip-phases addon/kube-proxy
 # if you disabled kube-proxy for your CNI, you need to re-disable it again after the upgrade
+
+# On all remaining master nodes
+sudo kubeadm upgrade node --patches ./patches/
 
 # === on all other nodes ===
 # - repeat upgrade via apt-get
 # - run `upgrade node` instead of `upgrade apply`
-# on control plane nodes this can take some time
 # on worker nodes this should finish instantly
-sudo kubeadm upgrade node --certificate-renewal=false
+sudo kubeadm upgrade node
+
 ```
 
 # Edit kubelet args

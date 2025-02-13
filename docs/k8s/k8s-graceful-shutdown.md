@@ -26,18 +26,18 @@ systemd-inhibit --list
 
 If `systemd-inhibit` output does not contain the kubelet entry, it's probably because someone overrides `InhibitDelayMaxSec`.
 
-Any of the following configs can set the wrong limit:
-- `/etc/systemd/logind.conf`
-- `/etc/systemd/logind.conf.d/*.conf`
-- `/run/systemd/logind.conf.d/*.conf`
-- `/usr/lib/systemd/logind.conf.d/*.conf`
+```bash
 
-Grep `InhibitDelayMaxSec` in files in these directories.
+# Check existing config
+grep InhibitDelayMaxSec /etc/systemd/logind.conf /etc/systemd/logind.conf.d/* /run/systemd/logind.conf.d/* /usr/lib/systemd/logind.conf.d/*
 
-In Ubuntu and Debian the limit is 30 seconds:
-- `/usr/lib/systemd/logind.conf.d/unattended-upgrades-logind-maxdelay.conf`
+# unattended-upgrades has default limit 30 seconds
+cat /usr/lib/systemd/logind.conf.d/unattended-upgrades-logind-maxdelay.conf
 
-Uninstall `unattended-upgrades` to fix it.
+# fix it
+sudo sed -i 's/InhibitDelayMaxSec=.*/InhibitDelayMaxSec=60/' /usr/lib/systemd/logind.conf.d/unattended-upgrades-logind-maxdelay.conf
+
+```
 
 References:
 - https://github.com/kubernetes/kubernetes/issues/107043

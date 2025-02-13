@@ -155,6 +155,7 @@ EOF
 Check your current apiserver address:
 
 ```bash
+kl config get-contexts
 echo $(kl config view --raw -o jsonpath='{.clusters[?(@.name == "'"$current_cluster_name"'")].cluster.server}')
 ```
 

@@ -9,7 +9,7 @@ fi
 if [ "$1" = "master" ]; then
   join=$(sudo kubeadm token create --print-join-command | xargs) || exit
   cp_cert=$(sudo kubeadm init phase upload-certs --upload-certs --config ./kconf.yaml | grep -vw -e certificate -e Namespace) || exit
-  echo "sudo $join --node-name "'$(hostname --fqdn)'" --control-plane --certificate-key $cp_cert"
+  echo "sudo $join --node-name "'$(hostname --fqdn)'" --control-plane --certificate-key $cp_cert --patches ./patches/"
   exit 0
 fi
 

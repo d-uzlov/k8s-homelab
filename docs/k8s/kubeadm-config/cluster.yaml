@@ -1,10 +1,11 @@
 ---
-# https://kubernetes.io/docs/reference/config-api/kubeadm-config.v1beta3/#kubeadm-k8s-io-v1beta3-ClusterConfiguration
-apiVersion: kubeadm.k8s.io/v1beta3
+# https://kubernetes.io/docs/reference/config-api/kubeadm-config.v1beta4/
+apiVersion: kubeadm.k8s.io/v1beta4
 kind: ClusterConfiguration
 controlPlaneEndpoint: REPLACE_ME_CONTROL_PLANE_ENDPOINT
 clusterName: kubernetes
-kubernetesVersion: 1.30.5
+kubernetesVersion: v1.32.1
+encryptionAlgorithm: ECDSA-P256
 networking:
   dnsDomain: cluster.local
   podSubnet: 10.201.0.0/16
@@ -20,23 +21,27 @@ apiServer:
   certSANs:
   - 127.0.0.1
   extraArgs:
-    bind-address: 0.0.0.0
+  - name: bind-address
+    value: 0.0.0.0
     # different prefix values allow you to run several k8s instances off of one etcd cluster
-    # the default value in /registry
-    etcd-prefix: /registry
+    # the default value is /registry
+  - name: etcd-prefix
+    value: /registry
 controllerManager:
   extraArgs:
     # required for prometheus metrics gathering
-    bind-address: 0.0.0.0
+  - name: bind-address
+    value: 0.0.0.0
 scheduler:
   extraArgs:
     # required for prometheus metrics gathering
-    bind-address: 0.0.0.0
+  - name: bind-address
+    value: 0.0.0.0
 etcd:
 # vvvvv - remove when using external etcd - vvvvv
   local:
     extraArgs: {}
-      # something seems to break when using these arguments
+      # something seems to break when using these arguments on an already existing cluster
       # listen-client-urls: https://0.0.0.0:2379
       # listen-metrics-urls: https://127.0.0.1:2381
       # listen-peer-urls: https://0.0.0.0:2380

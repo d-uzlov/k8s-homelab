@@ -72,12 +72,13 @@ sed -e "s/REPLACE_ME_CONTROL_PLANE_ENDPOINT/$control_plane_endpoint/" \
   > ./docs/k8s/env/kconf-$control_plane_endpoint.yaml
 # review kconf.yaml before copying it to make sure everything is OK
 scp ./docs/k8s/env/kconf-$control_plane_endpoint.yaml $cp_node1:kconf.yaml
+
 ```
 
 # Setup cluster
 
 ```bash
-cp_node1=m1.k8s.lan
+cp_node1=m2.k8s.lan
 ssh $cp_node1 kubeadm config validate --config ./kconf.yaml
 
 # if you are using external etcd, copy etcd certs
@@ -85,6 +86,8 @@ ssh $cp_node1 sudo mkdir -p /etc/etcd/pki/
 ssh $cp_node1 sudo tee '>' /dev/null /etc/etcd/pki/ca.pem              < ./docs/k8s/etcd/env/ca.pem
 ssh $cp_node1 sudo tee '>' /dev/null /etc/etcd/pki/etcd-client.pem     < ./docs/k8s/etcd/env/etcd-client.pem
 ssh $cp_node1 sudo tee '>' /dev/null /etc/etcd/pki/etcd-client-key.pem < ./docs/k8s/etcd/env/etcd-client-key.pem
+
+scp -r ./docs/k8s/patches $cp_node1:./patches
 
 # if using kube-vip for control plane, you should switch to its commands at this point
 
@@ -119,14 +122,20 @@ kubectl --kubeconfig ./_env/"$control_plane_endpoint".yaml -n kube-system logs -
 Show command to join:
 
 ```bash
-# worker join can be generated on any master node
+# worker join (doesn't have any special prerequisites)
 ssh $cp_node1 bash -s - < ./docs/k8s/print-join.sh worker
-# master join requires kconf.yaml to be preset, copy it into the node if needed
+
+# master join:
+# - requires kconf.yaml on the node generating the command
+scp ./docs/k8s/env/kconf-$control_plane_endpoint.yaml $cp_node1:kconf.yaml
 ssh $cp_node1 bash -s - < ./docs/k8s/print-join.sh master
+# - requires patches directory to be present on the node joining the cluster
+scp -r ./docs/k8s/patches $cp_node1:./patches
 ```
 
 Run printed command on additional nodes to join the cluster.
-Commands will expire in 2 hours. Until then you can join however many nodes you want.
+Token in printed commands will expire in 2 hours.
+Until then you can join however many nodes you want.
 
 For master nodes remember:
 - They should have static IP
