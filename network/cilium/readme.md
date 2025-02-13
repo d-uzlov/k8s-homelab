@@ -25,13 +25,6 @@ helm template cilium cilium/cilium \
   --version 1.17.0 \
   --values ./network/cilium/values.yaml \
   --namespace cilium \
-  --set l2announcements.enable=true \
-  --api-versions gateway.networking.k8s.io/v1/GatewayClass \
-  > ./network/cilium/cilium-native-l2lb.gen.yaml
-helm template cilium cilium/cilium \
-  --version 1.17.0 \
-  --values ./network/cilium/values.yaml \
-  --namespace cilium \
   --set routingMode=tunnel \
   --set autoDirectNodeRoutes=false \
   --set loadBalancer.dsrDispatch=geneve \
@@ -73,12 +66,6 @@ kl -n cilium delete job hubble-generate-certs
 (
   . ./network/cilium/env/control-plane-endpoint.env \
   && sed "s/cp-address-automatic-replace/$control_plane_endpoint/" ./network/cilium/cilium-native.gen.yaml \
-  | kl apply -f - --server-side=true
-)
-# - also enable L2 announcements, when not using any other load balancer provider
-(
-  . ./network/cilium/env/control-plane-endpoint.env \
-  && sed "s/cp-address-automatic-replace/$control_plane_endpoint/" ./network/cilium/cilium-native-l2lb.gen.yaml \
   | kl apply -f - --server-side=true
 )
 # - choose tunnel when nodes are in different L2 segments
