@@ -17,6 +17,7 @@ helm show values nfd/node-feature-discovery > ./hardware/node-feature-discovery/
 ```
 
 ```bash
+
 helm template \
   nfd \
   nfd/node-feature-discovery \
@@ -25,11 +26,14 @@ helm template \
   --values ./hardware/node-feature-discovery/values.yaml \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/part-of|d' -e '\|app.kubernetes.io/version|d' \
   > ./hardware/node-feature-discovery/nfd.gen.yaml
+
 ```
 
 ```bash
+
 crd_url=https://github.com/kubernetes-sigs/node-feature-discovery/raw/v0.16.4/deployment/helm/node-feature-discovery/crds/nfd-api-crds.yaml
 curl -fsSL "$crd_url" --output ./hardware/node-feature-discovery/crd.yaml
+
 ```
 
 # Deploy
