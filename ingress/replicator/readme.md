@@ -19,6 +19,7 @@ helm show values mittwald/kubernetes-replicator --version 2.9.2 > ./ingress/repl
 ```
 
 ```bash
+
 helm template \
     kubernetes-replicator \
     mittwald/kubernetes-replicator \
@@ -27,16 +28,19 @@ helm template \
     --namespace replicator \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' -e '\|app.kubernetes.io/version|d' \
     > ./ingress/replicator/replicator.gen.yaml
+
 ```
 
 # Deploy
 
 ```bash
+
 kl create ns replicator
 kl label ns replicator pod-security.kubernetes.io/enforce=baseline
 
 kl apply -k ./ingress/replicator/
 kl -n replicator get pod -o wide
+
 ```
 
 # Test that it works
