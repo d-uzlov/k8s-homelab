@@ -27,19 +27,3 @@ EOF
 ```bash
 kl apply -k ./storage/nfs-csi/storage-classes/nfs-folder
 ```
-
-# Test that pods are able to consume PVCs
-
-```bash
-kl apply -f ./storage/nfs-csi/storage-classes/nfs-folder/test.yaml
-# make sure that PVCs are provisioned
-kl get pvc
-# make sure that test pod is running
-kl get pod
-# check contents of mounted folder
-kl exec deployments/test-nfs-folder -- touch /mnt/data/test-file
-kl exec deployments/test-nfs-folder -- ls -laF /mnt/data
-kl exec deployments/test-nfs-folder -- mount | grep /mnt/data
-# cleanup resources
-kl delete -f ./storage/nfs-csi/storage-classes/nfs-folder/test.yaml
-```

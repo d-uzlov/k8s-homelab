@@ -81,27 +81,3 @@ kl -n pv-discsi get pod -o wide
 kl delete -k ./storage/democratic-csi/iscsi/block/
 kl delete ns pv-discsi
 ```
-
-# Test that deployment works
-
-```bash
-kl apply -f ./storage/democratic-csi/iscsi/block/test.yaml
-# make sure that PVCs are provisioned
-kl get pvc
-# make sure that test pod is running
-kl get pod -o wide
-
-# if there are issues, you can try to check logs
-kl describe pvc test-iscsi-block
-kl -n pv-discsi logs deployments/discsi-controller csi-driver --tail 20
-kl describe pod -l app=test-iscsi-block
-
-# check mounted file system
-kl exec deployments/test-iscsi-block -- mount | grep /mnt/data
-kl exec deployments/test-iscsi-block -- df -h /mnt/data
-kl exec deployments/test-iscsi-block -- touch /mnt/data/test-file
-kl exec deployments/test-iscsi-block -- ls -laF /mnt/data
-
-# cleanup resources
-kl delete -f ./storage/democratic-csi/iscsi/block/test.yaml
-```

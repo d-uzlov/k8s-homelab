@@ -24,19 +24,3 @@ EOF
 ```bash
 kl apply -k ./storage/smb-csi/storage-classes/bulk/
 ```
-
-# Test that pods are able to consume PVCs
-
-```bash
-kl apply -f ./storage/smb-csi/storage-classes/bulk/test.yaml
-# make sure that PVCs are provisioned
-kl get pvc
-# make sure that test pod is running
-kl get pod
-# check contents of mounted folder
-kl exec deployments/test-smb-bulk -- touch /mnt/data/test-file
-kl exec deployments/test-smb-bulk -- ls -laF /mnt/data
-kl exec deployments/test-smb-bulk -- mount | grep /mnt/data
-# cleanup resources
-kl delete -f ./storage/smb-csi/storage-classes/bulk/test.yaml
-```

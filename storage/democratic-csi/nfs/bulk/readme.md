@@ -80,26 +80,3 @@ kl -n pv-dnfsb get pod -o wide
 kl delete -k ./storage/democratic-csi/nfs/bulk/
 kl delete ns pv-dnfsb
 ```
-
-# Test that deployment works
-
-```bash
-kl apply -f ./storage/democratic-csi/nfs/bulk/test.yaml
-# make sure that PVCs are provisioned
-kl get pvc
-# make sure that test pod is running
-kl get pod -o wide
-
-# if there are issues, you can try to check logs
-kl describe pvc test-nfs-bulk
-kl -n pv-dnfsb logs deployments/dnfsb-controller csi-driver --tail 20
-
-# check contents of mounted folder, create a test file
-kl exec deployments/test-nfs-bulk -- mount | grep /mnt/data
-kl exec deployments/test-nfs-bulk -- df -h /mnt/data
-kl exec deployments/test-nfs-bulk -- touch /mnt/data/test-file
-kl exec deployments/test-nfs-bulk -- ls -laF /mnt/data
-
-# cleanup resources
-kl delete -f ./storage/democratic-csi/nfs/bulk/test.yaml
-```

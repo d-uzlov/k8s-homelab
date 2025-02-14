@@ -82,26 +82,3 @@ kl -n pv-dnfsf get pod -o wide
 kl delete -k ./storage/democratic-csi/nfs/fast/
 kl delete ns pv-dnfsf
 ```
-
-# Test that deployment works
-
-```bash
-kl apply -f ./storage/democratic-csi/nfs/fast/test.yaml
-# make sure that PVCs are provisioned
-kl get pvc
-# make sure that test pod is running
-kl get pod -o wide
-
-# if there are issues, you can try to check logs
-kl describe pvc test-nfs-fast
-kl -n pv-dnfsf logs deployments/dnfsf-controller csi-driver --tail 20
-
-# check contents of mounted folder, create a test file
-kl exec deployments/test-nfs-fast -- mount | grep /mnt/data
-kl exec deployments/test-nfs-fast -- df -h /mnt/data
-kl exec deployments/test-nfs-fast -- touch /mnt/data/test-file
-kl exec deployments/test-nfs-fast -- ls -laF /mnt/data
-
-# cleanup resources
-kl delete -f ./storage/democratic-csi/nfs/fast/test.yaml
-```

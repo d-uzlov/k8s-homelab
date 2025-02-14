@@ -30,22 +30,3 @@ EOF
 ```bash
 kl apply -k ./storage/nfs-csi/storage-classes/bulk-persist
 ```
-
-# Test that pods are able to consume PVCs
-
-```bash
-kl apply -f ./storage/nfs-csi/storage-classes/bulk-persist/test.yaml
-# make sure that PVCs are provisioned
-kl get pvc
-# make sure that test pod is running
-kl get pod
-
-# check contents of mounted folder
-kl exec deployments/test-nfs-bulk-persist -- mount | grep /mnt/data
-kl exec deployments/test-nfs-bulk-persist -- df -h /mnt/data
-kl exec deployments/test-nfs-bulk-persist -- touch /mnt/data/test-file
-kl exec deployments/test-nfs-bulk-persist -- ls -laF /mnt/data
-
-# cleanup resources
-kl delete -f ./storage/nfs-csi/storage-classes/bulk-persist/test.yaml
-```

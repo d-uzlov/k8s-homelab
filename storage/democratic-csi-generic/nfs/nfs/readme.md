@@ -90,27 +90,3 @@ kl -n pv-dnfs get pod -o wide
 kl delete -k ./storage/democratic-csi-generic/nfs/nfs/
 kl delete ns pv-dnfs
 ```
-
-# Test that deployment works
-
-```bash
-kl apply -f ./storage/democratic-csi-generic/nfs/nfs/test.yaml
-# make sure that PVCs are provisioned
-kl get pvc
-# make sure that test pod is running
-kl get pod -o wide
-
-# if there are issues, you can try to check logs
-kl describe pvc test-dnfs
-kl -n pv-dnfs logs deployments/dnfs-controller csi-driver --tail 20
-kl describe pod -l app=test-dnfs
-
-# check mounted file system
-kl exec deployments/test-dnfs -- mount | grep /mnt/data
-kl exec deployments/test-dnfs -- df -h /mnt/data
-kl exec deployments/test-dnfs -- touch /mnt/data/test-file
-kl exec deployments/test-dnfs -- ls -laFh /mnt/data
-
-# cleanup resources
-kl delete -f ./storage/democratic-csi-generic/nfs/nfs/test.yaml
-```

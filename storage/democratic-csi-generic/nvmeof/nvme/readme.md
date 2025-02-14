@@ -90,27 +90,3 @@ kl -n pv-nvmeof get pod -o wide
 kl delete -k ./storage/democratic-csi-generic/nvmeof/nvme/
 kl delete ns pv-nvmeof
 ```
-
-# Test that deployment works
-
-```bash
-kl apply -f ./storage/democratic-csi-generic/nvmeof/nvme/test.yaml
-# make sure that PVCs are provisioned
-kl get pvc
-# make sure that test pod is running
-kl get pod -o wide
-
-# if there are issues, you can try to check logs
-kl describe pvc test-nvme
-kl -n pv-nvmeof logs deployments/dnvme-controller csi-driver --tail 20
-kl describe pod -l app=test-nvmeof
-
-# check mounted file system
-kl exec deployments/test-nvmeof -- mount | grep /mnt/data
-kl exec deployments/test-nvmeof -- df -h /mnt/data
-kl exec deployments/test-nvmeof -- touch /mnt/data/test-file
-kl exec deployments/test-nvmeof -- ls -laF /mnt/data
-
-# cleanup resources
-kl delete -f ./storage/democratic-csi-generic/nvmeof/nvme/test.yaml
-```
