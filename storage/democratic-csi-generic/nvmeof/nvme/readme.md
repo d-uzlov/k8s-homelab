@@ -111,9 +111,6 @@ kl exec deployments/test-nvmeof -- df -h /mnt/data
 kl exec deployments/test-nvmeof -- touch /mnt/data/test-file
 kl exec deployments/test-nvmeof -- ls -laF /mnt/data
 
-# explore container
-kl exec deployments/test-nvmeof-root -it -- sh
-
 # cleanup resources
 kl delete -f ./storage/democratic-csi-generic/nvmeof/nvme/test.yaml
 ```

@@ -32,49 +32,6 @@ spec:
         persistentVolumeClaim:
           claimName: AUTOREPLACE_TEST_NAME
 ---
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: AUTOREPLACE_TEST_NAME-root
-spec:
-  selector:
-    matchLabels:
-      app: AUTOREPLACE_TEST_NAME-root
-  template:
-    metadata:
-      labels:
-        app: AUTOREPLACE_TEST_NAME-root
-    spec:
-      affinity:
-        podAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - topologyKey: kubernetes.io/hostname
-            labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - AUTOREPLACE_TEST_NAME
-      securityContext:
-        runAsUser: 0
-        runAsGroup: 2000
-        fsGroup: 3000
-        fsGroupChangePolicy: OnRootMismatch
-      containers:
-      - name: alpine
-        image: docker.io/alpine:3.17.3
-        command: ["/bin/sh", "-c", "trap : TERM INT; sleep infinity & wait"]
-        resources:
-          limits:
-            memory: 128Mi
-        volumeMounts:
-        - mountPath: /mnt/data
-          name: data
-      volumes:
-      - name: data
-        persistentVolumeClaim:
-          claimName: AUTOREPLACE_TEST_NAME
----
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

@@ -178,7 +178,7 @@ kl get pvc
 # make sure that test pods are running
 kl get pod -o wide
 
-(cd ./storage/democratic-csi-generic/proxy/storage-classes/env/ && ls test-* | sed s~.yaml~~)
+(cd ./storage/democratic-csi-generic/proxy/storage-classes/env/ && ls test-* | sed s~.yaml~~g)
 # select one of the tests to get details
 testName=
 echo $testName
@@ -197,7 +197,12 @@ kl exec deployments/$testName -- ls -laF /mnt/data
 done
 
 # explore container
-kl exec deployments/$testName-root -it -- sh
+kl exec deployments/$testName -it -- sh
+# explore container as root
+testPod=$(kl get pod -l app=$testName -o name)
+kl debug $testPod -it --image docker.io/alpine:3.17.3 --container debug --profile sysadmin --target alpine --custom ./storage/democratic-csi-generic/proxy/storage-classes/debug-container.yaml -- sh
+kl attach $testPod -c debug -it -- sh
+# https://kubernetes.io/blog/2024/08/22/kubernetes-1-31-custom-profiling-kubectl-debug/
 
 # cleanup resources
 cat ./storage/democratic-csi-generic/proxy/storage-classes/env/test-* | kl delete -f -

@@ -109,9 +109,6 @@ kl exec deployments/test-iscsi -- df -h /mnt/data
 kl exec deployments/test-iscsi -- touch /mnt/data/test-file
 kl exec deployments/test-iscsi -- ls -laF /mnt/data
 
-# explore container
-kl exec deployments/test-iscsi-root -it -- sh
-
 # cleanup resources
 kl delete -f ./storage/democratic-csi-generic/iscsi/iscsi/test.yaml
 ```

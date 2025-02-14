@@ -111,9 +111,6 @@ kl exec deployments/test-dnfs -- df -h /mnt/data
 kl exec deployments/test-dnfs -- touch /mnt/data/test-file
 kl exec deployments/test-dnfs -- ls -laFh /mnt/data
 
-# explore container
-kl exec deployments/test-dnfs-root -it -- sh
-
 # cleanup resources
 kl delete -f ./storage/democratic-csi-generic/nfs/nfs/test.yaml
 ```
