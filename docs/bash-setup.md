@@ -7,10 +7,12 @@ All code sections here can be run as-is, without any adjustments.
 # Script header
 
 ```bash
+
 # from `help set`:
 # -e Exit immediately if a command exits with a non-zero status
 # -u Treat unset variables as an error when substituting
 set -eu
+
 ```
 
 Note: the code section above must be the first in the file.
@@ -18,10 +20,12 @@ Commands in it are helpful in automated setups that transform this file into `.s
 
 # Required tools
 
+These tools are needed for this setup.
+
 ```bash
-which unzip > /dev/null || { sudo apt-get update; sudo apt-get install -y unzip; }
-which curl  > /dev/null || { sudo apt-get update; sudo apt-get install -y curl; }
-which wget  > /dev/null || { sudo apt-get update; sudo apt-get install -y wget; }
+
+which unzip curl wget > /dev/null || { sudo apt-get update; sudo apt-get install -y unzip curl wget; }
+
 ```
 
 # Add bashrc directory
@@ -29,8 +33,9 @@ which wget  > /dev/null || { sudo apt-get update; sudo apt-get install -y wget; 
 Enable using `~/.bashrc.d` for adjustments.
 
 ```bash
+
 mkdir -p ~/.bashrc.d/
- cat << "EOF" >> ~/.bashrc.d/include
+ cat << "EOF" > ~/.bashrc.d/include
 # add support for bashrc.d
 if [ -d ~/.bashrc.d ]; then
   for rc in ~/.bashrc.d/*.sh; do
@@ -40,12 +45,14 @@ if [ -d ~/.bashrc.d ]; then
   done
 fi
 EOF
-grep '\.bashrc\.d' ~/.bashrc > /dev/null || echo '. ~/.bashrc.d/include' >> ~/.bashrc
+grep -Fx '. ~/.bashrc.d/include' ~/.bashrc > /dev/null || echo '. ~/.bashrc.d/include' >> ~/.bashrc
+
 ```
 
 # Bash autocomplete tweaks
 
 ```bash
+
  cat << "EOF" > ~/.inputrc
 # Respect default shortcuts.
 $include /etc/inputrc
@@ -73,6 +80,7 @@ set show-all-if-unmodified On
 # avoid repeating prefix when in a folder with many similar files
 set completion-prefix-display-length 3
 EOF
+
 ```
 
 References:
@@ -96,6 +104,7 @@ Example: `user@host:/path/to/current/directory # 2000-01-01 15:10:30 # timer: 1.
 Also, prompt history is saved after every command.
 
 ```bash
+
  cat << "EOF" > ~/.bashrc.d/0-prompt.sh
 
 function timer_now {
@@ -188,6 +197,7 @@ function before_command() {
 trap 'before_command' DEBUG
 PROMPT_COMMAND=__prompt_command
 EOF
+
 ```
 
 References:
@@ -200,6 +210,7 @@ References:
 # Better `ls`
 
 ```bash
+
 # use more and better colors for ls
 curl -fsSL "https://github.com/trapd00r/LS_COLORS/raw/refs/heads/master/lscolors.sh" > ~/.bashrc.d/0-ls-colors.sh
 
@@ -210,7 +221,7 @@ curl -fsSL "https://github.com/trapd00r/LS_COLORS/raw/refs/heads/master/lscolors
 ! alias l > /dev/null 2> /dev/null || unalias l
 
 if ls --color -d . > /dev/null 2>&1; then  # GNU ls
-  export COLUMNS  # Remember columns for subprocesses.
+  export COLUMNS # Remember columns for subprocesses.
   eval "$(dircolors)"
   function ls {
     # -F, --classify: append indicator (one of */=>@|) to entries
@@ -230,6 +241,7 @@ if ls --color -d . > /dev/null 2>&1; then  # GNU ls
   alias l=ll
 fi
 EOF
+
 ```
 
 References:
@@ -239,6 +251,7 @@ References:
 # Nano settings
 
 ```bash
+
 # syntax highlights for many languages
 [ -d ~/.nano/ ] || curl https://raw.githubusercontent.com/galenguyer/nano-syntax-highlighting/master/install.sh | bash || rm -rf ~/.nano/
 # installs into ~/.nano/
@@ -303,9 +316,9 @@ unbind F4 all
 # cut from current to the end of file
 unbind M-T all
 
-include $HOME/.nano/*.nanorc
+include ~/.nano/*.nanorc
 EOF
-sudo cp ~/.nanorc /root/.nanorc
+
 ```
 
 Toggle lines with `ctrl + L` if you want to select multiple lines with mouse.
@@ -318,15 +331,18 @@ References:
 # Additional colors
 
 ```bash
+
  cat << EOF > ~/.bashrc.d/0-colors.sh
 alias ip='ip --color=auto'
 alias grep='grep --color=auto'
 EOF
+
 ```
 
 # Unlimited history
 
 ```bash
+
 sed -i -E -e 's/^(.*)HISTSIZE/# \1HISTSIZE/' -e 's/^(.*)HISTFILESIZE/# \1HISTFILESIZE/' ~/.bashrc
 
  cat << EOF > ~/.bashrc.d/0-history.sh
@@ -341,6 +357,7 @@ export HISTTIMEFORMAT="[%F %T] "
 # http://superuser.com/questions/575479/bash-history-truncated-to-500-lines-on-each-login
 export HISTFILE=~/.bash_eternal_history
 EOF
+
 ```
 
 References:

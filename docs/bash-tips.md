@@ -8,8 +8,13 @@ You can quickly run all commands from there
 if you have it in your local filesystem:
 
 ```bash
+# apply everything to current user
 sed -n '/```bash/,/```/{//!p;}' ./docs/bash-setup.md | bash
+# apply everything to root user
+sed -n '/```bash/,/```/{//!p;}' ./docs/bash-setup.md | sudo bash
+# you can configure remote system via ssh
 sed -n '/```bash/,/```/{//!p;}' ./docs/bash-setup.md | ssh $remote_hostname
+sed -n '/```bash/,/```/{//!p;}' ./docs/bash-setup.md | ssh $remote_hostname sudo bash
 ```
 
 # Settings for new users
