@@ -7,7 +7,7 @@ echo "Changing config dir permissions..."
 chmod +rw -R /var/www/html/config/* || true
 
 # /path/to/nextcloud/core/skeleton
-mkdir /tmp/user-skeleton/
+mkdir -p /tmp/user-skeleton/
 ln -s --target-directory /tmp/user-skeleton/\
   "/usr/src/nextcloud/core/skeleton/Nextcloud intro.mp4" \
   "/usr/src/nextcloud/core/skeleton/Readme.md" \
