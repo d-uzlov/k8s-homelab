@@ -66,3 +66,7 @@ Get-MMAgent
 Disable-MMAgent -mc
 # reboot after this command
 ```
+
+# Move window from out of the screen
+
+Task bar: select unaccessible window: `Shift` + RMB -> Maximize

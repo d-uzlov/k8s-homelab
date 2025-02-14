@@ -47,7 +47,7 @@ sudo groupadd -g $xray_group xray-tproxy
 getent group xray-tproxy | grep $xray_group
 
 service_file=/etc/systemd/system/x-ui.service
-{ grep Group= $service_file ||  sudo sed -i 's/\[Service]/[Service]\nGroup=xray-tproxy/' $service_file ; } && grep 'Group=xray-tproxy' $service_file
+{ grep Group= $service_file || sudo sed -i 's/\[Service]/[Service]\nGroup=xray-tproxy/' $service_file ; } && grep 'Group=xray-tproxy' $service_file
 
 sudo systemctl daemon-reload
 sudo systemctl restart x-ui
@@ -59,6 +59,7 @@ ps -o pid,uid,gid,group,supgid -p $(pgrep xray-linux)
 
 # check that you have high enough ulimit
 cat /proc/$(pgrep x-ui)/limits | grep -e "Max open files" -e ^Limit
+# 524288 seems to be good enough
 ```
 
 # System route setup
@@ -83,7 +84,7 @@ ip route flush table 100 || true
 # Who the hell knows why this is needed...
 # Every tproxy guide just says "add this route to make tproxy work".
 # Nobody in the internet seems to have an answer, there are only "RTFM" references.
-# The F manual aka linux kerned docs doesn't explain anything.
+# The F manual aka linux kernel docs doesn't explain anything.
 # https://docs.kernel.org/networking/tproxy.html
 sudo ip route add table 100 local default dev lo && echo "added ip route"
 EOF
