@@ -274,3 +274,17 @@ sudo arc_summary | grep l2arc
 cat /proc/spl/kstat/zfs/arcstats
 arcstat -f read,hits,miss,hit%,miss%,arcsz,c,l2read,l2hits,l2miss,l2hit%,l2miss%,arcsz,l2size 2
 ```
+
+# List holds
+
+```bash
+
+# list all datasets with at least one hold
+zfs get userrefs | grep 'userrefs *[^-\ 0]'
+
+# select one of entries and run zfs holds
+zfs holds nvme/test/backup/nvme/k8s/default--test-nvmeof2@zrepl_20250205_031626_000
+
+# run "zfs release tag_name dataset@snapshot" if you need to remove the hold
+
+```

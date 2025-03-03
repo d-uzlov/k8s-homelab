@@ -1,0 +1,45 @@
+
+jobs:
+- type: pull
+  name: pull-from-ssd-nas
+  connect:
+    type: tls
+    address: AUTOREPLACE_SOURCE_ADDRESS
+    ca:   /etc/zrepl/ca.crt
+    cert: /etc/zrepl/node.crt
+    key:  /etc/zrepl/node.key
+    server_cn: AUTOREPLACE_SOURCE_CERT_NAME
+    dial_timeout: # optional, default 10s
+  root_fs: AUTOREPLACE_DATASET
+  interval: 10m
+  recv:
+    placeholder:
+      encryption: inherit
+  pruning:
+    keep_sender:
+    # do not prune anything from source
+    - type: regex
+      regex: ".*"
+    keep_receiver:
+    # fade-out scheme for snapshots starting with `zrepl_`
+    # - keep all created in the last hour
+    # - for snapshots older than 1h:
+    #   destroy snapshots such that we keep 6 each 1 hour apart
+    # - for snapshots older than 1h + 6h:
+    #   destroy snapshots such that we keep 14 each 1 day apart
+    # - for snapshots older than 1h + 6h + 14d:
+    #   destroy snapshots such that we keep 6 each 30 days apart
+    # - then destroy all snapshots older than 1h + 6h + 14d + 6x30d
+    - type: grid
+      grid: 1x1h(keep=all) | 6x1h | 14x1d | 6x30d
+      regex: "^zrepl_.*"
+    # retain all non-zrepl snapshots
+    - type: regex
+      negate: true
+      regex: "^zrepl_.*"
+  replication:
+    protection:
+      # guarantee_resumability creates a hold on the dataset
+      # initial:     guarantee_resumability
+      initial:     guarantee_nothing
+      incremental: guarantee_nothing

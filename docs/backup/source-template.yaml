@@ -1,0 +1,35 @@
+jobs:
+# this job takes care of snapshot creation + pruning
+- name: automatic-snapshots
+  type: snap
+  filesystems:
+    AUTOREPLACE_SOURCE_DATASET: true
+  # create snapshots with prefix `zrepl_` every 10 minutes
+  snapshotting:
+    type: periodic
+    interval: 10m
+    prefix: zrepl_
+  pruning:
+    keep:
+    - type: grid
+      grid: 1x1h(keep=all)
+      regex: "^zrepl_.*"
+    # keep all snapshots that don't have the `zrepl_` prefix
+    - type: regex
+      negate: true
+      regex: "^zrepl_.*"
+- name: source
+  type: source
+  filesystems:
+    AUTOREPLACE_SOURCE_DATASET: true
+  serve:
+    type: tls
+    listen: :AUTOREPLACE_LISTEN_PORT
+    ca:   /etc/zrepl/ca.crt
+    cert: /etc/zrepl/node.crt
+    key:  /etc/zrepl/node.key
+    client_cns:
+    - AUTOREPLACE_CLIENT_CERT_NAME
+  snapshotting:
+    # snapshots wil be managed by snapshotting job
+    type: manual
