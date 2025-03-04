@@ -39,6 +39,7 @@ acme-dns uses [ACME challenge redirection](../acme.md#acme-delegation-for-dns01)
 # Init server environment
 
 ```bash
+
 mkdir -p ./ingress/cert-manager/acme-dns/env/
  cat << EOF > ./ingress/cert-manager/acme-dns/env/acme-dns.env
 # acme-dns will serve on this domain
@@ -50,6 +51,12 @@ ns_name=ns1.acme.example.org
 # admin email address, where @ is substituted with .
 admin_email=admin.example.org
 EOF
+
+mkdir -p ./ingress/cert-manager/acme-dns/db/env/
+ cat << EOF > ./ingress/cert-manager/acme-dns/db/env/postgres-sc.env
+postgres_storage_class=nvmeof
+EOF
+
 ```
 
 References:
@@ -59,10 +66,12 @@ References:
 # Deploy
 
 ```bash
+
 kl create ns cm-acme-dns
 kl label ns cm-acme-dns pod-security.kubernetes.io/enforce=baseline
 
-kl apply -f ./ingress/cert-manager/acme-dns/postgres.yaml
+kl apply -k ./ingress/cert-manager/acme-dns/db/
+kl -n cm-acme-dns describe postgresql postgres
 kl -n cm-acme-dns get pods -o wide -L spilo-role
 
 kl apply -f ./ingress/cert-manager/acme-dns/service-dns.yaml
@@ -74,6 +83,7 @@ kl -n cm-acme-dns get pods -o wide
 
 kl apply -k ./ingress/cert-manager/acme-dns/ingress-route/
 kl -n cm-acme-dns get httproute
+
 ```
 
 # Cleanup
