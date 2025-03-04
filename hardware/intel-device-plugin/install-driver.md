@@ -15,25 +15,21 @@ References:
 
 ```bash
 sudo apt install -y build-* dkms git
-sudo apt install -y pve-headers-$(uname -r)
+sudo apt install -y proxmox-headers-$(uname -r)
 
-wget https://github.com/strongtz/i915-sriov-dkms/releases/download/2024.12.30/i915-sriov-dkms_2024.12.30_amd64.deb
-sudo dpkg -i ./i915-sriov-dkms_2024.12.30_amd64.deb
-
-# alt: manual installation
-git clone https://github.com/strongtz/i915-sriov-dkms.git
-
-sudo dkms add ./i915-sriov-dkms/
-
-sudo dkms install -m i915-sriov-dkms -v $(cat ./i915-sriov-dkms/VERSION) --force
+wget https://github.com/strongtz/i915-sriov-dkms/releases/download/2025.02.03/i915-sriov-dkms_2025.02.03_amd64.deb
+sudo dpkg -i ./i915-sriov-dkms_2025.02.03_amd64.deb
 # dkms install can take a long time
 sudo dkms status
 # status must be "installed"
 
-sudo nano /etc/kernel/cmdline
-# add: i915.enable_guc=3 i915.max_vfs=7
+# if sriov driver doesn't load despite dkms package being installed,
+# check that headers package is installed and reinstall dkms
 
-# pin the kernel (optional)
+sudo nano /etc/kernel/cmdline
+# add: intel_iommu=on i915.enable_guc=3 i915.max_vfs=7 module_blacklist=xe
+
+# pin the kernel
 sudo proxmox-boot-tool kernel pin $(uname -r)
 sudo proxmox-boot-tool kernel pin 6.8.12-5-pve
 sudo proxmox-boot-tool kernel list
@@ -86,22 +82,19 @@ sudo update-grub
 
 ```bash
 sudo apt install -y build-* dkms git
-sudo apt install -y pve-headers-$(uname -r)
+sudo apt install -y proxmox-headers-$(uname -r)
 
-wget https://github.com/strongtz/i915-sriov-dkms/releases/download/2024.12.30/i915-sriov-dkms_2024.12.30_amd64.deb
-sudo dpkg -i ./i915-sriov-dkms_2024.12.30_amd64.deb
-
-git clone https://github.com/strongtz/i915-sriov-dkms.git
-
-sudo dkms add ./i915-sriov-dkms/
-
-sudo dkms install -m i915-sriov-dkms -v $(cat ./i915-sriov-dkms/VERSION) --force
+wget https://github.com/strongtz/i915-sriov-dkms/releases/download/2025.02.03/i915-sriov-dkms_2025.02.03_amd64.deb
+sudo dpkg -i ./i915-sriov-dkms_2025.02.03_amd64.deb
 # dkms install can take a long time
 sudo dkms status
 # status must be "installed"
 
+# if sriov driver doesn't load despite dkms package being installed,
+# check that headers package is installed and reinstall dkms
+
 sudo nano /etc/default/grub
-# add to GRUB_CMDLINE_LINUX_DEFAULT: i915.enable_guc=3
+# add to GRUB_CMDLINE_LINUX_DEFAULT: i915.enable_guc=3 module_blacklist=xe
 sudo update-grub
 sudo update-initramfs -u
 sudo reboot now
