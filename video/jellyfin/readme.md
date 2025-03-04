@@ -22,17 +22,6 @@ db_size=1Gi
 # type: RWX
 config_class=bulk
 config_size=1Gi
-
-# this deployment assumes that 'shared' storage class is shared between namespaces,
-# and we use qbittorrent to populate it
-# type: RWX
-data_name=torrent
-data_class=shared
-data_size=10Ti
-
-# type: RWX
-links_class=bulk
-links_size=1Gi
 EOF
 
 # here is an example patch for local data
@@ -78,6 +67,7 @@ EOF
 # Deploy
 
 ```bash
+
 kl create ns jellyfin
 kl label ns jellyfin pod-security.kubernetes.io/enforce=baseline
 
@@ -105,6 +95,7 @@ kl apply -k ./video/jellyfin/intel/
 kl apply -k ./video/jellyfin/nvidia/
 
 kl -n jellyfin get pod -o wide
+
 ```
 
 # Cleanup
