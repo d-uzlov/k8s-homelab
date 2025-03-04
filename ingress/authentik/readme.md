@@ -50,6 +50,7 @@ helm template \
 Generate passwords and set up config.
 
 ```bash
+
 mkdir -p ./ingress/authentik/db/env/
  cat << EOF > ./ingress/authentik/db/env/redis-password.env
 redis_password=$(LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 20)
@@ -138,7 +139,7 @@ kl apply -k ./ingress/authentik/httproute-private/
 kl -n authentik get httproute
 
 # go here to set up access
-echo "https://"$(kl -n authentik get httproute authentik -o go-template --template "{{ (index .spec.hostnames 0)}}")/if/flow/initial-setup/
+echo "https://"$(kl -n authentik get httproute authentik-private -o go-template --template "{{ (index .spec.hostnames 0)}}")/if/flow/initial-setup/
 # after you finished the initial set up process, it's safe to open public access to authentik
 kl apply -k ./ingress/authentik/httproute-public/
 kl -n authentik get httproute
