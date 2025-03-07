@@ -189,7 +189,7 @@ spec:
       hostPID: false
       containers:
       - name: csi-driver
-        image: docker.io/daniluzlov/k8s-snippets:dcsi-proxy2-v14
+        image: docker.io/daniluzlov/k8s-snippets:dcsi-proxy2-v44
         imagePullPolicy: IfNotPresent
         args:
         - --csi-version=1.5.0
@@ -260,6 +260,9 @@ spec:
           mountPath: /tmp/certs
         - mountPath: /etc/nvme
           name: etc-nvme
+          readOnly: true
+        - mountPath: /etc/iscsi/
+          name: etc-iscsi
           readOnly: true
       - name: driver-registrar
         image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.9.0
@@ -366,6 +369,10 @@ spec:
           path: /etc/nvme
           type: ""
         name: etc-nvme
+      - hostPath:
+          path: /etc/iscsi/
+          type: ""
+        name: etc-iscsi
       nodeSelector:
         kubernetes.io/os: linux
       tolerations:
@@ -432,6 +439,8 @@ spec:
         - --worker-threads=10
         - --extra-create-metadata
         - --csi-address=/csi-data/csi.sock
+        - --enable-capacity=true
+        - --capacity-ownerref-level=2
         resources:
           limits:
             memory: 30Mi
@@ -528,7 +537,7 @@ spec:
               apiVersion: v1
               fieldPath: metadata.name
       - name: csi-driver
-        image: docker.io/daniluzlov/k8s-snippets:dcsi-proxy2-v14
+        image: docker.io/daniluzlov/k8s-snippets:dcsi-proxy2-v42
         imagePullPolicy: IfNotPresent
         args:
         - --csi-version=1.5.0
@@ -601,3 +610,4 @@ spec:
   #  volumeLifecycleModes:
   #  - Persistent
   #  - Ephemeral
+  storageCapacity: true

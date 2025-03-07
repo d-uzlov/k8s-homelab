@@ -5,6 +5,7 @@ fullnameOverride: dem
 csiDriver:
   # should be globally unique for a given cluster
   name: org.democratic-csi.proxy
+  storageCapacity: true
 
 driver:
   existingConfigSecret: main-config
@@ -28,7 +29,7 @@ controller:
     - name: connections
       mountPath: /mnt/connections
     # image: docker.io/democraticcsi/democratic-csi:v1.9.1
-    image: docker.io/daniluzlov/k8s-snippets:dcsi-proxy2-v14
+    image: docker.io/daniluzlov/k8s-snippets:dcsi-proxy2-v42
     imagePullPolicy: IfNotPresent
     # image: docker.io/democraticcsi/democratic-csi:next
     # imagePullPolicy: Always
@@ -46,6 +47,10 @@ controller:
       limits:
         memory: 30Mi
   externalProvisioner:
+    extraArgs:
+    - --enable-capacity=true
+    - --capacity-ownerref-level=2
+    # - --capacity-for-immediate-binding
     resources:
       requests:
         memory: 25Mi
@@ -73,6 +78,10 @@ node:
     hostPath:
       path: /etc/nvme
       type: ""
+  - name: etc-iscsi
+    hostPath:
+      path: /etc/iscsi/
+      type: ""
 
   driver:
     logLevel: debug
@@ -80,8 +89,11 @@ node:
     - name: etc-nvme
       mountPath: /etc/nvme
       readOnly: true
+    - name: etc-iscsi
+      mountPath: /etc/iscsi/
+      readOnly: true
     # image: docker.io/democraticcsi/democratic-csi:v1.9.1
-    image: docker.io/daniluzlov/k8s-snippets:dcsi-proxy2-v14
+    image: docker.io/daniluzlov/k8s-snippets:dcsi-proxy2-v42
     imagePullPolicy: IfNotPresent
     # image: docker.io/democraticcsi/democratic-csi@sha256:945cf404d40f719edda62c1889d142bfe8b970c7bfd3e99054869e1dc8efe62a
     # imagePullPolicy: IfNotPresent

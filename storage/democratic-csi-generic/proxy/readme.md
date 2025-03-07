@@ -75,8 +75,8 @@ kl apply -k ./storage/democratic-csi-generic/proxy/
 kl -n pv-dem get pod -o wide
 
 # view logs if something does not work
-kl -n pv-dem logs deployments/dcsi2-controller csi-driver > ./controller.log
-kl -n pv-dem logs deployments/dcsi2-controller external-provisioner > ./controller-external-provisioner.log
+kl -n pv-dem logs deployments/dem-controller csi-driver > ./controller.log
+kl -n pv-dem logs deployments/dem-controller external-provisioner > ./controller-external-provisioner.log
 
 # if some pod is failing to get PVC attached,
 # look at logs of dcsi node pod
