@@ -13,3 +13,18 @@ secretGenerator:
 
 patches:
 - path: node-patch.yaml
+# democratic-csi has "cleanup" container that doesn't do anything useful but it slows down pod shutdown/deletion
+# it is supposed to delete plugin folder, but after pod deletion plugin folder is empty anyway
+# it's possible to fix the slowdown but I find it better to just delete the container
+- target:
+    group: apps
+    version: v1
+    kind: DaemonSet
+    name: dem-node
+    namespace: pv-dem
+  patch: |
+    - op: test
+      path: /spec/template/spec/containers/2/name
+      value: cleanup
+    - op: remove
+      path: /spec/template/spec/containers/2
