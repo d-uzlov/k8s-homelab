@@ -96,3 +96,34 @@ kl delete -k ./storage/democratic-csi-generic/proxy/
 kl delete ns pv-dem
 
 ```
+
+# Storage classes
+
+First you need to create configuration files for your storage classes:
+- [Linux ZFS server](./generic-zfs-storage-classes.md)
+- - [generic-zfs-server-setup.md](./generic-zfs-server-setup.md)
+- [Truenas server](./truenas-storage-classes.md)
+
+Don't forget to set up cluster nodes: [client-setup.md](./client-setup.md).
+
+```bash
+
+connections_folder=./storage/democratic-csi-generic/proxy/env/connections/
+file_args=()
+for file in $(/usr/bin/ls $connections_folder/*); do
+  echo adding $file
+  file_args+=("--from-file=$file")
+done
+echo args ${file_args[@]}
+
+kl create secret generic connections \
+  --save-config \
+  --dry-run=client \
+  ${file_args[@]} \
+  -o yaml | \
+  kl -n pv-dem apply -f -
+
+kl apply -f ./storage/democratic-csi-generic/proxy/env/storage-classes/
+
+kl get sc
+```
