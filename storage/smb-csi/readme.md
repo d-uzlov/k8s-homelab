@@ -19,6 +19,7 @@ helm show values csi-driver-smb/csi-driver-smb > ./storage/smb-csi/default-value
 ```
 
 ```bash
+
 helm template \
   csi-smb \
   csi-driver-smb/csi-driver-smb \
@@ -27,12 +28,23 @@ helm template \
   --namespace pv-smb \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' \
   > ./storage/smb-csi/deployment.gen.yaml
+
 ```
 
 # Deploy
 
 ```bash
+
 kl create ns pv-smb
-kl apply -k ./storage/smb-csi
-kl -n pv-smb get pod
+
+kl apply -k ./storage/smb-csi/
+kl -n pv-smb get pod -o wide
+
+```
+
+# Cleanup
+
+```bash
+kl delete -k ./storage/smb-csi
+kl delete ns pv-smb
 ```

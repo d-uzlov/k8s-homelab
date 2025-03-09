@@ -43,6 +43,13 @@ kl -n pv-nfs get pod -o wide
 
 Don't forget to enable NFSv4 protocol on the server side.
 
+# Cleanup
+
+```bash
+kl delete -k ./storage/nfs-csi/
+kl delete ns pv-nfs
+```
+
 # Create storage classes
 
 You need to create storage classes with proper settings to connect to your NFS server.
