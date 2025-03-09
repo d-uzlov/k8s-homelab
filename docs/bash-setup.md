@@ -332,7 +332,7 @@ References:
 
 ```bash
 
- cat << EOF > ~/.bashrc.d/0-colors.sh
+ cat << EOF > ~/.bashrc.d/0-color-aliases.sh
 alias ip='ip --color=auto'
 alias grep='grep --color=auto'
 EOF
@@ -345,7 +345,7 @@ EOF
 
 sed -i -E -e 's/^(.*)HISTSIZE/# \1HISTSIZE/' -e 's/^(.*)HISTFILESIZE/# \1HISTFILESIZE/' ~/.bashrc
 
- cat << EOF > ~/.bashrc.d/0-history.sh
+ cat << EOF > ~/.bashrc.d/0-bash-history.sh
 # Eternal bash history.
 # ---------------------
 # Undocumented feature which sets the size to "unlimited".

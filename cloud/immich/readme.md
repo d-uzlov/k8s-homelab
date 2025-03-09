@@ -29,6 +29,7 @@ helm show values immich/immich --version 0.8.5 > ./cloud/immich/default-values.y
 ```
 
 ```bash
+
 helm template \
   immich \
   immich/immich \
@@ -37,11 +38,13 @@ helm template \
   --namespace immich \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' -e '\|^#|d' \
   > ./cloud/immich/deployment.gen.yaml
+
 ```
 
 # Local config
 
 ```bash
+
 mkdir -p ./cloud/immich/pvc/env/
  cat << EOF > ./cloud/immich/pvc/env/pvc.env
 # userdata uses ReadWriteMany type volumes
@@ -66,6 +69,7 @@ sed -e "s/STORAGE_CLASS/$postgresStorageClass/" \
 # Deploy
 
 ```bash
+
 kl create ns immich
 kl label ns immich pod-security.kubernetes.io/enforce=baseline
 
@@ -91,6 +95,7 @@ kl -n immich get pod -o wide
 # after initial setup you can safely make it public
 kl apply -k ./cloud/immich/immich-route/
 kl -n immich get httproute
+
 ```
 
 # Cleanup

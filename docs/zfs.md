@@ -73,9 +73,34 @@ zpool iostat -y rpool -r
 zpool iostat rpool
 # similar to `watch --interval 2 zpool iostat -y rpool`
 zpool iostat -y rpool 2
+```
+
+# iostat
+
+```bash
+
+sudo apt-get install -y sysstat
+
 # generic linux iostat for drives
 iostat -mx 2
+
 ```
+
+Columns (from `man 1 iostat`):
+- `r/s`: The number (after merges) of read requests completed per second for the device.
+- `rrqm/s`: read request merged+queued per second
+- `r_await`: The average time (in milliseconds) for read requests issued to the device to be served. This includes the time spent by the requests in queue and the time spent servicing them.
+- `w_await`: ... for write requests
+- `d_await`: ... for discard requests
+- `d/s`: The number (after merges) of discard requests completed per second for the device.
+- `f/s`: The  number (after  merges) of flush requests completed per second for the device.
+- - This counts flush requests executed by disks.
+- - Flush requests are not tracked for partitions.
+- - Before being merged, flush operations are counted as writes.
+- `aqu-sz`: The average queue length of the requests that were issued to the device.
+- `%util`: Percentage  of  elapsed  time during which I/O requests were issued to the device (bandwidth utilization for the device).
+- - Device saturation occurs when this value is close to 100% for devices serving requests serially.
+- - But for devices serving requests in parallel, such as RAID arrays and modern SSDs, this number does not reflect their performance limits.
 
 # Compression benchmark
 
@@ -286,5 +311,41 @@ zfs get userrefs | grep 'userrefs *[^-\ 0]'
 zfs holds nvme/test/backup/nvme/k8s/default--test-nvmeof2@zrepl_20250205_031626_000
 
 # run "zfs release tag_name dataset@snapshot" if you need to remove the hold
+
+```
+
+# Change mount point
+
+```bash
+# dataset will be mounted on new mount point after this command
+zfs set mountpoint=/location pool/dataset
+
+# change, but skip mounting
+# useful target dataset or some of its children are busy
+# new mountpoint will be used on next boot
+zfs set -u mountpoint=/location pool/dataset
+```
+
+References:
+- https://unix.stackexchange.com/questions/548969/change-the-mount-point-of-a-zfs-dataset-thats-in-use
+- https://serverfault.com/questions/1000540/change-zfs-mountpoint-property-without-remounting/1148641#1148641
+
+# Send/receive
+
+```bash
+# zfs send requires a snapshot
+sudo /usr/sbin/zfs snapshot nvme/k8s/nfsd/ubiquiti--config@send
+# send creates a stream of data that can be inflated via zfs receive
+# you can transfer it immediately or save to file
+ssh ssd.tn.lan sudo /usr/sbin/zfs send nvme/k8s/nfsd/ubiquiti--config@send | ssh ssd-nas.storage.lan sudo zfs receive nvme/k8s-trixie/file-generic/ubiquiti--config
+# zfs receive requires that parent dataset already exists
+sudo zfs create nvme/k8s-trixie/block-generic
+```
+
+# Show size
+
+```bash
+
+zfs list -o space,quota,refquota,volsize
 
 ```
