@@ -1,30 +1,10 @@
 
-# Storage classes for the proxy driver
-
-Unlike other democratic-csi drivers, this one can have many storage classes.
-
-Here we define iscsi, nvmeof and nfs storage classes
-that connect to the server via `zfs-generic-*` drivers.
-
-If you want more servers, repeat this setup.
-
-# Custom drivers
-
-If you want to use other drivers, just copy
-the `storage-class.template.yaml` into `env` folder,
-create your secret with config for your driver
-with key(s) starting with `config-`
-and point storage class to that secret.
-
-You can either place the whole config in one key,
-or split it into several keys.
-Make sure that all annotations point to your secret.
-
 # NVMEoF
 
 ```bash
 
 mkdir -p ./storage/democratic-csi-generic/proxy/env/connections/
+mkdir -p ./storage/democratic-csi-generic/proxy/env/storage-classes/
 
 storageClassName=test-nvme-sc
 connectionName=$storageClassName
@@ -40,7 +20,7 @@ snapshotDataset=invalid
 nqnBaseName=nqn.2025-01.com.example:location:nas-nickname
 nqnPrefix=k8s-cluster-nickname:
 
- cat << EOF > ./storage/democratic-csi-generic/proxy/env/connections/$connectionName-connection.yaml
+ cat << EOF > ./storage/democratic-csi-generic/proxy/env/connections/$connectionName.yaml
 driver: zfs-generic-nvmeof
 
 zfs:
@@ -65,7 +45,7 @@ sshConnection: # connection from controller
 $(sed -e 's/^/    /' $sshKey)
 EOF
 
-cat << EOF > ./storage/democratic-csi-generic/proxy/env/$storageClassName-sc.yaml
+cat << EOF > ./storage/democratic-csi-generic/proxy/env/storage-classes/$storageClassName-sc.yaml
 ---
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -88,6 +68,7 @@ EOF
 ```bash
 
 mkdir -p ./storage/democratic-csi-generic/proxy/env/connections/
+mkdir -p ./storage/democratic-csi-generic/proxy/env/storage-classes/
 
 storageClassName=test-nvme-sc
 connectionName=$storageClassName
@@ -103,7 +84,7 @@ snapshotDataset=invalid
 iqnBaseName=iqn.2025-01.com.example:location:nas-nickname
 iqnPrefix=k8s-cluster-nickname:
 
- cat << EOF > ./storage/democratic-csi-generic/proxy/env/connections/$connectionName-connection.yaml
+ cat << EOF > ./storage/democratic-csi-generic/proxy/env/connections/$connectionName.yaml
 driver: zfs-generic-nvmeof
 
 zfs:
@@ -111,15 +92,8 @@ zfs:
   datasetParentName: $mainDataset
   detachedSnapshotsDatasetParentName: $snapshotDataset
 
-# final nqn format:
-# {{ nvmeof.shareStrategyNvmetCli.basename }}:{{ nvmeof.namePrefix }}{{ nvmeof.nameTemplate }}{{ nvmeof.nameSuffix }}
-nvmeof:
-  transports: # connection from node
-  - tcp://$serverAddress:4420
-  namePrefix: '$nqnPrefix'
-  shareStrategyNvmetCli:
-    basename: $nqnBaseName
-
+# final iqn format:
+# {{ iscsi.shareStrategyTargetCli.basename }}:{{ iscsi.namePrefix }}{{ iscsi.nameTemplate }}{{ iscsi.nameSuffix }}
 iscsi:
   # connection from node
   targetPortal: $serverAddress
@@ -135,7 +109,7 @@ sshConnection: # connection from controller
 $(sed -e 's/^/    /' $sshKey)
 EOF
 
-cat << EOF > ./storage/democratic-csi-generic/proxy/env/$storageClassName-sc.yaml
+cat << EOF > ./storage/democratic-csi-generic/proxy/env/storage-classes/$storageClassName-sc.yaml
 ---
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -158,6 +132,7 @@ EOF
 ```bash
 
 mkdir -p ./storage/democratic-csi-generic/proxy/env/connections/
+mkdir -p ./storage/democratic-csi-generic/proxy/env/storage-classes/
 
 storageClassName=test-nvme-sc
 connectionName=$storageClassName
@@ -173,7 +148,7 @@ snapshotDataset=invalid
 nqnBaseName=nqn.2025-01.com.example:location:nas-nickname
 nqnPrefix=k8s-cluster-nickname:
 
- cat << EOF > ./storage/democratic-csi-generic/proxy/env/connections/$connectionName-connection.yaml
+ cat << EOF > ./storage/democratic-csi-generic/proxy/env/connections/$connectionName.yaml
 driver: zfs-generic-nvmeof
 
 zfs:
@@ -192,7 +167,7 @@ sshConnection: # connection from controller
 $(sed -e 's/^/    /' $sshKey)
 EOF
 
-cat << EOF > ./storage/democratic-csi-generic/proxy/env/$storageClassName-sc.yaml
+cat << EOF > ./storage/democratic-csi-generic/proxy/env/storage-classes/$storageClassName-sc.yaml
 ---
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -212,49 +187,26 @@ EOF
 
 ```
 
-# Create storage classes
-
-Create `storage/democratic-csi-generic/proxy/env/kustomization.yaml`.
-
-Kustomization fila example:
-
-```yaml
----
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-
-namespace: pv-dem
-
-resources:
-- ./my-nas-nvmeof.yaml
-- ./my-nas-nfs.yaml
-
-secretGenerator:
-- name: connections
-  files:
-  - my-nas-nvmeof.yaml=./connections/my-nas-nvmeof.yaml
-  - my-nas-nfs.yaml=./connections/my-nas-nfs.yaml
-  options:
-    disableNameSuffixHash: true
-```
-
 # Deploy
-
-TODO finish this
 
 ```bash
 
-# (
-# echo "---"
-# echo "apiVersion: kustomize.config.k8s.io/v1beta1"
-# echo "kind: Kustomization"
-# echo "resources:"
-# cat ./storage/democratic-csi-generic/proxy/env/resources-*
-# echo secretGenerator:
-# cat ./storage/democratic-csi-generic/proxy/env/secrets-*
-# ) > ./storage/democratic-csi-generic/proxy/env/kustomization.yaml
+connections_folder=./storage/democratic-csi-generic/proxy/env/connections/
+file_args=()
+for file in $(/usr/bin/ls $connections_folder/*); do
+  echo adding $file
+  file_args+=("--from-file=$file")
+done
+echo args ${file_args[@]}
 
-# kl apply -k ./storage/democratic-csi-generic/proxy/env/
+kl create secret generic connections \
+  --save-config \
+  --dry-run=client \
+  ${file_args[@]} \
+  -o yaml | \
+  kl -n pv-dem apply -f -
+
+kl apply -f ./storage/democratic-csi-generic/proxy/env/storage-classes/
 
 kl get sc
 ```

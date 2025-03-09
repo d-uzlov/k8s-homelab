@@ -33,6 +33,7 @@ Storage class must have `parameters.connection` set to file name in the config f
 
 References:
 - https://github.com/d-uzlov/democratic-csi/tree/proxy-driver
+- https://github.com/democratic-csi/democratic-csi/pull/433
 
 # Generate config
 
