@@ -2,6 +2,7 @@
 # Scraping external ETCD
 
 ```bash
+
 # you need to have etcd client certificate in env folder
 mkdir -p ./metrics/component-monitoring/etcd/external-etcd/env/
 # if you set etcd up using ./docs/k8s/etcd/etcd.md, you can copy files from there
@@ -29,4 +30,5 @@ EOF
 
 # TODO is there a better namespace for this?
 kl -n prometheus apply -k ./metrics/component-monitoring/etcd/external-etcd/
+
 ```

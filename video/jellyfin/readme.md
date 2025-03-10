@@ -45,22 +45,17 @@ spec:
         - mountPath: /raw-data
           name: raw-data
         - mountPath: /media
-          name: links
-        - mountPath: /media2
           name: media
       volumes:
       - name: media
         nfs:
-          path: /mnt/main/data/video
+          path: /mnt/tank/data/video
           server: truenas.lan
           readOnly: true
       - name: raw-data
         persistentVolumeClaim:
           claimName: raw-data
           readOnly: true
-      - name: links
-        persistentVolumeClaim:
-          claimName: links
 EOF
 ```
 

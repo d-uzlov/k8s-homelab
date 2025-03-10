@@ -51,6 +51,9 @@ kl create ns prometheus
 kl label ns prometheus pod-security.kubernetes.io/enforce=baseline
 
 kl apply -k ./metrics/prometheus/
+kl -n prometheus get prometheus
+kl -n prometheus describe prometheus
+kl -n prometheus get sts
 kl -n prometheus get pvc
 kl -n prometheus get pod -o wide
 

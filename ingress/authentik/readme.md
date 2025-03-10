@@ -95,6 +95,7 @@ kl create ns authentik
 kl label ns authentik pod-security.kubernetes.io/enforce=baseline
 
 kl apply -k ./ingress/authentik/db/
+kl -n authentik get postgresql
 kl -n authentik get pvc
 kl -n authentik get pod -o wide -L spilo-role
 

@@ -24,7 +24,7 @@ kl -n prometheus describe httproute alertmanager
 
 To use alertmanager, create an `AlertmanagerConfig` object with `alertmanager.prometheus.io/instance: main` label.
 For example:
-- [telegram](./notify-telegram.md)
+- [telegram](./telegram/notify-telegram.md)
 
 # Cleanup
 

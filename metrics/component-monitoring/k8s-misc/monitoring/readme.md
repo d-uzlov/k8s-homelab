@@ -4,8 +4,9 @@
 Apiserver monitoring is only used for alerting.
 
 ```bash
-kl apply -f ./metrics/component-monitoring/k8s/monitoring/apiserver-service-monitor.yaml
-kl apply -f ./metrics/component-monitoring/k8s/monitoring/apiserver-alerts.yaml
+
+kl apply -f ./metrics/component-monitoring/k8s-misc/monitoring/
+
 ```
 
 Manual metric checking:
