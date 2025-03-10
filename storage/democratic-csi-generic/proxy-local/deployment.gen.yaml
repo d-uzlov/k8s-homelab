@@ -2,27 +2,27 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: dem-node-sa
+  name: dem-local-node-sa
   namespace: pv-dem-local
   labels:
-    app.kubernetes.io/name: dem
+    app.kubernetes.io/name: dem-local
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: dem
+  name: dem-local
   namespace: pv-dem-local
   labels:
-    app.kubernetes.io/name: dem
+    app.kubernetes.io/name: dem-local
 data:
   extra-ca-certs: ""
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: dem-node-cr
+  name: dem-local-node-cr
   labels:
-    app.kubernetes.io/name: dem
+    app.kubernetes.io/name: dem-local
 rules:
   # Allow listing and creating CRDs
   - apiGroups: ['apiextensions.k8s.io']
@@ -112,43 +112,43 @@ rules:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: dem-node-rb
+  name: dem-local-node-rb
   labels:
-    app.kubernetes.io/name: dem
+    app.kubernetes.io/name: dem-local
 roleRef:
   kind: ClusterRole
   apiGroup: rbac.authorization.k8s.io
-  name: dem-node-cr
+  name: dem-local-node-cr
 subjects:
 - kind: ServiceAccount
-  name: dem-node-sa
+  name: dem-local-node-sa
   namespace: pv-dem-local
 ---
 kind: DaemonSet
 apiVersion: apps/v1
 metadata:
-  name: dem-node
+  name: dem-local-node
   namespace: pv-dem-local
   labels:
-    app.kubernetes.io/name: dem
+    app.kubernetes.io/name: dem-local
     app.kubernetes.io/csi-role: "node"
     app.kubernetes.io/component: "node-linux"
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: dem
+      app.kubernetes.io/name: dem-local
       app.kubernetes.io/csi-role: "node"
       app.kubernetes.io/component: "node-linux"
   template:
     metadata:
       annotations:
-        checksum/configmap: 4ab3b09f0589ec4edb604694d677540d92c52b681bd6203eee7345f0ffe66b20
+        checksum/configmap: 8f2e3817bf8417f14a52d2f97eee1feea323a4adf0c0d9a5fcc1eefe566b271c
       labels:
-        app.kubernetes.io/name: dem
+        app.kubernetes.io/name: dem-local
         app.kubernetes.io/csi-role: "node"
         app.kubernetes.io/component: "node-linux"
     spec:
-      serviceAccount: dem-node-sa
+      serviceAccount: dem-local-node-sa
       priorityClassName: "system-node-critical"
       # Required by iSCSI
       hostNetwork: true
@@ -417,7 +417,7 @@ spec:
           secretName: main-config
       - name: extra-ca-certs
         configMap:
-          name: dem
+          name: dem-local
           items:
           - key: extra-ca-certs
             path: extra-ca-certs.crt
@@ -450,7 +450,7 @@ kind: CSIDriver
 metadata:
   name: org.democratic-csi.proxy-local
   labels:
-    app.kubernetes.io/name: dem
+    app.kubernetes.io/name: dem-local
 spec:
   attachRequired: false
   podInfoOnMount: true
