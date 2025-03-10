@@ -114,6 +114,9 @@ psql --list
 psql template1 -c '\du'
 
 psql -c 'create database test;'
+
+# change password for username
+psql -c "ALTER USER username WITH PASSWORD 'qwerty';"
 ```
 
 # Database not created

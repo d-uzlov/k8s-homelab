@@ -26,7 +26,7 @@ spec:
         - -c
         - |
           trap : TERM INT
-          until psql -q -h$DB_HOST -p$DB_PORT -d$DB_NAME -U$DB_USER -w -XtAc '\q'
+          until psql -q "postgresql://$DB_USER:$PGPASSWORD@$DB_HOST:$DB_PORT/$DB_NAME?sslmode=require" -w -XtA -c '\q'
           do
             echo $(date +"%Y-%m-%dT%H:%M:%S%z") Waiting...
             sleep 1 & wait
@@ -47,6 +47,7 @@ spec:
               name: nextcloud.postgres.credentials.postgresql.acid.zalan.do
               key: username
         - name: PGPASSWORD
+          # PGPASSWORD is picked up by psql implicitly
           valueFrom:
             secretKeyRef:
               name: nextcloud.postgres.credentials.postgresql.acid.zalan.do

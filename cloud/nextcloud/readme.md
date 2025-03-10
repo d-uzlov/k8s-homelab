@@ -90,6 +90,8 @@ kl -n nextcloud get pod -o wide -L spilo-role
 
 ```
 
+TODO support dynamic postgres password update without manual config edits.
+
 # Uninstall
 
 ```bash
