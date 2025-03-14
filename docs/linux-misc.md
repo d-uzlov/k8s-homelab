@@ -102,3 +102,18 @@ dpkg -S /boot/vm*
 sudo apt remove --no-install-recommends --no-install-suggests linux-image-6.1.0-28-amd64 proxmox-kernel-6.8.12-8-pve-signed
 
 ```
+
+# Fix files permissions
+
+```bash
+# remove extended ACLs
+sudo setfacl -b -R *
+sudo setfacl -b -R -d *
+# remove executable bit from everything
+sudo chmod -R a-x *
+# add executable bit to folders
+sudo chmod -R a+rwX *
+```
+
+References:
+- https://superuser.com/questions/51838/recursive-chmod-rw-for-files-rwx-for-directories

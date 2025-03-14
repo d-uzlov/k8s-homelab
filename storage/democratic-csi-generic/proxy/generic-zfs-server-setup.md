@@ -137,17 +137,4 @@ Additional info:
 
 # Samba / SMB
 
-```bash
-
-sudo apt install -y samba
-
-# show shares
-sudo net usershare info --long
-sudo ls -la /var/lib/samba/usershares/
-# show currently connected sessions
-sudo smbstatus
-# print raw share config
-cat /etc/samba/smb.conf
-cat /etc/samba/smb.conf | grep include
-
-```
+See samba docs: [samba.md](../../../docs/samba.md).
