@@ -13,6 +13,7 @@ References:
 Generate passwords and set up config.
 
 ```bash
+
 mkdir -p ./video/ome/common-env/env/
  cat << EOF > ./video/ome/common-env/env/redis.env
 redis_password=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
@@ -26,9 +27,11 @@ public=example.duckdns.org
 # LAN address, in case you are behind NAT
 local=webrtc-ice.ome.kubelb.lan
 EOF
+
 ```
 
 ```bash
+
 kl create ns ome
 kl label ns ome pod-security.kubernetes.io/enforce=baseline
 
@@ -74,6 +77,7 @@ kl apply -k ./video/ome/api-route/
 
 kl -n ome get pod -o wide
 kl -n ome get svc
+
 ```
 
 # Cleanup
@@ -94,6 +98,7 @@ kl delete ns ome
 # Edge debug
 
 ```bash
+
 # First of all, restart the stream. Sometimes stream just doesn't get registered, and restart helps.
 # check that redis contains a record for your stream
 redis_pass=$(kl -n ome get secret redis-password --template "{{.data.redis_password}}" | base64 --decode)
@@ -104,6 +109,7 @@ kl -n ome exec deployments/redis -- redis-cli -a "$redis_pass" get app/key
 kl -n ome exec deployments/redis -- redis-cli -a "$redis_pass" del app/key
 
 kl -n ome logs deployments/ome-edge
+
 ```
 
 # Hardware acceleration on NVidia GPUs
@@ -194,6 +200,7 @@ https://github.com/bozbez/win-capture-audio
 # Build CUDA image
 
 ```bash
+
 docker_username=
 docker_repo=
 
@@ -201,11 +208,13 @@ docker build https://github.com/AirenSoft/OvenMediaEngine/raw/4b297cc97fbc8e9ff7
     --build-arg OME_VERSION=v0.16.4 \
     -t docker.io/$docker_username/$docker_repo:ome-official-v0.16.4-fixed
 docker push docker.io/$docker_username/$docker_repo:ome-official-v0.16.4-fixed
+
 ```
 
 # API usage examples
 
 ```bash
+
 api_public_domain=$(kl -n ome get ingress api-origin -o go-template --template "{{ (index .spec.rules 0).host}}")
 api_public_domain=$(kl -n ome get httproute api-origin -o go-template --template "{{ (index .spec.hostnames 0)}}")
 AUTH=$(kl -n ome get deployments.apps ome-origin-cpu -o go-template --template "{{ ( index ( index .spec.template.spec.containers 0 ).readinessProbe.httpGet.httpHeaders 0 ).value }}")
@@ -216,6 +225,7 @@ curl --header "Authorization: $AUTH" https://$api_public_domain/v1/vhosts/defaul
 api_edge_public_domain=$(kl -n ome get httproute api-edge -o go-template --template "{{ (index .spec.hostnames 0)}}")
 curl --header "Authorization: $AUTH" https://$api_edge_public_domain/v1/vhosts/default/apps | jq
 curl --header "Authorization: $AUTH" https://$api_edge_public_domain/v1/vhosts/default/apps/tc/streams | jq
+
 ```
 
 Apparently, someone created a client for the OME API:
@@ -224,6 +234,7 @@ https://github.com/AirenSoft/OvenMediaEngine/discussions/1609
 # API exporter
 
 ```bash
+
 docker_username=
 docker_repo=
 
@@ -234,6 +245,7 @@ kl apply -k ./video/ome/api-exporter/
 
 api_exporter_domain=$(kl -n ome get httproute api-exporter -o go-template --template "{{ (index .spec.hostnames 0)}}")
 curl https://$api_exporter_domain/list
+
 ```
 
 # TODO

@@ -13,6 +13,7 @@ wget https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.7.2/
 # Install
 
 ```bash
+
 kl create ns metrics
 kl label ns metrics pod-security.kubernetes.io/enforce=baseline
 
@@ -25,6 +26,7 @@ kl -n metrics get pod -o wide
 
 # check that metrics actually work
 kl -n metrics top pod
+
 ```
 
 # Cleanup

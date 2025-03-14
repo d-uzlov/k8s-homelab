@@ -12,6 +12,7 @@ References:
 Set storage classes for different data types:
 
 ```bash
+
 mkdir -p ./cloud/vaultwarden/postgres/env/
  cat << EOF > ./cloud/vaultwarden/postgres/env/postgres-patch.yaml
 ---
@@ -63,6 +64,7 @@ EOF
 # Deploy
 
 ```bash
+
 kl create ns vaultwarden
 kl label ns vaultwarden pod-security.kubernetes.io/enforce=baseline
 

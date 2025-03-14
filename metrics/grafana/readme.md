@@ -12,6 +12,7 @@ References:
 You only need to do this if you change `values.yaml` file.
 
 ```bash
+
 helm repo add grafana https://grafana.github.io/helm-charts
 helm repo update grafana
 helm search repo grafana/grafana --versions --devel | head
@@ -52,6 +53,7 @@ prometheus and related scrape configurations.
 # Deploy
 
 ```bash
+
 mkdir -p ./metrics/grafana/env/
  cat << EOF > ./metrics/grafana/env/admin.env
 username=admin

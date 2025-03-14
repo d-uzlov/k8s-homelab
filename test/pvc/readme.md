@@ -2,6 +2,7 @@
 # Test that deployment works
 
 ```bash
+
 kl get sc
 kl get sc -o go-template --template "{{ range .items }}{{ .metadata.name }} {{ end }}"
 kl get sc iscsi -o jsonpath='{.parameters.fsType}'
@@ -54,4 +55,5 @@ kl attach $testPod -c debug -it -- sh
 # cleanup resources
 
 cat ./test/pvc/env/test-* | kl delete -f -
+
 ```

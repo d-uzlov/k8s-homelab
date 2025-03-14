@@ -39,6 +39,7 @@ For example: `set-inform http://unifi.ubiquiti.kubelb.lan:8080/inform`.
 # Deploy
 
 ```bash
+
 kl create ns ubiquiti
 kl label ns ubiquiti pod-security.kubernetes.io/enforce=baseline
 
@@ -58,6 +59,18 @@ kl -n ubiquiti get pvc
 
 kl apply -k ./network/ubiquiti/
 kl -n ubiquiti get pod -o wide
+
+```
+
+# Cleanup
+
+```bash
+
+kl delete -k ./network/ubiquiti/
+kl delete -k ./network/ubiquiti/pvc/
+kl delete ns ubiquiti
+
+
 ```
 
 # Run temporary controller locally
@@ -67,6 +80,7 @@ Just for testing.
 You can inject the config into k8s later.
 
 ```bash
+
 docker run \
   --name=unifi-controller \
   -e PUID=1000 \
@@ -77,4 +91,5 @@ docker run \
   -p 8080:8080 \
   -v /tmp/unify-config:/config \
   lscr.io/linuxserver/unifi-controller:7.4.162
+
 ```

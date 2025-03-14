@@ -13,6 +13,7 @@ helm show values prometheus-community/kube-state-metrics --version 5.28.0 > ./me
 ```
 
 ```bash
+
 helm template \
   ksm \
   prometheus-community/kube-state-metrics \
@@ -29,6 +30,7 @@ helm template \
     -e '/^ *$/d' \
     -e '\|httpHeaders\:$|d' \
   > ./metrics/kube-state-metrics/kube-state-metrics.gen.yaml
+
 ```
 
 # Local config setup

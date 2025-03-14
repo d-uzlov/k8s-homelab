@@ -41,6 +41,7 @@ spec:
             storage: 150Gi
         storageClassName: fast
 EOF
+
 ```
 
 # Deploy
@@ -76,6 +77,7 @@ kl -n prometheus get httproute
 kl -n prometheus describe httproute prometheus
 
 kl -n prometheus exec sts/prometheus-main -- df -h | grep /prometheus\$
+
 ```
 
 To use this prometheus instance with `ServiceMonitor` and other resources,
@@ -92,7 +94,9 @@ kl delete ns prometheus
 # Manual metric checking
 
 ```bash
+
 kl -n prometheus describe svc prometheus
 kl exec deployments/alpine -- curl -sS http://prometheus-operated.prometheus:9090/metrics
 kl exec deployments/alpine -- curl -sS http://prometheus-operated.prometheus:8080/metrics
+
 ```

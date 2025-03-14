@@ -9,9 +9,11 @@ References:
 # Apply
 
 ```bash
+
 # don't forget to add `-n <namespace>`
 kl apply -f ./network/network-policies/deny-ingress.yaml
 kl apply -f ./network/network-policies/deny-egress.yaml
 kl apply -f ./network/network-policies/allow-same-namespace.yaml
 kl apply -f ./network/network-policies/allow-lan.yaml
+
 ```

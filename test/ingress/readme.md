@@ -2,6 +2,7 @@
 # Deploy
 
 ```bash
+
 kl create ns ingress-test
 kl label ns ingress-test pod-security.kubernetes.io/enforce=baseline
 kl -n ingress-test apply -f ./network/default-network-policies.yaml
@@ -50,11 +51,13 @@ curl "https://$test_domain/"
 ! curl -s -D- "https://$test_domain/" | grep strict-transport-security
 # debug info in case there are any errors
 curl -v -i "https://$test_domain/"
+
 ```
 
 # Cleanup
 
 ```bash
+
 kl delete -k ./test/ingress/httproute/
 kl delete -k ./test/ingress/wildcard
 kl delete -k ./test/ingress/http01/
@@ -65,4 +68,5 @@ kl delete -f ./test/ingress/echo-cp.yaml
 kl delete -f ./test/ingress/echo-ds.yaml
 
 kl delete ns ingress-test
+
 ```

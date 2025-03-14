@@ -37,6 +37,7 @@ helm template cilium cilium/cilium \
 # Deploy
 
 ```bash
+
 # cilium completely replaces kube-proxy so you need to disable it.
 #   disable kube-proxy
 kl -n kube-system patch ds kube-proxy -p '{"spec":{"template":{"spec":{"nodeSelector":{"enable-kube-proxy": "true"}}}}}'
@@ -82,6 +83,7 @@ kl -n cilium get pod -o wide
 kl apply -k ./network/cilium/hubble-ingress-route/
 kl -n cilium describe httproute hubble
 kl -n cilium get httproute hubble
+
 ```
 
 # Setup load balancer IPAM for load balancer services
@@ -90,17 +92,21 @@ Cilium picks up services without load balancer class specified,
 and services with class `io.cilium/l2-announcer`.
 
 ```bash
+
 mkdir -p ./network/cilium/loadbalancer/env/
  cat << EOF > ./network/cilium/loadbalancer/env/ip-pool.env
 pool=10.0.2.0/24
 EOF
+
 ```
 
 ```bash
+
 kl apply -k ./network/cilium/loadbalancer/
 kl get ciliumloadbalancerippool
 kl get ciliuml2announcementpolicy
 kl -n cilium get lease
+
 ```
 
 Test: [ingress example](../../test/ingress/readme.md)
@@ -122,11 +128,12 @@ kl delete ns cilium
 
 # Cilium CLI
 
-Cilium CLI is not strictly required but it can be very convenient to use.
+Cilium CLI is not strictly required but sometimes it can be convenient to use.
 
 Install:
 
 ```bash
+
 CILIUM_CLI_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/cilium-cli/main/stable.txt)
 CLI_ARCH=amd64
 if [ "$(uname -m)" = "aarch64" ]; then CLI_ARCH=arm64; fi
@@ -136,11 +143,13 @@ sudo tar xzvfC cilium-linux-${CLI_ARCH}.tar.gz /usr/local/bin
 rm cilium-linux-${CLI_ARCH}.tar.gz{,.sha256sum}
 
 cilium version --client
+
 ```
 
 Test connection to cluster:
 
 ```bash
+
 # if you are using a custom kubeconfig, set it before running the command
 KUBECONFIG=$KUBECONFIG_LOCAL cilium status -n cilium
 # or define a short alias
@@ -152,20 +161,14 @@ cilium status
 cilium version
 
 cilium connectivity test
+
 ```
 
 You can also run `cilium` tool in the cilium pod
 but it seems to have completely different args and output structure.
 
 ```bash
+
 kl -n cilium exec ds/cilium -c cilium-agent -- cilium status
-```
 
-# Installing using CLI
-
-```bash
-cilium install --list-versions | head
-cilium install \
-  --version=v1.11.1 \
-  --values ./network/cilium/values.yaml
 ```

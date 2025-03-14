@@ -22,6 +22,7 @@ helm show values kyverno/kyverno --version 3.1.4 > ./metrics/kyverno/default-val
 ```
 
 ```bash
+
 helm template \
   kyverno \
   kyverno/kyverno \
@@ -30,11 +31,13 @@ helm template \
   --namespace kyverno \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' -e '\|app.kubernetes.io/version|d' \
   > ./metrics/kyverno/deployment.gen.yaml
+
 ```
 
 # Deploy
 
 ```bash
+
 kl apply -k ./metrics/kyverno/crds/ --server-side
 
 kl create ns kyverno
@@ -45,6 +48,7 @@ kl -n kyverno get pod -o wide
 
 kl apply -k ./metrics/kyverno/common-policies/
 kl get clusterpolicy
+
 ```
 
 # Cleanup

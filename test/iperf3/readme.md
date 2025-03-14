@@ -2,6 +2,7 @@
 # Deploy
 
 ```bash
+
 kl create ns iperf3
 
 kl apply -f ./test/iperf3/iperf3.yaml
@@ -30,6 +31,7 @@ lbip=$(kl -n iperf3 get svc iperf3-lb -o go-template --template "{{ (index .stat
 iperf3 -c $lbip
 iperf3 -c $lbip --reverse
 iperf3 -c $lbip --bidir
+
 ```
 
 # Cleanup

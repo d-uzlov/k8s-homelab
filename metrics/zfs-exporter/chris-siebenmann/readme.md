@@ -46,6 +46,7 @@ sudo journalctl -b -u zfs_exporter_chris
 # Prometheus scrape config
 
 ```bash
+
 mkdir -p ./metrics/zfs-exporter/chris-siebenmann/env/
 
 [ -f ./metrics/zfs-exporter/chris-siebenmann/env/targets-patch.yaml ] ||
@@ -78,7 +79,9 @@ kl delete -k ./metrics/zfs-exporter/chris-siebenmann/
 # Manual metric checking
 
 ```bash
+
 # ip or domain name
 node=
 curl -sS --insecure http://$node:9700/metrics > ./zfs-exporter-chris.log
+
 ```

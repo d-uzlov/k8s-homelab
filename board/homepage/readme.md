@@ -9,6 +9,7 @@ References:
 # Init configs
 
 ```bash
+
 mkdir -p ./board/homepage/config/env/
 
 # ============= Proxmox =============
@@ -65,6 +66,7 @@ ingress_domain_suffix=
 sed -e "s|AUTOMATIC_REPLACE_DOMAIN_SUFFIX|$ingress_domain_suffix|g" \
   ./board/homepage/config/services-user.tmpl.yaml \
   >> ./board/homepage/config/env/services-user.yaml
+
 ```
 
 Manually edit `./board/homepage/config/env/services-*`
@@ -73,6 +75,7 @@ to account for your local environment.
 # Deploy
 
 ```bash
+
 kl create ns homepage
 kl label ns homepage pod-security.kubernetes.io/enforce=baseline
 
@@ -87,6 +90,7 @@ kl apply -k ./board/homepage/httproute-private/
 kl apply -k ./board/homepage/httproute-protected/
 kl -n homepage get httproute
 kl -n homepage describe httproute
+
 ```
 
 # Cleanup

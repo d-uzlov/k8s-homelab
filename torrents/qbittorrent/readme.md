@@ -11,6 +11,7 @@ References:
 Set storage classes for different data types:
 
 ```bash
+
 # list storage classes
 kl get sc
 # set values in env file
@@ -30,6 +31,7 @@ incomplete_size=1Ti
 torrent=shared
 torrent_size=10Ti
 EOF
+
 ```
 
 # Set up qBitTorrent config
@@ -42,6 +44,7 @@ some settings aren't important for running the app in the k8s
 can only be changed via web-UI.
 
 ```bash
+
 mkdir -p ./torrents/qbittorrent/main-app/env/
  cat << EOF > ./torrents/qbittorrent/main-app/env/settings.env
 # set to true if you want to discard all changes in settings when the app is restarted
@@ -74,11 +77,13 @@ trusted_proxies=10.201.0.0/16
 # Set to your public IP for passwordless access via NAT loopback (if it uses public address as source IP).
 auth_whitelist=10.201.0.0/16
 EOF
+
 ```
 
 # Deploy
 
 ```bash
+
 kl create ns bt-qbittorrent
 kl label ns bt-qbittorrent pod-security.kubernetes.io/enforce=baseline
 
@@ -109,6 +114,7 @@ kl -n bt-qbittorrent describe httproute qbittorrent
 kl apply -k ./torrents/qbittorrent/main-app/
 # make sure the pod is running
 kl -n bt-qbittorrent get pod -o wide
+
 ```
 
 # Cleanup

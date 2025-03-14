@@ -2,6 +2,7 @@
 # Deploy
 
 ```bash
+
 kl create ns fortio
 
 # setup wildcard ingress
@@ -11,4 +12,5 @@ kl -n fortio get ingress
 
 kl apply -k ./test/fortio/
 kl -n fortio get pod
+
 ```

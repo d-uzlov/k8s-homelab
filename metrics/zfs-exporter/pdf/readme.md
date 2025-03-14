@@ -13,6 +13,7 @@ References:
 Run on the target system:
 
 ```bash
+
 sudo apt-get update
 sudo apt-get install -y git
 
@@ -50,6 +51,7 @@ sudo journalctl -b -u zfs_exporter
 # Prometheus scrape config
 
 ```bash
+
 mkdir -p ./metrics/zfs-exporter/pdf/env/
 
 [ -f ./metrics/zfs-exporter/pdf/env/targets-patch.yaml ] ||
@@ -82,9 +84,11 @@ kl delete -k ./metrics/zfs-exporter/pdf/
 # Manual metric checking
 
 ```bash
+
 # ip or domain name
 node=
 curl -sS --insecure http://$node:9134/metrics > ./zfs-exporter-pdf.log
+
 ```
 
 # Alerts

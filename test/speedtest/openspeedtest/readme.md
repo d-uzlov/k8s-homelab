@@ -16,6 +16,7 @@ But it's impossible to disable http2 for a single ingress.
 # Deploy
 
 ```bash
+
 kl create ns openspeedtest
 kl label ns openspeedtest pod-security.kubernetes.io/enforce=baseline
 
@@ -34,6 +35,7 @@ kl -n openspeedtest describe httproute openspeedtest
 
 kl apply -k ./test/speedtest/openspeedtest/
 kl -n openspeedtest get pod -o wide
+
 ```
 
 # Cleanup

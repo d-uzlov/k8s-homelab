@@ -17,6 +17,7 @@ References:
 Generate passwords and set up config.
 
 ```bash
+
 mkdir -p ./cloud/onlyoffice/main-app/env/
  cat << EOF > ./cloud/onlyoffice/main-app/env/api.env
 jwt_secret=$(LC_ALL=C tr -dc A-Za-z0-9 </dev/urandom | head -c 20)
@@ -36,11 +37,13 @@ spec:
     size: 2Gi
     storageClass: $storageClass
 EOF
+
 ```
 
 # Deploy
 
 ```bash
+
 kl create ns onlyoffice
 kl label ns onlyoffice pod-security.kubernetes.io/enforce=baseline
 
@@ -59,6 +62,7 @@ kl -n onlyoffice get pod -o wide -L spilo-role
 
 kl apply -k ./cloud/onlyoffice/main-app/
 kl -n onlyoffice get pod -o wide -L spilo-role
+
 ```
 
 # Cleanup
@@ -85,9 +89,11 @@ A workaround is to open onlyoffice page directly and accept the certificate.
 Useful for debugging.
 
 ```bash
+
 cat /usr/bin/documentserver-prepare4shutdown.sh
 cat /app/ds/run-document-server.sh
 cat /usr/bin/documentserver-generate-allfonts.sh
+
 ```
 
 # Custom fonts

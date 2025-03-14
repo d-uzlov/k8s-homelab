@@ -9,6 +9,7 @@ References:
 You can set a list of default keys that are used when page arg list is empty:
 
 ```bash
+
 mkdir -p ./video/custom-player/content/env/
  cat << EOF > ./video/custom-player/content/env/data-sources.js
 export function getDataSources() {
@@ -18,6 +19,7 @@ export function getDataSources() {
 }
 EOF
 # redact this file manually to include all your api-exporter sources
+
 ```
 
 If you don't want to use default keys, make the file empty.
@@ -31,6 +33,7 @@ using URL args: `/#sources=source_key1,source_key2`.
 You need to have `ovenplayer.js` and `hls.min.js` in your content directory:
 
 ```bash
+
 (
     cd ./video/custom-player/content/env/
     [ -f ovenplayer.js ] || wget https://github.com/AirenSoft/OvenPlayer/raw/master/dist/ovenplayer.js
@@ -40,13 +43,16 @@ You need to have `ovenplayer.js` and `hls.min.js` in your content directory:
         rm release.zip
     }
 )
+
 ```
 
 # Deploy
 
 ```bash
+
 kl create ns ome-player
 kl label ns ome-player pod-security.kubernetes.io/enforce=baseline
+
 kl -n ome-player apply -f ./network/default-network-policies.yaml
 kl apply -f ./video/custom-player/network-policy.yaml
 
@@ -61,6 +67,7 @@ kl -n ome-player get httproute
 
 kl apply -k ./video/custom-player/ --server-side
 kl -n ome-player get pod -o wide
+
 ```
 
 # Cleanup

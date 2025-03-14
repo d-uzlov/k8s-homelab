@@ -50,6 +50,7 @@ References:
 # Deploy
 
 ```bash
+
 kl apply -f ./metrics/prometheus-operator/crd/ --server-side
 
 kl create ns prometheus-operator
@@ -57,6 +58,7 @@ kl label ns prometheus-operator pod-security.kubernetes.io/enforce=baseline
 
 kl apply -k ./metrics/prometheus-operator/
 kl -n prometheus-operator get pod -o wide
+
 ```
 
 Don't forget to deploy additional dashboards:
@@ -75,7 +77,9 @@ kl delete -f ./metrics/prometheus-operator/crd/
 # Manual metric checking
 
 ```bash
+
 kl -n prometheus-operator describe svc prometheus-operator
 kl exec deployments/alpine -- apk add curl
 kl exec deployments/alpine -- curl -sS --insecure https://prometheus-operator.prometheus-operator/metrics
+
 ```

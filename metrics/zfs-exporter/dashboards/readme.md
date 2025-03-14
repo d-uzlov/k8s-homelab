@@ -2,7 +2,9 @@
 # Deploy
 
 ```bash
+
 kl apply -k ./metrics/zfs-exporter/dashboards/
+
 ```
 
 # Cleanup

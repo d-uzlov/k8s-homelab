@@ -20,6 +20,7 @@ helm show values kubelet-csr-approver/kubelet-csr-approver > ./metrics/kubelet-c
 ```
 
 ```bash
+
 helm template \
   csr-approver \
   kubelet-csr-approver/kubelet-csr-approver \
@@ -28,11 +29,13 @@ helm template \
   --namespace csr-approver \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' -e '\|app.kubernetes.io/version|d' \
   > ./metrics/kubelet-csr-approver/deployment.gen.yaml
+
 ```
 
 # Init local settings
 
 ```bash
+
 mkdir -p ./metrics/kubelet-csr-approver/env
  cat << EOF > ./metrics/kubelet-csr-approver/env/rules.env
 # set to true if your node names don't resolve as valid DNS names
@@ -44,6 +47,7 @@ PROVIDER_REGEX=.*\.k8s\.lan$
 # set to 0.0.0.0/0,::/0 to disable this check
 PROVIDER_IP_PREFIXES=10.0.0.0/24
 EOF
+
 ```
 
 # Deploy
@@ -51,12 +55,14 @@ EOF
 You need to make sure `serverTLSBootstrap` is enabled in kubelet config before deploying this.
 
 ```bash
+
 kl create ns csr-approver
 kl apply -k ./metrics/kubelet-csr-approver/
 kl -n csr-approver get pod -o wide
 
 # check CSRs to make sure they are approved
 kl get csr
+
 ```
 
 # Cleanup
