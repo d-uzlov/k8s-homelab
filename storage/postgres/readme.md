@@ -54,14 +54,14 @@ kl -n postgres-operator logs deployments/postgres-operator > ./postgres-operator
 
 ```bash
 
-kl delete -f ./storage/postgres/postgres.gen.yaml
+kl delete -k ./storage/postgres/
 kl delete -f ./storage/postgres/roles/
 kl delete ns postgres-operator
 kl delete -k ./storage/postgres/crd/
 
 ```
 
-Get current config from the cluster:
+# Get current config from the cluster:
 
 ```bash
 
