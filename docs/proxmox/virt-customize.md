@@ -100,4 +100,24 @@ EOF
 InhibitDelayMaxSec=60
 EOF
 
+# https://www.reddit.com/r/Proxmox/comments/plct2v/are_there_any_current_guides_on_templatingcloning/
+ cat << "image-cleanup-EOF" > ~/cloud-scripts/image-cleanup.sh
+#!/bin/bash
+set -eu
+
+apt-get clean
+apt-get autoremove
+cloud-init clean
+
+# replace log files with empty ones, to avoid errors when something expects log file to exist
+for CLEAN in $(find /var/log/ -type f)
+do
+  cp /dev/null  $CLEAN
+done
+rm -rf /var/log/journal/*
+
+rm -rf /tmp/*
+rm -rf /var/tmp/*
+image-cleanup-EOF
+
 ```
