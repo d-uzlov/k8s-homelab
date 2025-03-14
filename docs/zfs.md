@@ -13,6 +13,8 @@ References:
     > - Edon-R: >350% higher performance than SHA-256. Lower security margin than Skein, but much higher throughput.
 - https://github.com/openzfs/zfs/pull/12918
 - - There are a lot of benchmark references
+- - `cat /proc/spl/kstat/zfs/fletcher_4_bench`
+- - `cat /proc/spl/kstat/zfs/chksum_bench`
 - - For example:
     > implementation   digest    1k        2k        4k        8k        16k       32k       64k       128k      256k      512k      1m
     > fletcher-4       4         3932      7112      11824     18053     24549     28667     32892     35115     36338     36156     36562
@@ -33,6 +35,7 @@ https://jro.io/capacity/
 # Use partitions in ZFS
 
 ```bash
+
 # find out PART UUID of a partition
 blkid /dev/nvme1n1p1 -s PARTUUID -o value
 
@@ -40,20 +43,24 @@ sudo zpool add -f main log /dev/disk/by-partuuid/your-partuuid-value
 
 # check status
 zpool list main -v
+
 ```
 
 # ashift
 
 ```bash
+
 # print current ashift
 sudo zpool get ashift
 # if property ashift is missing, you can try checking zdb
 sudo zdb -C | grep ashift
+
 ```
 
 # Statistics
 
 ```bash
+
 # list pools
 zpool list
 # list pools with drive info
@@ -73,6 +80,7 @@ zpool iostat -y rpool -r
 zpool iostat rpool
 # similar to `watch --interval 2 zpool iostat -y rpool`
 zpool iostat -y rpool 2
+
 ```
 
 # iostat
@@ -137,6 +145,7 @@ Summary 2:
 # TRIM
 
 ```bash
+
 # automatic trim
 # doesn't do as much as manual trim
 zpool get autotrim
@@ -145,6 +154,7 @@ sudo zpool set autotrim=on pool_name
 # manual trim
 sudo zpool trim rpool
 zpool status -t
+
 ```
 
 # `nopwrite`
@@ -157,6 +167,7 @@ To enable:
 These commands show if `nopwrite` works:
 
 ```bash
+
 zfs --version
 # zfs-2.1.5-1ubuntu6~22.04.1
 # zfs-kmod-2.1.5-1ubuntu6~22.04.1
@@ -182,6 +193,7 @@ zfs list -t all -r tank/test
 # 1M used, 150K in snapshot, 38.8M available
 
 sudo zfs destroy -r tank/test
+
 ```
 
 References:
@@ -224,6 +236,7 @@ As noted in the [`nopwrite`](#nopwrite) section, encryption breaks nopwrite.
 # Set limit for ARC size
 
 ```bash
+
 cat /sys/module/zfs/parameters/zfs_arc_min /sys/module/zfs/parameters/zfs_arc_max | numfmt --to=iec
 
 # set 8G for current session
@@ -245,6 +258,7 @@ sudo update-initramfs -u
 # purge cache for current system (useful if you want to reduce ARC size)
 echo 0 | sudo tee /sys/module/zfs/parameters/zfs_arc_shrinker_limit
 echo 3 | sudo tee /proc/sys/vm/drop_caches
+
 ```
 
 # L2ARC
@@ -275,6 +289,7 @@ References:
 # L2ARC tuning
 
 ```bash
+
 # disable l2 caching for the special metadata device
 echo 1 | sudo tee /sys/module/zfs/parameters/l2arc_exclude_special
 # set max write speed of l2arc device
@@ -282,11 +297,13 @@ echo 1 | sudo tee /sys/module/zfs/parameters/l2arc_exclude_special
 # this sets average write limit to 100 MB/s, peak to 200 MB/s
 echo 209715200 | sudo tee /sys/module/zfs/parameters/l2arc_write_boost
 echo 104857600 | sudo tee /sys/module/zfs/parameters/l2arc_write_max
+
 ```
 
 # ZFS ARC statistics
 
 ```bash
+
 # print statistics
 sudo arc_summary
 # for ARC only
@@ -298,6 +315,7 @@ sudo arc_summary | grep l2arc
 
 cat /proc/spl/kstat/zfs/arcstats
 arcstat -f read,hits,miss,hit%,miss%,arcsz,c,l2read,l2hits,l2miss,l2hit%,l2miss%,arcsz,l2size 2
+
 ```
 
 # List holds
@@ -317,6 +335,7 @@ zfs holds nvme/test/backup/nvme/k8s/default--test-nvmeof2@zrepl_20250205_031626_
 # Change mount point
 
 ```bash
+
 # dataset will be mounted on new mount point after this command
 zfs set mountpoint=/location pool/dataset
 
@@ -324,6 +343,7 @@ zfs set mountpoint=/location pool/dataset
 # useful target dataset or some of its children are busy
 # new mountpoint will be used on next boot
 zfs set -u mountpoint=/location pool/dataset
+
 ```
 
 References:
@@ -333,19 +353,52 @@ References:
 # Send/receive
 
 ```bash
+
 # zfs send requires a snapshot
-sudo /usr/sbin/zfs snapshot nvme/k8s/nfsd/ubiquiti--config@send
+sudo /usr/sbin/zfs snapshot tank/dataset@send
 # send creates a stream of data that can be inflated via zfs receive
 # you can transfer it immediately or save to file
-ssh ssd.tn.lan sudo /usr/sbin/zfs send nvme/k8s/nfsd/ubiquiti--config@send | ssh ssd-nas.storage.lan sudo zfs receive nvme/k8s-trixie/file-generic/ubiquiti--config
+
 # zfs receive requires that parent dataset already exists
-sudo zfs create nvme/k8s-trixie/block-generic
+sudo zfs create tank2/backup
+
+# -s enables receive_resume_token generation
+ssh ssd.tn.lan sudo /usr/sbin/zfs send --verbose tank/dataset@send | ssh ssd-nas.storage.lan sudo zfs receive -s tank2/backup/dataset
+
+# if transfer was interrupted, get receive_resume_token from partially received dataset
+zfs get -H -o value receive_resume_token tank2/dataset
+resumeToken=
+# when using resume token, dataset name must be omitted
+ssh ssd.tn.lan sudo /usr/sbin/zfs send --verbose -t $resumeToken | ssh ssd-nas.storage.lan zfs receive -s -v tank2/backup/dataset
+
 ```
+
+References:
+- https://unix.stackexchange.com/questions/343675/zfs-on-linux-send-receive-resume-on-poor-bad-ssh-connection
 
 # Show size
 
 ```bash
 
-zfs list -o space,quota,refquota,volsize
+zfs list -o space,refer,quota,refquota,volsize,recordsize,compressratio
 
 ```
+
+# Run ZFS command without sudo
+
+```bash
+
+username=danil
+dataset=tulip
+
+sudo zfs allow \
+  $username \
+  create,destroy,mount,snapshot,bookmark,hold,receive,release,rename,rollback,send,load-key,diff,@quota,@refquota,@refreservation,@recordsize,@reservation,@sharenfs,@volblocksize,@volmode,@volsize \
+  $dataset
+
+```
+
+Note that `zfs create` and `zfs set mountpoint` will still fail because `mount` on linux can't work without root:
+https://github.com/openzfs/zfs/discussions/10648
+
+`zfs set sharenfs` will fail for the same reason.

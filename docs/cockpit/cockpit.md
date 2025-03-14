@@ -78,22 +78,24 @@ References:
 # ZFS
 
 ```bash
+
 . /etc/os-release
  sudo tee /etc/apt/sources.list.d/backports.list << EOF
 deb http://deb.debian.org/debian ${VERSION_CODENAME}-backports main contrib
 deb-src http://deb.debian.org/debian ${VERSION_CODENAME}-backports main contrib
 EOF
-sudo tee /etc/apt/preferences.d/90-zfs << EOF
+ sudo tee /etc/apt/preferences.d/90-zfs << EOF
 Package: src:zfs-linux
 Pin: release n=${VERSION_CODENAME}-backports
 Pin-Priority: 990
 EOF
 
+sudo apt update
 apt-cache madison zfs-linux
 
-sudo apt update
 sudo apt install -y dpkg-dev linux-headers-generic linux-image-generic
 sudo apt install -y zfs-dkms zfsutils-linux
+
 ```
 
 # iSCSI
