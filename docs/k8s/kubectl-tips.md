@@ -47,31 +47,40 @@ Prerequisites:
 - [.bashrc directory](../bash-setup.md#add-bashrc-directory)
 
 ```bash
- cat << "EOF" > ~/.bashrc.d/998-kubeconfig.sh
-export KUBECONFIG_MAIN=
-export KUBECONFIG_LOCAL=
-EOF
- cat << "EOF" > ~/.bashrc.d/999-kubectl-completion.sh
-# enable kubectl completion
-source <(kubectl completion bash)
 
+ cat << "EOF" > ~/.bashrc.d/20-kubectl-completion.sh
+source <(kubectl completion bash)
+EOF
+
+ cat << "EOF" > ~/.bashrc.d/21-kubectl-alias-generator.sh
 # create both the bash alias and the function alias
 # with given name and kubeconfig file
 # and enable bash completion for them
 function createKubectlAlias() {
   name=$1
   config=$2
-  . <(echo 'function '$name'() { kubecolor --kubeconfig "'"$config"'" "$@"; }; export -f '$name'; alias '$name'="kubecolor --kubeconfig='$config'"; complete -o default -F __start_kubectl '$name)
+  source /dev/stdin << CREATE_ALIAS_EOF
+function $name() {
+  KUBECONFIG=$config kubecolor "\$@"; 
+};
+CREATE_ALIAS_EOF
+  export -f $name
+  # alias $name="KUBECONFIG=$config kubecolor"
+  complete -o default -F __start_kubectl $name
 }
-
-createKubectlAlias k "$KUBECONFIG_MAIN"
-createKubectlAlias kl "$KUBECONFIG_LOCAL"
 EOF
-```
 
-Local configuration:
-- edit variables in `~/.bashrc.d/998-kubeconfig.sh`
-- adjust the amount and name of aliases in `~/.bashrc.d/999-kubectl-completion.sh`
+# set your kubeconfig location
+# path must not have any special symbols or spaces
+kubeconfig_local=
+alias_name=kl
+
+# repeat this for each of your kubeconfig files
+ cat << EOF > ~/.bashrc.d/22-kubectl-aliases-$alias_name.sh
+createKubectlAlias $alias_name $kubeconfig_local
+EOF
+
+```
 
 # Show pods from a certain node
 
@@ -145,4 +154,12 @@ kl delete pods --field-selector status.phase=Succeeded --all-namespaces
 # cluster domain, cluster CIDR
 kl -n kube-system describe cm kubeadm-config
 kl describe node | grep -e PodCIDR -e Name:
+```
+
+# Get secret content in plain text
+
+```bash
+
+kl -n pgo-cnpg-test get secret postgres-app -o json | jq -r '.data | map(@base64d) | .[]'
+
 ```
