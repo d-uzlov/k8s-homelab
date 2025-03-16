@@ -154,3 +154,32 @@ sudo vgdisplay
 sudo lvextend -l +100%FREE /dev/mapper/volume-name
 sudo resize2fs /dev/mapper/volume-name
 ```
+
+# List drives
+
+```bash
+
+lsblk
+lsblk -o NAME,SIZE,TYPE,DISC-GRAN,PHY-SEC,LOG-SEC,ROTA,PTTYPE,MOUNTPOINTS
+lsblk -o NAME,SIZE,TYPE,DISC-GRAN,PHY-SEC,LOG-SEC,ROTA,PTTYPE,MOUNTPOINTS,PATH
+lsblk -o NAME,SIZE,TYPE,DISC-GRAN,PHY-SEC,LOG-SEC,ROTA,PTTYPE,MOUNTPOINTS,PARTUUID,PTUUID,UUID
+
+lsscsi --scsi_id --size
+
+zpool list
+zpool status
+zpool status -P -s -t -c size
+zpool status -P -s -t -c model,size
+
+```
+
+# SATA: Change sector size
+
+For most devices this will not work.
+
+```bash
+
+sudo apt install hdparm
+sudo hdparm --set-sector-size 4096 --please-destroy-my-drive /dev/sdc
+
+```

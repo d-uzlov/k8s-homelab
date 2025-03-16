@@ -57,6 +57,33 @@ sudo zdb -C | grep ashift
 
 ```
 
+# zpool create example
+
+This command creates a ZFS pool with:
+- 3 mirrored data vdevs
+- 1 mirrored special device
+- 1 log device
+
+```bash
+
+sudo zpool create -o ashift=12 -O mountpoint=/mnt/petunia petunia \
+mirror \
+/dev/disk/by-id/ata-ST12000NM000J-2TY103_ZR305PES-part2 \
+/dev/disk/by-id/ata-ST12000NM000J-2TY103_ZR305RBC-part2 \
+mirror \
+/dev/disk/by-id/ata-ST12000NM001G-2MV103_WAICRTCS-part2 \
+/dev/disk/by-id/ata-ST12000NM0007-2A1101_WAICRYDA-part2 \
+mirror \
+/dev/disk/by-id/ata-HGST_HUH721212ALE600_5PJ54MXE-part2 \
+/dev/disk/by-id/ata-TOSHIBA_MG08ACA14TE_41S0A1R5FRVH-part2 \
+log \
+/dev/disk/by-id/nvme-INTEL_MEMPEK1J016GAL_BTBT849220ZH016N_1-part1 \
+special mirror \
+/dev/disk/by-id/ata-TEAM_T253480GB_TPBF2209020010803378-part1 \
+/dev/disk/by-id/ata-Apacer_AS340_480GB_E09507281ACE00417122-part1
+
+```
+
 # Statistics
 
 ```bash

@@ -1,10 +1,14 @@
 
 # Install
 
+Prerequisites:
+- [.bashrc directory](./bash-setup.md#add-bashrc-directory)
+
 ```bash
+
 # check out the latest release
 # https://go.dev/doc/devel/release
-release=1.23.5
+release=1.24.1
 filename=go$release.linux-amd64.tar.gz
 curl -OL https://golang.org/dl/$filename &&
 rm -rf /usr/local/go &&
@@ -23,6 +27,7 @@ EOF
 
 # if doing development in golang
 go install golang.org/x/tools/gopls@latest
+
 ```
 
 # VSCode set GO OS

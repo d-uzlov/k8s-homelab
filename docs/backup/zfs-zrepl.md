@@ -25,10 +25,10 @@ echo "deb [arch=$ARCH signed-by=$zrepl_apt_key_dst] https://zrepl.cschwarz.com/a
 sudo apt-get update
 sudo apt-get install zrepl
 
-sudo nano /etc/zrepl/zrepl.yml
-
 # see status and send signals
-sudo ./zrepl status
+sudo zrepl status
+# status will not work until you configure zrepl.yml
+sudo nano /etc/zrepl/zrepl.yml
 
 ```
 

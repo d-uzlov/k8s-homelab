@@ -3,7 +3,7 @@
 
 # Prerequisites
 
-- [Golang](../../docs/golang.md#install)
+- [Golang](../../../docs/golang.md#install)
 
 # Linux installation
 
