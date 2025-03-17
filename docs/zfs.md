@@ -415,11 +415,9 @@ zfs list -o space,refer,quota,refquota,volsize,recordsize,compressratio
 
 ```bash
 
-username=danil
-dataset=tulip
+dataset=
 
-sudo zfs allow \
-  $username \
+sudo zfs allow $USER \
   create,destroy,mount,snapshot,bookmark,hold,receive,release,rename,rollback,send,load-key,diff,@quota,@refquota,@refreservation,@recordsize,@reservation,@sharenfs,@volblocksize,@volmode,@volsize \
   $dataset
 
@@ -428,4 +426,4 @@ sudo zfs allow \
 Note that `zfs create` and `zfs set mountpoint` will still fail because `mount` on linux can't work without root:
 https://github.com/openzfs/zfs/discussions/10648
 
-`zfs set sharenfs` will fail for the same reason.
+`zfs set sharenfs` will fail for similar reasons.

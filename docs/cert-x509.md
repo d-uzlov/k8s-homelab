@@ -7,7 +7,7 @@
 
 # name can ba anything, it does not matter for CA
 ca_name=
-ca_path=./docs/backup/env/$ca_name-ca
+ca_path=./path-to-cert/$ca_name-ca
 
 # create new private key for CA
 openssl genpkey -algorithm ED25519 -out $ca_path.key
@@ -25,7 +25,7 @@ openssl x509 -in $ca_path.crt -noout -text
 
 ```
 
-# subj format
+# `subj` format
 
 Format: `/ID1=value/ID2=value/ID3=value`.
 Add as many IDs as needed.
@@ -40,37 +40,37 @@ List of other commonly used IDs: https://www.ibm.com/docs/en/ibm-mq/7.5?topic=ce
 
 ```bash
 
-client_name=
-client_group=
-client_path=./docs/backup/env/$client_group-$client_name
+client_cert_name=
+client_cert_group=
+client_cert_path=./path-to-cert/$client_cert_group!$client_cert_name
 
 # client private key
-openssl genpkey -algorithm ED25519 -out $client_path.key
+openssl genpkey -algorithm ED25519 -out $client_cert_path.key
 
 # create CSR
 # even if you don't need alt names, you usually need to set CN as alt name
 # you can add more than one alt name if needed:
 # -addext "subjectAltName = DNS:example.com,DNS:*.example.com,IP:10.0.0.1"
 
-openssl req -new -subj "/CN=$client_name/O=$client_group" \
-  -out $client_path.csr \
-  -key $client_path.key \
+openssl req -new -subj "/CN=$client_cert_name/O=$client_cert_group" \
+  -out $client_cert_path.csr \
+  -key $client_cert_path.key \
   -addext "extendedKeyUsage = serverAuth, clientAuth" \
-  -addext "subjectAltName = DNS:$client_name"
+  -addext "subjectAltName = DNS:$client_cert_name"
 
 # arguments:
 # -new: new CSR
 
 # sign CSR using CA
-openssl x509 -req -in $client_path.csr \
+openssl x509 -req -in $client_cert_path.csr \
   -CA $ca_path.crt \
   -CAkey $ca_path.key \
   -CAcreateserial \
-  -out $client_path.crt \
+  -out $client_cert_path.crt \
   -copy_extensions copy \
   -days 3650
 
-openssl x509 -in $client_path.crt -noout -text
+openssl x509 -in $client_cert_path.crt -noout -text
 
 # arguments:
 # -req: expect CSR as input

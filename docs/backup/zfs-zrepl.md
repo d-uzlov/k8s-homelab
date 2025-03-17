@@ -53,76 +53,226 @@ sudo ./zrepl status --config ./zrepl-config/zrepl.yml
 
 ```
 
-# Pull setup
+# Node setup
 
-We will set up source and pull configuration.
-Push and target configuration is also available but is not discussed here.
+Generate certificate for CA (once): [x509 Certificates](../cert-x509.md#generate-a-cert-for-ca)
+See example values:
 
-First generate certificates for CA and all nodes:
-- [x509 Certificates](../cert-x509.md)
+```bash
+ca_name=
+ca_path=./docs/backup/env/_.$ca_name-ca
+```
+
+Generate a certificate for each node: [x509 Certificates](../cert-x509.md#generate-client-certificates-sign-using-ca)
+See example values:
+
+```bash
+node_hostname=
+client_cert_name=$node_hostname.$ca_name
+client_cert_group=
+client_cert_path=./docs/backup/env/$client_cert_group#$client_cert_name
+```
+
+Send the certificate to node:
 
 ```bash
 
-# paths to certificates, without file extension
-ca_cert_path=./docs/backup/env/b2788.meoe.cloudns.be-ca
+node_ssh_address=
+ssh $node_ssh_address rm -rf ./zrepl-config/
+ssh $node_ssh_address mkdir -p ./zrepl-config/
+scp $ca_path.crt          $node_ssh_address:./zrepl-config/ca.crt
+scp $client_cert_path.crt $node_ssh_address:./zrepl-config/node.crt
+scp $client_cert_path.key $node_ssh_address:./zrepl-config/node.key
+ssh $node_ssh_address sudo mv ./zrepl-config/ca.crt ./zrepl-config/node.crt ./zrepl-config/node.key /etc/zrepl/
 
-source_cert_path=./docs/backup/env/b2788-ssd-nas.b2788.meoe.cloudns.be
-source_cert_name=ssd-nas.b2788.meoe.cloudns.be
-source_file_name=ssd-nas.storage.lan
+```
 
-source_dataset=nvme/test/data
-source_port=8888
-# pull job should be able to access this address
-source_public_address=ssd-nas.storage.lan:$source_port
+After your node has required certificate files,
+you need to copy config to node.
+If you don't have config yet, skip to config generation and run these commands later:
 
-pull_cert_path=./docs/backup/env/b2788-hdd-tn.b2788.meoe.cloudns.be
-pull_cert_name=hdd.tn.lan
-pull_file_name=hdd.tn.lan
+```bash
 
-pull_dataset=main/backup
-pull_cert_name=hdd.tn.lan
+node_config_path=$client_cert_path.yaml
 
-source_ssh=ssd-nas.storage.lan
-pull_ssh=hdd.tn.lan
+nano $node_config_path
 
-sed \
-  -e "s~AUTOREPLACE_SOURCE_DATASET~$source_dataset~" \
-  -e "s/AUTOREPLACE_CLIENT_CERT_NAME/$pull_cert_name/" \
-  -e "s/AUTOREPLACE_LISTEN_PORT/$source_port/" \
-  ./docs/backup/source-template.yaml \
-  > ./docs/backup/env/$source_file_name-zrepl.yml
+scp $node_config_path $node_ssh_address:./zrepl-config/zrepl.yml
+ssh $node_ssh_address sudo mv ./zrepl-config/zrepl.yml /etc/zrepl/
+ssh $node_ssh_address zrepl configcheck --config /etc/zrepl/zrepl.yml
 
-ssh $source_ssh rm -rf ./zrepl-config/
-ssh $source_ssh mkdir -p ./zrepl-config/
-scp $ca_cert_path.crt     $source_ssh:./zrepl-config/ca.crt
-scp $source_cert_path.crt $source_ssh:./zrepl-config/node.crt
-scp $source_cert_path.key $source_ssh:./zrepl-config/node.key
-scp ./docs/backup/env/$source_file_name-zrepl.yml $source_ssh:./zrepl-config/zrepl.yml
-# skip source commands below if you are running zrepl manually
-ssh $source_ssh sudo mv ./zrepl-config/ca.crt ./zrepl-config/node.crt ./zrepl-config/node.key ./zrepl-config/zrepl.yml /etc/zrepl/
-ssh $source_ssh zrepl configcheck --config /etc/zrepl/zrepl.yml
-ssh $source_ssh sudo systemctl restart zrepl
-ssh $source_ssh sudo systemctl status zrepl --no-pager
+# if configcheck is successful, restart the service
+ssh $node_ssh_address sudo systemctl restart zrepl
+ssh $node_ssh_address sudo systemctl status zrepl --no-pager
 
-sed \
-  -e "s/AUTOREPLACE_SOURCE_ADDRESS/$source_public_address/" \
-  -e "s/AUTOREPLACE_SOURCE_CERT_NAME/$source_cert_name/" \
-  -e "s~AUTOREPLACE_DATASET~$pull_dataset~" \
-  ./docs/backup/pull-template.yaml \
-  > ./docs/backup/env/$pull_file_name-zrepl.yml
+```
 
-ssh $pull_ssh rm -rf ./zrepl-config/
-ssh $pull_ssh mkdir -p ./zrepl-config/
-scp $ca_cert_path.crt   $pull_ssh:./zrepl-config/ca.crt
-scp $pull_cert_path.crt $pull_ssh:./zrepl-config/node.crt
-scp $pull_cert_path.key $pull_ssh:./zrepl-config/node.key
-scp ./docs/backup/env/$pull_file_name-zrepl.yml $pull_ssh:./zrepl-config/zrepl.yml
-# skip pull commands below if you are running zrepl manually
-ssh $pull_ssh sudo mv ./zrepl-config/ca.crt ./zrepl-config/node.crt ./zrepl-config/node.key ./zrepl-config/zrepl.yml /etc/zrepl/
-ssh $pull_ssh zrepl configcheck --config /etc/zrepl/zrepl.yml
-ssh $pull_ssh sudo systemctl restart zrepl
-ssh $pull_ssh sudo systemctl status zrepl --no-pager
+# Pull setup: source side
 
+Add `global` and `jobs` objects:
+
+```yaml
+global:
+  logging:
+  # use syslog instead of stdout because it makes journald happy
+  - type: syslog
+    format: human
+    level: warn
+  monitoring:
+  - type: prometheus
+    listen: :9811
+jobs:
+```
+
+- In `jobs`: Add a single snapshotting job
+- - Replace `REPLACE_ME_SOURCE_DATASET` with your value(s)
+
+```yaml
+- name: automatic-snapshots
+  type: snap
+  filesystems:
+    REPLACE_ME_SOURCE_DATASET: true
+  # create snapshots with prefix `zrepl_` every 10 minutes
+  snapshotting:
+    # if you only want to transfer a backup, change type to manual
+    type: periodic
+    prefix: zrepl_
+    interval: 10m
+  pruning:
+    keep:
+    # delete all automatic snapshots older than 1 hour
+    - type: grid
+      grid: 1x1h(keep=all)
+      regex: "^zrepl_.*"
+    # keep all snapshots that don't have the `zrepl_` prefix
+    - type: regex
+      negate: true
+      regex: "^zrepl_.*"
+```
+
+- In `jobs`: For each pull client add a separate source config:
+- - Replace `REPLACE_ME_SOURCE_DATASET` with your value(s)
+- - `<` at the end of dataset makes zrepl replicate dataset children, without it it will send only parent dataset
+- - Don't forget to set a unique port for each source listener
+- - Set `REPLACE_ME_CLIENT_CERT_NAME` to pull client name
+- - Even though you can set several values in `client_cns`, zrepl does not support more than 1 client per source
+
+To make sure that `client_cns` is correct, check the pull client certificate:
+
+```bash
+openssl x509 -in $client_cert_path.crt -noout -text | grep DNS:
+```
+
+```yaml
+- name: source
+  type: source
+  filesystems:
+    REPLACE_ME_SOURCE_DATASET<: true
+  serve:
+    type: tls
+    listen: :8888
+    ca:   /etc/zrepl/ca.crt
+    cert: /etc/zrepl/node.crt
+    key:  /etc/zrepl/node.key
+    client_cns:
+    - REPLACE_ME_CLIENT_CERT_NAME
+  snapshotting:
+    type: manual
+```
+
+# Pull setup: pull side
+
+Add `global` and `jobs` objects:
+
+```yaml
+global:
+  logging:
+  # use syslog instead of stdout because it makes journald happy
+  - type: syslog
+    format: human
+    level: warn
+  monitoring:
+  - type: prometheus
+    listen: :9811
+jobs:
+```
+
+Add basic pull job:
+
+```yaml
+- type: pull
+  name: pull-from-source
+  connect:
+    type: tls
+    address: REPLACE_ME_ADDRESS:REPLACE_ME_PORT
+    ca:   /etc/zrepl/ca.crt
+    cert: /etc/zrepl/node.crt
+    key:  /etc/zrepl/node.key
+    server_cn: REPLACE_ME
+    dial_timeout: # optional, default 10s
+  root_fs: REPLACE_ME
+  # interval is low on purpose
+  # after restart program waits the interval before attempting to do anything
+  interval: 1m
+  recv:
+    placeholder:
+      encryption: inherit
+  conflict_resolution:
+    initial_replication: all
+```
+
+`address` must be reachable, port must match `listen` port from source.
+
+To make sure that `server_cn` is correct, check the pull client certificate:
+
+```bash
+openssl x509 -in $client_cert_path.crt -noout -text | grep DNS:
+```
+
+Set `root_fs` to dataset where you want your backups to be stored.
+
+Set pruning. For example:
+
+> fade-out scheme for snapshots starting with `zrepl_`
+> - keep all created in the last hour
+> - for snapshots older than 1h:
+>   destroy snapshots such that we keep 6 each 1 hour apart
+> - for snapshots older than 1h + 6h:
+>   destroy snapshots such that we keep 14 each 1 day apart
+> - for snapshots older than 1h + 6h + 14d:
+>   destroy snapshots such that we keep 6 each 30 days apart
+> - then destroy all snapshots older than 1h + 6h + 14d + 6x30d
+
+```yaml
+  pruning:
+    keep_sender:
+    # keep all non-zrepl snapshots
+    # keep 3 zrepl snapshots
+    - type: regex
+      negate: true
+      regex: "^zrepl_.*"
+    - type: grid
+      grid: 3x1h
+      regex: "^zrepl_.*"
+    keep_receiver:
+    - type: grid
+      grid: 1x1h(keep=all) | 6x1h | 14x1d | 6x30d
+      regex: "^zrepl_.*"
+    # keep all non-zrepl snapshots
+    - type: regex
+      negate: true
+      regex: "^zrepl_.*"
+```
+
+Set replication settings:
+
+```yaml
+  replication:
+    protection:
+      # https://zrepl.github.io/configuration/replication.html
+      # guarantee_resumability guarantee_incremental guarantee_nothing
+      initial:     guarantee_resumability
+      incremental: guarantee_resumability
 ```
 
 # Many-to-many backup
@@ -137,7 +287,7 @@ Edit pull config: add one more `type: pull` entry.
 Back up different filesystems to different clients:
 Edit source config: add one more `type: source` entry.
 
-# Knows errors
+# Known errors
 
 `error reading protocol banner length: EOF`:
 most likely client name mismatch between server and client.
@@ -146,3 +296,67 @@ Check `client_cns`, `server_cn`, and CN/altName in certificate.
 `error listing receiver filesystems`, `cannot determine whether root_fs exists`:
 seems to have disappeared after system upgrade and reboot.
 Not sure which action helped to solve the issue.
+
+# Metrics
+
+```bash
+
+# check metrics manually
+zrepl_host=
+curl $zrepl_host:9811/metrics > ./zrepl-metrics.log
+
+```
+
+Possibly useful metrics:
+- zrepl_replication_bytes_replicated
+- zrepl_replication_filesystem_errors
+- zrepl_replication_last_successful
+
+# Release all holds
+
+```bash
+
+parentDataset=petunia/restore
+# if empty, will match all holds
+holdPrefix=zrepl_last_received_
+dryRun=true1
+
+zfs list -H -t snapshot -r -o name $parentDataset |
+while IFS=$'\t' read -r snapshot; do
+  zfs holds -H "$snapshot" |
+  while IFS=$'\t' read -r _ holdTag _; do
+    if [[ ! "$holdTag" == "${holdPrefix}"* ]]; then
+      continue;
+    fi
+    echo "zfs release '$holdTag' '$snapshot'"
+    if [[ "$dryRun" == true ]]; then
+      continue;
+    fi
+    sudo zfs release "$holdTag" "$snapshot"
+  done
+done
+
+```
+
+# Delete snapshots
+
+```bash
+
+parentDataset=petunia/restore
+# if empty, will match all holds
+snapshotPrefix=zrepl_
+dryRun=true1
+
+zfs list -H -t snapshot -r -o name $parentDataset |
+while IFS=$'\t' read -r snapshot; do
+  if [[ ! "$snapshot" == *"@${snapshotPrefix}"* ]]; then
+    continue;
+  fi
+  echo "zfs destroy '$snapshot'"
+  if [[ "$dryRun" == true ]]; then
+    continue;
+  fi
+  sudo zfs destroy "$snapshot"
+done
+
+```
