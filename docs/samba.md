@@ -79,7 +79,7 @@ sudo mkdir -p /etc/samba/smb.conf.d/
 sudo nano /etc/samba/smb.conf.d/example.conf
 
 # allow user to connect to samba
-sudo smbpasswd -a username
+sudo smbpasswd -a $USER
 
 # make sure that user that tries to access smb share actually has access to files
 sudo groupadd samba-data

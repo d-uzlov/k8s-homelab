@@ -407,7 +407,7 @@ References:
 
 ```bash
 
-zfs list -o space,refer,quota,refquota,volsize,recordsize,compressratio
+zfs list -o name,avail,volsize,used,refer,quota,refquota,recordsize,volblocksize,compressratio
 
 ```
 
@@ -415,15 +415,19 @@ zfs list -o space,refer,quota,refquota,volsize,recordsize,compressratio
 
 ```bash
 
-dataset=
+dataset=tulip
 
 sudo zfs allow $USER \
-  create,destroy,mount,snapshot,bookmark,hold,receive,release,rename,rollback,send,load-key,diff,@quota,@refquota,@refreservation,@recordsize,@reservation,@sharenfs,@volblocksize,@volmode,@volsize \
+  snapshot,bookmark,hold,receive,release,rollback,send,load-key,diff,quota,refquota,refreservation,recordsize,reservation \
   $dataset
 
 ```
 
-Note that `zfs create` and `zfs set mountpoint` will still fail because `mount` on linux can't work without root:
-https://github.com/openzfs/zfs/discussions/10648
+Note that ZFS does not give user additional permissions to run commands.
+For example: `zfs create` and `zfs set mountpoint` need to run `mount`,
+and would still fail even if they were zfs-allowed, because non-sudo users don't have permission to mount.
+See more here: https://github.com/openzfs/zfs/discussions/10648
 
-`zfs set sharenfs` will fail for similar reasons.
+Similarly, `rename` and `sharenfs` will fail.
+
+Strangely, `zfs receive` seems to work fine without sudo.

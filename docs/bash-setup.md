@@ -362,3 +362,88 @@ EOF
 
 References:
 - https://stackoverflow.com/questions/9457233/unlimited-bash-history
+
+# Better ZFS autocompletion
+
+By default ZFS prints all datasets matching prefix.
+For example, if you type `ta<TAB>`, ZFS autocompletion
+will suggest `tank`, `tank/data`, `tank/data/child`, etc.
+If you have a lot of datasets, this will cover your whole screen
+and request you to close the `less` terminal before you continue.
+
+Additionally, for each `tank/data` option ZFS suggests `tank/data@`, cluttering the output.
+
+This script changes the behavior the following way:
+- Only a single level of detail is printed
+- If exact match for completion exists, suggest `@` and `/`
+- If only a single option exists, suggest `@` and `/`
+
+```bash
+
+cat << "EOF" > ~/.bashrc.d/10-zfs-completion-patch.sh
+# skip the script if ZFS is not installed
+if [ -f /usr/share/bash-completion/completions/zfs ]; then
+
+# source the original file to load it into bash
+# otherwise bash will overwrite __zfs_match_snapshot
+# when it loads this file on first ZFS completion
+. /usr/share/bash-completion/completions/zfs
+
+__zfs_match_snapshot()
+{
+  local base_dataset="${cur%@*}"
+  if [[ "$base_dataset" != "$cur" ]]
+  then
+    $__ZFS_CMD list -H -o name -s name -t snapshot -d 1 "$base_dataset"
+    return 0
+  fi
+  # Check if exact dataset match exists.
+  # We can't skip this:
+  #   If both "$cur" and "$cur-suffix" exist
+  #   without this check nothing would ever show @ and / for $cur without suffix
+  if [[ "$cur" != "" ]] && __zfs_list_datasets "$cur" &> /dev/null
+  then
+    # suggest snapshot suffix
+    echo "$cur"@
+    local num_children
+    # zfs list includes the named dataset in addition to its children
+    num_children=$(__zfs_list_datasets -d 1 "${cur%/}" 2> /dev/null | wc -l)
+    if [[ $num_children != 1 ]]; then
+      # suggest child datasets
+      echo "$cur"/
+    fi
+  fi
+
+  local parent_dataset="${base_dataset%/*}"
+  if [[ ! "$base_dataset" == *"/"* ]]; then
+    parent_dataset=""
+  fi
+  local datasets
+  if [[ "$parent_dataset" == "" ]]; then
+    datasets="$(__zfs_list_datasets -d 0)"
+  else
+    # filter on prefix to be able to correctly count results
+    datasets="$(__zfs_list_datasets "$parent_dataset" -d 1 | grep "$cur")"
+  fi
+  echo "$datasets"
+  local num_result
+  num_result=$(echo "$datasets" | wc -l)
+  # if there is only a single result, suggest more options
+  # to stop bash from ending the completion
+  if [[ $num_result == 1 ]]; then
+    # suggest snapshot suffix
+    echo "$datasets" | awk '{print $1 "@"}'
+    local num_children
+    # zfs list includes the named dataset in addition to its children
+    num_children=$(__zfs_list_datasets -d 1 "$datasets" 2> /dev/null | wc -l)
+    if [[ $num_children != 1 ]]; then
+      # suggest child datasets
+      echo "$datasets"/
+    fi
+  fi
+}
+
+fi
+EOF
+
+```
