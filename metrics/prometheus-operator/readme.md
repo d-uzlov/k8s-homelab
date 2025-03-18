@@ -1,10 +1,12 @@
 
 # prometheus-operator
 
-If you want to upgrade, consult this: https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack
+If you want to upgrade, consult this:
+- https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack
+- https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/UPGRADE.md
 
 You need to manually upgrade CRDs.
-Som upgrades need a migration.
+Some upgrades need a migration.
 
 References:
 - https://technotim.live/posts/kube-grafana-prometheus/
@@ -19,7 +21,7 @@ You only need to do this if you change `values.yaml` file.
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update prometheus-community
 helm search repo prometheus-community/kube-prometheus-stack --versions --devel | head
-helm show values prometheus-community/kube-prometheus-stack --version 67.4.0 > ./metrics/prometheus-operator/default-values.yaml
+helm show values prometheus-community/kube-prometheus-stack --version 70.0.2 > ./metrics/prometheus-operator/default-values.yaml
 ```
 
 ```bash
@@ -27,7 +29,7 @@ helm show values prometheus-community/kube-prometheus-stack --version 67.4.0 > .
 helm template \
   prometheus-operator \
   prometheus-community/kube-prometheus-stack \
-  --version 67.4.0 \
+  --version 70.0.2 \
   --values ./metrics/prometheus-operator/values.yaml \
   --namespace prometheus-operator \
   | sed \
