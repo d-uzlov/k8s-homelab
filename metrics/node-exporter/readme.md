@@ -9,7 +9,7 @@ You only need to do this if you change `values.yaml` file.
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update prometheus-community
 helm search repo prometheus-community/prometheus-node-exporter --versions --devel | head
-helm show values prometheus-community/prometheus-node-exporter --version 4.43.0 > ./metrics/node-exporter/default-values.yaml
+helm show values prometheus-community/prometheus-node-exporter --version 4.44.1 > ./metrics/node-exporter/default-values.yaml
 ```
 
 ```bash
@@ -17,7 +17,7 @@ helm show values prometheus-community/prometheus-node-exporter --version 4.43.0 
 helm template \
   node-exporter \
   prometheus-community/prometheus-node-exporter \
-  --version 4.43.0 \
+  --version 4.44.1 \
   --values ./metrics/node-exporter/values.yaml \
   --namespace node-exporter \
   | sed \

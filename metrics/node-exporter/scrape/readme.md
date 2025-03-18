@@ -10,11 +10,12 @@ References:
 Run on the target system:
 
 ```bash
-# https://github.com/prometheus/node_exporter/releases
-wget -q https://github.com/prometheus/node_exporter/releases/download/v1.8.2/node_exporter-1.8.2.linux-amd64.tar.gz
-tar xvfz node_exporter-1.8.2.linux-amd64.tar.gz
 
-sudo cp ./node_exporter-1.8.2.linux-amd64/node_exporter /usr/local/bin/
+# https://github.com/prometheus/node_exporter/releases
+wget -q https://github.com/prometheus/node_exporter/releases/download/v1.9.0/node_exporter-1.9.0.linux-amd64.tar.gz
+tar xvfz node_exporter-1.9.0.linux-amd64.tar.gz
+
+sudo cp ./node_exporter-1.9.0.linux-amd64/node_exporter /usr/local/bin/
 
 sudo groupadd --system node_exporter
 sudo useradd -s /sbin/nologin --system -g node_exporter node_exporter
