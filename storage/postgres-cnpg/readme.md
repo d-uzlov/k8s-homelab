@@ -102,9 +102,13 @@ and remove scheduled backup to S3.
 postgres_storage_class=nvmeof
 EOF
 
+# make sure that bucket_path is empty
+# otherwise cnpg will refuse to upload backups
+# apparently it shouldn't even start, but currently there is only error in logs:
+#     WAL archive check failed for server postgres: Expected empty archive
  cat << EOF > ./storage/postgres-cnpg/test/env/backup-s3.env
-server_address=http://nas.exmple.com:9000/
-bucket=postgres-test
+server_address=http://nas.example.com:9000/
+bucket_path=s3://postgres-test/postgres2/
 EOF
 
  cat << EOF > ./storage/postgres-cnpg/test/env/backup-s3-credentials.env
@@ -113,6 +117,7 @@ secret=zD07Jfk483DAJU8soRLZ4x9xdbtsU1QPcnU2eCp7
 EOF
 
 kl create ns pgo-cnpg-test
+kl label ns pgo-cnpg-test pod-security.kubernetes.io/enforce=baseline
 
 kl apply -k ./storage/postgres-cnpg/test/
 
@@ -154,8 +159,17 @@ EOF
 kl -n pgo-cnpg-test get scheduledbackup
 kl -n pgo-cnpg-test describe scheduledbackup
 
+kl cnpg -n pgo-cnpg-test pgadmin4 --mode desktop postgres
+kl -n pgo-cnpg-test get pods -o wide
+kl -n pgo-cnpg-test get svc
+kl -n pgo-cnpg-test port-forward svc/postgres-pgadmin4 8080:80
+# delete pgadmin when you are done with it
+kl cnpg -n pgo-cnpg-test pgadmin4 --dry-run postgres | kl delete -f -
+
 # warning: PVCs will be deleted automatically
 kl delete -k ./storage/postgres-cnpg/test/
 kl delete ns pgo-cnpg-test
+
+# backups seem to survive namespace deletion
 
 ```
