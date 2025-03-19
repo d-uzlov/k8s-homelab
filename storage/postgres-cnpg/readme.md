@@ -90,11 +90,26 @@ sudo chmod +x /usr/local/bin/kubectl_complete-cnpg
 
 References:
 - https://cloudnative-pg.io/documentation/1.25/samples/
+- https://blog.jirapongpansak.com/say-goodbye-to-data-loss-cnpgs-backup-and-restore-will-change-your-life-04bcab281214
+
+This deployment sets up backups to S3 storage.
+If you don't have S3, you will need to disable S3 backup configuration
+and remove scheduled backup to S3.
 
 ```bash
 
-cat << EOF > ./storage/postgres-cnpg/test/env/postgres-sc.env
+ cat << EOF > ./storage/postgres-cnpg/test/env/postgres-sc.env
 postgres_storage_class=nvmeof
+EOF
+
+ cat << EOF > ./storage/postgres-cnpg/test/env/backup-s3.env
+server_address=http://nas.exmple.com:9000/
+bucket=postgres-test
+EOF
+
+ cat << EOF > ./storage/postgres-cnpg/test/env/backup-s3-credentials.env
+key=dmzER5pleUdusVaG9n8d
+secret=zD07Jfk483DAJU8soRLZ4x9xdbtsU1QPcnU2eCp7
 EOF
 
 kl create ns pgo-cnpg-test
@@ -117,6 +132,27 @@ kl -n pgo-cnpg-test exec pods/postgres-1 -- psql --list
 # "cnpg psql" can automatically finds the master instance
 kl cnpg -n pgo-cnpg-test psql postgres -- --command '\du'
 kl cnpg -n pgo-cnpg-test psql postgres -- --list
+
+# trigger a backup
+kl cnpg backup -n pgo-cnpg-test postgres
+kl -n pgo-cnpg-test get backup
+kl -n pgo-cnpg-test describe backup
+
+# alternative way to create backups
+kl -n pgo-cnpg-test apply -f - << EOF
+apiVersion: postgresql.cnpg.io/v1
+kind: Backup
+metadata:
+  name: backup-test
+spec:
+  method: barmanObjectStore
+  cluster:
+    name: postgres
+EOF
+
+# check automatic backups
+kl -n pgo-cnpg-test get scheduledbackup
+kl -n pgo-cnpg-test describe scheduledbackup
 
 # warning: PVCs will be deleted automatically
 kl delete -k ./storage/postgres-cnpg/test/
