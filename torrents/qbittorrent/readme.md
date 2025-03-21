@@ -20,16 +20,10 @@ mkdir -p ./torrents/qbittorrent/pvc/env/
 # where qbittorrent internal configs should be located
 config=bulk
 config_size=1Gi
-# .torrent files that user wants to download
-watch=shared
-watch_size=1Gi
 
 # temporary folder for downloaded torrents
 incomplete=bulk
 incomplete_size=1Ti
-# folder where torrents are moved after they are finished downloading
-torrent=shared
-torrent_size=10Ti
 EOF
 
 ```
@@ -76,6 +70,34 @@ trusted_proxies=10.201.0.0/16
 # Set to your LAN CIDR for passwordless access in LAN.
 # Set to your public IP for passwordless access via NAT loopback (if it uses public address as source IP).
 auth_whitelist=10.201.0.0/16
+EOF
+
+# connect shared for torrent data and watched files
+# you need to create these shares manually
+ cat << EOF > ./torrents/qbittorrent/main-app/env/patch.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qbittorrent
+spec:
+  selector:
+    matchLabels:
+      app: qbittorrent
+  template:
+    spec:
+      containers: []
+      volumes:
+      - name: finished
+        nfs:
+          path: /media/torrent
+          server: nas.example.com
+          readOnly: true
+      - name: watch
+        nfs:
+          path: /media/watch
+          server: nas.example.com
+          readOnly: true
 EOF
 
 ```
