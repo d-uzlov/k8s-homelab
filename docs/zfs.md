@@ -84,6 +84,17 @@ special mirror \
 
 ```
 
+# Change disk path after creating ZFS pool
+
+```bash
+
+current_disk_path=sda1
+current_disk_path=caa0dfbc-c58c-4da0-a90d-9fe9562347d1
+
+sudo zpool set path=/dev/disk/by-id/$your_path_here $pool_name $current_disk_path
+
+```
+
 # Statistics
 
 ```bash

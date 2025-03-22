@@ -29,6 +29,8 @@ After=network-online.target
 [Service]
 User=zfs_exporter_chris
 ExecStart=$(which ~/zfs_exporter/zfs-exporter-chris) \
+  -depth=2 \
+  -fullpath \
   -listen-addr=:9700
 
 [Install]
@@ -81,7 +83,7 @@ kl delete -k ./metrics/zfs-exporter/chris-siebenmann/
 ```bash
 
 # ip or domain name
-node=
+node=nas-tulip.storage.lan
 curl -sS --insecure http://$node:9700/metrics > ./zfs-exporter-chris.log
 
 ```
