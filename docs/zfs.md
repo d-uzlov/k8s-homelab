@@ -262,6 +262,8 @@ As noted in the [`nopwrite`](#nopwrite) section, encryption breaks nopwrite.
 
 # Set limit for ARC size
 
+In `htop` arc_min shows as used memory, the remaining arc_min to arc_max shows as cache memory.
+
 ```bash
 
 cat /sys/module/zfs/parameters/zfs_arc_min /sys/module/zfs/parameters/zfs_arc_max | numfmt --to=iec
@@ -273,11 +275,12 @@ echo 8589934592 | sudo tee /sys/module/zfs/parameters/zfs_arc_max
 # 4G:  4294967296
 # 8G:  8589934592
 # 16G: 17179869184
+# 18G: 19327352832
 
 # set ARC size automatically after boot
-sudo tee /etc/modprobe.d/50-zfs_arc_size.conf << EOF
-options zfs zfs_arc_min=4294967296
-options zfs zfs_arc_max=4294967296
+ sudo tee /etc/modprobe.d/50-zfs_arc_size.conf << EOF
+options zfs zfs_arc_min=8589934592
+options zfs zfs_arc_max=8589934592
 EOF
 cat /etc/modprobe.d/50-zfs_arc_size.conf
 sudo update-initramfs -u
@@ -322,8 +325,17 @@ echo 1 | sudo tee /sys/module/zfs/parameters/l2arc_exclude_special
 # set max write speed of l2arc device
 # the default speed is just a few MB/s
 # this sets average write limit to 100 MB/s, peak to 200 MB/s
-echo 209715200 | sudo tee /sys/module/zfs/parameters/l2arc_write_boost
 echo 104857600 | sudo tee /sys/module/zfs/parameters/l2arc_write_max
+echo 209715200 | sudo tee /sys/module/zfs/parameters/l2arc_write_boost
+
+# set L2ARC parameters after boot
+ sudo tee /etc/modprobe.d/50-zfs_l2arc.conf << EOF
+options zfs l2arc_exclude_special=1
+options zfs l2arc_write_max=104857600
+options zfs l2arc_write_boost=209715200
+EOF
+cat /etc/modprobe.d/50-zfs_l2arc.conf
+sudo update-initramfs -u
 
 ```
 
@@ -431,3 +443,76 @@ See more here: https://github.com/openzfs/zfs/discussions/10648
 Similarly, `rename` and `sharenfs` will fail.
 
 Strangely, `zfs receive` seems to work fine without sudo.
+
+# ZFS stats explanation
+
+View arcstats in current system:
+
+```bash
+cat /proc/spl/kstat/zfs/arcstats
+```
+
+Check here for tunables explanation:
+- https://openzfs.github.io/openzfs-docs/Performance%20and%20Tuning/Module%20Parameters.html
+
+- `arc_sys_free` makes ZFS shrink ARC target size to increase amount of free node memory.
+- - File cache memory does NOT count as free.
+
+Some explanations of ZFS stats are available in Chris Siebenmann blog:
+- https://utcc.utoronto.ca/~cks/space/blog/solaris/ZFSARCItsVariousSizes
+- https://utcc.utoronto.ca/~cks/space/blog/linux/ZFSOnLinuxARCMemoryStatistics
+- https://utcc.utoronto.ca/~cks/space/blog/linux/ZFSOnLinuxARCMemoryReclaimStats
+- https://utcc.utoronto.ca/~cks/space/blog/linux/ZFSOnLinuxARCTargetSizeChanges
+- https://utcc.utoronto.ca/~cks/space/blog/linux/ZFSOnLinuxSettingARCSize
+
+zfs prefetching:
+- https://utcc.utoronto.ca/~cks/space/blog/solaris/ZFSHowPrefetching
+- https://utcc.utoronto.ca/~cks/space/blog/solaris/ZFSHowPrefetchingII
+- https://utcc.utoronto.ca/~cks/space/blog/solaris/ZFSARCStatsAndPrefetch
+
+- `arcstats.c` is target for ARC size. Seems like `c` is short for "current".
+- - ARC size will increase until it hits `c`.
+- - ARC will rapidly free memory if `c` has decreased below current ARC size.
+
+- `anon_size` is the size of dirty buffers that are to be written to disk.
+- `arc_loaned_bytes` is part of `anon_size` that is loaned (to where?).
+- `arc_tempreserve` is additional reserved space for writes.
+- - Total amount of dirty space is `arc_tempreserve + anon_size - arc_loaned_bytes`.
+- - Reference: https://utcc.utoronto.ca/~cks/space/blog/linux/ZFSOnLinuxARCMemoryReclaimStats
+
+- `deleted` counts cache entries deleted because data on disk was invalidated (file was deleted, ZVOL TRIM, etc).
+
+- `arc_meta_used` is the whole metadata size. Includes all types of metadata and meta-meta overhead.
+- `metadata_size` is size of filesystem metadata blocks.
+- `dnode_size` is size of buffers for data nodes (pointers to data blocks).
+- `bonus_size` is size of small data blocks (less than 1k) stored in dnodes. Included in `metadata_size`. Included in `dnode_size`.
+- `dbuf_size` is metadata overhead for managing cached data blocks.
+- `data_size` is actual data blocks.
+- `anon_size == anon_data + anon_metadata` is temporary buffers that aren't linked to any files yet. Created during write operations.
+- - Anon data and metadata is never evictable.
+
+L2ARC statistics:
+- `l2_feeds` - how many times l2arc has been updated. Usually it's updated once per second.
+- `l2_writes_sent` - how many feeds resulted in written blocks.
+- `l2_abort_lowmem` - number of times l2arc feed failed
+    because ZFS couldn't allocate temp memory to feed it
+    and/or because l2arc is too slow to keep with arc eviction rate.
+- `l2_writes_lock_retry` - several threads trying to write data to l2arc. High rate of lock retries can indicate slow l2arc device.
+- `l2_evict_lock_retry` - save as `l2_writes_lock_retry`, but for _removing_ data from l2arc.
+- `l2_evict_l1cached` - number of times l2arc block was evicted while being in the memory. Can indicate that l2arc is redundant.
+- `l2_size` is logical size of data
+- `l2_asize` is size on disk (compressed size can be smaller than logical)
+
+- `prefetch_data_hits` and other `prefetch_` metrics are for "prefetch wants to load this block but it is already in the ARC".
+- - This doesn't have anything to do with actual fetching of data from disk.
+
+- `predictive_prefetch` is data prefetched via a runtime heuristic based on user request pattern.
+- `prescient_prefetch` is data prefetched by hard logic built into code.
+
+zfetch metrics:
+- `zfetchstats.miss` is a read that isn't expected to be prefetched by ZFS (== random access).
+- - ZFS will not even try to prefetch data in such cases
+- - This isn't related to ARC hits and misses. A read can count as ARC hit but zfetch miss.
+- `zfetchstats.hits` is a demand read that fits into prefetch logic (== sequential read).
+- - Data should already be in ARC, because ZFS prefetches sequential reads, but this metric doesn't require it.
+- - `zfetchstats.hits` ratio can be used to measure how sequential reads are on average
