@@ -46,14 +46,8 @@ done
 
 # explore container
 kl exec deployments/$testName -it -- sh
-# explore container as root
-testPod=$(kl get pod -l app=$testName -o name)
-kl debug $testPod -it --image docker.io/alpine:3.17.3 --container debug --profile sysadmin --target alpine --custom ./storage/democratic-csi-generic/proxy/storage-classes/debug-container.yaml -- sh
-kl attach $testPod -c debug -it -- sh
-# https://kubernetes.io/blog/2024/08/22/kubernetes-1-31-custom-profiling-kubectl-debug/
 
 # cleanup resources
-
 cat ./test/pvc/env/test-* | kl delete -f -
 
 ```
