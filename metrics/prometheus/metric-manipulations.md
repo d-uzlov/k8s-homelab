@@ -31,24 +31,47 @@ curl -X POST -g "https://$prometheus_ingress/api/v1/admin/tsdb/clean_tombstones"
 # source: https://stackoverflow.com/questions/70301131/how-to-get-all-metric-names-from-prometheus-server-filtered-by-a-particular-labe
 curl -X GET -G "https://$prometheus_ingress/api/v1/label/__name__/values" --data-urlencode 'match[]={__name__=~".+", job="kubelet"}'
 
-# show current config
-kl -n prometheus exec sts/prometheus-main -it -- cat /etc/prometheus/config_out/prometheus.env.yaml
-
-# generate missing past metrics for a new recording rule
-#     enter the prometheus container
-kl -n prometheus exec statefulsets/prometheus-main -it -- sh
-#     inside the container: find recording rule file and run promtool
-ls -la /etc/prometheus/rules/prometheus-main-rulefiles-0/
-# Be careful! Do not overlap time period with existing data!
-promtool tsdb create-blocks-from rules --start 2024-05-29T21:33:40+07:00 --end 2024-06-11T14:40:40+07:00 --output-dir=. --eval-interval=10s /etc/prometheus/rules/prometheus-main-rulefiles-0/kps-default-rules-etcd-recording-f515cf3e-c48e-4ff4-ab43-d997c9aa4825.yaml
-
-# to delete _all_ data from prometheus, delete /prometheus contents and restart prometheus
-# rm -rf will fail, it's OK, it just can't delete some of the special files
-kl -n prometheus exec sts/prometheus-main -it -- rm -rf /prometheus
-kl -n prometheus delete pod prometheus-main-0
-kl -n prometheus get pod -o wide
 ```
 
 References:
 - https://faun.pub/how-to-drop-and-delete-metrics-in-prometheus-7f5e6911fb33
 - https://prometheus.io/docs/prometheus/latest/storage/#backfilling-for-recording-rules
+
+# Show current config
+
+```bash
+
+kl -n prometheus exec sts/prometheus-main -it -- cat /etc/prometheus/config_out/prometheus.env.yaml
+
+```
+
+# Generate missing past metrics for a new recording rule
+
+```bash
+
+# enter the prometheus container
+kl -n prometheus exec statefulsets/prometheus-main -it -- sh
+# inside the container: find recording rule file and run promtool
+ls -la /etc/prometheus/rules/prometheus-main-rulefiles-0/
+
+# Be careful! Do not overlap time period with existing data!
+# Be careful! Prometheus will consume large amount of memory during metric generation!
+#             Use small rule files and/or small time intervals!
+promtool tsdb create-blocks-from rules --start 2025-01-08T01:00:00+07:00 --end 2025-03-23T23:30:00+07:00 --output-dir=. --eval-interval=10s /etc/prometheus/rules/prometheus-main-rulefiles-0/prometheus-record-k8s-namespace-cpu-ceda2f82-7d83-4213-9ae8-f341d74f7e4a.yaml
+# promtool works quickly, but if your date range is large, it will still take some time
+
+```
+
+# Delete all data
+
+If you want to delete all data and start from scratch, you can either delete PVC completely,
+or just delete `/prometheus` folder and restart prometheus.
+
+```bash
+
+# rm -rf will fail, it's OK, it just can't delete some of the special files
+kl -n prometheus exec sts/prometheus-main -it -- rm -rf /prometheus
+kl -n prometheus delete pod prometheus-main-0
+kl -n prometheus get pod -o wide
+
+```

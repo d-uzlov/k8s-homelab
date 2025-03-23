@@ -17,6 +17,7 @@ clusterName=
 EOF
 
 kl apply -k ./metrics/component-monitoring/kubelet/
+
 ```
 
 For alerts and dashboards to work properly,
@@ -27,7 +28,9 @@ Don't forget to deploy grafana dashboards: [dashboards](./dashboards/readme.md).
 # Cleanup
 
 ```bash
+
 kl delete -k ./metrics/component-monitoring/kubelet/
+
 ```
 
 # Manual metric checking

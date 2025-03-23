@@ -148,3 +148,76 @@ spec:
       labels:
         workload_type: job
       record: namespace_workload_pod:kube_pod_owner:relabel
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: record-k8s-namespace-memory
+  labels:
+    prometheus.io/instance: main
+spec:
+  groups:
+  - name: record-k8s-namespace-memory
+    rules:
+    - record: namespace:container_memory_usage_bytes
+      expr: |-
+        sum by (cluster_type, cluster, namespace) (
+          # max by(container) should fix overlapping data on container restarts
+          max by(cluster_type, cluster, namespace, pod, container) (
+            container_memory_usage_bytes{}
+          )
+        )
+    - record: namespace:container_memory_rss
+      expr: |-
+        sum by (cluster_type, cluster, namespace) (
+          # max by(container) should fix overlapping data on container restarts
+          max by(cluster_type, cluster, namespace, pod, container) (
+            container_memory_rss{}
+          )
+        )
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: record-k8s-namespace-cpu
+  labels:
+    prometheus.io/instance: main
+spec:
+  groups:
+  - name: record-k8s-namespace-cpu
+    rules:
+    - record: namespace:container_cpu_usage_seconds:irate
+      expr: |-
+        sum by (cluster_type, cluster, namespace) (
+          # max by(container) should fix overlapping data on container restarts
+          max by(cluster_type, cluster, namespace, pod, container) (
+            irate(container_cpu_usage_seconds_total{}[40s])
+          )
+        )
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: record-k8s-namespace-network
+  labels:
+    prometheus.io/instance: main
+spec:
+  groups:
+  - name: record-k8s-namespace-network
+    rules:
+    - record: namespace:container_network_receive_bytes:irate
+      expr: |-
+        sum by (cluster_type, cluster, namespace) (
+          # max by(container) should fix overlapping data on container restarts
+          max by(cluster_type, cluster, namespace, pod, container) (
+            irate(container_network_receive_bytes_total{}[40s])
+          )
+        )
+    - record: namespace:container_network_transmit_bytes:irate
+      expr: |-
+        sum by (cluster_type, cluster, namespace) (
+          # max by(container) should fix overlapping data on container restarts
+          max by(cluster_type, cluster, namespace, pod, container) (
+            irate(container_network_transmit_bytes_total{}[40s])
+          )
+        )
