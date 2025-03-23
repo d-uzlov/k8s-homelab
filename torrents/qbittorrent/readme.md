@@ -92,12 +92,12 @@ spec:
         nfs:
           path: /media/torrent
           server: nas.example.com
-          readOnly: true
+          readOnly: false
       - name: watch
         nfs:
           path: /media/watch
           server: nas.example.com
-          readOnly: true
+          readOnly: false
 EOF
 
 ```
