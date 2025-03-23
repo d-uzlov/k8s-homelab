@@ -1,0 +1,16 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: record-node-cpu
+  labels:
+    prometheus.io/instance: main
+spec:
+  groups:
+  - name: record-node-cpu
+    rules:
+    - record: node:cpu_cores
+      expr: |-
+        count by (cluster_type, cluster, instance) (
+          count by (cluster_type, cluster, instance, cpu) (node_cpu_seconds_total)
+        )
