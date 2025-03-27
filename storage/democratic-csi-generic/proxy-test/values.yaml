@@ -1,0 +1,124 @@
+
+nameOverride: dem-test
+fullnameOverride: dem-test
+
+csiDriver:
+  # should be globally unique for a given cluster
+  name: org.democratic-csi.proxy-test
+  storageCapacity: true
+
+driver:
+  existingConfigSecret: main-config
+  config:
+    driver: proxy
+
+controller:
+  priorityClassName: system-cluster-critical
+  
+  extraVolumes:
+  - name: connections
+    secret:
+      secretName: connections
+
+  # extraEnv:
+  # - name: SSH_REUSE_CONNECTION
+  #   value: '0'
+  driver:
+    logLevel: debug
+    extraVolumeMounts:
+    - name: connections
+      mountPath: /mnt/connections
+    # image: docker.io/democraticcsi/democratic-csi:v1.9.1
+    image: docker.io/daniluzlov/k8s-snippets:dcsi-proxy2-v62
+    imagePullPolicy: IfNotPresent
+    # image: docker.io/democraticcsi/democratic-csi:next
+    # imagePullPolicy: Always
+    # image: docker.io/democraticcsi/democratic-csi@sha256:945cf404d40f719edda62c1889d142bfe8b970c7bfd3e99054869e1dc8efe62a
+    # imagePullPolicy: IfNotPresent
+    resources:
+      requests:
+        memory: 70Mi
+      limits:
+        memory: 250Mi
+  externalAttacher:
+    resources:
+      requests:
+        memory: 20Mi
+      limits:
+        memory: 30Mi
+  externalProvisioner:
+    extraArgs:
+    - --feature-gates=Topology=true
+    - --strict-topology=true
+    # https://github.com/kubernetes-csi/external-provisioner#topology-support
+    - --immediate-topology=false
+    - --enable-capacity=true
+    - --capacity-ownerref-level=2
+    # - --capacity-for-immediate-binding
+    resources:
+      requests:
+        memory: 25Mi
+      limits:
+        memory: 30Mi
+  externalResizer:
+    resources:
+      requests:
+        memory: 25Mi
+      limits:
+        # it is getting OOMKilled when limit is 25Mi
+        memory: 50Mi
+  externalSnapshotter:
+    resources:
+      requests:
+        memory: 25Mi
+      limits:
+        memory: 25Mi
+
+node:
+  priorityClassName: system-node-critical
+
+  extraVolumes:
+  - name: etc-nvme
+    hostPath:
+      path: /etc/nvme
+      type: ""
+  - name: etc-iscsi
+    hostPath:
+      path: /etc/iscsi/
+      type: ""
+
+  driver:
+    logLevel: debug
+    extraVolumeMounts:
+    - name: etc-nvme
+      mountPath: /etc/nvme
+      readOnly: true
+    - name: etc-iscsi
+      mountPath: /etc/iscsi/
+      readOnly: true
+    # image: docker.io/democraticcsi/democratic-csi:v1.9.1
+    image: docker.io/daniluzlov/k8s-snippets:dcsi-proxy2-v62
+    imagePullPolicy: IfNotPresent
+    # image: docker.io/democraticcsi/democratic-csi@sha256:945cf404d40f719edda62c1889d142bfe8b970c7bfd3e99054869e1dc8efe62a
+    # imagePullPolicy: IfNotPresent
+    resources:
+      requests:
+        memory: 70Mi
+      limits:
+        # there are occasional spikes to 150Mi+
+        memory: 250Mi
+  tolerations:
+  - effect: NoSchedule
+    key: node-role.kubernetes.io/control-plane
+  driverRegistrar:
+    resources:
+      requests:
+        cpu: ~
+        memory: 20Mi
+      limits:
+        cpu: ~
+        memory: 30Mi
+
+csiProxy:
+  # csi-proxy doesn't seem to do anything in current version of k8s and democratic-csi
+  enabled: false
