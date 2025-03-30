@@ -455,7 +455,7 @@
           {
             "matcher": {
               "id": "byFrameRefID",
-              "options": "requests"
+              "options": "ns_requests"
             },
             "properties": [
               {
@@ -499,8 +499,8 @@
           },
           {
             "matcher": {
-              "id": "byName",
-              "options": "Total"
+              "id": "byFrameRefID",
+              "options": "total"
             },
             "properties": [
               {
@@ -569,6 +569,19 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
+          "expr": "sum (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval]))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Total",
+          "range": true,
+          "refId": "total"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
           "expr": "scalar(max(kube_resourcequota{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", type=\"hard\", resource=\"requests.cpu\"}))",
           "hide": false,
           "instant": false,
@@ -591,12 +604,6 @@
         }
       ],
       "title": "CPU Usage",
-      "transformations": [
-        {
-          "id": "calculateField",
-          "options": {}
-        }
-      ],
       "type": "timeseries"
     },
     {
@@ -1327,22 +1334,22 @@
           "legendFormat": "__auto",
           "range": true,
           "refId": "resource_limits"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum (max by(pod, container) (max_over_time(kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"memory\"}[$__interval])))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Total",
+          "range": true,
+          "refId": "A"
         }
       ],
       "title": "Namespace quota vs container requests (stacked)",
-      "transformations": [
-        {
-          "id": "calculateField",
-          "options": {
-            "mode": "reduceRow",
-            "reduce": {
-              "include": [],
-              "reducer": "sum"
-            },
-            "replaceFields": false
-          }
-        }
-      ],
       "type": "timeseries"
     },
     {
@@ -1571,15 +1578,22 @@
           "legendFormat": "__auto",
           "range": true,
           "refId": "resource_limits"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum (max by(pod, container) (max_over_time(kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"memory\"}[$__interval])))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Total",
+          "range": true,
+          "refId": "total"
         }
       ],
       "title": "Namespace quota vs container limits (stacked)",
-      "transformations": [
-        {
-          "id": "calculateField",
-          "options": {}
-        }
-      ],
       "type": "timeseries"
     },
     {
@@ -1770,16 +1784,23 @@
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
-          "refId": "A"
+          "refId": "raw"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum (max by(pod, container) (max_over_time(container_memory_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Total",
+          "range": true,
+          "refId": "raw_total"
         }
       ],
       "title": "Memory Usage (Raw)",
-      "transformations": [
-        {
-          "id": "calculateField",
-          "options": {}
-        }
-      ],
       "type": "timeseries"
     },
     {
@@ -1970,16 +1991,23 @@
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
-          "refId": "A"
+          "refId": "rss"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum (max by(pod, container) (max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Total",
+          "range": true,
+          "refId": "rss_total"
         }
       ],
       "title": "Memory Usage (RSS)",
-      "transformations": [
-        {
-          "id": "calculateField",
-          "options": {}
-        }
-      ],
       "type": "timeseries"
     },
     {
