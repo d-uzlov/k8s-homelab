@@ -33,19 +33,20 @@ spec:
   - port: http-metrics
     bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
     scheme: https
+    honorLabels: true
+    honorTimestamps: true
+    trackTimestampsStaleness: true
     tlsConfig:
       caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
       insecureSkipVerify: true
     metricRelabelings:
     - action: keep
-      sourceLabels:
-      - __name__
+      sourceLabels: [ __name__ ]
       regex: kubernetes_build_info
     relabelings:
-    - action: replace
-      targetLabel: nodename
-      sourceLabels:
-      - __meta_kubernetes_pod_node_name
-      regex: ^(.*)$
-      replacement: $1
-      separator: ;
+    - targetLabel: cluster_type
+      replacement: k8s
+    - targetLabel: instance # turn instance from ip:port into node name
+      sourceLabels: [ __meta_kubernetes_endpoint_node_name ]
+    - action: labeldrop
+      regex: endpoint|service

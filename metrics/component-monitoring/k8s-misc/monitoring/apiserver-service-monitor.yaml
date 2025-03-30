@@ -1,22 +1,41 @@
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kube-apiserver
+  namespace: kube-system
+  labels:
+    app: kube-apiserver
+    prometheus.io/job: kube-apiserver
+spec:
+  clusterIP: None
+  selector:
+    component: kube-apiserver
+  ports:
+  - name: https
+    port: 6443
+    protocol: TCP
+    targetPort: 6443
+---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: apiserver
-  # kubernetes apiserver service is located in the default namespace
-  namespace: default
+  name: kube-apiserver
+  namespace: kube-system
   labels:
     prometheus.io/instance: main
 spec:
-  jobLabel: component
+  jobLabel: prometheus.io/job
   selector:
     matchLabels:
-      component: apiserver
-      provider: kubernetes
+      app: kube-apiserver
   endpoints:
   - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
     port: https
     scheme: https
+    honorLabels: true
+    honorTimestamps: true
+    trackTimestampsStaleness: true
     metricRelabelings:
     - action: keep
       regex: "\
@@ -32,14 +51,12 @@ spec:
       sourceLabels:
       - __name__
     relabelings:
-    - action: keep
-      regex: default;kubernetes;https
-      sourceLabels:
-      - __meta_kubernetes_namespace
-      - __meta_kubernetes_service_name
-      - __meta_kubernetes_endpoint_port_name
-    - replacement: kubernetes.default.svc:443
-      targetLabel: __address__
+    - targetLabel: cluster_type
+      replacement: k8s
+    - targetLabel: instance # turn instance from ip:port into node name
+      sourceLabels: [ __meta_kubernetes_endpoint_node_name ]
+    - action: labeldrop
+      regex: endpoint|service
     tlsConfig:
       caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
       serverName: kubernetes

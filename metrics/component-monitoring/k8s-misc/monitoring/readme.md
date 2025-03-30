@@ -1,13 +1,25 @@
 
-# apiserver
-
-Apiserver monitoring is only used for alerting.
+# Deploy
 
 ```bash
 
-kl apply -f ./metrics/component-monitoring/k8s-misc/monitoring/
+mkdir -p ./metrics/component-monitoring/k8s-misc/monitoring/env/
+clusterName=
+ cat << EOF > ./metrics/component-monitoring/k8s-misc/monitoring/env/patch-cluster-tag.yaml
+- op: add
+  path: /spec/endpoints/0/relabelings/-
+  value:
+    targetLabel: cluster
+    replacement: $clusterName
+EOF
+
+kl apply -k ./metrics/component-monitoring/k8s-misc/monitoring/
 
 ```
+
+# apiserver
+
+Apiserver monitoring is only used for alerting.
 
 Manual metric checking:
 
@@ -21,7 +33,6 @@ kl exec deployments/alpine -- curl -sS --insecure -H "Authorization: Bearer $bea
 # kube-controller-manager
 
 kube-controller-manager monitoring is only used for `kubernetes_build_info` checking.
-You can skip it.
 
 Make sure that kube controller manager is listening on `0.0.0.0` to allow prometheus to connect to it.
 
@@ -31,10 +42,6 @@ For example, if you are using kubeadm, adjust its config:
 controllerManager:
   extraArgs:
     bind-address: 0.0.0.0
-```
-
-```bash
-kl apply -f ./metrics/component-monitoring/k8s/monitoring/kube-controller-manager-service-monitor.yaml
 ```
 
 References:
@@ -52,7 +59,6 @@ kl exec deployments/alpine -- curl -sS --insecure -H "Authorization: Bearer $bea
 # kube-scheduler
 
 kube-scheduler monitoring is only used for `kubernetes_build_info` checking.
-You can skip it.
 
 Make sure that kube scheduler is listening on `0.0.0.0` to allow prometheus to connect to it.
 
@@ -62,10 +68,6 @@ For example, if you are using kubeadm, adjust its config:
 scheduler:
   extraArgs:
     bind-address: 0.0.0.0
-```
-
-```bash
-kl apply -f ./metrics/component-monitoring/k8s/monitoring/kube-scheduler-service-monitor.yaml
 ```
 
 References:
