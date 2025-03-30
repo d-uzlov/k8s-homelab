@@ -51,3 +51,40 @@ kl exec deployments/$testName -it -- sh
 cat ./test/pvc/env/test-* | kl delete -f -
 
 ```
+
+# Copy PVC
+
+```bash
+
+kl get pvc
+
+sourcePvcName=
+storageClassName=
+newPvcName=
+namespace=
+
+ kl apply -f - << EOF
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+    name: $newPvcName
+    namespace: $namespace
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: $storageClassName
+  resources:
+    requests:
+      storage: 150Gi
+  dataSource:
+    kind: PersistentVolumeClaim
+    name: $sourcePvcName
+EOF
+
+kl -n $namespace get pvc
+kl -n $namespace describe pvc $newPvcName
+
+kl -n $namespace delete pvc $newPvcName
+
+```
