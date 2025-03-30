@@ -39,3 +39,15 @@ git remote set-url --push origin no_push
 # for the last 3 commits
 git rebase HEAD~3 --signoff
 ```
+
+# Clean git reflog
+
+```bash
+
+git -c gc.reflogExpire=0 -c gc.reflogExpireUnreachable=0 -c gc.rerereresolved=0 \
+    -c gc.rerereunresolved=0 -c gc.pruneExpire=now gc
+
+```
+
+References:
+- https://stackoverflow.com/a/14728706
