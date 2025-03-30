@@ -173,7 +173,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/configmap: c39e4fe06114f541269a1422a1ffcd320c50442f40a6f57a0fff975f52e1ee04
+        checksum/configmap: 6d88b3779effa76dd0be613240ed83db2304033e00945c7f89735083015f3167
       labels:
         app.kubernetes.io/name: dem
         app.kubernetes.io/csi-role: "node"
@@ -183,14 +183,14 @@ spec:
       priorityClassName: "system-node-critical"
       # Required by iSCSI
       hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       hostAliases: []
       # Required by multipath detach
       hostIPC: true
       hostPID: false
       containers:
       - name: csi-driver
-        image: docker.io/daniluzlov/k8s-snippets:dcsi-proxy2-v44
-        imagePullPolicy: IfNotPresent
+        image: "docker.io/daniluzlov/k8s-snippets:dcsi-proxy2-v92"
         args:
         - --csi-version=1.5.0
         - --csi-name=org.democratic-csi.proxy
@@ -239,6 +239,9 @@ spec:
         - name: kubelet-dir
           mountPath: /var/lib/kubelet
           mountPropagation: Bidirectional
+        - name: nvme-dir
+          mountPath: /etc/nvme
+          mountPropagation: Bidirectional
         - name: modules-dir
           mountPath: /lib/modules
           readOnly: true
@@ -258,14 +261,11 @@ spec:
           mountPath: /config
         - name: extra-ca-certs
           mountPath: /tmp/certs
-        - mountPath: /etc/nvme
-          name: etc-nvme
-          readOnly: true
         - mountPath: /etc/iscsi/
           name: etc-iscsi
           readOnly: true
       - name: driver-registrar
-        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.9.0
+        image: "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.9.0"
         args:
         - --v=5
         - --csi-address=/csi-data/csi.sock
@@ -300,7 +300,7 @@ spec:
           mountPath: /var/lib/kubelet
 
       - name: cleanup
-        image: docker.io/busybox:1.32.0
+        image: "docker.io/busybox:1.37.0"
         command:
           - "/bin/sh"
           - "-c"
@@ -335,6 +335,10 @@ spec:
         hostPath:
           path: /var/lib/kubelet
           type: Directory
+      - name: nvme-dir
+        hostPath:
+          path: /etc/nvme
+          type: Directory
       - name: dev-dir
         hostPath:
           path: /dev
@@ -366,10 +370,6 @@ spec:
           - key: extra-ca-certs
             path: extra-ca-certs.crt
       - hostPath:
-          path: /etc/nvme
-          type: ""
-        name: etc-nvme
-      - hostPath:
           path: /etc/iscsi/
           type: ""
         name: etc-iscsi
@@ -398,7 +398,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/configmap: c39e4fe06114f541269a1422a1ffcd320c50442f40a6f57a0fff975f52e1ee04
+        checksum/configmap: 6d88b3779effa76dd0be613240ed83db2304033e00945c7f89735083015f3167
       labels:
         app.kubernetes.io/name: dem
         app.kubernetes.io/csi-role: "controller"
@@ -407,12 +407,13 @@ spec:
       serviceAccount: dem-controller-sa
       priorityClassName: "system-cluster-critical"
       hostNetwork: false
+      dnsPolicy: ClusterFirst
       hostAliases: []
       hostIPC: false
       containers:
       # https://github.com/kubernetes-csi/external-attacher
       - name: external-attacher
-        image: registry.k8s.io/sig-storage/csi-attacher:v4.4.0
+        image: "registry.k8s.io/sig-storage/csi-attacher:v4.4.0"
         args:
         - --v=5
         - --leader-election
@@ -430,7 +431,7 @@ spec:
           name: socket-dir
       # https://github.com/kubernetes-csi/external-provisioner
       - name: external-provisioner
-        image: registry.k8s.io/sig-storage/csi-provisioner:v3.6.0
+        image: "registry.k8s.io/sig-storage/csi-provisioner:v3.6.0"
         args:
         - --v=5
         - --leader-election
@@ -467,7 +468,7 @@ spec:
               fieldPath: metadata.name
       # https://github.com/kubernetes-csi/external-resizer
       - name: external-resizer
-        image: registry.k8s.io/sig-storage/csi-resizer:v1.9.0
+        image: "registry.k8s.io/sig-storage/csi-resizer:v1.9.0"
         args:
         - --v=5
         - --leader-election
@@ -504,7 +505,7 @@ spec:
       #  - https://github.com/rook/rook/issues/4178
       #  - https://github.com/kubernetes-csi/external-snapshotter/issues/147#issuecomment-513664310
       - name: external-snapshotter
-        image: registry.k8s.io/sig-storage/csi-snapshotter:v6.3.0
+        image: "registry.k8s.io/sig-storage/csi-snapshotter:v8.2.1"
         args:
         - --v=5
         - --leader-election
@@ -537,8 +538,7 @@ spec:
               apiVersion: v1
               fieldPath: metadata.name
       - name: csi-driver
-        image: docker.io/daniluzlov/k8s-snippets:dcsi-proxy2-v42
-        imagePullPolicy: IfNotPresent
+        image: "docker.io/daniluzlov/k8s-snippets:dcsi-proxy2-v92"
         args:
         - --csi-version=1.5.0
         - --csi-name=org.democratic-csi.proxy

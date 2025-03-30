@@ -17,7 +17,7 @@ helm show values democratic-csi/democratic-csi --version 0.14.7 > ./storage/demo
 
 ```bash
 
-image=docker.io/daniluzlov/k8s-snippets:dcsi-proxy2-v90
+image=docker.io/daniluzlov/k8s-snippets:dcsi-proxy-topology-v13
 helm template \
   dcsi \
   democratic-csi/democratic-csi \

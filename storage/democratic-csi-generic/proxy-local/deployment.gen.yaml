@@ -142,7 +142,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/configmap: 8f2e3817bf8417f14a52d2f97eee1feea323a4adf0c0d9a5fcc1eefe566b271c
+        checksum/configmap: ac0afd76ca2c707d9b0cdf209cc8c5ddc716ef3ba6923544a68efe9b3b7937c5
       labels:
         app.kubernetes.io/name: dem-local
         app.kubernetes.io/csi-role: "node"
@@ -152,6 +152,7 @@ spec:
       priorityClassName: "system-node-critical"
       # Required by iSCSI
       hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       hostAliases: []
       # Required by multipath detach
       hostIPC: true
@@ -159,7 +160,7 @@ spec:
       containers:
       # https://github.com/kubernetes-csi/external-provisioner
       - name: external-provisioner
-        image: registry.k8s.io/sig-storage/csi-provisioner:v3.6.0
+        image: "registry.k8s.io/sig-storage/csi-provisioner:v3.6.0"
         args:
         - --v=5
         - --leader-election
@@ -204,7 +205,7 @@ spec:
       #  - https://github.com/rook/rook/issues/4178
       #  - https://github.com/kubernetes-csi/external-snapshotter/issues/147#issuecomment-513664310
       - name: external-snapshotter
-        image: registry.k8s.io/sig-storage/csi-snapshotter:v6.3.0
+        image: "registry.k8s.io/sig-storage/csi-snapshotter:v8.2.1"
         args:
         - --v=5
         - --leader-election
@@ -239,8 +240,7 @@ spec:
               apiVersion: v1
               fieldPath: metadata.name
       - name: csi-driver
-        image: docker.io/daniluzlov/k8s-snippets:dcsi-proxy2-v45
-        imagePullPolicy: IfNotPresent
+        image: "docker.io/daniluzlov/k8s-snippets:dcsi-proxy2-v92"
         args:
         - --csi-version=1.5.0
         - --csi-name=org.democratic-csi.proxy-local
@@ -309,19 +309,13 @@ spec:
           mountPath: /config
         - name: extra-ca-certs
           mountPath: /tmp/certs
-        - mountPath: /etc/nvme
-          name: etc-nvme
-          readOnly: true
-        - mountPath: /etc/iscsi/
-          name: etc-iscsi
-          readOnly: true
         - mountPath: /mnt/democratic-csi-local-storage
           mountPropagation: Bidirectional
           name: local-storage
         - mountPath: /mnt/connections
           name: connections
       - name: driver-registrar
-        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.9.0
+        image: "registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.9.0"
         args:
         - --v=5
         - --csi-address=/csi-data/csi.sock
@@ -356,7 +350,7 @@ spec:
           mountPath: /var/lib/kubelet
 
       - name: cleanup
-        image: docker.io/busybox:1.32.0
+        image: "docker.io/busybox:1.37.0"
         command:
           - "/bin/sh"
           - "-c"
@@ -421,14 +415,6 @@ spec:
           items:
           - key: extra-ca-certs
             path: extra-ca-certs.crt
-      - hostPath:
-          path: /etc/nvme
-          type: ""
-        name: etc-nvme
-      - hostPath:
-          path: /etc/iscsi/
-          type: ""
-        name: etc-iscsi
       - hostPath:
           path: /mnt/democratic-csi-local-storage
           type: DirectoryOrCreate

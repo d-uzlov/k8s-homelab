@@ -14,22 +14,8 @@ Instead it dynamically reads config from the cluster
 and allows you to use many drivers with many configs
 via a single instance of democratic-csi.
 
-Proxy config format:
-
-```yaml
-driver: proxy
-
-proxy:
-  configFolder: /mnt/connections/
-```
-
-Other values are allowed, and will be used as default values for other drivers.
-
-Other driver config is located in `proxy.configFolder`.
-
-Storage class must have `parameters.connection` set to file name in the config folder (without `.yaml` extension).
-
-`zfs-local-ephemeral-inline`, `objectivefs` are not compatible with proxy.
+Local drivers are not compatible to this deployment. Use special [proxy-local](../proxy-local/readme.md)
+`objectivefs` are not compatible with proxy.
 
 References:
 - https://github.com/d-uzlov/democratic-csi/tree/proxy-driver
@@ -43,7 +29,7 @@ You only need to do this if you change `values.yaml` file.
 helm repo add democratic-csi https://democratic-csi.github.io/charts/
 helm repo update democratic-csi
 helm search repo democratic-csi/democratic-csi --versions --devel | head
-helm show values democratic-csi/democratic-csi --version 0.14.7 > ./storage/democratic-csi-generic/default-values.yaml
+helm show values democratic-csi/democratic-csi --version 0.15.0 > ./storage/democratic-csi-generic/default-values.yaml
 ```
 
 ```bash
@@ -51,7 +37,7 @@ helm show values democratic-csi/democratic-csi --version 0.14.7 > ./storage/demo
 helm template \
   dcsi \
   democratic-csi/democratic-csi \
-  --version 0.14.7 \
+  --version 0.15.0 \
   --values ./storage/democratic-csi-generic/proxy/values.yaml \
   --namespace pv-dem \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' -e '\|^#|d' \
@@ -108,7 +94,7 @@ Don't forget to set up cluster nodes: [client-setup.md](./client-setup.md).
 
 ```bash
 
-connections_folder=./storage/democratic-csi-generic/proxy/env/connections/
+connections_folder=./storage/democratic-csi-generic/proxy/env/connections
 file_args=()
 for file in $(/usr/bin/ls $connections_folder/*); do
   echo adding $file
@@ -126,4 +112,5 @@ kl create secret generic connections \
 kl apply -f ./storage/democratic-csi-generic/proxy/env/storage-classes/
 
 kl get sc
+
 ```

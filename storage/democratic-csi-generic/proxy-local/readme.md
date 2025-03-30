@@ -1,38 +1,14 @@
 
-# Proxy driver
+# Proxy local
 
-In democratic-csi there are drivers
-that can provision and mount volumes.
-Usually you deploy an instance of democratic-csi
-with a fixed config to use a driver.
-If you need to connect to 2 different servers,
-or use different protocols, or 2 different datasets,
-you need to deploy a second instance of democratic-csi.
+Same as [proxy](../proxy/readme.md) deployment but for `-local-` drivers.
 
-`proxy` driver solves this issue. It doesn't immediately connect to any server.
-Instead it dynamically reads config from the cluster
-and allows you to use many drivers with many configs
-via a single instance of democratic-csi.
+`zfs-local-ephemeral-inline` is not compatible with proxy.
 
-Proxy config format:
-
-```yaml
-driver: proxy
-
-proxy:
-  configFolder: /mnt/connections/
-```
-
-Other values are allowed, and will be used as default values for other drivers.
-
-Other driver config is located in `proxy.configFolder`.
-
-Storage class must have `parameters.connection` set to file name in the config folder (without `.yaml` extension).
-
-`zfs-local-ephemeral-inline`, `objectivefs` are not compatible with proxy.
+Non-local drivers are not compatible: use the main deployment for them.
 
 References:
-- https://github.com/d-uzlov/democratic-csi/tree/proxy-driver
+- https://github.com/democratic-csi/democratic-csi/pull/433
 
 # Generate config
 
@@ -42,7 +18,7 @@ You only need to do this if you change `values.yaml` file.
 helm repo add democratic-csi https://democratic-csi.github.io/charts/
 helm repo update democratic-csi
 helm search repo democratic-csi/democratic-csi --versions --devel | head
-helm show values democratic-csi/democratic-csi --version 0.14.7 > ./storage/democratic-csi-generic/default-values.yaml
+helm show values democratic-csi/democratic-csi --version 0.15.0 > ./storage/democratic-csi-generic/default-values.yaml
 ```
 
 ```bash
@@ -50,7 +26,7 @@ helm show values democratic-csi/democratic-csi --version 0.14.7 > ./storage/demo
 helm template \
   dcsi \
   democratic-csi/democratic-csi \
-  --version 0.14.7 \
+  --version 0.15.0 \
   --values ./storage/democratic-csi-generic/proxy-local/values.yaml \
   --namespace pv-dem-local \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' -e '\|^#|d' \
@@ -76,7 +52,7 @@ kl -n pv-dem-local get pod -o wide
 kl -n pv-dem-local get csistoragecapacity
 
 # view logs if something does not work
-nodeName=w1.k8s.lan
+nodeName=w2.k8s.lan
 nodePod=$(kl -n pv-dem-local get pod -o name --field-selector spec.nodeName=$nodeName -l app.kubernetes.io/csi-role=node)
 kl -n pv-dem-local logs $nodePod csi-driver > ./node.log
 kl -n pv-dem-local logs $nodePod external-provisioner > ./node-external-provisioner.log
@@ -89,5 +65,37 @@ kl -n pv-dem-local logs $nodePod external-provisioner > ./node-external-provisio
 
 kl delete -k ./storage/democratic-csi-generic/proxy-local/
 kl delete ns pv-dem-local
+
+```
+
+# Storage classes
+
+First you need to create configuration files for your storage classes:
+- [Linux ZFS server](./generic-zfs-storage-classes.md)
+- - [generic-zfs-server-setup.md](./generic-zfs-server-setup.md)
+- [Truenas server](./truenas-storage-classes.md)
+
+Don't forget to set up cluster nodes: [client-setup.md](./client-setup.md).
+
+```bash
+
+connections_folder=./storage/democratic-csi-generic/proxy-local/env/connections
+file_args=()
+for file in $(/usr/bin/ls $connections_folder/*); do
+  echo adding $file
+  file_args+=("--from-file=$file")
+done
+echo args ${file_args[@]}
+
+kl create secret generic connections \
+  --save-config \
+  --dry-run=client \
+  ${file_args[@]} \
+  -o yaml | \
+  kl -n pv-dem-local apply -f -
+
+kl apply -f ./storage/democratic-csi-generic/proxy-local/env/storage-classes/
+
+kl get sc
 
 ```
