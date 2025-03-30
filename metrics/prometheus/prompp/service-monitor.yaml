@@ -1,0 +1,78 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: prompp
+  labels:
+    prometheus.io/instance: prompp
+spec:
+  selector:
+    matchLabels:
+      app: prompp
+      self-monitor: enable
+  # seems to generate a shorter config?
+  # with RelabelConfig:
+  # - watches for all possible endpoint in a single WATCH query
+  # - drops endpoints that don't match inside prometheus
+  # - there are more unused endpoint in service discovery listing, but lod on k8s is O(1)
+  # - O(1) can be very big in large clusters
+  # with RoleSelector:
+  # - creates a separate WATCH query for each unique selector
+  # - load on k8s is O(N)
+  selectorMechanism: RelabelConfig
+  # namespaceSelector:
+  #   matchNames:
+  #   - prometheus
+  endpoints:
+  - port: http-web
+    path: /metrics
+    metricRelabelings:
+    - action: keep
+      sourceLabels:
+      - __name__
+      regex: "\
+        prometheus_build_info|\
+        prometheus_config_last_reload_success_timestamp_seconds|\
+        prometheus_config_last_reload_successful|\
+        prometheus_engine_queries|\
+        prometheus_engine_queries_concurrent_max|\
+        prometheus_engine_query_duration_seconds.*|\
+        prometheus_notifications_.*|\
+        prometheus_remote_storage_.*|\
+        prometheus_rule_evaluation_.*|\
+        prometheus_rule_group_.*|\
+        prometheus_sd_refresh_failures_total|\
+        prometheus_sd_kubernetes_failures_total|\
+        prometheus_target_interval_length_.*|\
+        prometheus_target_metadata_cache_entries|\
+        prometheus_target_scrape_pool_exceeded_label_limits_total|\
+        prometheus_target_scrape_pool_exceeded_target_limit_total|\
+        prometheus_target_scrapes_.*|\
+        prometheus_target_sync_failed_total|\
+        prometheus_target_sync_length_.*|\
+        prometheus_tsdb_compaction_duration_seconds_bucket.*|\
+        prometheus_tsdb_compactions_failed_total|\
+        prometheus_tsdb_compactions_total|\
+        prometheus_tsdb_compactions_triggered_total|\
+        prometheus_tsdb_head_chunks|\
+        prometheus_tsdb_head_samples_appended_total|\
+        prometheus_tsdb_head_series|\
+        prometheus_tsdb_reloads_failures_total|\
+        prometheus_tsdb_reloads_total|\
+        "
+  - port: reloader-web
+    path: "/metrics"
+    metricRelabelings:
+    - action: keep
+      sourceLabels:
+      - __name__
+      regex: "\
+        reloader_config_apply_operations_failed_total|\
+        reloader_config_apply_operations_total|\
+        reloader_last_reload_success_timestamp_seconds|\
+        reloader_last_reload_successful|\
+        reloader_reloads_failed_total|\
+        reloader_reloads_total|\
+        reloader_watch_errors_total|\
+        reloader_watch_events_total|\
+        "

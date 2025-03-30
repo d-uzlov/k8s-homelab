@@ -1,0 +1,108 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prompp
+  labels:
+    app: prompp
+    self-monitor: enable
+spec:
+  selector:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/instance: prompp
+  ports:
+  - name: http-web
+    port: 9090
+    targetPort: 9090
+  - name: reloader-web
+    appProtocol: http
+    port: 8080
+    targetPort: reloader-web
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: prompp
+  labels:
+    app: prompp
+spec:
+  version: v2.53.2
+  # paused: false
+  replicas: 0
+  # shards: 1
+  logLevel:  debug
+  logFormat:  logfmt
+  # listenLocal: false
+  enableAdminAPI: true
+  scrapeInterval: 10s
+  evaluationInterval: 10s
+  retention: 10y
+  # tsdb:
+    # outOfOrderTimeWindow: 0s
+  # routePrefix: "/"
+  securityContext:
+    fsGroup: 64535
+    runAsGroup: 64535
+    runAsNonRoot: true
+    runAsUser: 64535
+  serviceAccountName: prometheus
+  serviceMonitorSelector:
+    matchLabels:
+      prometheus.io/instance: prompp2
+  serviceMonitorNamespaceSelector: {}
+  podMonitorSelector:
+    matchLabels:
+      prometheus.io/instance: prompp
+  podMonitorNamespaceSelector: {}
+  probeSelector:
+    matchLabels:
+      prometheus.io/instance: prompp
+  probeNamespaceSelector: {}
+  ruleSelector:
+    matchLabels:
+      prometheus.io/instance: prompp
+  ruleNamespaceSelector: {}
+  scrapeConfigSelector:
+    matchLabels:
+      instance.prometheus.io/prompp: no-timestamp
+  scrapeConfigNamespaceSelector: {}
+  # affinity:
+  #   podAntiAffinity:
+  #     preferredDuringSchedulingIgnoredDuringExecution:
+  #     - weight: 100
+  #       podAffinityTerm:
+  #         topologyKey: kubernetes.io/hostname
+  #         labelSelector:
+  #           matchExpressions:
+  #           # prometheus operator creates pods with app.kubernetes.io/name label
+  #           - {key: app.kubernetes.io/name, operator: In, values: [prompp]}
+  # portName: http-web
+  # volumes:
+  # - emptyDir: {}
+  #   name: tmp
+  # volumeMounts:
+  # - mountPath: /tmp
+  #   name: tmp
+  # hostNetwork: false
+  # containers:
+  # - name: prometheus
+  #   livenessProbe:
+  #     failureThreshold: 10
+  image: prompp/prompp:2.53.2-0.1.5  # Replace Prometheus with Deckhouse Prom++
+  imagePullPolicy: Always
+  initContainers:
+  - name: prompptool
+    image: prompp/prompp:2.53.2-0.1.5
+    imagePullPolicy: Always
+    command:
+      - /bin/prompptool
+      - "--working-dir=/prometheus"
+      - "walvanilla"
+    volumeMounts:
+    - name: db
+      mountPath: /prometheus
+      subPath: prometheus-db
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"

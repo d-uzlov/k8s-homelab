@@ -60,6 +60,7 @@ kl label ns prometheus-operator pod-security.kubernetes.io/enforce=baseline
 
 kl apply -k ./metrics/prometheus-operator/
 kl -n prometheus-operator get pod -o wide
+kl -n prometheus-operator logs deployments/prometheus-operator > ./prom-operator.log
 
 ```
 

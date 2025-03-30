@@ -8,8 +8,8 @@ metadata:
     self-monitor: enable
 spec:
   selector:
-    # prometheus operator creates pods with app.kubernetes.io/name label
     app.kubernetes.io/name: prometheus
+    app.kubernetes.io/instance: main
   ports:
   - name: http-web
     port: 9090
@@ -88,3 +88,12 @@ spec:
   - name: prometheus
     livenessProbe:
       failureThreshold: 10
+  - name: config-reloader
+    args:
+    - --listen-address=:8080
+    - --reload-url=http://127.0.0.1:9090/-/reload
+    - --config-file=/etc/prometheus/config/prometheus.yaml.gz
+    - --config-envsubst-file=/etc/prometheus/config_out/prometheus.env.yaml
+    - --watched-dir=/etc/prometheus/rules/prometheus-main-rulefiles-0
+    - --log-level=debug
+    - --watch-interval=10s

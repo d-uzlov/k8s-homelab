@@ -1,0 +1,164 @@
+---
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: kubelet-main-prompp
+  namespace: prometheus
+  labels:
+    instance.prometheus.io/prompp: no-timestamp
+spec:
+  kubernetesSDConfigs:
+  - role: Node
+  scheme: HTTPS
+  metricsPath: /metrics
+  tlsConfig:
+    ca:
+      configMap:
+        name: kube-root-ca.crt
+        key: ca.crt
+  authorization:
+    credentials:
+      name: prometheus-sa-token
+      key: token
+  honorLabels: true
+  honorTimestamps: false
+  trackTimestampsStaleness: true
+  relabelings:
+  - targetLabel: job
+    replacement: kubelet-main-prompp
+  - targetLabel: cluster_type
+    replacement: k8s
+  metricRelabelings:
+  - action: keep
+    sourceLabels: [ __name__ ]
+    regex: "\
+      kubelet_node_name|\
+      kubernetes_build_info|\
+      kubelet_active_pods|\
+      kubelet_desired_pods|\
+      kubelet_running_pods|\
+      kubelet_working_pods|\
+      kubelet_container_log_filesystem_used_bytes|\
+      kubelet_pod_worker_.*|\
+      kubelet_volume_stats.*|\
+      kubelet_pleg_.*|\
+      kubelet_evented_pleg_.*|\
+      "
+---
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: kubelet-cadvisor-prompp
+  namespace: prometheus
+  labels:
+    instance.prometheus.io/prompp: no-timestamp
+spec:
+  kubernetesSDConfigs:
+  - role: Node
+  scheme: HTTPS
+  metricsPath: /metrics/cadvisor
+  tlsConfig:
+    ca:
+      configMap:
+        name: kube-root-ca.crt
+        key: ca.crt
+  authorization:
+    credentials:
+      name: prometheus-sa-token
+      key: token
+  honorLabels: true
+  honorTimestamps: false
+  trackTimestampsStaleness: true
+  relabelings:
+  - targetLabel: job
+    replacement: kubelet-cadvisor-prompp
+  - targetLabel: cluster_type
+    replacement: k8s
+  - targetLabel: node
+    sourceLabels: [ instance ]
+  metricRelabelings:
+  # drop metrics for dummy cgroup containers without name
+  - sourceLabels:
+    - __name__
+    - container
+    action: drop
+    # select only metrics that are linked to containers
+    # for example, network metrics do not have container label by design
+    regex: 'container_(cpu_|fs_|blkio_|memory_|oom_|start_time_|threads|processes|sockets|ulimits_soft).*;'
+    separator: ;
+  - sourceLabels:
+    - __name__
+    - interface
+    action: drop
+    # drop lxc* interface metrics
+    # they are kinda impossible to correlate with k8s objects
+    # they don't seem to have any real traffic reported
+    # but they give huge cardinality for pods with hostNetwork enabled
+    regex: 'container_network_.*;lxc.*'
+    separator: ;
+  # iops metrics don't seems to be useful ?
+  # - sourceLabels: [__name__]
+  #   action: drop
+  #   regex: 'container_fs_reads_total|container_fs_writes_total'
+  # Drop less useful container CPU metrics.
+  - sourceLabels: [__name__]
+    action: drop
+    regex: 'container_cpu_(cfs_throttled_seconds_total|load_average_10s|system_seconds_total|user_seconds_total)'
+  # Drop less useful container / always zero filesystem metrics.
+  - sourceLabels: [__name__]
+    action: drop
+    regex: 'container_fs_(io_current|io_time_seconds_total|io_time_weighted_seconds_total|reads_merged_total|sector_reads_total|sector_writes_total|writes_merged_total)'
+  # Drop less useful / always zero container memory metrics.
+  - sourceLabels: [__name__]
+    action: drop
+    # regex: 'container_memory_swap|container_memory_kernel_usage|container_memory_mapped_file'
+    regex: 'container_memory_swap|container_memory_kernel_usage'
+  # Drop less useful container process metrics.
+  - sourceLabels: [__name__]
+    action: drop
+    regex: 'container_(file_descriptors|tasks_state|threads_max)'
+  # Drop container spec metrics that overlap with kube-state-metrics.
+  - sourceLabels: [__name__]
+    action: drop
+    regex: 'container_spec.*'
+  # Drop cgroup metrics with no pod.
+  - sourceLabels: [id, pod]
+    action: drop
+    regex: '.+;'
+  - sourceLabels: [__name__]
+    action: drop
+    regex: container_last_seen
+  - sourceLabels: [ __name__, scope ]
+    action: drop
+    # container_memory_failures_total{scope="container"} == container_memory_failures_total{scope="hierarchy"}
+    regex: container_memory_failures_total;hierarchy
+    separator: ;
+# ---
+# apiVersion: monitoring.coreos.com/v1alpha1
+# kind: ScrapeConfig
+# metadata:
+#   name: kubelet-probes
+#   namespace: prometheus
+#   labels:
+#     prometheus.io/instance: main
+# spec:
+#   kubernetesSDConfigs:
+#   - role: Node
+#   scheme: HTTPS
+#   metricsPath: /metrics/probes
+#   tlsConfig:
+#     ca:
+#       configMap:
+#         name: kube-root-ca.crt
+#         key: ca.crt
+#   authorization:
+#     credentials:
+#       name: prometheus-sa-token
+#       key: token
+#   honorLabels: true
+#   honorTimestamps: true
+#   relabelings:
+#   # - action: labeldrop
+#   #   regex: endpoint|instance
+#   - targetLabel: job
+#     replacement: kubelet-probes
