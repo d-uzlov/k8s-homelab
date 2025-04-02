@@ -3,29 +3,53 @@
 
 This file is a cheat sheet for various maintenance tasks for a cluster created using kubeadm.
 
-# Change kubeadm config
+# Change kubeadm cluster config
 
 References:
 - https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-reconfigure/
 
+Check out example [cluster config](./kubeadm-config/cluster.yaml).
+
+Cluster config is a composite config for:
+- apiserver
+- controller-manager
+- scheduler
+- etcd
+
 ```bash
-# etcd, scheduler, apiserver, controllerManager
+
+# Option 1: download config, edit it, then push it back to cluster
 kl -n kube-system get cm kubeadm-config -o 'go-template={{index .data "ClusterConfiguration"}}' > ./docs/k8s/env/cluster-config.yaml
+
+kl create cm kubeadm-config --dry-run=client -o yaml --from-file ClusterConfiguration=./docs/k8s/env/cluster-config.yaml | kl -n kube-system replace cm kubeadm-config -f -
+
+# Option 2: edit config in place
 kl -n kube-system edit cm kubeadm-config
 
-# kubelet
+# when configmap contains desired config,
+# ssh into each master nodes and run kubeadm
+sudo kubeadm upgrade node phase control-plane --patches ./patches/
+
+```
+
+# Change kubelet config
+
+```bash
+
+# Option 1: download config, edit it, then push it back to cluster
 kl -n kube-system get cm kubelet-config -o 'go-template={{index .data "kubelet"}}' > ./docs/k8s/env/kubelet-config.yaml
-# edit the file, then push it back to cluster
-kl create cm kubelet-config --dry-run=client -o yaml --from-file kubelet=./docs/k8s/env/kubelet-config.yaml | kl -n kube-system replace cm kubelet-config -f -
-# or just edit it in place
+kl create cm kubelet-config --dry-run=client -o yaml --from-file kubelet=./docs/k8s/env/kubelet-cp.k8s.lan.yaml | kl -n kube-system replace cm kubelet-config -f -
+
+# Option 2: edit config in place
 kl -n kube-system edit cm kubelet-config
 
 # ssh into each node and run:
-sudo kubeadm upgrade node phase kubelet-config
+sudo kubeadm upgrade node phase kubelet-config --patches ./patches/
 # if something is broken, and you can't connect from node to cluster, you can edit kubelet locally
 sudo nano /var/lib/kubelet/config.yaml
 # apply new config
 sudo systemctl restart kubelet
+
 ```
 
 # Remove node from cluster
@@ -56,6 +80,7 @@ References:
 - https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/change-package-repository/
 
 ```bash
+
 # check out the latest stable release
 # see also: https://kubernetes.io/releases/
 echo $(curl -Ls https://dl.k8s.io/release/stable.txt)
@@ -74,7 +99,7 @@ sudo apt autoremove -y
 
 apt-cache policy kubeadm | head
 
-new_package_version=1.32.1
+new_package_version=1.32.3
 sudo apt-mark unhold kubeadm kubelet && \
 sudo apt-get install -y kubeadm="$new_package_version"'-*' kubelet="$new_package_version"'-*' && \
 sudo apt-mark hold kubeadm kubelet &&
@@ -107,52 +132,30 @@ sudo kubeadm upgrade node
 # Edit kubelet args
 
 ```bash
+
 sudo cat /etc/default/kubelet
 echo "KUBELET_EXTRA_ARGS=--housekeeping-interval=5s" | sudo tee /etc/default/kubelet
+
 ```
 
 References:
 - https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-reconfigure/#reflecting-clusterconfiguration-changes-on-control-plane-nodes
 - https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/kubelet-integration/#the-kubelet-drop-in-file-for-systemd
 
-# Change kubelet config
-
-References:
-- https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-reconfigure/
-
-```bash
-# check current kubelet config
-# (run this on a cluster node)
-sudo cat /var/lib/kubelet/config.yaml
-
-# generate new config
-# fill in your values
-control_plane_endpoint=cp.k8s.lan
-serverTLSBootstrap=true
-sed \
-  -e "s/REPLACE_ME_SERVER_TLS_BOOTSTRAP/$serverTLSBootstrap/" \
-  ./docs/k8s/kubeadm-config/kubelet.yaml \
-  > ./docs/k8s/env/kubelet-$control_plane_endpoint.yaml
-
-kl -n kube-system create cm kubelet-config --from-file=kubelet=./docs/k8s/env/kubelet-$control_plane_endpoint.yaml -o yaml --dry-run=client | kl apply -f -
-
-# then run this on all of the nodes
-sudo kubeadm upgrade node phase kubelet-config
-# you can also edit /var/lib/kubelet/kubeadm-flags.env to adjust node-specific config
-sudo systemctl restart kubelet
-```
-
 # Update static pod manifests
 
 ```bash
+
 sudo kubeadm init phase control-plane all --config ./kconf.yaml
 sudo kubeadm init phase etcd local --config ./kconf.yaml
 sudo kubeadm init phase upload-certs --upload-certs --config ./kconf.yaml
+
 ```
 
 # Kubelet logs
 
 ```bash
+
 # it's convenient to delete all logs, for easier reading
 # WARNING: this will delete all node logs, not just from kubelet
 sudo journalctl --rotate && sudo journalctl -m --vacuum-time=1s
@@ -162,6 +165,7 @@ sudo systemctl restart kubelet
 journalctl -x --unit kubelet
 # show last 50 lines
 journalctl -x -n 50 --unit kubelet
+
 ```
 
 # Attempt at changing the master node IP address

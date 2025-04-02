@@ -163,3 +163,19 @@ kl describe node | grep -e PodCIDR -e Name:
 kl -n pgo-cnpg-test get secret postgres-app -o json | jq -r '.data | map(@base64d) | .[]'
 
 ```
+
+# Kubeconfig certificate expiration
+
+```bash
+
+kubeconfigPath=./_env/cp.k8s.lan.yaml
+
+for certContent in $(cat $kubeconfigPath | grep client-certificate-data | cut -f2 -d : | tr -d ' '); do
+  echo $certContent | base64 -d | openssl x509 -text -out - | grep "Not After"
+done
+
+# if the admin certificate has expired,
+# run the following on the master node
+sudo kubeadm certs renew admin.conf
+
+```
