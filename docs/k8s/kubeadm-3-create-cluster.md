@@ -44,7 +44,7 @@ For example: [kube-vip for control plane](../../network/kube-vip-control-plane/r
 
 ```bash
 # add key or user if needed
-cp_node1=m1.k8s.lan
+cp_node1=
 # you can print the default config
 # this is just for reference, you don't really need it
 ssh $cp_node1 sudo kubeadm config print init-defaults --component-configs KubeletConfiguration,KubeProxyConfiguration > ./docs/k8s/env/kconf-default.yaml
@@ -73,12 +73,17 @@ sed -e "s/REPLACE_ME_CONTROL_PLANE_ENDPOINT/$control_plane_endpoint/" \
 # review kconf.yaml before copying it to make sure everything is OK
 scp ./docs/k8s/env/kconf-$control_plane_endpoint.yaml $cp_node1:kconf.yaml
 
+# Later you will be able to configure auth without changes in the apiserver config.
+# apiserver watches changes in the auth-config file.
+ssh $cp_node1 sudo mkdir -p /etc/k8s-auth/
+ssh $cp_node1 sudo tee '>' /dev/null /etc/k8s-auth/auth-config.yaml < ./docs/k8s/auth-config-init.yaml
+
 ```
 
 # Setup cluster
 
 ```bash
-cp_node1=m2.k8s.lan
+cp_node1=
 ssh $cp_node1 kubeadm config validate --config ./kconf.yaml
 
 # if you are using external etcd, copy etcd certs

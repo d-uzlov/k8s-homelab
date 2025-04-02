@@ -1,0 +1,59 @@
+---
+apiVersion: apiserver.config.k8s.io/v1beta1
+kind: AuthenticationConfiguration
+jwt:
+- issuer:
+    # url must be unique across all authenticators.
+    # url must not conflict with issuer configured in --service-account-issuer.
+    url: https://auth.example.com/application/o/app/
+    discoveryURL: https://auth.example.com/application/o/app/.well-known/openid-configuration
+    audiences:
+    # client-id
+    - uroZ7IV5HyJs2aJ2AihcBOno1
+    audienceMatchPolicy: MatchAny
+  claimValidationRules:
+  # example: checking claim
+  # - claim: hd
+  #   requiredValue: example.com
+  # - expression: 'claims.hd == "example.com"'
+  # iat is "issued at"
+  # exp is expiration
+  - expression: 'claims.exp - claims.iat <= 86400'
+    message: total token lifetime must not exceed 24 hours
+  claimMappings:
+    # username is the only required attribute.
+    username:
+      # sub is short for subject
+      claim: sub
+      prefix: "authentik:"
+      # Mutually exclusive with username.claim and username.prefix.
+      # expression is a CEL expression that evaluates to a string.
+      #
+      # 1.  If username.expression uses 'claims.email', then 'claims.email_verified' must be used in
+      #     username.expression or extra[*].valueExpression or claimValidationRules[*].expression.
+      #     An example claim validation rule expression that matches the validation automatically
+      #     applied when username.claim is set to 'email' is 'claims.?email_verified.orValue(true) == true'.
+      #     By explicitly comparing the value to true, we let type-checking see the result will be a boolean, and
+      #     to make sure a non-boolean email_verified claim will be caught at runtime.
+      # 2.  If the username asserted based on username.expression is the empty string, the authentication
+      #     request will fail.
+      # expression: 'claims.username + ":external-user"'
+    groups:
+      claim: sub
+      prefix: ""
+      # Mutually exclusive with groups.claim and groups.prefix.
+      # expression is a CEL expression that evaluates to a string or a list of strings.
+      # expression: 'claims.roles.split(",")'
+    uid:
+      claim: 'sub'
+      # Mutually exclusive with uid.claim
+      # expression is a CEL expression that evaluates to a string.
+      # expression: 'claims.sub'
+  userValidationRules:
+    # expression is a CEL expression that evaluates to a boolean.
+    # all the expressions must evaluate to true for the user to be valid.
+  - expression: "!user.username.startsWith('system:')"
+    # Message customizes the error message seen in the API server logs when the validation fails.
+    message: 'username cannot used reserved system: prefix'
+  - expression: "user.groups.all(group, !group.startsWith('system:'))"
+    message: 'groups cannot used reserved system: prefix'

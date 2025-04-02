@@ -3,9 +3,16 @@
 
 This file describes how to create and/or configure "flows" for different actions:
 
-- [Create account](#enrollment-creating-account)
+- [Device Authorization Grant](#activate-device-authorization-grant--device-flow)
+- [Customize login page](#customize-login-page)
+- [Create account](#enrollment--create-account)
 - [Password recovery via email](#email-settings)
-- [Passwordless auth via WebAuthn]()
+- [Passwordless auth via WebAuthn](#passwordless-auth-via-webauthn)
+
+# Activate RFC 8628 Device Authorization Grant / Device flow
+
+- `Admin interface -> System -> Brands -> authentik-default -> Edit -> Default Flows -> Device code flow`
+- - Set to `default-source-pre-authentication`
 
 # Customize login page
 
@@ -15,7 +22,7 @@ Show password field on the same page instead of checking username first:
 - - `Stage Bindings -> default-authentication-identification -> Edit Stage`
 - - - `Password stage`: select `default-authentication-password`
 
-# Enrollment
+# Enrollment / Create account
 
 References:
 - https://www.youtube.com/watch?v=mGOTpRfulfQ
@@ -77,11 +84,11 @@ In case documentation has changed, you can find a January 2025 copy of the recov
 [flows-recovery-email-verification.yaml](./flows-recovery-email-verification-408d6afeff2fbf276bf43a949e332ef6.yaml).
 
 Import and enable this flow in authentik settings:
--  `Admin interface -> Flows and Stages -> Flows -> Import`
--  `Admin interface -> System -> Brands -> authentik-default -> Edit -> Default Flows -> Recovery flow`
+- `Admin interface -> Flows and Stages -> Flows -> Import`
+- `Admin interface -> System -> Brands -> authentik-default -> Edit -> Default Flows -> Recovery flow`
 
 You can customize email appearance:
--  `Admin interface -> Flows and Stages -> Flows -> (click on name) default-recovery-flow -> Stage Bindings -> default-recovery-email -> Edit Stage`
+- `Admin interface -> Flows and Stages -> Flows -> (click on name) default-recovery-flow -> Stage Bindings -> default-recovery-email -> Edit Stage`
 
 Add `Forgot username or password?` button on the main login page:
 - `Flows and Stages -> Flows -> default-authentication-flow`

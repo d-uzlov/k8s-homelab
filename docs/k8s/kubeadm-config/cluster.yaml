@@ -4,7 +4,7 @@ apiVersion: kubeadm.k8s.io/v1beta4
 kind: ClusterConfiguration
 controlPlaneEndpoint: REPLACE_ME_CONTROL_PLANE_ENDPOINT
 clusterName: kubernetes
-kubernetesVersion: v1.32.1
+kubernetesVersion: v1.32.3
 encryptionAlgorithm: ECDSA-P256
 networking:
   dnsDomain: cluster.local
@@ -27,6 +27,14 @@ apiServer:
     # the default value is /registry
   - name: etcd-prefix
     value: /registry
+  - name: authentication-config
+    value: /etc/k8s-auth/auth-config.yaml
+  extraVolumes:
+  - name: auth-config
+    hostPath: /etc/k8s-auth/
+    mountPath: /etc/k8s-auth/
+    readOnly: true
+    pathType: Directory
 controllerManager:
   extraArgs:
     # required for prometheus metrics gathering
@@ -37,6 +45,9 @@ scheduler:
     # required for prometheus metrics gathering
   - name: bind-address
     value: 0.0.0.0
+# you can disable kube-proxy during init phase
+# proxy:
+#   disabled: true
 etcd:
 # vvvvv - remove when using external etcd - vvvvv
   local:
