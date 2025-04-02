@@ -1,0 +1,60 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: postgres
+spec:
+  instances: 2
+  primaryUpdateStrategy: unsupervised
+  postgresql: {}
+    # parameters:
+    #   shared_buffers: 256MB
+    #   pg_stat_statements.max: '10000'
+    #   pg_stat_statements.track: all
+    #   auto_explain.log_min_duration: '10s'
+    # pg_hba:
+    #   - host all all 10.244.0.0/16 md5
+  bootstrap:
+    initdb:
+      database: app
+      owner: app
+      # secret:
+      # the secret should be of type kubernetes.io/basic-auth
+      # https://cloudnative-pg.io/documentation/1.25/bootstrap/#bootstrap-an-empty-cluster-initdb
+      #   name: cluster-example-app-user
+  # enableSuperuserAccess: true
+  # superuserSecret:
+  #   name: cluster-example-superuser
+  storage:
+    size: 1Gi
+    storageClass: AUTOREPLACE_STORAGE_CLASS
+  managed:
+    services:
+      disabledDefaultServices: ["ro", "r"]
+  backup:
+    barmanObjectStore:
+      endpointURL: AUTOREPLACE
+      destinationPath: AUTOREPLACE
+      s3Credentials:
+        accessKeyId:
+          name: postgres-backup-credentials
+          key: key
+        secretAccessKey:
+          name: postgres-backup-credentials
+          key: secret
+      wal:
+        compression: snappy
+        # encryption: AES256
+      data:
+        compression: snappy
+        # encryption: AES256
+        # immediateCheckpoint: false
+        # jobs: 2
+    retentionPolicy: 30d
+  # affinity:
+    # enablePodAntiAffinity: true # default is true
+    # podAntiAffinityType: preferred
+    # topologyKey: failure-domain.beta.kubernetes.io/zone
+  # nodeMaintenanceWindow:
+  #   inProgress: false
+  #   reusePVC: false

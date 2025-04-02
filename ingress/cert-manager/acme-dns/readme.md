@@ -52,9 +52,23 @@ ns_name=ns1.acme.example.org
 admin_email=admin.example.org
 EOF
 
-mkdir -p ./ingress/cert-manager/acme-dns/db/env/
- cat << EOF > ./ingress/cert-manager/acme-dns/db/env/postgres-sc.env
+mkdir -p ./ingress/cert-manager/acme-dns/postgres-cnpg/env/
+ cat << EOF > ./ingress/cert-manager/acme-dns/postgres-cnpg/env/postgres-sc.env
 postgres_storage_class=nvmeof
+EOF
+
+# make sure that bucket_path is empty
+# otherwise cnpg will refuse to upload backups
+# apparently it shouldn't even start, but currently there is only error in logs:
+#     WAL archive check failed for server postgres: Expected empty archive
+ cat << EOF >  ./ingress/cert-manager/acme-dns/postgres-cnpg/env/backup-s3.env
+server_address=http://nas.example.com:9000/
+bucket_path=s3://postgres-test/cm-acme-dns/
+EOF
+
+ cat << EOF >  ./ingress/cert-manager/acme-dns/postgres-cnpg/env/backup-s3-credentials.env
+key=dmzER5pleUdusVaG9n8d
+secret=zD07Jfk483DAJU8soRLZ4x9xdbtsU1QPcnU2eCp7
 EOF
 
 ```
@@ -70,9 +84,14 @@ References:
 kl create ns cm-acme-dns
 kl label ns cm-acme-dns pod-security.kubernetes.io/enforce=baseline
 
-kl apply -k ./ingress/cert-manager/acme-dns/db/
-kl -n cm-acme-dns describe postgresql postgres
-kl -n cm-acme-dns get pods -o wide -L spilo-role
+kl apply -k ./ingress/cert-manager/acme-dns/postgres-cnpg/
+kl -n cm-acme-dns get cluster
+kl -n cm-acme-dns describe cluster postgres
+kl -n cm-acme-dns get pvc
+kl -n cm-acme-dns get pods -o wide -L role -L cnpg.io/jobRole
+kl -n cm-acme-dns get svc
+kl -n cm-acme-dns get secrets
+kl cnpg -n cm-acme-dns status postgres
 
 kl apply -f ./ingress/cert-manager/acme-dns/service-dns.yaml
 kl apply -f ./ingress/cert-manager/acme-dns/service-management.yaml
@@ -93,7 +112,7 @@ kl delete -k ./ingress/cert-manager/acme-dns/ingress-route/
 kl delete -k ./ingress/cert-manager/acme-dns/
 kl delete -f ./ingress/cert-manager/acme-dns/service-dns.yaml
 kl delete -f ./ingress/cert-manager/acme-dns/service-management.yaml
-kl delete -f ./ingress/cert-manager/acme-dns/postgres.yaml
+kl delete -k ./ingress/cert-manager/acme-dns/postgres-cnpg/
 kl delete ns cm-acme-dns
 ```
 
@@ -103,6 +122,7 @@ This just checks that acme-dns is working in a vacuum.
 This can be useful to check database connectivity and stuff.
 
 ```bash
+
 # test creating a domain for ACME
 acmedns_mgmt="https://"$(kl -n cm-acme-dns get httproute management -o go-template --template "{{ (index .spec.hostnames 0)}}")
 acmedns_mgmt="http://"$(kl -n cm-acme-dns get svc management -o go-template --template "{{ (index .status.loadBalancer.ingress 0).ip}}")
@@ -123,6 +143,7 @@ dig $(echo $registration | jq .fulldomain -r) @$acmedns_lb TXT
 # after you have external access set up, check via google
 nslookup -type=txt $(echo $registration | jq .fulldomain -r) 8.8.8.8
 dig $(echo $registration | jq .fulldomain -r) @8.8.8.8 TXT
+
 ```
 
 # External DNS setup

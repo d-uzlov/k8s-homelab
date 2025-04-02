@@ -129,6 +129,10 @@ kl -n pgo-cnpg-test get svc
 kl -n pgo-cnpg-test get secrets
 kl cnpg -n pgo-cnpg-test status postgres
 
+# show connection secret contents
+kl -n pgo-cnpg-test get secret postgres-app -o json | jq -r '.data | map(@base64d)'
+kl -n pgo-cnpg-test get secret postgres-app -o json | jq -r '.data | map(@base64d) | .[]'
+
 # list users
 kl -n pgo-cnpg-test exec pods/postgres-1 -- psql template1 --command '\du'
 # list databases
@@ -137,6 +141,8 @@ kl -n pgo-cnpg-test exec pods/postgres-1 -- psql --list
 # "cnpg psql" can automatically finds the master instance
 kl cnpg -n pgo-cnpg-test psql postgres -- --command '\du'
 kl cnpg -n pgo-cnpg-test psql postgres -- --list
+# run interactive psql
+kl cnpg -n pgo-cnpg-test psql postgres
 
 # trigger a backup
 kl cnpg backup -n pgo-cnpg-test postgres
@@ -170,6 +176,6 @@ kl cnpg -n pgo-cnpg-test pgadmin4 --dry-run postgres | kl delete -f -
 kl delete -k ./storage/postgres-cnpg/test/
 kl delete ns pgo-cnpg-test
 
-# backups seem to survive namespace deletion
+# backup files seem to survive namespace deletion
 
 ```

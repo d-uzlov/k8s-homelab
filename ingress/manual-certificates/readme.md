@@ -16,6 +16,7 @@ will be treated as the main one by this repo,
 with automatic ingress replacements.
 
 ```bash
+
 domain_name=my-domain.parent-domain.com
 # either ClusterIssuer or Issuer
 issuer_kind=Issuer
@@ -29,6 +30,7 @@ issuer_prefix=$domain_name
 mkdir -p ./ingress/manual-certificates/env/
 # if you don't need the wildcard domain, remove it manually
 # remember that you _have_ to remove if when using HTTP01 challenge
+
  cat << EOF > ./ingress/manual-certificates/env/$domain_name-cert-staging.yaml
 ---
 apiVersion: cert-manager.io/v1
@@ -60,23 +62,27 @@ EOF
 sed ./ingress/manual-certificates/env/$domain_name-cert-staging.yaml \
   -e 's/-staging/-production/g' \
   > ./ingress/manual-certificates/env/$domain_name-cert-production.yaml
+
 ```
 
 Save environment info to automate ingress deployment:
 
 ```bash
+
 mkdir -p ./ingress/manual-certificates/domain-info/env/
  cat << EOF > ./ingress/manual-certificates/domain-info/env/main-domain.env
 # used to deploy environment-agnostic ingress
 domain_suffix=$domain_name
 secret_name=cert-$domain_name-production
 EOF
+
  cat << EOF > ./ingress/manual-certificates/domain-info/env/main-domain-replicator.env
 # label for the certificate secret
 # used by the 'replicator' deployment
 # this is just so you don't forget the value
 copy_label=$replicator_label
 EOF
+
 ```
 
 If you delete `.env` files by accident,
@@ -97,21 +103,23 @@ HTTP01, on the other hand, is usually almost instant.
 Staging certificates usually take quite a bit longer to produce than production ones.
 
 ```bash
+
 # make sure that your certificate issuer is available in the desired namespace
 cert_namespace=gateways
 
 # first deploy a staging certificate to check that everything works as expected
 kl -n $cert_namespace apply -f ./ingress/manual-certificates/env/$domain_name-cert-staging.yaml
 # wait for the certificate to be approved
-kl -n $cert_namespace get certificate
+kl -n $cert_namespace get cert
 # now that you know that challenge works
 # deploy the production certificate without the fear of getting banned by letsencrypt limits
 kl -n $cert_namespace apply -f ./ingress/manual-certificates/env/$domain_name-cert-production.yaml
-kl -n $cert_namespace get certificate
+kl -n $cert_namespace get cert
 
 # if you want to use the certificate with gateway API from a different namespace
 # modify secret name in the reference grant before applying
 kl -n $cert_namespace apply -f ./ingress/manual-certificates/reference-grant.yaml
+
 ```
 
 # Certificate and challenge info
@@ -123,17 +131,18 @@ or for debugging why certificate is not being approved.
 # check that all three related resources are created
 # certificaterequest: check the DENIED and READY values
 # order: check STATE
-kl -n $cert_namespace get certificate
-kl -n $cert_namespace get certificaterequest
+kl -n $cert_namespace get cert
+kl -n $cert_namespace get cr
 kl -n $cert_namespace get order
 
 # in case of errors, of if some resources are missing, check describes
-kl -n $cert_namespace describe certificate
-kl -n $cert_namespace describe certificaterequest
+kl -n $cert_namespace describe cert
+kl -n $cert_namespace describe cr
 kl -n $cert_namespace describe order
 
 # in case certificaterequest and order aren't descriptive
 kl -n cert-manager logs deployments/cert-manager | grep $domain_name
+
 ```
 
 # Avoid re-creating production certificate when re-creating cluster
@@ -142,12 +151,14 @@ You can save the certificate and deploy it in the new cluster,
 without requesting a new certificate from ACME provider.
 
 ```bash
+
 # save
 mkdir -p ./ingress/manual-certificates/env/
 kl -n cm-manual get secrets main-wildcard -o yaml > ./ingress/manual-certificates/env/wildcard-secret.yaml
 
 # restore
 kl apply -f ./ingress/manual-certificates/env/wildcard-secret.yaml
+
 ```
 
 # Using in ingress resources
