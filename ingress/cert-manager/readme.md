@@ -55,6 +55,10 @@ kl label ns cert-manager pod-security.kubernetes.io/enforce=baseline
 kl apply -k ./ingress/cert-manager/
 kl -n cert-manager get pod -o wide
 
+kl -n cert-manager get cert
+kl -n cert-manager get issuer
+kl get clusterissuer cluster-ca
+
 ```
 
 # Cleanup

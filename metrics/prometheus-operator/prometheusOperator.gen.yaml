@@ -242,20 +242,6 @@ spec:
       automountServiceAccountToken: true
       terminationGracePeriodSeconds: 30
 ---
-# Generate a CA Certificate used to sign certificates for the webhook
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: prometheus-operator-root-cert
-  namespace: prometheus-operator
-spec:
-  secretName: prometheus-operator-root-cert
-  duration: "43800h0m0s"
-  issuerRef:
-    name: prometheus-operator-self-signed-issuer
-  commonName: "ca.webhook.kube-prometheus-stack"
-  isCA: true
----
 # generate a server certificate for the apiservices to use
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -266,30 +252,11 @@ spec:
   secretName: prometheus-operator-admission
   duration: "8760h0m0s"
   issuerRef:
-    name: prometheus-operator-root-issuer
+    kind: ClusterIssuer
+    name: cluster-ca
   dnsNames:
     - prometheus-operator
     - prometheus-operator.prometheus-operator.svc
----
-# Create a selfsigned Issuer, in order to create a root CA certificate for
-# signing webhook serving certificates
-apiVersion: cert-manager.io/v1
-kind: Issuer
-metadata:
-  name: prometheus-operator-self-signed-issuer
-  namespace: prometheus-operator
-spec:
-  selfSigned: {}
----
-# Create an Issuer that uses the above generated CA certificate to issue certs
-apiVersion: cert-manager.io/v1
-kind: Issuer
-metadata:
-  name: prometheus-operator-root-issuer
-  namespace: prometheus-operator
-spec:
-  ca:
-    secretName: prometheus-operator-root-cert
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration

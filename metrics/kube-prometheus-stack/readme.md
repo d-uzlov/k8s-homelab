@@ -64,11 +64,6 @@ kl apply -k ./metrics/kube-prometheus-stack/grafana/
 
 ```
 
-Don't forget to deploy additional dashboards:
-- [k8s](./component-monitors/k8s/readme.md)
-- [etcd](./component-monitors/etcd/readme.md)
-- [proxmox](./component-monitors/proxmox/readme.md)
-
 # Cleanup
 
 ```bash

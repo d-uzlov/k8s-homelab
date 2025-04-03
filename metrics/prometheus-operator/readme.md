@@ -21,7 +21,7 @@ You only need to do this if you change `values.yaml` file.
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update prometheus-community
 helm search repo prometheus-community/kube-prometheus-stack --versions --devel | head
-helm show values prometheus-community/kube-prometheus-stack --version 70.0.2 > ./metrics/prometheus-operator/default-values.yaml
+helm show values prometheus-community/kube-prometheus-stack --version 70.4.1 > ./metrics/prometheus-operator/default-values.yaml
 ```
 
 ```bash
@@ -29,7 +29,7 @@ helm show values prometheus-community/kube-prometheus-stack --version 70.0.2 > .
 helm template \
   prometheus-operator \
   prometheus-community/kube-prometheus-stack \
-  --version 70.0.2 \
+  --version 70.4.1 \
   --values ./metrics/prometheus-operator/values.yaml \
   --namespace prometheus-operator \
   | sed \
@@ -49,6 +49,10 @@ helm template \
 References:
 - https://stackoverflow.com/questions/68409322/prometheus-cannot-scrape-kubernetes-metrics
 
+# Prerequisites
+
+- [cert-manager](../../ingress/cert-manager/readme.md)
+
 # Deploy
 
 ```bash
@@ -63,11 +67,6 @@ kl -n prometheus-operator get pod -o wide
 kl -n prometheus-operator logs deployments/prometheus-operator > ./prom-operator.log
 
 ```
-
-Don't forget to deploy additional dashboards:
-- [k8s](./component-monitors/k8s/readme.md)
-- [etcd](./component-monitors/etcd/readme.md)
-- [proxmox](./component-monitors/proxmox/readme.md)
 
 # Cleanup
 
