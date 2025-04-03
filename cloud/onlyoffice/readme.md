@@ -55,13 +55,22 @@ kl -n onlyoffice get ingress
 kl apply -k ./cloud/onlyoffice/httproute-public/
 kl -n onlyoffice get httproute
 
-kl apply -k ./cloud/onlyoffice/postgres/
+# kl apply -k ./cloud/onlyoffice/postgres/
+# kl -n onlyoffice get pvc
+# kl -n onlyoffice describe postgresqls.acid.zalan.do postgres
+# kl -n onlyoffice get pod -o wide -L spilo-role
+
+kl apply -k ./cloud/onlyoffice/postgres-cnpg/
+kl -n onlyoffice get cluster
+kl -n onlyoffice describe cluster postgres
 kl -n onlyoffice get pvc
-kl -n onlyoffice describe postgresqls.acid.zalan.do postgres
-kl -n onlyoffice get pod -o wide -L spilo-role
+kl -n onlyoffice get pods -o wide -L role -L cnpg.io/jobRole
+kl -n onlyoffice get svc
+kl -n onlyoffice get secrets
+kl cnpg -n onlyoffice status postgres
 
 kl apply -k ./cloud/onlyoffice/main-app/
-kl -n onlyoffice get pod -o wide -L spilo-role
+kl -n onlyoffice get pod -o wide
 
 ```
 
