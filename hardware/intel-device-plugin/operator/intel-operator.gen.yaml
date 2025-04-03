@@ -21,6 +21,13 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - nodes/proxy
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - ""
+  resources:
   - pods
   verbs:
   - get
@@ -67,155 +74,11 @@ rules:
   - deviceplugin.intel.com
   resources:
   - dlbdeviceplugins
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - deviceplugin.intel.com
-  resources:
-  - dlbdeviceplugins/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - deviceplugin.intel.com
-  resources:
-  - dlbdeviceplugins/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - deviceplugin.intel.com
-  resources:
   - dsadeviceplugins
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - deviceplugin.intel.com
-  resources:
-  - dsadeviceplugins/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - deviceplugin.intel.com
-  resources:
-  - dsadeviceplugins/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - deviceplugin.intel.com
-  resources:
   - fpgadeviceplugins
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - deviceplugin.intel.com
-  resources:
-  - fpgadeviceplugins/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - deviceplugin.intel.com
-  resources:
-  - fpgadeviceplugins/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - deviceplugin.intel.com
-  resources:
   - gpudeviceplugins
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - deviceplugin.intel.com
-  resources:
-  - gpudeviceplugins/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - deviceplugin.intel.com
-  resources:
-  - gpudeviceplugins/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - deviceplugin.intel.com
-  resources:
   - iaadeviceplugins
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - deviceplugin.intel.com
-  resources:
-  - iaadeviceplugins/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - deviceplugin.intel.com
-  resources:
   - qatdeviceplugins
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - deviceplugin.intel.com
-  resources:
-  - qatdeviceplugins/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - deviceplugin.intel.com
-  resources:
-  - qatdeviceplugins/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - deviceplugin.intel.com
-  resources:
   - sgxdeviceplugins
   verbs:
   - create
@@ -228,12 +91,24 @@ rules:
 - apiGroups:
   - deviceplugin.intel.com
   resources:
+  - dlbdeviceplugins/finalizers
+  - dsadeviceplugins/finalizers
+  - fpgadeviceplugins/finalizers
+  - gpudeviceplugins/finalizers
+  - iaadeviceplugins/finalizers
+  - qatdeviceplugins/finalizers
   - sgxdeviceplugins/finalizers
   verbs:
   - update
 - apiGroups:
   - deviceplugin.intel.com
   resources:
+  - dlbdeviceplugins/status
+  - dsadeviceplugins/status
+  - fpgadeviceplugins/status
+  - gpudeviceplugins/status
+  - iaadeviceplugins/status
+  - qatdeviceplugins/status
   - sgxdeviceplugins/status
   verbs:
   - get
@@ -280,7 +155,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: intel-proxy
+  name: inteldeviceplugins-auth-role
 rules:
 - apiGroups:
   - authentication.k8s.io
@@ -311,11 +186,11 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: intel-proxy
+  name: inteldeviceplugins-auth-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: intel-proxy
+  name: inteldeviceplugins-auth-role
 subjects:
 - kind: ServiceAccount
   name: default
@@ -419,13 +294,29 @@ spec:
     spec:
       containers:
       - args:
+        - "--metrics-bind-address=:8443"
+        - "--metrics-secure"
+        - "--health-probe-bind-address=:8081"
+        - "--leader-elect"
         env:
         - name: DEVICEPLUGIN_NAMESPACE
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
-        image: "intel/intel-deviceplugin-operator:0.30.0"
+        image: "intel/intel-deviceplugin-operator:0.32.0"
         imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
         name: manager
         ports:
         - containerPort: 9443
@@ -451,25 +342,6 @@ spec:
         - mountPath: /tmp/k8s-webhook-server/serving-certs
           name: cert
           readOnly: true
-      - args:
-        - --secure-listen-address=0.0.0.0:8443
-        - --upstream=http://127.0.0.1:8080/
-        - --logtostderr=true
-        - --tls-cipher-suites=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
-        - --v=10
-        image: "gcr.io/kubebuilder/kube-rbac-proxy:v0.16.0"
-        name: kube-rbac-proxy
-        ports:
-        - containerPort: 8443
-          name: https
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          runAsGroup: 1000
-          runAsNonRoot: true
-          runAsUser: 1000
-          seccompProfile:
-            type: RuntimeDefault
       nodeSelector:
         kubernetes.io/arch: amd64
       serviceAccountName: default
@@ -479,6 +351,8 @@ spec:
         secret:
           defaultMode: 420
           secretName: webhook-server-cert
+      tolerations: 
+        []
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
