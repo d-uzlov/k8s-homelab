@@ -1,0 +1,120 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: alert-cert-manager-expiration
+  namespace: cert-manager
+  labels:
+    prometheus.io/instance: main
+spec:
+  groups:
+  - name: cert-manager-expiration
+    rules:
+    - alert: CertificateExpiringSoon
+      annotations:
+        description: >-
+          cluster {{ $labels.cluster_type }}/{{ $labels.cluster }}:
+          certificate {{ $labels.namespace }}/{{ $labels.name }}:
+          {{ $value | humanizeDuration }} remaining until certificate expiration.
+        summary: Certificate is expiring in less than 21 days
+      expr: |-
+        (
+          (certmanager_certificate_expiration_timestamp_seconds{} - time())
+        ) < 21 * (60 * 60 * 24)
+      for: 15m
+      labels:
+        severity: warning
+    - alert: CertificateExpiringSoon
+      annotations:
+        description: >-
+          cluster {{ $labels.cluster_type }}/{{ $labels.cluster }}:
+          certificate {{ $labels.namespace }}/{{ $labels.name }}:
+          {{ $value | humanizeDuration }} remaining until certificate expiration.
+        summary: Certificate is expiring in less than 7 days
+      expr: |-
+        (
+          (certmanager_certificate_expiration_timestamp_seconds{} - time())
+        ) < 7 * (60 * 60 * 24)
+      for: 15m
+      labels:
+        severity: critical
+    - alert: CertificateRenewalOverdue
+      annotations:
+        description: >-
+          cluster {{ $labels.cluster_type }}/{{ $labels.cluster }}:
+          certificate {{ $labels.namespace }}/{{ $labels.name }}:
+          certificate should have been renewed {{ $value | humanizeDuration }} ago.
+        summary: Certificate renewal date has passed by more than 1 day
+      expr: |-
+        (
+          (time() - certmanager_certificate_renewal_timestamp_seconds{})
+        ) > 1 * (60 * 60 * 24)
+      for: 15m
+      labels:
+        severity: warning
+    - alert: CertificateLowLifetime
+      annotations:
+        description: >-
+          cluster {{ $labels.cluster_type }}/{{ $labels.cluster }}:
+          certificate {{ $labels.namespace }}/{{ $labels.name }}:
+          certificate has less than {{ $value | humanizePercentage }} left of renew period.
+        summary: Certificate has less than 50% of renewal time left
+      expr: |-
+        (
+          (certmanager_certificate_expiration_timestamp_seconds - time())
+          /
+          (certmanager_certificate_expiration_timestamp_seconds - certmanager_certificate_renewal_timestamp_seconds)
+        ) < 0.5
+      for: 15m
+      labels:
+        severity: critical
+    - alert: CertificateHasExpired
+      annotations:
+        description: >-
+          cluster {{ $labels.cluster_type }}/{{ $labels.cluster }}:
+          certificate {{ $labels.namespace }}/{{ $labels.name }}:
+          certificate has expired {{ $value | humanizeDuration }} ago.
+        summary: Certificate has expired
+      expr: |-
+        (time() - certmanager_certificate_expiration_timestamp_seconds) > 0
+      for: 15m
+      labels:
+        severity: critical
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: alert-cert-manager-errors
+  namespace: cert-manager
+  labels:
+    prometheus.io/instance: main
+spec:
+  groups:
+  - name: cert-manager-errors
+    rules:
+    - alert: CertificateNotReady
+      annotations:
+        description: >-
+          cluster {{ $labels.cluster_type }}/{{ $labels.cluster }}:
+          certificate {{ $labels.namespace }}/{{ $labels.name }}:
+          certificate is not ready for more than 15 minutes
+        summary: Certificate is not ready for more than 15 minutes
+      expr: |-
+        certmanager_certificate_ready_status{condition!="True"} == 1
+      for: 15m
+      labels:
+        severity: warning
+    - alert: CertManagerHittingRateLimits
+      annotations:
+        description: >-
+          cluster {{ $labels.cluster_type }}/{{ $labels.cluster }}:
+          calling {{ $labels.host }}:
+          {{ $value }} rate limit errors over the last 4 hours
+        summary: Hitting upstream issuer rate limit
+      expr: |-
+        sum by (cluster_type, cluster, host) (
+          increase(certmanager_http_acme_client_request_count{status="429"}[4h])
+        ) > 0
+      for: 15m
+      labels:
+        severity: critical

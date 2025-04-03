@@ -15,40 +15,71 @@ You only need to do this when updating the app.
 helm repo add jetstack https://charts.jetstack.io
 helm repo update jetstack
 helm search repo jetstack/cert-manager --versions --devel | head
-helm show values jetstack/cert-manager --version v1.16.2 > ./ingress/cert-manager/default-values.yaml
+helm show values jetstack/cert-manager --version v1.17.1 > ./ingress/cert-manager/default-values.yaml
 ```
 
 ```bash
+
 helm template \
   cert-manager jetstack/cert-manager \
   --values ./ingress/cert-manager/values.yaml \
-  --version v1.16.2 \
+  --version v1.17.1 \
   --namespace cert-manager \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/version|d' \
   > ./ingress/cert-manager/cert-manager.gen.yaml
 
-wget https://github.com/cert-manager/cert-manager/releases/download/v1.16.2/cert-manager.crds.yaml \
+wget https://github.com/cert-manager/cert-manager/releases/download/v1.17.1/cert-manager.crds.yaml \
   -O ./ingress/cert-manager/cert-manager.crds.yaml
+
 ```
 
 # Deploy
 
 ```bash
+
+mkdir -p ./ingress/cert-manager/env/
+clusterName=
+ cat << EOF > ./ingress/cert-manager/env/patch-cluster-tag.yaml
+- op: add
+  path: /spec/relabelings/-
+  value:
+    targetLabel: cluster
+    replacement: $clusterName
+EOF
+
 kl apply -f ./ingress/cert-manager/cert-manager.crds.yaml --server-side
 
 kl create ns cert-manager
 kl label ns cert-manager pod-security.kubernetes.io/enforce=baseline
 
 kl apply -k ./ingress/cert-manager/
-kl -n cert-manager get pod
+kl -n cert-manager get pod -o wide
+
 ```
 
 # Cleanup
 
 ```bash
+
 kl delete -k ./ingress/cert-manager/
 kl delete ns cert-manager
 kl delete -f ./ingress/cert-manager/cert-manager.crds.yaml
+
+```
+
+# Manual metric checking
+
+```bash
+
+kl -n cert-manager describe svc cm
+kl -n cert-manager describe svc cm-cainjector
+kl -n cert-manager describe svc cm-webhook
+
+kl exec deployments/alpine -- apk add curl
+kl exec deployments/alpine -- curl -sS http://cm.cert-manager:9402/metrics > ./cm.log
+kl exec deployments/alpine -- curl -sS http://cm-cainjector.cert-manager:9402/metrics > ./cm-cainjector.log
+kl exec deployments/alpine -- curl -sS http://cm-webhook.cert-manager:9402/metrics > ./cm-webhook.log
+
 ```
 
 # Deploy issuers
