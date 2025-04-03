@@ -39,6 +39,7 @@ metadata:
   name: $domain_name-staging
 spec:
   issuerRef:
+    group: cert-manager.io
     kind: $issuer_kind
     name: $issuer_prefix-staging
   # shown in the cert info, doesn't seem to do anything else
