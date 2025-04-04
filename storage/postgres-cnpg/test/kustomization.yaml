@@ -8,19 +8,8 @@ resources:
 - ./postgres.yaml
 - ./scheduled-backup.yaml
 
-configMapGenerator:
-- name: postgres-sc
-  envs:
-  - ./env/postgres-sc.env
-  options:
-    annotations:
-      config.kubernetes.io/local-config: 'true'
-- name: backup-s3
-  envs:
-  - ./env/backup-s3.env
-  options:
-    annotations:
-      config.kubernetes.io/local-config: 'true'
+patches:
+- path: ./env/patch.yaml
 
 secretGenerator:
 - name: postgres-backup-credentials
@@ -28,35 +17,3 @@ secretGenerator:
   - ./env/backup-s3-credentials.env
   options:
     disableNameSuffixHash: true
-
-replacements:
-- source:
-    kind: ConfigMap
-    name: postgres-sc
-    fieldPath: data.postgres_storage_class
-  targets:
-  - select:
-      kind: Cluster
-      name: postgres
-    fieldPaths:
-    - spec.storage.storageClass
-- source:
-    kind: ConfigMap
-    name: backup-s3
-    fieldPath: data.server_address
-  targets:
-  - select:
-      kind: Cluster
-      name: postgres
-    fieldPaths:
-    - spec.backup.barmanObjectStore.endpointURL
-- source:
-    kind: ConfigMap
-    name: backup-s3
-    fieldPath: data.bucket_path
-  targets:
-  - select:
-      kind: Cluster
-      name: postgres
-    fieldPaths:
-    - spec.backup.barmanObjectStore.destinationPath

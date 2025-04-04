@@ -98,22 +98,37 @@ and remove scheduled backup to S3.
 
 ```bash
 
- cat << EOF > ./storage/postgres-cnpg/test/env/postgres-sc.env
-postgres_storage_class=nvmeof
-EOF
+mkdir -p ./storage/postgres-cnpg/test/env/
 
-# make sure that bucket_path is empty
+storage_class=
+storage_size=1Gi
+s3_server_address=http://nas.example.com:9000/
+# make sure that bucket path is empty
 # otherwise cnpg will refuse to upload backups
 # apparently it shouldn't even start, but currently there is only error in logs:
 #     WAL archive check failed for server postgres: Expected empty archive
- cat << EOF > ./storage/postgres-cnpg/test/env/backup-s3.env
-server_address=http://nas.example.com:9000/
-bucket_path=s3://postgres-test/postgres2/
-EOF
+s3_bucket_path=s3://postgres-test/subfolder/
 
  cat << EOF > ./storage/postgres-cnpg/test/env/backup-s3-credentials.env
 key=dmzER5pleUdusVaG9n8d
 secret=zD07Jfk483DAJU8soRLZ4x9xdbtsU1QPcnU2eCp7
+EOF
+
+ cat << EOF > ./storage/postgres-cnpg/test/env/patch.env
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: postgres
+spec:
+  instances: 2
+  storage:
+    size: $storage_size
+    storageClass: $storage_class
+  backup:
+    barmanObjectStore:
+      endpointURL: $s3_server_address
+      destinationPath: $s3_bucket_path
 EOF
 
 kl create ns pgo-cnpg-test
@@ -130,8 +145,7 @@ kl -n pgo-cnpg-test get secrets
 kl cnpg -n pgo-cnpg-test status postgres
 
 # show connection secret contents
-kl -n pgo-cnpg-test get secret postgres-app -o json | jq -r '.data | map(@base64d)'
-kl -n pgo-cnpg-test get secret postgres-app -o json | jq -r '.data | map(@base64d) | .[]'
+kl -n pgo-cnpg-test get secret postgres-app -o json | jq -r '.data | to_entries | map(.value |= @base64d) | from_entries'
 
 # list users
 kl -n pgo-cnpg-test exec pods/postgres-1 -- psql template1 --command '\du'
