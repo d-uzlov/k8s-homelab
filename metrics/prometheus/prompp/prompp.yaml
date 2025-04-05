@@ -28,7 +28,7 @@ metadata:
 spec:
   version: v2.53.2
   # paused: false
-  replicas: 0
+  replicas: 1
   # shards: 1
   logLevel:  debug
   logFormat:  logfmt
@@ -45,26 +45,28 @@ spec:
     runAsGroup: 64535
     runAsNonRoot: true
     runAsUser: 64535
+  # service account, configured in rbac.yaml,
+  # is required for service discovery to work
   serviceAccountName: prometheus
   serviceMonitorSelector:
     matchLabels:
-      prometheus.io/instance: prompp2
+      instance.prometheus.io/prompp: enable
   serviceMonitorNamespaceSelector: {}
   podMonitorSelector:
     matchLabels:
-      prometheus.io/instance: prompp
+      instance.prometheus.io/prompp: enable
   podMonitorNamespaceSelector: {}
   probeSelector:
     matchLabels:
-      prometheus.io/instance: prompp
+      instance.prometheus.io/prompp: enable
   probeNamespaceSelector: {}
   ruleSelector:
     matchLabels:
-      prometheus.io/instance: prompp
+      instance.prometheus.io/prompp: enable
   ruleNamespaceSelector: {}
   scrapeConfigSelector:
     matchLabels:
-      instance.prometheus.io/prompp: no-timestamp
+      instance.prometheus.io/prompp: enable
   scrapeConfigNamespaceSelector: {}
   # affinity:
   #   podAntiAffinity:
@@ -88,21 +90,21 @@ spec:
   # - name: prometheus
   #   livenessProbe:
   #     failureThreshold: 10
-  image: prompp/prompp:2.53.2-0.1.5  # Replace Prometheus with Deckhouse Prom++
+  image: prompp/prompp:2.53.2-0.1.7  # Replace Prometheus with Deckhouse Prom++
   imagePullPolicy: Always
-  initContainers:
-  - name: prompptool
-    image: prompp/prompp:2.53.2-0.1.5
-    imagePullPolicy: Always
-    command:
-      - /bin/prompptool
-      - "--working-dir=/prometheus"
-      - "walvanilla"
-    volumeMounts:
-    - name: db
-      mountPath: /prometheus
-      subPath: prometheus-db
-    resources:
-      requests:
-        cpu: "100m"
-        memory: "128Mi"
+  # initContainers:
+  # - name: prompptool
+  #   image: prompp/prompp:2.53.2-0.1.7
+  #   imagePullPolicy: Always
+  #   command:
+  #     - /bin/prompptool
+  #     - --working-dir=/prometheus
+  #     - walvanilla
+  #   volumeMounts:
+  #   - name: db
+  #     mountPath: /prometheus
+  #     subPath: prometheus-db
+  #   resources:
+  #     requests:
+  #       cpu: "100m"
+  #       memory: "128Mi"
