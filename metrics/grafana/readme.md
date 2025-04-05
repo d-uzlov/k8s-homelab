@@ -173,3 +173,20 @@ Set one of the groups for the user first (configurable via `role_attribute_path`
 - `Grafana Admins`
 - `Grafana Editors`
 - `Grafana Viewers`
+
+# Disable annoying loading animation
+
+Add the following CSS patch in any CSS patcher for your browser:
+
+```css
+.panel-loading { display: none !important; }
+.css-ol7v04-panel-loading-bar-container { display: none !important; }
+```
+
+You may need to adjust this when Grafana is updated.
+It seems like Grafana generates CSS classes with random names.
+
+Example extensions:
+- https://chromewebstore.google.com/detail/custom-css-by-denis/cemphncflepgmgfhcdegkbkekifodacd?hl=en
+- https://chromewebstore.google.com/detail/stylus/clngdbkpkpeebahjckkjfobafhncgmne?hl=en
+- https://chromewebstore.google.com/detail/stylish-custom-themes-for/fjnbnpbmkenffdnngjfgmeleoegfcffe?hl=en&pli=1
