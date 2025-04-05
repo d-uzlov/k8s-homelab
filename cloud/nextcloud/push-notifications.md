@@ -9,15 +9,16 @@ References:
 - https://github.com/nextcloud/notify_push
 
 ```bash
+
 # ingress with wildcard certificate
-kl label ns --overwrite nextcloud copy-wild-cert=main
-kl apply -k ./cloud/nextcloud/notifications/ingress-wildcard/
-kl -n nextcloud get ingress
+# kl label ns --overwrite nextcloud copy-wild-cert=main
+# kl apply -k ./cloud/nextcloud/notifications/ingress-wildcard/
+# kl -n nextcloud get ingress
 
 kl apply -k ./cloud/nextcloud/notifications/httproute-public/
 kl -n nextcloud get httproute
 
-nextcloud_push_domain=$(kl -n nextcloud get ingress push-notifications -o go-template "{{ (index .spec.rules 0).host}}")
+# nextcloud_push_domain=$(kl -n nextcloud get ingress push-notifications -o go-template "{{ (index .spec.rules 0).host}}")
 nextcloud_push_domain=$(kl -n nextcloud get httproute nextcloud-push-public -o go-template --template "{{ (index .spec.hostnames 0)}}")
 
  kl -n nextcloud exec deployments/nextcloud -c nextcloud -i -- bash - << EOF

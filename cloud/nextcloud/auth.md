@@ -16,6 +16,7 @@ References:
 - Set expression:
 
 ```python
+
 # Extract all groups the user is a member of
 authGroups = [group.name for group in user.ak_groups.all()]
 groups = []
@@ -32,6 +33,7 @@ return {
   # user's attributes to the username of the corresponding user on Nextcloud.
   "user_id": user.attributes.get("nextcloud_user_id", str(user.uuid)),
 }
+
 ```
 
 - `Admin Interface -> Applications -> Providers -> nextcloud -> Edit -> Advanced protocol settings -> Scopes`:
@@ -48,6 +50,7 @@ return {
 ```bash
 
 kl -n nextcloud exec deployments/nextcloud -- php occ app:enable user_oidc
+
 ```
 
 Set up OIDC: `Administration settings -> OpenID Connect -> Registered Providers -> +`
@@ -58,14 +61,15 @@ Set up OIDC: `Administration settings -> OpenID Connect -> Registered Providers 
 - Set `Discovery endpoint` to `OpenID Configuration URL` value from authentik provider page
 - Set scope to `email profile offline_access nextcloud-profile`
 - Set `Groups mapping` to `nc-groups`
+- - Enable `Use group provisioning` to unlock group mapping
 - Set `User ID mapping` to `user_id`
 - ! Disable `Use unique user id`
 - ! Disable `Use provider identifier as prefix for ids`
-- Enable `Use group provisioning`
 
 # Tips for oidc maintenance
 
 ```bash
+
 # check list of existing groups and their users
 # format is:
 # - group-id
@@ -78,6 +82,7 @@ kl -n nextcloud exec deployments/nextcloud -- php occ config:app:set --value=0 u
 kl -n nextcloud exec deployments/nextcloud -- php occ config:app:set --value=1 user_oidc allow_multiple_user_backends
 # alternatively, use `direct=1` to bypass this setting
 # https://nextcloud.example.com/login?direct=1
+
 ```
 
 # WebDAV access
@@ -86,8 +91,9 @@ To access your files via WebDAV, generate a new app password:
 `Personal settings -> Security -> Devices & sessions -> Create new app password`
 
 ```bash
+
 # get login value from the `New app password` window
-login=
+login=danil
 
 nextcloud_public_domain=$(kl -n nextcloud get httproute nextcloud-public -o go-template --template "{{ (index .spec.hostnames 0)}}")
 

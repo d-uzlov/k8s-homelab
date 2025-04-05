@@ -9,10 +9,9 @@ OnlyOffice app installation can take a long time
 both for downloading the app and for running the cron job.
 
 ```bash
-kl -n onlyoffice get all
 
 onlyoffice_jwt_secret=$(kl -n onlyoffice get secret onlyoffice-api --template {{.data.jwt_secret}} | base64 --decode)
-onlyoffice_public_domain=$(kl -n onlyoffice get ingress onlyoffice -o go-template "{{ (index .spec.rules 0).host}}")
+# onlyoffice_public_domain=$(kl -n onlyoffice get ingress onlyoffice -o go-template "{{ (index .spec.rules 0).host}}")
 onlyoffice_public_domain=$(kl -n onlyoffice get httproute onlyoffice-public -o go-template --template "{{ (index .spec.hostnames 0)}}")
 
  kl -n nextcloud exec deployments/nextcloud -c nextcloud -i -- bash - << EOF

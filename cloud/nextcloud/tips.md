@@ -19,22 +19,25 @@ kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ security:brut
 
 # list throttled ips via DB
 # apparently, this can be empty because redis is used?
-# but I don't see anything in redis
-kl -n nextcloud exec pods/postgres-0 -- psql --username=nextcloud -c 'SELECT * from oc_bruteforce_attempts'
+# kl -n nextcloud exec pods/postgres-0 -- psql --username=nextcloud nextcloud -c 'SELECT * from oc_bruteforce_attempts'
+kl cnpg -n nextcloud psql nextcloud-cnpg -- app -c 'SELECT * from oc_bruteforce_attempts'
 
 redis_password=$(kl -n nextcloud get secret -l nextcloud=passwords --template "{{ (index .items 0).data.redis_password}}" | base64 --decode)
 kl -n nextcloud exec deployments/redis -- redis-cli -a "$redis_password" KEYS '*' | grep -i brute
 # for example:
 kl -n nextcloud exec deployments/redis -- redis-cli -a "$redis_password" GET '3a3b047e3d074beac4385ef47fea7764/OC\Security\Bruteforce\Backend\MemoryCacheBackend94ba2723aa73ca1d9bbca3638888eaccb289619a'
+# example output: 1743818060#7068ec443266b79f3de8e414659b929459f478c9#991c211900f8f69c0ce0ebce6f5cdf43d85b71c0
 # the format is unreadable :-(
 
 # the only sane way to deal with this is to disable brute force protection altogether :-(
 kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ config:system:set auth.bruteforce.protection.enabled --value false --type bool
 kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ config:system:set auth.bruteforce.protection.enabled --value true --type bool
 # alternatively, you can whitelist 0.0.0.0/0 in the web UI
+# Administration -> Security -> Add a new whitelist
 
 # enable a disabled user
 kl -n nextcloud exec deployments/nextcloud -c nextcloud -- php occ user:enable $username
+
 ```
 
 References:

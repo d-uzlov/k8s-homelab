@@ -1,0 +1,35 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: nextcloud-cnpg
+spec:
+  instances: 2
+  primaryUpdateStrategy: unsupervised
+  postgresql: {}
+  bootstrap:
+    initdb:
+      database: app
+      owner: app
+  managed:
+    services:
+      disabledDefaultServices: ["ro", "r"]
+  backup:
+    barmanObjectStore:
+      endpointURL: ''
+      destinationPath: _
+      s3Credentials:
+        accessKeyId:
+          name: postgres-backup-credentials
+          key: key
+        secretAccessKey:
+          name: postgres-backup-credentials
+          key: secret
+      wal:
+        compression: snappy
+      data:
+        compression: snappy
+    retentionPolicy: 30d
+  # nodeMaintenanceWindow:
+  #   inProgress: false
+  #   reusePVC: false
