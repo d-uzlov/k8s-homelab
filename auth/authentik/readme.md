@@ -18,30 +18,30 @@ You only need to do this when updating the app.
 helm repo add authentik https://charts.goauthentik.io
 helm repo update authentik
 helm search repo authentik/authentik --versions --devel | head
-helm show values authentik/authentik --version 2024.12.2 > ./ingress/authentik/default-values.yaml
+helm show values authentik/authentik --version 2024.12.2 > ./auth/authentik/default-values.yaml
 ```
 
 ```bash
 # https://hub.docker.com/r/bitnamicharts/redis/tags
-helm show values oci://registry-1.docker.io/bitnamicharts/redis --version 20.6.2 > ./ingress/authentik/redis-default-values.yaml
+helm show values oci://registry-1.docker.io/bitnamicharts/redis --version 20.6.2 > ./auth/authentik/redis-default-values.yaml
 
 helm template \
   authentik \
   authentik/authentik \
   --version 2024.12.2 \
   --namespace authentik \
-  --values ./ingress/authentik/values.yaml \
+  --values ./auth/authentik/values.yaml \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/part-of|d' -e '\|app.kubernetes.io/version|d' \
-  > ./ingress/authentik/authentik.gen.yaml
+  > ./auth/authentik/authentik.gen.yaml
 
 helm template \
   redis \
   oci://registry-1.docker.io/bitnamicharts/redis \
   --version 20.6.2 \
   --namespace authentik \
-  --values ./ingress/authentik/db/redis-values.yaml \
+  --values ./auth/authentik/db/redis-values.yaml \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/part-of|d' -e '\|app.kubernetes.io/version|d' -e 's/redis-data/data/' \
-  > ./ingress/authentik/db/redis.gen.yaml
+  > ./auth/authentik/db/redis.gen.yaml
 
 ```
 
@@ -51,20 +51,20 @@ Generate passwords and set up config.
 
 ```bash
 
-mkdir -p ./ingress/authentik/db/env/
- cat << EOF > ./ingress/authentik/db/env/redis-password.env
+mkdir -p ./auth/authentik/db/env/
+ cat << EOF > ./auth/authentik/db/env/redis-password.env
 redis_password=$(LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 20)
 EOF
- cat << EOF > ./ingress/authentik/db/env/redis-sc.env
+ cat << EOF > ./auth/authentik/db/env/redis-sc.env
 # authentik keeps session info in redis, so we need PVC for to avoid resetting sessions on restart
 redis_storage_class=nvmeof
 EOF
- cat << EOF > ./ingress/authentik/db/env/postgres-sc.env
+ cat << EOF > ./auth/authentik/db/env/postgres-sc.env
 postgres_storage_class=nvmeof
 EOF
 
-mkdir -p ./ingress/authentik/env/
- cat << EOF > ./ingress/authentik/env/authentik-seed.env
+mkdir -p ./auth/authentik/env/
+ cat << EOF > ./auth/authentik/env/authentik-seed.env
 # Secret key used for cookie signing. Changing this will invalidate active sessions.
 # Prior to 2023.6.0 the secret key was also used for unique user IDs.
 # When running a pre-2023.6.0 version of authentik the key should not be changed after the first install.
@@ -76,7 +76,7 @@ EOF
 # for example:
 # - yandex: https://yandex.ru/support/yandex-360/customers/mail/ru/mail-clients/others.html#smtpsetting
 # - google: https://support.google.com/a/answer/176600?hl=en
- cat << EOF > ./ingress/authentik/env/authentik-smtp.env
+ cat << EOF > ./auth/authentik/env/authentik-smtp.env
 auth_smtp_host=AUTOREPLACE_SMTP_HOST
 auth_smtp_port=AUTOREPLACE_SMTP_PORT
 auth_smtp_username=AUTOREPLACE_SMTP_USERNAME
@@ -94,15 +94,15 @@ EOF
 kl create ns authentik
 kl label ns authentik pod-security.kubernetes.io/enforce=baseline
 
-kl apply -k ./ingress/authentik/db/
+kl apply -k ./auth/authentik/db/
 kl -n authentik get postgresql
 kl -n authentik get pvc
 kl -n authentik get pod -o wide -L spilo-role
 
-authentik_seed=$(. ./ingress/authentik/env/authentik-seed.env; echo $authentik_seed)
-redis_password=$(. ingress/authentik/db/env/redis-password.env; echo $redis_password)
+authentik_seed=$(. ./auth/authentik/env/authentik-seed.env; echo $authentik_seed)
+redis_password=$(. ./auth/authentik/db/env/redis-password.env; echo $redis_password)
 postgres_password=$(kl -n authentik get secret authentik.postgres.credentials.postgresql.acid.zalan.do --template='{{.data.password | base64decode | printf "%s\n" }}')
- cat << EOF > ./ingress/authentik/env/authentik-passwords-patch.yaml
+ cat << EOF > ./auth/authentik/env/authentik-passwords-patch.yaml
 ---
 apiVersion: v1
 kind: Secret
@@ -114,8 +114,8 @@ stringData:
   AUTHENTIK_REDIS__PASSWORD: $redis_password
   AUTHENTIK_SECRET_KEY: $authentik_seed
 EOF
- ( . ./ingress/authentik/env/authentik-smtp.env;
- cat << EOF > ./ingress/authentik/env/authentik-smtp-patch.yaml
+ ( . ./auth/authentik/env/authentik-smtp.env;
+ cat << EOF > ./auth/authentik/env/authentik-smtp-patch.yaml
 ---
 apiVersion: v1
 kind: Secret
@@ -133,16 +133,16 @@ stringData:
 EOF
 )
 
-kl apply -k ./ingress/authentik/
+kl apply -k ./auth/authentik/
 kl -n authentik get pod -o wide -L spilo-role
 
-kl apply -k ./ingress/authentik/httproute-private/
+kl apply -k ./auth/authentik/httproute-private/
 kl -n authentik get httproute
 
 # go here to set up access
 echo "https://"$(kl -n authentik get httproute authentik-private -o go-template --template "{{ (index .spec.hostnames 0)}}")/if/flow/initial-setup/
 # after you finished the initial set up process, it's safe to open public access to authentik
-kl apply -k ./ingress/authentik/httproute-public/
+kl apply -k ./auth/authentik/httproute-public/
 kl -n authentik get httproute
 
 ```
@@ -150,7 +150,7 @@ kl -n authentik get httproute
 # Cleanup
 
 ```bash
-kl delete -k ./ingress/authentik/
+kl delete -k ./auth/authentik/
 kl delete ns authentik
 ```
 

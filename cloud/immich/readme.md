@@ -123,7 +123,7 @@ References:
 # Authentik SSO
 
 Prerequisites:
-- [Authentik](../../ingress/authentik/readme.md)
+- [Authentik](../../auth/authentik/readme.md)
 
 References:
 - https://immich.app/docs/administration/oauth/

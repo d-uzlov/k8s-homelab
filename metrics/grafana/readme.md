@@ -121,7 +121,7 @@ kl exec deployments/alpine -- curl -sS http://grafana.grafana/metrics
 # Authentik SSO
 
 Prerequisites:
-- [Authentik](../../ingress/authentik/readme.md)
+- [Authentik](../../auth/authentik/readme.md)
 
 References:
 - https://docs.goauthentik.io/integrations/services/grafana/
