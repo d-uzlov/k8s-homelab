@@ -33,6 +33,52 @@ spec:
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
+  name: alert-kubelet-k8s-pod-owner
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  groups:
+  - name: kubelet-k8s-pod-owner
+    rules:
+    - alert: UnknownControllerType
+      annotations:
+        description: >-
+          {{ $labels.cluster_type }}/{{ $labels.cluster }}:
+          ns={{ $labels.namespace }}/pod={{ $labels.pod }}:
+          unknown owner kind: {{ $labels.owner_kind }}
+        summary: kube_pod_owner{owner_kind} has unknown value
+      expr: |-
+            kube_pod_owner{
+              owner_kind!="",
+              owner_kind!="Cluster",
+              owner_kind!="DaemonSet",
+              owner_kind!="Job",
+              owner_kind!="Node",
+              owner_kind!="ReplicaSet",
+              owner_kind!="StatefulSet"
+            }
+      labels:
+        severity: warning
+    - alert: PodWithoutController
+      annotations:
+        description: >-
+          {{ $labels.cluster_type }}/{{ $labels.cluster }}:
+          ns={{ $labels.namespace }}/pod={{ $labels.pod }}:
+          pod is created manually
+        summary: free pod without controller
+      expr: |-
+            kube_pod_owner{owner_kind=""}
+      # manually created pods are fine for short testing,
+      # so let's delay this warning
+      for: 24h
+      labels:
+        severity: warning
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
   name: alert-kubelet-system
   labels:
     prometheus.io/instance: main

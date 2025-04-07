@@ -179,8 +179,13 @@ Set one of the groups for the user first (configurable via `role_attribute_path`
 Add the following CSS patch in any CSS patcher for your browser:
 
 ```css
+/* hide loading animation above each of the panels */
 .panel-loading { display: none !important; }
 .css-ol7v04-panel-loading-bar-container { display: none !important; }
+/* hide loading animation near variable name */
+.css-1dx36ai * {
+  display: none;
+}
 ```
 
 You may need to adjust this when Grafana is updated.

@@ -106,11 +106,11 @@ metadata:
     instance.prometheus.io/prompp: enable
 spec:
   groups:
-  # TODO do we need these relabelings?
   - name: recording-k8s-pod-owner-relabel
     rules:
-    - expr: |-
-        max by (cluster, namespace, workload, pod) (
+    - record: namespace_workload_pod:kube_pod_owner:relabel
+      expr: |-
+        max by (cluster_type, cluster, namespace, workload, pod) (
           label_replace(
             label_replace(
               kube_pod_owner{job="kube-state-metrics", owner_kind="ReplicaSet"},
@@ -125,9 +125,9 @@ spec:
         )
       labels:
         workload_type: deployment
-      record: namespace_workload_pod:kube_pod_owner:relabel
-    - expr: |-
-        max by (cluster, namespace, workload, pod) (
+    - record: namespace_workload_pod:kube_pod_owner:relabel
+      expr: |-
+        max by (cluster_type, cluster, namespace, workload, pod) (
           label_replace(
             kube_pod_owner{job="kube-state-metrics", owner_kind="DaemonSet"},
             "workload", "$1", "owner_name", "(.*)"
@@ -135,9 +135,9 @@ spec:
         )
       labels:
         workload_type: daemonset
-      record: namespace_workload_pod:kube_pod_owner:relabel
-    - expr: |-
-        max by (cluster, namespace, workload, pod) (
+    - record: namespace_workload_pod:kube_pod_owner:relabel
+      expr: |-
+        max by (cluster_type, cluster, namespace, workload, pod) (
           label_replace(
             kube_pod_owner{job="kube-state-metrics", owner_kind="StatefulSet"},
             "workload", "$1", "owner_name", "(.*)"
@@ -145,9 +145,9 @@ spec:
         )
       labels:
         workload_type: statefulset
-      record: namespace_workload_pod:kube_pod_owner:relabel
-    - expr: |-
-        max by (cluster, namespace, workload, pod) (
+    - record: namespace_workload_pod:kube_pod_owner:relabel
+      expr: |-
+        max by (cluster_type, cluster, namespace, workload, pod) (
           label_replace(
             kube_pod_owner{job="kube-state-metrics", owner_kind="Job"},
             "workload", "$1", "owner_name", "(.*)"
@@ -155,7 +155,34 @@ spec:
         )
       labels:
         workload_type: job
-      record: namespace_workload_pod:kube_pod_owner:relabel
+    - record: namespace_workload_pod:kube_pod_owner:relabel
+      expr: |-
+        max by (cluster_type, cluster, namespace, workload, pod) (
+          label_replace(
+            kube_pod_owner{job="kube-state-metrics", owner_kind="Node"},
+            "workload", "$1", "owner_name", "(.*)"
+          )
+        )
+      labels:
+        workload_type: static-pod
+    - record: namespace_workload_pod:kube_pod_owner:relabel
+      expr: |-
+        max by (cluster_type, cluster, namespace, workload, pod) (
+          label_replace(
+            kube_pod_owner{job="kube-state-metrics", owner_kind="Cluster"},
+            "workload", "$1", "owner_name", "(.*)"
+          )
+        )
+      labels:
+        workload_type: cnpg
+    - record: namespace_workload_pod:kube_pod_owner:relabel
+      expr: |-
+        max by (cluster_type, cluster, namespace, workload, pod) (
+          kube_pod_owner{job="kube-state-metrics", owner_kind=""}
+        )
+      labels:
+        workload_type: free-pod
+        workload: '-'
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
