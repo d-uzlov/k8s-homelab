@@ -155,6 +155,8 @@ kl -n pgo-cnpg-test exec pods/postgres-1 -- psql --list
 # "cnpg psql" can automatically finds the master instance
 kl cnpg -n pgo-cnpg-test psql postgres -- --command '\du'
 kl cnpg -n pgo-cnpg-test psql postgres -- --list
+# list all existing tables
+kl cnpg -n pgo-cnpg-test psql postgres -- -c '\dt *.*'
 # run interactive psql
 kl cnpg -n pgo-cnpg-test psql postgres
 

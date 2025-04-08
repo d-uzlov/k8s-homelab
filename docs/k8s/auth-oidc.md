@@ -76,7 +76,15 @@ EOF
 ```
 
 Note that even after you set up authentication (user is verified by the cluster),
-you may need additional authorization setup (user is allowed to do things).
+you may need additional authorization setup (user is allowed to do things):
+
+```bash
+
+# user id will depend on your cluster auth setup
+user_id=
+kl create clusterrolebinding oidc-cluster-admin --clusterrole cluster-admin --user 'user_id'
+
+```
 
 You may want to check current token contents:
 
@@ -90,5 +98,24 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 cargo install jwt-cli
 
 jq .id_token -r ~/.kube/cache/oidc-login/2a873c56504aaa8ba00a4f6dfcc252dde71566fc68a648175bd71b685b5949d4 | jwt decode -
+
+```
+
+# Test requesting token manually
+
+```bash
+
+issuer_url=https://auth.example.com/application/o/app/
+client_id=
+
+# request device node token
+curl -d "client_id=qwe123&scope=offline_access+openid" -X POST $issuer_url/oauth/v2/device_authorization
+# open the supplied link and confirm the access
+# after access is granted, obtain access token and refresh token
+curl -d "client_id=qwe123&device_code=QhQ4uY6xyXMKvWtnb0aZ8g&grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Adevice_code" -X POST $issuer_url/oauth/v2/token
+# extract refresh token
+refresh_token=
+# try to refresh access token
+curl -d "client_id=qwe123&grant_type=refresh_token&refresh_token=$refresh_token&scope=offline_access+openid" -X POST $issuer_url/oauth/v2/token
 
 ```

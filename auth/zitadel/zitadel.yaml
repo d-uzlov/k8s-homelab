@@ -1,0 +1,116 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zitadel
+spec:
+  ports:
+  - port: 80
+    name: http2-server
+    targetPort: http2-server
+    protocol: TCP
+    appProtocol: kubernetes.io/h2c
+  selector:
+    app: zitadel
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zitadel
+  labels:
+    app: zitadel
+    app.kubernetes.io/component: start
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zitadel
+      app.kubernetes.io/component: start
+  template:
+    metadata:
+      labels:
+        app: zitadel
+        app.kubernetes.io/component: start
+    spec:
+      securityContext:
+        fsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+      enableServiceLinks: false
+      containers:
+      - name: zitadel
+        image: ghcr.io/zitadel/zitadel:v2.71.6
+        ports:
+        - containerPort: 8080
+          name: http2-server
+          protocol: TCP
+        args:
+        - start
+        - --config=/config/config.yaml
+        - --masterkeyFromEnv
+        - --tlsMode=external
+        env:
+        - name: ZITADEL_MASTERKEY
+          valueFrom:
+            secretKeyRef:
+              name: zitadel-master-key
+              key: master_key
+        - name: ZITADEL_DATABASE_POSTGRES_HOST
+          valueFrom:
+            secretKeyRef:
+              name: cnpg-app
+              key: host
+        - name: ZITADEL_DATABASE_POSTGRES_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: cnpg-app
+              key: dbname
+        - name: ZITADEL_DATABASE_POSTGRES_PORT
+          valueFrom:
+            secretKeyRef:
+              name: cnpg-app
+              key: port
+        - name: ZITADEL_DATABASE_POSTGRES_USER_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: cnpg-app
+              key: username
+        - name: ZITADEL_DATABASE_POSTGRES_USER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cnpg-app
+              key: password
+        - name: ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE
+          value: require
+        securityContext:
+          readOnlyRootFilesystem: true
+        livenessProbe:
+          httpGet:
+            path: /debug/healthz
+            port: http2-server
+            scheme: HTTP
+          initialDelaySeconds: 0
+          periodSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /debug/ready
+            port: http2-server
+            scheme: HTTP
+          initialDelaySeconds: 0
+          periodSeconds: 5
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /debug/ready
+            port: http2-server
+            scheme: HTTP
+          periodSeconds: 1
+          failureThreshold: 30
+        volumeMounts:
+        - mountPath: /config
+          name: zitadel-config
+      volumes:
+      - name: zitadel-config
+        secret:
+          secretName: zitadel-config
