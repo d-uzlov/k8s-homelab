@@ -36,7 +36,6 @@ ExecStart=/usr/local/bin/node_exporter \
   --no-collector.nfsd \
   --no-collector.sockstat \
   --no-collector.softnet \
-  --no-collector.timex \
   --no-collector.udp_queues \
   --no-collector.infiniband \
   --web.listen-address=:9100 \
