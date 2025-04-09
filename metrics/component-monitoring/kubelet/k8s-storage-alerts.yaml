@@ -16,35 +16,9 @@ spec:
     - alert: KubePersistentVolumeFillingUp
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}:
           {{ $labels.namespace }}/pvc/{{ $labels.persistentvolumeclaim }}:
-          {{ $value | humanizePercentage }} free space.
-        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubepersistentvolumefillingup
-        summary: PersistentVolume is filling up.
-      expr: |-
-        (
-          kubelet_volume_stats_available_bytes
-            /
-          kubelet_volume_stats_capacity_bytes
-        ) < 0.03
-        and
-        kubelet_volume_stats_used_bytes > 0
-        unless on (cluster, namespace, persistentvolumeclaim)
-        kube_persistentvolumeclaim_access_mode{ access_mode="ReadOnlyMany"} == 1
-        unless on (cluster, namespace, persistentvolumeclaim)
-        kube_persistentvolumeclaim_labels{label_excluded_from_alerts="true"} == 1
-      for: 1m
-      labels:
-        severity: critical
-    - alert: KubePersistentVolumeFillingUp
-      annotations:
-        description: >-
-          k8s cluster {{ $labels.cluster }}:
-          {{ $labels.namespace }}/pvc/{{ $labels.persistentvolumeclaim }}:
-          PVC is expected to fill up within four days.
-          Currently {{ $value | humanizePercentage }} is available.
-        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubepersistentvolumefillingup
-        summary: PersistentVolume is filling up.
+          {{ $value | humanizePercentage }}
+        summary: PersistentVolume free space is below 15% and is expected to fill in less than 4 days
       expr: |-
         (
           kubelet_volume_stats_available_bytes
@@ -55,32 +29,30 @@ spec:
         kubelet_volume_stats_used_bytes > 0
         and
         predict_linear(kubelet_volume_stats_available_bytes[6h], 4 * 24 * 3600) < 0
-        unless on (cluster, namespace, persistentvolumeclaim)
+        unless on (cluster_type, cluster, namespace, persistentvolumeclaim)
         kube_persistentvolumeclaim_access_mode{ access_mode="ReadOnlyMany"} == 1
-        unless on (cluster, namespace, persistentvolumeclaim)
+        unless on (cluster_type, cluster, namespace, persistentvolumeclaim)
         kube_persistentvolumeclaim_labels{label_excluded_from_alerts="true"} == 1
-      for: 1h
+      for: 30m
       labels:
         severity: warning
-    - alert: KubePersistentVolumeInodesFillingUp
+    - alert: KubePersistentVolumeFillingUp
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}:
           {{ $labels.namespace }}/pvc/{{ $labels.persistentvolumeclaim }}:
-          {{ $value | humanizePercentage }} free inodes.
-        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubepersistentvolumeinodesfillingup
-        summary: PersistentVolumeInodes are filling up.
+          {{ $value | humanizePercentage }}
+        summary: PersistentVolume free space is below 5%
       expr: |-
         (
-          kubelet_volume_stats_inodes_free
+          kubelet_volume_stats_available_bytes
             /
-          kubelet_volume_stats_inodes
-        ) < 0.03
+          kubelet_volume_stats_capacity_bytes
+        ) < 0.05
         and
-        kubelet_volume_stats_inodes_used > 0
-        unless on (cluster, namespace, persistentvolumeclaim)
-        kube_persistentvolumeclaim_access_mode{ access_mode="ReadOnlyMany"} == 1
-        unless on (cluster, namespace, persistentvolumeclaim)
+        kubelet_volume_stats_used_bytes > 0
+        unless on (cluster_type, cluster, namespace, persistentvolumeclaim)
+        kube_persistentvolumeclaim_access_mode{access_mode="ReadOnlyMany"} == 1
+        unless on (cluster_type, cluster, namespace, persistentvolumeclaim)
         kube_persistentvolumeclaim_labels{label_excluded_from_alerts="true"} == 1
       for: 1m
       labels:
@@ -88,12 +60,9 @@ spec:
     - alert: KubePersistentVolumeInodesFillingUp
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}:
           {{ $labels.namespace }}/pvc/{{ $labels.persistentvolumeclaim }}:
-          PVC is expected to run out of inodes within four days.
-          Currently {{ $value | humanizePercentage }} inodes are free.
-        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubepersistentvolumeinodesfillingup
-        summary: PersistentVolumeInodes are filling up.
+          {{ $value | humanizePercentage }}
+        summary: PersistentVolume free inodes is below 15% and is expected to fill in less than 4 days
       expr: |-
         (
           kubelet_volume_stats_inodes_free
@@ -104,22 +73,41 @@ spec:
         kubelet_volume_stats_inodes_used > 0
         and
         predict_linear(kubelet_volume_stats_inodes_free[6h], 4 * 24 * 3600) < 0
-        unless on (cluster, namespace, persistentvolumeclaim)
+        unless on (cluster_type, cluster, namespace, persistentvolumeclaim)
         kube_persistentvolumeclaim_access_mode{ access_mode="ReadOnlyMany"} == 1
-        unless on (cluster, namespace, persistentvolumeclaim)
+        unless on (cluster_type, cluster, namespace, persistentvolumeclaim)
         kube_persistentvolumeclaim_labels{label_excluded_from_alerts="true"} == 1
       for: 1h
       labels:
         severity: warning
+    - alert: KubePersistentVolumeInodesFillingUp
+      annotations:
+        description: >-
+          {{ $labels.namespace }}/pvc/{{ $labels.persistentvolumeclaim }}:
+          {{ $value | humanizePercentage }}
+        summary: PersistentVolume free inodes is below 5%
+      expr: |-
+        (
+          kubelet_volume_stats_inodes_free
+            /
+          kubelet_volume_stats_inodes
+        ) < 0.05
+        and
+        kubelet_volume_stats_inodes_used > 0
+        unless on (cluster_type, cluster, namespace, persistentvolumeclaim)
+        kube_persistentvolumeclaim_access_mode{ access_mode="ReadOnlyMany"} == 1
+        unless on (cluster_type, cluster, namespace, persistentvolumeclaim)
+        kube_persistentvolumeclaim_labels{label_excluded_from_alerts="true"} == 1
+      for: 1m
+      labels:
+        severity: critical
     - alert: KubePersistentVolumeErrors
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}:
           pv/{{ $labels.persistentvolume }}:
-          status {{ $labels.phase }}.
-        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubepersistentvolumeerrors
-        summary: PersistentVolume is having issues with provisioning.
-      expr: kube_persistentvolume_status_phase{phase=~"Failed|Pending",job="kube-state-metrics"} > 0
+          status {{ $labels.phase }}
+        summary: PersistentVolume is having issues with provisioning
+      expr: kube_persistentvolume_status_phase{phase=~"Failed|Pending"} > 0
       for: 5m
       labels:
         severity: critical

@@ -57,6 +57,16 @@ References:
 
 ```bash
 
+mkdir -p ./metrics/prometheus-operator/env/
+clusterName=
+ cat << EOF > ./metrics/prometheus-operator/env/patch-cluster-tag.yaml
+- op: add
+  path: /spec/endpoints/0/relabelings/-
+  value:
+    targetLabel: cluster
+    replacement: $clusterName
+EOF
+
 kl apply -f ./metrics/prometheus-operator/crd/ --server-side
 
 kl create ns prometheus-operator
@@ -82,6 +92,6 @@ kl delete -f ./metrics/prometheus-operator/crd/
 
 kl -n prometheus-operator describe svc prometheus-operator
 kl exec deployments/alpine -- apk add curl
-kl exec deployments/alpine -- curl -sS --insecure https://prometheus-operator.prometheus-operator/metrics
+kl exec deployments/alpine -- curl -sS --insecure https://prometheus-operator.prometheus-operator/metrics > ./prometheus-operator-metrics.log
 
 ```

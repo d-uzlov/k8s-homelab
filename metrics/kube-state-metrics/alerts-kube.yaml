@@ -15,58 +15,51 @@ spec:
     - alert: KubePodCrashLooping
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}: {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }} is in state CrashLoopBackOff.
-        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubepodcrashlooping
-        summary: Pod is crash looping.
-      expr: max_over_time(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff", job="kube-state-metrics", namespace=~".*"}[5m]) >= 1
+          {{ $labels.namespace }}/{{ $labels.pod }}
+        summary: Pod is in state CrashLoopBackOff
+      expr: max_over_time(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}[5m]) > 0
       for: 5m
       labels:
         severity: warning
     - alert: KubePodNotReady
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}: {{ $labels.namespace }}/{{ $labels.pod }} has been in a non-ready state for longer than 5 minutes.
-        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubepodnotready
+          {{ $labels.namespace }}/{{ $labels.pod }}:
+          {{ $labels.phase }}
         summary: Pod has been in a non-ready state for more than 5 minutes.
       expr: |-
-        sum by (namespace, pod, cluster) (
-          max by (namespace, pod, cluster) (
-            kube_pod_status_phase{job="kube-state-metrics", namespace=~".*", phase=~"Pending|Unknown|Failed"}
-          ) * on (namespace, pod, cluster) group_left(owner_kind) topk by (namespace, pod, cluster) (
-            1, max by (namespace, pod, owner_kind, cluster) (kube_pod_owner{owner_kind!="Job"})
-          )
-        ) > 0
+        kube_pod_status_phase{phase=~"Pending|Unknown|Failed"} > 0
+        unless on (cluster_type, cluster, namespace, pod)
+        kube_pod_owner{owner_kind="Job"}
       for: 5m
       labels:
         severity: warning
     - alert: KubeDeploymentGenerationMismatch
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}: {{ $labels.namespace }}/deploy/{{ $labels.deployment }}:
-          generation does not match, this indicates that the Deployment has failed but has not been rolled back.
+          {{ $labels.namespace }}/deploy/{{ $labels.deployment }}
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubedeploymentgenerationmismatch
         summary: Deployment generation mismatch due to possible roll-back
       expr: |-
-        kube_deployment_status_observed_generation{job="kube-state-metrics", namespace=~".*"}
+        kube_deployment_status_observed_generation
           !=
-        kube_deployment_metadata_generation{job="kube-state-metrics", namespace=~".*"}
+        kube_deployment_metadata_generation
       for: 15m
       labels:
         severity: warning
     - alert: KubeDeploymentReplicasMismatch
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}: {{ $labels.namespace }}/deploy/{{ $labels.deployment }}
-          has not matched the expected number of replicas for longer than 15 minutes.
+          {{ $labels.namespace }}/deploy/{{ $labels.deployment }}
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubedeploymentreplicasmismatch
-        summary: Deployment has not matched the expected number of replicas.
+        summary: Deployment has not matched the expected number of replicas for longer than 15 minutes
       expr: |-
         (
-          kube_deployment_spec_replicas{job="kube-state-metrics", namespace=~".*"}
+          kube_deployment_spec_replicas
             >
-          kube_deployment_status_replicas_available{job="kube-state-metrics", namespace=~".*"}
+          kube_deployment_status_replicas_available
         ) and (
-          changes(kube_deployment_status_replicas_updated{job="kube-state-metrics", namespace=~".*"}[10m])
+          changes(kube_deployment_status_replicas_updated[10m])
             ==
           0
         )
@@ -76,12 +69,11 @@ spec:
     - alert: KubeDeploymentRolloutStuck
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}: {{ $labels.namespace }}/deploy/{{ $labels.deployment }}:
-          rollout is not progressing for longer than 15 minutes.
+          {{ $labels.namespace }}/deploy/{{ $labels.deployment }}
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubedeploymentrolloutstuck
-        summary: Deployment rollout is not progressing.
+        summary: Deployment rollout is not progressing for longer than 15 minutes.
       expr: |-
-        kube_deployment_status_condition{condition="Progressing", status="false",job="kube-state-metrics", namespace=~".*"}
+        kube_deployment_status_condition{condition="Progressing", status="false"}
         != 0
       for: 15m
       labels:
@@ -89,17 +81,16 @@ spec:
     - alert: KubeStatefulSetReplicasMismatch
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}: {{ $labels.namespace }}/sts/{{ $labels.statefulset }}
-          has not matched the expected number of replicas for longer than 15 minutes.
+          {{ $labels.namespace }}/sts/{{ $labels.statefulset }}
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubestatefulsetreplicasmismatch
-        summary: StatefulSet has not matched the expected number of replicas.
+        summary: StatefulSet has not matched the expected number of replicas for longer than 15 minutes.
       expr: |-
         (
-          kube_statefulset_status_replicas_ready{job="kube-state-metrics", namespace=~".*"}
+          kube_statefulset_status_replicas_ready
             !=
-          kube_statefulset_status_replicas{job="kube-state-metrics", namespace=~".*"}
+          kube_statefulset_status_replicas
         ) and (
-          changes(kube_statefulset_status_replicas_updated{job="kube-state-metrics", namespace=~".*"}[10m])
+          changes(kube_statefulset_status_replicas_updated[10m])
             ==
           0
         )
@@ -109,38 +100,37 @@ spec:
     - alert: KubeStatefulSetGenerationMismatch
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}: {{ $labels.namespace }}/sts/{{ $labels.statefulset }}: generation does not match,
-          this indicates that the StatefulSet has failed but has not been rolled back.
+          {{ $labels.namespace }}/sts/{{ $labels.statefulset }}
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubestatefulsetgenerationmismatch
         summary: StatefulSet generation mismatch due to possible roll-back
       expr: |-
-        kube_statefulset_status_observed_generation{job="kube-state-metrics", namespace=~".*"}
+        kube_statefulset_status_observed_generation
           !=
-        kube_statefulset_metadata_generation{job="kube-state-metrics", namespace=~".*"}
+        kube_statefulset_metadata_generation
       for: 15m
       labels:
         severity: warning
     - alert: KubeStatefulSetUpdateNotRolledOut
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}: {{ $labels.namespace }}/sts/{{ $labels.statefulset }} update has not been rolled out.
+          {{ $labels.namespace }}/sts/{{ $labels.statefulset }}
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubestatefulsetupdatenotrolledout
-        summary: StatefulSet update has not been rolled out.
+        summary: StatefulSet update has not been rolled out
       expr: |-
         (
           max by (namespace, statefulset, job, cluster) (
-            kube_statefulset_status_current_revision{job="kube-state-metrics", namespace=~".*"}
+            kube_statefulset_status_current_revision
               unless
-            kube_statefulset_status_update_revision{job="kube-state-metrics", namespace=~".*"}
+            kube_statefulset_status_update_revision
           )
             *
           (
-            kube_statefulset_replicas{job="kube-state-metrics", namespace=~".*"}
+            kube_statefulset_replicas
               !=
-            kube_statefulset_status_replicas_updated{job="kube-state-metrics", namespace=~".*"}
+            kube_statefulset_status_replicas_updated
           )
         )  and (
-          changes(kube_statefulset_status_replicas_updated{job="kube-state-metrics", namespace=~".*"}[5m])
+          changes(kube_statefulset_status_replicas_updated[5m])
             ==
           0
         )
@@ -150,30 +140,30 @@ spec:
     - alert: KubeDaemonSetRolloutStuck
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}: {{ $labels.namespace }}/ds/{{ $labels.daemonset }} has not finished or progressed for at least 15m.
+          {{ $labels.namespace }}/ds/{{ $labels.daemonset }}
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubedaemonsetrolloutstuck
-        summary: DaemonSet rollout is stuck.
+        summary: DaemonSet rollout is stuck for at least 15m
       expr: |-
         (
           (
-            kube_daemonset_status_current_number_scheduled{job="kube-state-metrics", namespace=~".*"}
+            kube_daemonset_status_current_number_scheduled
              !=
-            kube_daemonset_status_desired_number_scheduled{job="kube-state-metrics", namespace=~".*"}
+            kube_daemonset_status_desired_number_scheduled
           ) or (
-            kube_daemonset_status_number_misscheduled{job="kube-state-metrics", namespace=~".*"}
+            kube_daemonset_status_number_misscheduled
              !=
             0
           ) or (
-            kube_daemonset_status_updated_number_scheduled{job="kube-state-metrics", namespace=~".*"}
+            kube_daemonset_status_updated_number_scheduled
              !=
-            kube_daemonset_status_desired_number_scheduled{job="kube-state-metrics", namespace=~".*"}
+            kube_daemonset_status_desired_number_scheduled
           ) or (
-            kube_daemonset_status_number_available{job="kube-state-metrics", namespace=~".*"}
+            kube_daemonset_status_number_available
              !=
-            kube_daemonset_status_desired_number_scheduled{job="kube-state-metrics", namespace=~".*"}
+            kube_daemonset_status_desired_number_scheduled
           )
         ) and (
-          changes(kube_daemonset_status_updated_number_scheduled{job="kube-state-metrics", namespace=~".*"}[5m])
+          changes(kube_daemonset_status_updated_number_scheduled[5m])
             ==
           0
         )
@@ -183,99 +173,108 @@ spec:
     - alert: KubeContainerWaiting
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}: {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container}}
-          has been in waiting state for longer than 1 hour. (reason: "{{ $labels.reason }}").
+          {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container}}:
+          reason: {{ $labels.reason }}
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubecontainerwaiting
-        summary: Pod container waiting longer than 1 hour
-      expr: kube_pod_container_status_waiting_reason{reason!="CrashLoopBackOff", job="kube-state-metrics", namespace=~".*"} > 0
-      for: 1h
+        summary: Pod container waiting longer than 30 minutes
+      expr: kube_pod_container_status_waiting_reason{reason!="CrashLoopBackOff"} > 0
+      for: 30m
       labels:
         severity: warning
     - alert: KubeDaemonSetNotScheduled
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}: {{ $labels.namespace }}/ds/{{ $labels.daemonset }}:
-          {{ $value }} Pods are not scheduled.
+          {{ $labels.namespace }}/ds/{{ $labels.daemonset }}:
+          {{ $value }} pods missing
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubedaemonsetnotscheduled
-        summary: DaemonSet pods are not scheduled.
+        summary: DaemonSet pods are not scheduled
       expr: |-
-        kube_daemonset_status_desired_number_scheduled{job="kube-state-metrics", namespace=~".*"}
+        (
+          kube_daemonset_status_desired_number_scheduled
           -
-        kube_daemonset_status_current_number_scheduled{job="kube-state-metrics", namespace=~".*"} > 0
+          kube_daemonset_status_current_number_scheduled
+        ) > 0
       for: 10m
       labels:
         severity: warning
     - alert: KubeDaemonSetMisScheduled
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}: {{ $labels.namespace }}/ds/{{ $labels.daemonset }}:
-          {{ $value }} Pods are running where they are not supposed to run.
+          {{ $labels.namespace }}/ds/{{ $labels.daemonset }}:
+          {{ $value }} excess pods
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubedaemonsetmisscheduled
-        summary: DaemonSet pods are misscheduled.
-      expr: kube_daemonset_status_number_misscheduled{job="kube-state-metrics", namespace=~".*"} > 0
+        summary: DaemonSet pods are misscheduled
+      expr: kube_daemonset_status_number_misscheduled > 0
       for: 15m
       labels:
         severity: warning
     - alert: KubeJobNotCompleted
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}: {{ $labels.namespace }}/job/{{ $labels.job_name }} is taking more than {{ "43200" | humanizeDuration }} to complete.
-        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubejobnotcompleted
-        summary: Job did not complete in time
+          {{ $labels.namespace }}/job/{{ $labels.job_name }}
+        summary: Job did not complete in 12 hours
       expr: |-
-        time() - max by (namespace, job_name, cluster) (kube_job_status_start_time{job="kube-state-metrics", namespace=~".*"}
-          and
-        kube_job_status_active{job="kube-state-metrics", namespace=~".*"} > 0) > 43200
+        (
+          time()
+          -
+          max by (namespace, job_name, cluster) (
+            kube_job_status_start_time
+            and
+            kube_job_status_active > 0
+          )
+        ) > 12 * 60 * 60
       labels:
         severity: warning
     - alert: KubeJobFailed
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}: {{ $labels.namespace }}/job/{{ $labels.job_name }} failed to complete.
-          Removing failed job after investigation should clear this alert.
-        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubejobfailed
-        summary: Job failed to complete.
-      expr: kube_job_failed{job="kube-state-metrics", namespace=~".*"}  > 0
+          {{ $labels.namespace }}/job/{{ $labels.job_name }}
+        summary: Job failed to complete
+      expr: kube_job_failed > 0
       for: 15m
       labels:
         severity: warning
     - alert: KubeHpaReplicasMismatch
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}: HPA {{ $labels.namespace }}/{{ $labels.horizontalpodautoscaler  }} has not matched the desired number of replicas for longer than 15 minutes.
-        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubehpareplicasmismatch
-        summary: HPA has not matched desired number of replicas.
+          {{ $labels.namespace }}/{{ $labels.horizontalpodautoscaler }}
+        summary: HPA has not matched desired number of replicas for longer than 15 minutes
       expr: |-
-        (kube_horizontalpodautoscaler_status_desired_replicas{job="kube-state-metrics", namespace=~".*"}
+        (
+          kube_horizontalpodautoscaler_status_desired_replicas
           !=
-        kube_horizontalpodautoscaler_status_current_replicas{job="kube-state-metrics", namespace=~".*"})
+          kube_horizontalpodautoscaler_status_current_replicas
+        )
           and
-        (kube_horizontalpodautoscaler_status_current_replicas{job="kube-state-metrics", namespace=~".*"}
+        (
+          kube_horizontalpodautoscaler_status_current_replicas
           >
-        kube_horizontalpodautoscaler_spec_min_replicas{job="kube-state-metrics", namespace=~".*"})
+          kube_horizontalpodautoscaler_spec_min_replicas
+        )
           and
-        (kube_horizontalpodautoscaler_status_current_replicas{job="kube-state-metrics", namespace=~".*"}
+        (
+          kube_horizontalpodautoscaler_status_current_replicas
           <
-        kube_horizontalpodautoscaler_spec_max_replicas{job="kube-state-metrics", namespace=~".*"})
+          kube_horizontalpodautoscaler_spec_max_replicas
+        )
           and
-        changes(kube_horizontalpodautoscaler_status_current_replicas{job="kube-state-metrics", namespace=~".*"}[15m]) == 0
+        changes(kube_horizontalpodautoscaler_status_current_replicas[15m]) == 0
       for: 15m
       labels:
         severity: warning
     - alert: KubeHpaMaxedOut
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}: HPA {{ $labels.namespace }}/{{ $labels.horizontalpodautoscaler  }} has been running at max replicas for longer than 15 minutes.
+          {{ $labels.namespace }}/{{ $labels.horizontalpodautoscaler }}
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubehpamaxedout
-        summary: HPA is running at max replicas
+        summary: HPA is running at max replicas for longer than 15 minutes
       expr: |-
-        kube_horizontalpodautoscaler_status_current_replicas{job="kube-state-metrics", namespace=~".*"}
+        kube_horizontalpodautoscaler_status_current_replicas
           ==
-        kube_horizontalpodautoscaler_spec_max_replicas{job="kube-state-metrics", namespace=~".*"}
+        kube_horizontalpodautoscaler_spec_max_replicas
       for: 15m
       labels:
         severity: warning
-
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
@@ -292,82 +291,111 @@ spec:
     - alert: KubeCPUOvercommit
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}: has overcommitted CPU resource requests for Pods by {{ $value }} CPU shares and cannot tolerate node failure.
+          {{ $value }} CPU overcommit
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubecpuovercommit
-        summary: Cluster has overcommitted CPU resource requests.
+        summary: Cluster has overcommitted CPU resource requests and cannot tolerate node failure
       expr: |-
-        sum(namespace_cpu:kube_pod_container_resource_requests:sum{}) by (cluster) - (sum(kube_node_status_allocatable{job="kube-state-metrics",resource="cpu"}) by (cluster) - max(kube_node_status_allocatable{job="kube-state-metrics",resource="cpu"}) by (cluster)) > 0
+        # check that cluster without the biggest noe is overcommitted
+        # TODO namespace_cpu:kube_pod_container_resource_requests:sum is missing cluster_type
+        sum by (cluster_type, cluster) (namespace_cpu:kube_pod_container_resource_requests:sum)
+        -
+        (
+          sum by (cluster_type, cluster) (kube_node_status_allocatable{resource="cpu"})
+          -
+          max by (cluster_type, cluster) (kube_node_status_allocatable{resource="cpu"})
+        )
+        > 0
         and
-        (sum(kube_node_status_allocatable{job="kube-state-metrics",resource="cpu"}) by (cluster) - max(kube_node_status_allocatable{job="kube-state-metrics",resource="cpu"}) by (cluster)) > 0
+        # check that cluster has more than one node
+        (
+          sum by (cluster_type, cluster) (kube_node_status_allocatable{resource="cpu"})
+          -
+          max by (cluster_type, cluster) (kube_node_status_allocatable{resource="cpu"})
+        ) > 0
       for: 10m
       labels:
         severity: warning
     - alert: KubeMemoryOvercommit
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}: has overcommitted memory resource requests for Pods by {{ $value | humanize }} bytes and cannot tolerate node failure.
+          {{ $value | humanize1024 }} memory overcommit
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubememoryovercommit
-        summary: Cluster has overcommitted memory resource requests.
+        summary: Cluster has overcommitted memory resource requests and cannot tolerate node failure.
       expr: |-
-        sum(namespace_memory:kube_pod_container_resource_requests:sum{}) by (cluster) - (sum(kube_node_status_allocatable{resource="memory", job="kube-state-metrics"}) by (cluster) - max(kube_node_status_allocatable{resource="memory", job="kube-state-metrics"}) by (cluster)) > 0
+        # check that cluster without the biggest noe is overcommitted
+        sum by (cluster_type, cluster) (namespace_memory:kube_pod_container_resource_requests:sum)
+        -
+        (
+          sum by (cluster_type, cluster) (kube_node_status_allocatable{resource="memory"})
+          -
+          max by (cluster_type, cluster) (kube_node_status_allocatable{resource="memory"})
+        )
+        > 0
         and
-        (sum(kube_node_status_allocatable{resource="memory", job="kube-state-metrics"}) by (cluster) - max(kube_node_status_allocatable{resource="memory", job="kube-state-metrics"}) by (cluster)) > 0
+        # check that cluster has more than one node
+        (
+          sum by (cluster_type, cluster) (kube_node_status_allocatable{resource="memory"})
+          -
+          max by (cluster_type, cluster) (kube_node_status_allocatable{resource="memory"})
+        ) > 0
       for: 10m
       labels:
         severity: warning
     - alert: KubeCPUQuotaOvercommit
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}: has overcommitted CPU resource requests for Namespaces.
+          {{ $value | humanizePercentage }} CPU overcommit
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubecpuquotaovercommit
-        summary: Cluster has overcommitted CPU resource requests.
+        summary: Cluster has overcommitted CPU Namespaces resource requests
       expr: |-
-        sum(min without(resource) (kube_resourcequota{job="kube-state-metrics", type="hard", resource=~"(cpu|requests.cpu)"})) by (cluster)
-          /
-        sum(kube_node_status_allocatable{resource="cpu", job="kube-state-metrics"}) by (cluster)
-          > 1.5
+        sum by (cluster_type, cluster) (
+          min without(resource) (kube_resourcequota{type="hard", resource=~"(cpu|requests.cpu)"})
+        ) / sum by (cluster_type, cluster) (kube_node_status_allocatable{resource="cpu"})
+        > 1.5
       for: 5m
       labels:
         severity: warning
     - alert: KubeMemoryQuotaOvercommit
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}: has overcommitted memory resource requests for Namespaces.
+          {{ $value | humanizePercentage }} memory overcommit
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubememoryquotaovercommit
-        summary: Cluster has overcommitted memory resource requests.
+        summary: Cluster has overcommitted memory Namespaces resource requests
       expr: |-
-        sum(min without(resource) (kube_resourcequota{job="kube-state-metrics", type="hard", resource=~"(memory|requests.memory)"})) by (cluster)
-          /
-        sum(kube_node_status_allocatable{resource="memory", job="kube-state-metrics"}) by (cluster)
-          > 1.5
+        sum by (cluster_type, cluster) (
+          min without(resource) (kube_resourcequota{type="hard", resource=~"(memory|requests.memory)"})
+        ) /
+        sum by (cluster_type, cluster) (kube_node_status_allocatable{resource="memory"})
+        > 1.5
       for: 5m
       labels:
         severity: warning
     - alert: KubeQuotaAlmostFull
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}: Namespace {{ $labels.namespace }} is using {{ $value | humanizePercentage }} of its {{ $labels.resource }} quota.
+          Namespace {{ $labels.namespace }}:
+          {{ $value | humanizePercentage }} of {{ $labels.resource }} quota
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubequotaalmostfull
-        summary: Namespace quota is going to be full.
+        summary: Namespace has used over 90% of its quota
       expr: |-
-        kube_resourcequota{job="kube-state-metrics", type="used"}
-          / ignoring(instance, job, type)
-        (kube_resourcequota{job="kube-state-metrics", type="hard"} > 0)
-          > 0.9 < 1
+        kube_resourcequota{type="used"}
+          / ignoring(type)
+        (kube_resourcequota{type="hard"} > 0)
+        > 0.9 < 1
       for: 15m
       labels:
         severity: info
     - alert: KubeQuotaFullyUsed
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}:
-          Namespace {{ $labels.namespace }} is using {{ $value | humanizePercentage }} of its {{ $labels.resource }} quota.
+          Namespace {{ $labels.namespace }}:
+          {{ $value | humanizePercentage }} of {{ $labels.resource }} quota
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubequotafullyused
-        summary: Namespace quota is fully used.
+        summary: Namespace quota is fully used
       expr: |-
-        kube_resourcequota{job="kube-state-metrics", type="used"}
-          / ignoring(instance, job, type)
-        (kube_resourcequota{job="kube-state-metrics", type="hard"} > 0)
+        kube_resourcequota{type="used"}
+          / ignoring(type)
+        (kube_resourcequota{type="hard"} > 0)
           == 1
       for: 15m
       labels:
@@ -375,19 +403,18 @@ spec:
     - alert: KubeQuotaExceeded
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}:
-          Namespace {{ $labels.namespace }} is using {{ $value | humanizePercentage }} of its {{ $labels.resource }} quota.
+          Namespace {{ $labels.namespace }}:
+          {{ $value | humanizePercentage }} of {{ $labels.resource }} quota
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubequotaexceeded
-        summary: Namespace quota has exceeded the limits.
+        summary: Namespace quota has exceeded the limits
       expr: |-
-        kube_resourcequota{job="kube-state-metrics", type="used"}
-          / ignoring(instance, job, type)
-        (kube_resourcequota{job="kube-state-metrics", type="hard"} > 0)
+        kube_resourcequota{type="used"}
+          / ignoring(type)
+        (kube_resourcequota{type="hard"} > 0)
           > 1
       for: 15m
       labels:
         severity: warning
-
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
@@ -404,45 +431,45 @@ spec:
     - alert: KubeNodeNotReady
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}:
-          {{ $labels.node }} has been unready for more than 15 minutes.
+          {{ $labels.node }}
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubenodenotready
-        summary: Node is not ready.
-      expr: kube_node_status_condition{job="kube-state-metrics",condition="Ready",status="true"} == 0
+        summary: Node is not ready for more than 15 minutes
+      expr: kube_node_status_condition{condition="Ready", status="true"} == 0
       for: 15m
       labels:
         severity: warning
     - alert: KubeNodeUnreachable
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}:
-          {{ $labels.node }} is unreachable and some workloads may be rescheduled.
+          {{ $labels.node }}
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubenodeunreachable
-        summary: Node is unreachable.
+        summary: Node is unreachable
       expr: |-
-        (kube_node_spec_taint{job="kube-state-metrics",key="node.kubernetes.io/unreachable",effect="NoSchedule"}
-        unless ignoring(key,value)
-        kube_node_spec_taint{job="kube-state-metrics",key=~"ToBeDeletedByClusterAutoscaler|cloud.google.com/impending-node-termination|aws-node-termination-handler/spot-itn"}) == 1
+        (
+          kube_node_spec_taint{key="node.kubernetes.io/unreachable",effect="NoSchedule"}
+          unless ignoring(key, value)
+          kube_node_spec_taint{key=~"ToBeDeletedByClusterAutoscaler|cloud.google.com/impending-node-termination|aws-node-termination-handler/spot-itn"}
+        ) == 1
       for: 15m
       labels:
         severity: warning
     - alert: KubeletTooManyPods
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}:
-          Kubelet '{{ $labels.node }}' is running at {{ $value | humanizePercentage }} of its Pod capacity.
+          {{ $labels.node }}:
+          {{ $value | humanizePercentage }}
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubelettoomanypods
-        summary: Kubelet is running at capacity.
+        summary: Kubelet is running above 95% of its pod capacity
       expr: |-
-        count by (cluster, node) (
-          (kube_pod_status_phase{job="kube-state-metrics",phase="Running"} == 1)
-          * on (instance,pod,namespace,cluster)
+        count by (cluster_type, cluster, node) (
+          (kube_pod_status_phase{phase="Running"} == 1)
+          * on (cluster_type, cluster, pod, namespace)
           group_left(node)
-          topk by (instance,pod,namespace,cluster) (1, kube_pod_info{job="kube-state-metrics"})
+          topk by (cluster_type, cluster, pod, namespace) (1, kube_pod_info)
         )
         /
-        max by (cluster, node) (
-          kube_node_status_capacity{job="kube-state-metrics",resource="pods"} != 1
+        max by (cluster_type, cluster, node) (
+          kube_node_status_capacity{resource="pods"} != 1
         ) > 0.95
       for: 15m
       labels:
@@ -450,11 +477,14 @@ spec:
     - alert: KubeNodeReadinessFlapping
       annotations:
         description: >-
-          k8s cluster {{ $labels.cluster }}:
-          The readiness status of node {{ $labels.node }} has changed {{ $value }} times in the last 15 minutes.
+          {{ $labels.node }}:
+          {{ $value }} changes
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubenodereadinessflapping
-        summary: Node readiness status is flapping.
-      expr: sum(changes(kube_node_status_condition{job="kube-state-metrics",status="true",condition="Ready"}[15m])) by (cluster, node) > 2
+        summary: Node readiness changed more than 2 times over the last 15 minutes
+      expr: |-
+        sum by (cluster_type, cluster, node) (
+          changes(kube_node_status_condition{status="true", condition="Ready"}[15m])
+        ) > 2
       for: 15m
       labels:
         severity: warning

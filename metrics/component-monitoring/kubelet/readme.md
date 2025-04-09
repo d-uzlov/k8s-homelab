@@ -36,15 +36,16 @@ kl delete -k ./metrics/component-monitoring/kubelet/
 # Manual metric checking
 
 ```bash
-bearer=$(kl -n prometheus exec sts/prometheus-main -- cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+
+bearer=$(kl -n prometheus get secrets prometheus-sa-token -o json | jq -r '.data.token' | base64 -d)
 kl get node -o wide
 nodeIp=
 # these metrics are not monitored here
-curl -sS --insecure -H "Authorization: Bearer $bearer" https://$nodeIp:10250/metrics
+curl -sS --insecure -H "Authorization: Bearer $bearer" https://$nodeIp:10250/metrics > ./kubelet-metrics.log
 # main container metrics
-curl -sS --insecure -H "Authorization: Bearer $bearer" https://$nodeIp:10250/metrics/cadvisor > ./cadvisor.log
+curl -sS --insecure -H "Authorization: Bearer $bearer" https://$nodeIp:10250/metrics/cadvisor > ./kubelet-cadvisor.log
 # liveness/readiness probe statistics
-curl -sS --insecure -H "Authorization: Bearer $bearer" https://$nodeIp:10250/metrics/probes
+curl -sS --insecure -H "Authorization: Bearer $bearer" https://$nodeIp:10250/metrics/probes > ./kubelet-probes.log
 
 # watch for some metric
 while true; do

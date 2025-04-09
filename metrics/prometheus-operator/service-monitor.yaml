@@ -3,7 +3,6 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: prometheus-operator
-  namespace: prometheus-operator
   labels:
     prometheus.io/instance: main
     instance.prometheus.io/main: enable
@@ -26,11 +25,15 @@ spec:
           key: ca.crt
           optional: false
     honorLabels: true
+    relabelings:
+    - targetLabel: cluster_type
+      replacement: k8s
     metricRelabelings:
     - action: keep
       sourceLabels:
       - __name__
       regex: "\
+        prometheus_operator_ready|\
         prometheus_operator_list_operations_.*|\
         prometheus_operator_managed_resources|\
         prometheus_operator_node_address_lookup_errors_total|\
@@ -42,11 +45,5 @@ spec:
         prometheus_operator_watch_operations_failed_total|\
         prometheus_operator_watch_operations_total|\
         "
-    relabelings:
-    - action: replace
-      regex: ^(.*)$
-      replacement: $1
-      separator: ;
-      sourceLabels:
-      - __meta_kubernetes_pod_node_name
-      targetLabel: nodename
+    - sourceLabels: [ pod ]
+      targetLabel: instance
