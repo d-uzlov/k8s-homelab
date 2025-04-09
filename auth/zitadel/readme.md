@@ -1,14 +1,7 @@
 
-# Authentik
+# Zitadel
 
-Authentik is an identity provider.
-It can be used to do unified auth across many applications.
-It can also be used as a proxy, adding auth to simple applications that don't have it on its own.
-
-References:
-- https://goauthentik.io/#comparison
-- https://xpufx.com/posts/protecting-your-first-app-with-authentik/
-- https://medium.com/@wessel__/istio-with-authentik-securing-your-cluster-and-providing-authentication-and-authorization-b5e48b331920
+Current version seems to have a memory leak.
 
 # Generate config
 
@@ -82,22 +75,6 @@ mkdir -p ./auth/zitadel/config/env/
 master_key=$(LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 32)
 EOF
 
-# consult your email provider for info how to connect to smtp
-# if you don't want to use it, leave everything empty
-# for example:
-# - yandex: https://yandex.ru/support/yandex-360/customers/mail/ru/mail-clients/others.html#smtpsetting
-# - google: https://support.google.com/a/answer/176600?hl=en
-#  cat << EOF > ./auth/authentik/env/authentik-smtp.env
-# auth_smtp_host=AUTOREPLACE_SMTP_HOST
-# auth_smtp_port=AUTOREPLACE_SMTP_PORT
-# auth_smtp_username=AUTOREPLACE_SMTP_USERNAME
-# auth_smtp_password=AUTOREPLACE_SMTP_PASSWORD
-# auth_smtp_use_tls=false
-# auth_smtp_use_ssl=true
-# # example: "Authentik <user@example.com>"
-# auth_smtp_from="AUTOREPLACE_SMTP_FROM"
-# EOF
-
 ```
 
 ```bash
@@ -159,6 +136,8 @@ curl https://$(kl -n zitadel get httproute zitadel-private -o go-template --temp
 
 ```
 
+Don't forget to enable `Projects -> your_project -> your_application -> Grant Types -> Refresh Token`.
+
 # Cleanup
 
 ```bash
@@ -182,9 +161,3 @@ AND field_name = 'domain';
 EOF
 
 ```
-
-# Additional configuration
-
-- [General tips](./tips.md)
-- [Auth proxy for applications that don't support auth natively](./proxy.md)
-- [Customize auth options and appearance](./flow-configuration.md)
