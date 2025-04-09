@@ -18,17 +18,18 @@ You only need to do this when updating the app.
 helm repo add authentik https://charts.goauthentik.io
 helm repo update authentik
 helm search repo authentik/authentik --versions --devel | head
-helm show values authentik/authentik --version 2024.12.2 > ./auth/authentik/default-values.yaml
+helm show values authentik/authentik --version 2025.2.4 > ./auth/authentik/default-values.yaml
 ```
 
 ```bash
+
 # https://hub.docker.com/r/bitnamicharts/redis/tags
 helm show values oci://registry-1.docker.io/bitnamicharts/redis --version 20.6.2 > ./auth/authentik/redis-default-values.yaml
 
 helm template \
   authentik \
   authentik/authentik \
-  --version 2024.12.2 \
+  --version 2025.2.4 \
   --namespace authentik \
   --values ./auth/authentik/values.yaml \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/part-of|d' -e '\|app.kubernetes.io/version|d' \
@@ -141,7 +142,7 @@ kl -n authentik get httproute
 
 # go here to set up access
 echo "https://"$(kl -n authentik get httproute authentik-private -o go-template --template "{{ (index .spec.hostnames 0)}}")/if/flow/initial-setup/
-# after you finished the initial set up process, it's safe to open public access to authentik
+# after you finished the initial setup, it's safe to open public access to authentik
 kl apply -k ./auth/authentik/httproute-public/
 kl -n authentik get httproute
 
