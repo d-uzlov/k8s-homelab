@@ -12,6 +12,7 @@ spec:
   - name: etcd
     rules:
     - alert: etcdMemberDown
+      # this is different from the generic TargetDown because this one has critical severity
       annotations:
         description: >-
           {{ $labels.instance }}
@@ -25,10 +26,10 @@ spec:
       annotations:
         description: >-
           target {{ $labels.To }}:
-          {{ $value | humanizePercentage }}
-        summary: More than 1% of requests to etcd node failed
+          {{ $value | humanize }}
+        summary: More than 1 failed requests per seconds to etcd node
       expr: |-
-        max by (To) (rate(etcd_network_peer_sent_failures_total[2m])) > 0.01
+        max by (cluster_type, cluster, To) (rate(etcd_network_peer_sent_failures_total[2m])) > 1
       for: 10m
       labels:
         severity: critical

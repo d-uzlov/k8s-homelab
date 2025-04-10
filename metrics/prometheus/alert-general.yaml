@@ -22,7 +22,7 @@ spec:
       for: 10m
       labels:
         severity: warning
-    - alert: TargetDown
+    - alert: ServiceTargetsDown
       annotations:
         description: >-
           job {{ $labels.job }}:
@@ -31,9 +31,9 @@ spec:
         summary: More than 10% of targets are unreachable
       expr: |-
         (
-          count by (cluster_type, cluster, job, namespace, service) (up == 0)
+          count by (cluster_type, cluster, job, namespace, service) (up{namespace!="", service!=""} == 0)
           /
-          count by (cluster_type, cluster, job, namespace, service) (up)
+          count by (cluster_type, cluster, job, namespace, service) (up{namespace!="", service!=""})
         ) > 0
       for: 10m
       labels:
