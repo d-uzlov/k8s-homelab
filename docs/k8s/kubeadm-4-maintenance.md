@@ -38,17 +38,28 @@ sudo kubeadm upgrade node phase control-plane --patches ./patches/
 
 # Option 1: download config, edit it, then push it back to cluster
 kl -n kube-system get cm kubelet-config -o 'go-template={{index .data "kubelet"}}' > ./docs/k8s/env/kubelet-config.yaml
-kl create cm kubelet-config --dry-run=client -o yaml --from-file kubelet=./docs/k8s/env/kubelet-cp.k8s.lan.yaml | kl -n kube-system replace cm kubelet-config -f -
+
+kl create cm kubelet-config --dry-run=client -o yaml --from-file kubelet=./docs/k8s/env/kubelet-config.yaml | kl -n kube-system replace cm kubelet-config -f -
 
 # Option 2: edit config in place
 kl -n kube-system edit cm kubelet-config
 
 # ssh into each node and run:
+#   for control plane nodes
 sudo kubeadm upgrade node phase kubelet-config --patches ./patches/
+#   for worker nodes
+sudo kubeadm upgrade node phase kubelet-config
+
 # if something is broken, and you can't connect from node to cluster, you can edit kubelet locally
 sudo nano /var/lib/kubelet/config.yaml
+
 # apply new config
 sudo systemctl restart kubelet
+sudo systemctl status kubelet --no-pager
+
+# you can also manually add extra args to kubelet
+sudo nano /etc/default/kubelet
+sudo cat /etc/default/kubelet
 
 ```
 
@@ -114,8 +125,8 @@ kubeadm version
 # study the upgrade plan manually
 sudo kubeadm upgrade plan
 # choose a version offered by the upgrade plan
-sudo kubeadm upgrade apply v1.32.1 --patches ./patches/
-sudo kubeadm upgrade apply v1.32.1 --patches ./patches/ --skip-phases addon/kube-proxy
+sudo kubeadm upgrade apply v1.32.3 --patches ./patches/
+sudo kubeadm upgrade apply v1.32.3 --patches ./patches/ --skip-phases addon/kube-proxy
 # if you disabled kube-proxy for your CNI, you need to re-disable it again after the upgrade
 
 # On all remaining master nodes

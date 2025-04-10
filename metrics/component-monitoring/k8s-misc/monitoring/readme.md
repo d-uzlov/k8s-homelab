@@ -52,7 +52,7 @@ Manual metric checking:
 ```bash
 
 bearer=$(kl -n prometheus get secrets prometheus-sa-token -o json | jq -r '.data.token' | base64 -d)
-kl exec deployments/alpine -- curl -sS --insecure -H "Authorization: Bearer $bearer" https://kps-kube-controller-manager.kube-system:10257/metrics
+kl exec deployments/alpine -- curl -sS --insecure -H "Authorization: Bearer $bearer" https://kube-controller-manager.kube-system:10257/metrics > ./kube-controller-manager-metrics.log
 
 ```
 
@@ -78,7 +78,7 @@ Manual metric checking:
 ```bash
 
 bearer=$(kl -n prometheus get secrets prometheus-sa-token -o json | jq -r '.data.token' | base64 -d)
-kl exec deployments/alpine -- curl -sS --insecure -H "Authorization: Bearer $bearer" https://kps-kube-scheduler.kube-system:10259/metrics
+kl exec deployments/alpine -- curl -sS --insecure -H "Authorization: Bearer $bearer" https://kube-scheduler.kube-system:10259/metrics > ./kube-scheduler-metrics.log
 
 ```
 
