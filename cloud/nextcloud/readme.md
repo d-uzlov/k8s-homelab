@@ -49,7 +49,7 @@ EOF
 mkdir -p ./cloud/nextcloud/postgres-cnpg/env/
 
 storage_class=
-storage_size=1Gi
+storage_size=2Gi
 s3_server_address=http://nas.example.com:9000/
 # make sure that bucket path is empty
 # otherwise cnpg will refuse to upload backups
