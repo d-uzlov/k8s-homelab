@@ -11,6 +11,21 @@ References:
 
 ```bash
 
+mkdir -p ./metrics/prometheus/alertmanager/env/
+clusterName=trixie
+ cat << EOF > ./metrics/prometheus/alertmanager/env/patch-cluster-tag.yaml
+- op: add
+  path: /spec/endpoints/0/relabelings/-
+  value:
+    targetLabel: cluster
+    replacement: $clusterName
+- op: add
+  path: /spec/endpoints/1/relabelings/-
+  value:
+    targetLabel: cluster
+    replacement: $clusterName
+EOF
+
 kl apply -k ./metrics/prometheus/alertmanager/
 kl -n prometheus get pod -o wide
 
@@ -36,6 +51,7 @@ kl delete -k ./metrics/alertmanager/
 
 ```bash
 kl -n prometheus describe svc alertmanager
+kl exec deployments/alpine -- apk add curl
 kl exec deployments/alpine -- curl -sS http://alertmanager.prometheus:9093/metrics
 kl exec deployments/alpine -- curl -sS http://alertmanager.prometheus:8080/metrics
 ```
