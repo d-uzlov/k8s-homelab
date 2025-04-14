@@ -338,6 +338,30 @@
                 "value": 130
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Type"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 103
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "uid"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 334
+              }
+            ]
           }
         ]
       },
@@ -360,7 +384,12 @@
           "show": false
         },
         "showHeader": true,
-        "sortBy": []
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "uid"
+          }
+        ]
       },
       "targets": [
         {
@@ -370,7 +399,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(pod, workload_type, workload) (\r\n  last_over_time(namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__range])\r\n)",
+          "expr": "max by(pod, workload_type, workload, uid) (\r\n  last_over_time(namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid!=\"\"}[$__range])\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -385,7 +414,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by(pod) (max by(pod, container) (\r\n  rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__range])\r\n))",
+          "expr": "sum by(node, pod, uid) (max by(node, pod, container, uid) (\r\n  rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid!~\".*_.*\", uid!=\"\"}[$__range])\r\n))",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -399,7 +428,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "# sum without(container) fixes issues if job labels has changed\r\nsum by (pod) (max by(pod, container) (\r\n  max_over_time(kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"cpu\"}[$__range])\r\n))",
+          "expr": "# sum without(container) fixes issues if job labels has changed\r\nsum by (node, pod, uid) (max by(node, pod, container, uid) (\r\n  max_over_time(kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"cpu\", uid!=\"\"}[$__range])\r\n))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -414,7 +443,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "# sum without(container) fixes issues if job labels has changed\r\nsum by (pod) (max by(pod, container) (\r\n  max_over_time(kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"cpu\"}[$__range])\r\n))",
+          "expr": "# sum without(container) fixes issues if job labels has changed\r\nsum by (node, pod, uid) (max by(node, pod, container, uid) (\r\n  max_over_time(kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"cpu\", uid!=\"\"}[$__range])\r\n))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -429,7 +458,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (pod) (max by(pod, container) (\r\n  max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__range])\r\n))",
+          "expr": "sum by (node, pod, uid) (max by(node, pod, container, uid) (\r\n  max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid!~\".*_.*\", uid!=\"\"}[$__range])\r\n))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -444,7 +473,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "# sum without(container) fixes issues if job labels has changed\r\nsum by (pod) (max by(pod, container) (\r\n  max_over_time(kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"memory\"}[$__range])\r\n))",
+          "expr": "# sum without(container) fixes issues if job labels has changed\r\nsum by (node, pod, uid) (max by(node, pod, container, uid) (\r\n  max_over_time(kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"memory\", uid!=\"\"}[$__range])\r\n))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -459,7 +488,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "# sum without(container) fixes issues if job labels has changed\r\nsum by (pod) (max by(pod, container) (\r\n  max_over_time(kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"memory\"}[$__range])\r\n))",
+          "expr": "# sum without(container) fixes issues if job labels has changed\r\nsum by (node, pod, uid) (max by(node, pod, container, uid) (\r\n  max_over_time(kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"memory\", uid!=\"\"}[$__range])\r\n))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -474,32 +503,92 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (pod) (max by(pod, container) (\r\n  max_over_time(container_memory_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__range])\r\n))",
+          "expr": "sum by (node, pod, uid) (max by(node, pod, container, uid) (\r\n  max_over_time(container_memory_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid!~\".*_.*\", uid!=\"\"}[$__range])\r\n))",
           "format": "table",
           "hide": false,
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
           "refId": "memory_raw"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "max by(node, pod) (\r\n  last_over_time(kube_pod_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__range])\r\n)",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "node"
         }
       ],
       "title": "CPU Usage",
       "transformations": [
+        {
+          "disabled": true,
+          "id": "groupBy",
+          "options": {
+            "fields": {
+              "Value #cpu": {
+                "aggregations": [
+                  "lastNotNull"
+                ],
+                "operation": "aggregate"
+              },
+              "Value #cpu_limit": {
+                "aggregations": [
+                  "lastNotNull"
+                ],
+                "operation": "aggregate"
+              },
+              "Value #cpu_request": {
+                "aggregations": [
+                  "lastNotNull"
+                ],
+                "operation": "aggregate"
+              },
+              "Value #memory_limit": {
+                "aggregations": [
+                  "lastNotNull"
+                ],
+                "operation": "aggregate"
+              },
+              "Value #memory_raw": {
+                "aggregations": [
+                  "lastNotNull"
+                ],
+                "operation": "aggregate"
+              },
+              "Value #memory_request": {
+                "aggregations": [
+                  "lastNotNull"
+                ],
+                "operation": "aggregate"
+              },
+              "Value #node": {
+                "aggregations": [
+                  "lastNotNull"
+                ],
+                "operation": "aggregate"
+              },
+              "Value #owner": {
+                "aggregations": []
+              },
+              "Value #rss": {
+                "aggregations": [
+                  "lastNotNull"
+                ],
+                "operation": "aggregate"
+              },
+              "node": {
+                "aggregations": [],
+                "operation": "groupby"
+              },
+              "pod": {
+                "aggregations": [],
+                "operation": "groupby"
+              },
+              "workload": {
+                "aggregations": [],
+                "operation": "groupby"
+              },
+              "workload_type": {
+                "aggregations": [],
+                "operation": "groupby"
+              }
+            }
+          }
+        },
         {
           "id": "merge",
           "options": {}
@@ -508,7 +597,7 @@
           "disabled": true,
           "id": "joinByField",
           "options": {
-            "byField": "pod",
+            "byField": "uid",
             "mode": "outer"
           }
         },
@@ -527,18 +616,19 @@
             "includeByName": {},
             "indexByName": {
               "Time": 0,
-              "Value #cpu": 5,
-              "Value #cpu_limit": 7,
-              "Value #cpu_request": 6,
-              "Value #memory_limit": 10,
-              "Value #memory_raw": 11,
-              "Value #memory_request": 9,
-              "Value #owner": 12,
-              "Value #rss": 8,
-              "node": 3,
-              "pod": 4,
-              "workload": 2,
-              "workload_type": 1
+              "Value #cpu": 6,
+              "Value #cpu_limit": 8,
+              "Value #cpu_request": 7,
+              "Value #memory_limit": 11,
+              "Value #memory_raw": 12,
+              "Value #memory_request": 10,
+              "Value #owner": 13,
+              "Value #rss": 9,
+              "node": 4,
+              "pod": 5,
+              "uid": 1,
+              "workload": 3,
+              "workload_type": 2
             },
             "renameByName": {
               "Time": "",
@@ -560,7 +650,9 @@
               "Value #request_percent_max": "Request % (max)",
               "Value #rss": "RSS",
               "node": "Node",
-              "pod": "Pod"
+              "pod": "Pod",
+              "uid": "",
+              "workload_type": "Type"
             }
           }
         }

@@ -1,0 +1,145 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: record-namespace-resources
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  groups:
+  - name: record-namespace-resources
+    rules:
+    - record: namespace_memory:kube_pod_container_resource_requests:sum
+      expr: |-
+        sum by (namespace, cluster) (
+            sum by (namespace, pod, cluster) (
+                max by (namespace, pod, container, cluster) (
+                  kube_pod_container_resource_requests{resource="memory"}
+                ) * on (namespace, pod, cluster) group_left() max by (namespace, pod, cluster) (
+                  kube_pod_status_phase{phase=~"Pending|Running"} == 1
+                )
+            )
+        )
+    - record: namespace_cpu:kube_pod_container_resource_requests:sum
+      expr: |-
+        sum by (namespace, cluster) (
+            sum by (namespace, pod, cluster) (
+                max by (namespace, pod, container, cluster) (
+                  kube_pod_container_resource_requests{resource="cpu"}
+                ) * on (namespace, pod, cluster) group_left() max by (namespace, pod, cluster) (
+                  kube_pod_status_phase{phase=~"Pending|Running"} == 1
+                )
+            )
+        )
+    - record: namespace_memory:kube_pod_container_resource_limits:sum
+      expr: |-
+        sum by (namespace, cluster) (
+            sum by (namespace, pod, cluster) (
+                max by (namespace, pod, container, cluster) (
+                  kube_pod_container_resource_limits{resource="memory"}
+                ) * on (namespace, pod, cluster) group_left() max by (namespace, pod, cluster) (
+                  kube_pod_status_phase{phase=~"Pending|Running"} == 1
+                )
+            )
+        )
+    - record: namespace_cpu:kube_pod_container_resource_limits:sum
+      expr: |-
+        sum by (namespace, cluster) (
+            sum by (namespace, pod, cluster) (
+                max by (namespace, pod, container, cluster) (
+                  kube_pod_container_resource_limits{resource="cpu"}
+                ) * on (namespace, pod, cluster) group_left() max by (namespace, pod, cluster) (
+                  kube_pod_status_phase{phase=~"Pending|Running"} == 1
+                )
+            )
+        )
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: record-pod-owner-relabel
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  groups:
+  - name: record-pod-owner-relabel
+    rules:
+    - record: namespace_workload_pod:kube_pod_owner:relabel
+      expr: |-
+        max by (cluster_type, cluster, namespace, workload, pod, uid) (
+          label_replace(
+            label_replace(
+              kube_pod_owner{owner_kind="ReplicaSet"},
+              "replicaset", "$1", "owner_name", "(.*)"
+            ) * on (replicaset, namespace) group_left(owner_name) topk by (replicaset, namespace) (
+              1, max by (replicaset, namespace, owner_name) (
+                kube_replicaset_owner
+              )
+            ),
+            "workload", "$1", "owner_name", "(.*)"
+          )
+        )
+      labels:
+        workload_type: deployment
+    - record: namespace_workload_pod:kube_pod_owner:relabel
+      expr: |-
+        max by (cluster_type, cluster, namespace, workload, pod, uid) (
+          label_replace(
+            kube_pod_owner{owner_kind="DaemonSet"},
+            "workload", "$1", "owner_name", "(.*)"
+          )
+        )
+      labels:
+        workload_type: daemonset
+    - record: namespace_workload_pod:kube_pod_owner:relabel
+      expr: |-
+        max by (cluster_type, cluster, namespace, workload, pod, uid) (
+          label_replace(
+            kube_pod_owner{owner_kind="StatefulSet"},
+            "workload", "$1", "owner_name", "(.*)"
+          )
+        )
+      labels:
+        workload_type: statefulset
+    - record: namespace_workload_pod:kube_pod_owner:relabel
+      expr: |-
+        max by (cluster_type, cluster, namespace, workload, pod, uid) (
+          label_replace(
+            kube_pod_owner{owner_kind="Job"},
+            "workload", "$1", "owner_name", "(.*)"
+          )
+        )
+      labels:
+        workload_type: job
+    - record: namespace_workload_pod:kube_pod_owner:relabel
+      expr: |-
+        max by (cluster_type, cluster, namespace, workload, pod, uid) (
+          label_replace(
+            kube_pod_owner{owner_kind="Node"},
+            "workload", "$1", "owner_name", "(.*)"
+          )
+        )
+      labels:
+        workload_type: static-pod
+    - record: namespace_workload_pod:kube_pod_owner:relabel
+      expr: |-
+        max by (cluster_type, cluster, namespace, workload, pod, uid) (
+          label_replace(
+            kube_pod_owner{owner_kind="Cluster"},
+            "workload", "$1", "owner_name", "(.*)"
+          )
+        )
+      labels:
+        workload_type: cnpg
+    - record: namespace_workload_pod:kube_pod_owner:relabel
+      expr: |-
+        max by (cluster_type, cluster, node, namespace, workload, pod, uid) (
+          kube_pod_owner{owner_kind=""}
+        )
+      labels:
+        workload_type: free-pod
+        workload: '-'
