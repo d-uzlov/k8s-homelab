@@ -15,52 +15,56 @@ newgrp kvm
 
 ```bash
 
+rm -r ~/cloud-scripts/
 mkdir -p ~/cloud-scripts/
 mkdir -p ~/cloud-scripts/udev/
-mkdir -p ~/cloud-scripts/cloud-init-cfg/
 mkdir -p ~/cloud-scripts/scripts/
 mkdir -p ~/cloud-scripts/sysctl/
 mkdir -p ~/cloud-scripts/sbin/
 mkdir -p ~/cloud-scripts/logind/
+mkdir -p ~/cloud-scripts/cloud-systemd/
 
 # default shutdown and reboot skip shutdown tasks
- cat << EOF > ~/cloud-scripts/sbin/shutdown
-#!/bin/bash
-exec systemctl poweroff
-EOF
-chmod 755 ~/cloud-scripts/sbin/shutdown
- cat << EOF > ~/cloud-scripts/sbin/reboot
-#!/bin/bash
-exec systemctl reboot
-EOF
-chmod 755 ~/cloud-scripts/sbin/reboot
+#  cat << EOF > ~/cloud-scripts/sbin/shutdown
+# #!/bin/bash
+# exec systemctl poweroff
+# EOF
+# chmod 755 ~/cloud-scripts/sbin/shutdown
+#  cat << EOF > ~/cloud-scripts/sbin/reboot
+# #!/bin/bash
+# exec systemctl reboot
+# EOF
+# chmod 755 ~/cloud-scripts/sbin/reboot
 
 # enable CPU hot plug
  cat << EOF > ~/cloud-scripts/udev/80-hotplug-cpu.rules
 SUBSYSTEM=="cpu", ACTION=="add", TEST=="online", ATTR{online}=="0", ATTR{online}="1"
 EOF
 
-# fix for DHCP DNS name being outdated on first boot, and after each name change
- cat << EOF > ~/cloud-scripts/cloud-init-cfg/10-dnsfix.cfg
-bootcmd:
-- /usr/sbin/dhclient
-EOF
-
 # generate iSCSI and NVMEoF identifiers from hostname
- cat << "generate-iqn-nqn-EOF" > ~/cloud-scripts/scripts/generate-iqn-nqn.sh
+ cat << "boot-cmd-EOF" > ~/cloud-scripts/scripts/boot-cmd.sh
 #!/bin/bash
-set -eu
+set -eux
 
-sudo tee /etc/iscsi/initiatorname.iscsi << initiatorname.iscsi-EOF
+echo check /run/test-init.log for cloud-init boot-cmd logs
+exec >> /run/test-init.log 2>&1
+
+echo renewing DHCP lease...
+# dhcp name is outdated on the first boot
+/usr/sbin/dhclient
+
+echo generating iscsi name...
+tee /etc/iscsi/initiatorname.iscsi << initiatorname.iscsi-EOF
 InitiatorName=iqn_prefix:$(hostname)
 initiatorname.iscsi-EOF
 
-sudo tee /etc/nvme/hostnqn << hostnqn-EOF
+echo generating nvme name...
+tee /etc/nvme/hostnqn << hostnqn-EOF
 nqn_prefix:$(hostname)
 hostnqn-EOF
 # hostid should only be generated if it is missing
 [ -f /etc/nvme/hostid ] && [ $(wc -c < /etc/nvme/hostid) = 37 ] || uuidgen | sudo tee /etc/nvme/hostid
-generate-iqn-nqn-EOF
+boot-cmd-EOF
 
 # replace example.com with your domain in reverse notation, date with current date
 # this is required to generate globally-unique identifiers
@@ -76,14 +80,9 @@ iqn_prefix=
 nqn_prefix=
 # for example: nqn_prefix=nqn.2001-04.com.example:custom
 
-sed -i -e "s/iqn_prefix/$iqn_prefix/" -e "s/nqn_prefix/$nqn_prefix/" ~/cloud-scripts/scripts/generate-iqn-nqn.sh
+sed -i -e "s/iqn_prefix/$iqn_prefix/" -e "s/nqn_prefix/$nqn_prefix/" ~/cloud-scripts/scripts/boot-cmd.sh
 
-chmod +x ~/cloud-scripts/scripts/generate-iqn-nqn.sh
-
- cat << EOF > ~/cloud-scripts/cloud-init-cfg/0-gen-iqn.cfg
-bootcmd:
-- /opt/scripts/generate-iqn-nqn.sh
-EOF
+chmod +x ~/cloud-scripts/scripts/boot-cmd.sh
 
  cat << EOF > ~/cloud-scripts/sysctl/inotify.conf
 fs.inotify.max_user_watches = 1048576
@@ -109,15 +108,37 @@ apt-get clean
 apt-get autoremove
 cloud-init clean
 
+rm /etc/iscsi/initiatorname.iscsi
+rm /etc/nvme/hostnqn
+rm /etc/nvme/hostid
+
 # replace log files with empty ones, to avoid errors when something expects log file to exist
 for CLEAN in $(find /var/log/ -type f)
 do
-  cp /dev/null  $CLEAN
+  cp /dev/null $CLEAN
 done
 rm -rf /var/log/journal/*
 
 rm -rf /tmp/*
 rm -rf /var/tmp/*
 image-cleanup-EOF
+
+chmod +x ~/cloud-scripts/image-cleanup.sh
+
+curl https://raw.githubusercontent.com/d-uzlov/k8s-homelab/refs/heads/master/docs/bash-setup.md | sed -n '/```bash/,/```/{//!p;}' | sed 's~\$HOME~/etc/skel~g' > ~/cloud-scripts/init-user-skel.sh
+
+ cat << EOF > ~/cloud-scripts/cloud-systemd/cloud-boot.service
+[Unit]
+Description=Cloud-init post-boot
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/scripts/boot-cmd.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
 
 ```
