@@ -335,6 +335,10 @@ References:
  cat << EOF > $HOME/.bashrc.d/0-color-aliases.sh
 alias ip='ip --color=auto'
 alias grep='grep --color=auto'
+
+# an alias for sudo allows alias expansion
+# when using 'sudo grep' and similar commands
+alias sudo='sudo '
 EOF
 
 ```
