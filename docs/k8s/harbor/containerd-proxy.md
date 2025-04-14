@@ -16,7 +16,8 @@ References:
 Should be done once for each node.
 
 ```bash
-containerd_node=m2.k8s.lan
+
+containerd_node=
 
 # enable registry mirrors in containerd
 ssh $containerd_node sudo bash -s - << EOF &&
@@ -27,6 +28,7 @@ ssh $containerd_node sudo systemctl restart containerd.service
 # copy the ca file used by harbor into the node
 ssh $containerd_node sudo mkdir -p /etc/certs/ &&
 ssh $containerd_node sudo tee '>' /dev/null < ./docs/k8s/harbor/env/ca.crt /etc/certs/harbor-ca.crt
+
 ```
 
 # Test connection
@@ -34,7 +36,8 @@ ssh $containerd_node sudo tee '>' /dev/null < ./docs/k8s/harbor/env/ca.crt /etc/
 Force connection through harbor, so that it fails if something isn't right.
 
 ```bash
-containerd_node=m2.k8s.lan
+
+containerd_node=
 
 registries="docker.io ghcr.io quay.io registry.k8s.io"
 for registry in $registries; do
@@ -58,6 +61,7 @@ ssh $containerd_node sudo crictl pull docker.io/alpine:20240315
 ssh $containerd_node sudo crictl pull ghcr.io/screego/server:1.10.1
 ssh $containerd_node sudo crictl pull quay.io/cilium/alpine-curl:v1.8.0
 ssh $containerd_node sudo crictl pull registry.k8s.io/metrics-server/metrics-server:v0.6.2
+
 ```
 
 # Set up mirrors / proxies
@@ -65,7 +69,8 @@ ssh $containerd_node sudo crictl pull registry.k8s.io/metrics-server/metrics-ser
 Here we setup mirrors with the fallback to the original registry when Harbor is not available.
 
 ```bash
-containerd_node=m2.k8s.lan
+
+containerd_node=
 
 registries="docker.io ghcr.io quay.io registry.k8s.io"
 for registry in $registries; do
@@ -77,4 +82,5 @@ for registry in $registries; do
   override_path = true
 EOF
 done
+
 ```

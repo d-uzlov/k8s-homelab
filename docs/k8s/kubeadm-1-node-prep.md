@@ -3,18 +3,12 @@
 
 This file describes how to prepare Linux nodes for kubeadm.
 
-# Install required or useful dependencies
-
-```bash
-sudo apt-get install -y qemu-guest-agent ncat net-tools bash-completion iperf3 nfs-common fio ca-certificates curl apt-transport-https gnupg htop open-iscsi cachefilesd dnsutils ipvsadm iotop
-
-sudo dnf install -y wget
-sudo dnf remove -y zram-generator-defaults
-```
-
 # Fix inotify limits
 
 ```bash
+
+cat /etc/sysctl.d/inotify.conf
+
 sudo tee /etc/sysctl.d/inotify.conf << EOF
 fs.inotify.max_user_watches = 4194304
 fs.inotify.max_user_instances = 65536
@@ -23,6 +17,7 @@ EOF
 sudo sysctl --system
 # check new values
 sudo sysctl fs.inotify
+
 ```
 
 # Use up-to-date kernel
@@ -33,6 +28,7 @@ For example, `netkit` requires 6.8 or newer.
 You can install a newer kernel manually. For example, here is how you can install proxmox kernel:
 
 ```bash
+
 echo "deb [arch=amd64] http://download.proxmox.com/debian/pve bookworm pve-no-subscription" | sudo tee /etc/apt/sources.list.d/pve-install-repo.list
 sudo wget https://enterprise.proxmox.com/debian/proxmox-release-bookworm.gpg -O /etc/apt/trusted.gpg.d/proxmox-release-bookworm.gpg
 # verify
@@ -47,6 +43,7 @@ uname -r
 # adjust for your kernel version prefix
 sudo apt remove -y linux-image-amd64 'linux-image-6.1*'
 sudo update-grub
+
 ```
 
 # Install containerd and its dependencies
@@ -57,38 +54,41 @@ You may want to switch to the official version
 of just rebuild the containerd binaries yourself.
 
 ```bash
+
 # https://github.com/containerd/containerd/blob/main/docs/getting-started.md
 # Check new versions here:
 # https://github.com/containerd/containerd/releases
 # https://github.com/d-uzlov/containerd/releases
-# wget https://github.com/d-uzlov/containerd/releases/download/v$containerd_version/containerd-$containerd_version-linux-amd64.tar.gz
-containerd_version=2.0m &&
-wget https://github.com/d-uzlov/containerd/releases/download/release-$containerd_version/containerd-$containerd_version-linux-amd64.tar.gz
+
+containerd_version=2.0.4m
+# containerd_url=https://github.com/containerd/containerd/releases/download/v$containerd_version/containerd-$containerd_version-linux-amd64.tar.gz
+containerd_url=https://github.com/d-uzlov/containerd/releases/download/release-$containerd_version/containerd-$containerd_version-linux-amd64.tar.gz
+wget $containerd_url &&
 sudo tar Czxvf /usr/local containerd-$containerd_version-linux-amd64.tar.gz &&
 rm containerd-$containerd_version-linux-amd64.tar.gz &&
-containerd --version &&
+containerd --version
 
 wget https://github.com/containerd/containerd/raw/refs/heads/main/containerd.service &&
 sudo mv containerd.service /usr/lib/systemd/system/ &&
 sudo systemctl daemon-reload &&
-sudo systemctl enable containerd &&
+sudo systemctl enable containerd
 
 # Check new versions here:
 # https://github.com/opencontainers/runc/releases
-runc_version=1.2.2 &&
+runc_version=1.2.6 &&
 wget https://github.com/opencontainers/runc/releases/download/v$runc_version/runc.amd64 &&
 sudo install -m 755 runc.amd64 /usr/local/sbin/runc &&
 rm runc.amd64 &&
-sudo runc --version &&
+sudo runc --version
 
 # Check new versions here:
 # https://github.com/kubernetes-sigs/cri-tools/releases
-crictl_version=v1.31.1 &&
+crictl_version=v1.32.0 &&
 wget https://github.com/kubernetes-sigs/cri-tools/releases/download/$crictl_version/crictl-$crictl_version-linux-amd64.tar.gz &&
 sudo tar zxvf crictl-$crictl_version-linux-amd64.tar.gz -C /usr/local/bin &&
 rm -f crictl-$crictl_version-linux-amd64.tar.gz &&
 crictl --version &&
-sudo crictl config --set runtime-endpoint=unix:///run/containerd/containerd.sock --set image-endpoint=unix:///run/containerd/containerd.sock &&
+sudo crictl config --set runtime-endpoint=unix:///run/containerd/containerd.sock --set image-endpoint=unix:///run/containerd/containerd.sock
 
 sudo tee /etc/modules-load.d/containerd.conf << EOF &&
 overlay
@@ -104,13 +104,17 @@ containerd config default |
     sudo tee /etc/containerd/config.toml > /dev/null 2>&1 &&
 sudo systemctl restart containerd &&
 sudo systemctl status containerd --no-pager
+
 ```
 
 # Setup shutdown commands for k8s
 
 Default `shutdown` and `reboot` commands don't allow for k8s graceful shutdown.
 
+TODO reboot and shutdown are overwritten on apt update, but it seems to work fine in the new versions?
+
 ```bash
+
 sudo rm /usr/sbin/shutdown &&
 sudo tee /usr/sbin/shutdown << EOF && sudo chmod 755 /usr/sbin/shutdown
 #!/bin/bash
@@ -122,11 +126,13 @@ sudo tee /usr/sbin/reboot << EOF && sudo chmod 755 /usr/sbin/reboot
 #!/bin/bash
 exec systemctl reboot
 EOF
+
 ```
 
 # System config for k8s
 
 ```bash
+
 # check if swap is enabled
 [ -z "$(sudo swapon -s)" ] || {
   # disable it
@@ -142,6 +148,7 @@ net.ipv4.ip_forward = 1
 EOF
 # reload rules from /etc/sysctl.d
 sudo sysctl --system
+
 ```
 
 # Registry cache (optional)
