@@ -34,8 +34,8 @@ Enable using `~/.bashrc.d` for adjustments.
 
 ```bash
 
-mkdir -p ~/.bashrc.d/
- cat << "EOF" > ~/.bashrc.d/include
+mkdir -p $HOME/.bashrc.d/
+ cat << "EOF" > $HOME/.bashrc.d/include
 # add support for bashrc.d
 if [ -d ~/.bashrc.d ]; then
   for rc in ~/.bashrc.d/*.sh; do
@@ -45,7 +45,7 @@ if [ -d ~/.bashrc.d ]; then
   done
 fi
 EOF
-grep -Fx '. ~/.bashrc.d/include' ~/.bashrc > /dev/null || echo '. ~/.bashrc.d/include' >> ~/.bashrc
+grep -Fx '. ~/.bashrc.d/include' $HOME/.bashrc > /dev/null || echo '. ~/.bashrc.d/include' >> $HOME/.bashrc
 
 ```
 
@@ -53,7 +53,7 @@ grep -Fx '. ~/.bashrc.d/include' ~/.bashrc > /dev/null || echo '. ~/.bashrc.d/in
 
 ```bash
 
- cat << "EOF" > ~/.inputrc
+ cat << "EOF" > $HOME/.inputrc
 # Respect default shortcuts.
 $include /etc/inputrc
 
@@ -105,7 +105,7 @@ Also, prompt history is saved after every command.
 
 ```bash
 
- cat << "EOF" > ~/.bashrc.d/0-prompt.sh
+ cat << "EOF" > $HOME/.bashrc.d/0-prompt.sh
 
 function timer_now {
   date +%s%N
@@ -212,10 +212,10 @@ References:
 ```bash
 
 # use more and better colors for ls
-curl -fsSL "https://github.com/trapd00r/LS_COLORS/raw/refs/heads/master/lscolors.sh" > ~/.bashrc.d/0-ls-colors.sh
+curl -fsSL "https://github.com/trapd00r/LS_COLORS/raw/refs/heads/master/lscolors.sh" > $HOME/.bashrc.d/0-ls-colors.sh
 
 # add more default args to ls
- cat << "EOF" > ~/.bashrc.d/0-better-ls.sh
+ cat << "EOF" > $HOME/.bashrc.d/0-better-ls.sh
 ! alias ls > /dev/null 2> /dev/null || unalias ls
 ! alias ll > /dev/null 2> /dev/null || unalias ll
 ! alias l > /dev/null 2> /dev/null || unalias l
@@ -253,14 +253,14 @@ References:
 ```bash
 
 # syntax highlights for many languages
-[ -d ~/.nano/ ] || curl https://raw.githubusercontent.com/galenguyer/nano-syntax-highlighting/master/install.sh | bash || rm -rf ~/.nano/
+[ -d $HOME/.nano/ ] || curl https://raw.githubusercontent.com/galenguyer/nano-syntax-highlighting/master/install.sh | bash || rm -rf $HOME/.nano/
 # installs into ~/.nano/
 
- cat << EOF > ~/.bashrc.d/0-editor.sh
+ cat << EOF > $HOME/.bashrc.d/0-editor.sh
 export EDITOR=nano
 EOF
 
- cat << EOF > ~/.nanorc
+ cat << EOF > $HOME/.nanorc
 set tabsize 2
 set tabstospaces
 
@@ -332,7 +332,7 @@ References:
 
 ```bash
 
- cat << EOF > ~/.bashrc.d/0-color-aliases.sh
+ cat << EOF > $HOME/.bashrc.d/0-color-aliases.sh
 alias ip='ip --color=auto'
 alias grep='grep --color=auto'
 EOF
@@ -343,9 +343,9 @@ EOF
 
 ```bash
 
-sed -i -E -e 's/^(.*)HISTSIZE/# \1HISTSIZE/' -e 's/^(.*)HISTFILESIZE/# \1HISTFILESIZE/' ~/.bashrc
+sed -i -E -e 's/^(.*)HISTSIZE/# \1HISTSIZE/' -e 's/^(.*)HISTFILESIZE/# \1HISTFILESIZE/' $HOME/.bashrc
 
- cat << EOF > ~/.bashrc.d/0-bash-history.sh
+ cat << EOF > $HOME/.bashrc.d/0-bash-history.sh
 # Eternal bash history.
 # ---------------------
 # Undocumented feature which sets the size to "unlimited".
@@ -380,7 +380,7 @@ This script changes the behavior the following way:
 
 ```bash
 
-cat << "EOF" > ~/.bashrc.d/10-zfs-completion-patch.sh
+cat << "EOF" > $HOME/.bashrc.d/10-zfs-completion-patch.sh
 # skip the script if ZFS is not installed
 if [ -f /usr/share/bash-completion/completions/zfs ]; then
 

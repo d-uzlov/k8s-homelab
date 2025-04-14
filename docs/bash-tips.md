@@ -15,6 +15,12 @@ sed -n '/```bash/,/```/{//!p;}' ./docs/bash-setup.md | sudo bash
 # you can configure remote system via ssh
 sed -n '/```bash/,/```/{//!p;}' ./docs/bash-setup.md | ssh $remote_hostname
 sed -n '/```bash/,/```/{//!p;}' ./docs/bash-setup.md | ssh $remote_hostname sudo bash
+
+# save script to run it somewhere else
+sed -n '/```bash/,/```/{//!p;}' ./docs/bash-setup.md > ./init-user.sh
+# run script from the web
+curl https://raw.githubusercontent.com/d-uzlov/k8s-homelab/refs/heads/master/docs/bash-setup.md | sed -n '/```bash/,/```/{//!p;}' | bash
+
 ```
 
 # Settings for new users
