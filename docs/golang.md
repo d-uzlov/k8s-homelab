@@ -8,10 +8,10 @@ Prerequisites:
 
 # check out the latest release
 # https://go.dev/doc/devel/release
-release=1.24.1
+release=1.24.2
 filename=go$release.linux-amd64.tar.gz
 curl -OL https://golang.org/dl/$filename &&
-rm -rf /usr/local/go &&
+sudo rm -rf /usr/local/go &&
 sudo tar -C /usr/local -xzf $filename &&
 rm $filename
 
