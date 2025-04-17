@@ -733,6 +733,180 @@
       "fieldConfig": {
         "defaults": {
           "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "limit"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "request"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 27
+      },
+      "id": 35,
+      "maxDataPoints": 300,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "lastNotNull",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(container, name) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))\r\n/ on(container) group_left\r\nsum by(container) (\r\n    kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\",container=~\"$container\", invalid=$enableLimits}\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}}, name={{name}}",
+          "range": true,
+          "refId": "cpu"
+        }
+      ],
+      "title": "CPU Usage / Limit",
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "(.*), name=(.{8})(.*)",
+            "renamePattern": "$1, $2"
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
             "mode": "thresholds",
             "seriesBy": "max"
           },
@@ -803,7 +977,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 27
+        "y": 34
       },
       "id": 2,
       "maxDataPoints": 200,
@@ -856,7 +1030,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 34
+        "y": 41
       },
       "id": 20,
       "panels": [],
@@ -1099,7 +1273,7 @@
         "h": 17,
         "w": 22,
         "x": 1,
-        "y": 35
+        "y": 42
       },
       "id": 5,
       "options": {
@@ -1367,7 +1541,7 @@
         "h": 9,
         "w": 7,
         "x": 16,
-        "y": 52
+        "y": 59
       },
       "id": 27,
       "options": {
@@ -1507,7 +1681,7 @@
         "h": 8,
         "w": 22,
         "x": 1,
-        "y": 61
+        "y": 68
       },
       "id": 31,
       "maxDataPoints": 300,
@@ -1519,7 +1693,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Name",
+          "sortDesc": false
         },
         "tooltip": {
           "hideZeros": false,
@@ -1534,36 +1710,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container) (kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\", invalid=$enableLimits})",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "limits: {{container}}",
-          "range": true,
-          "refId": "limit"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "max by (container) (kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\", invalid=$enableLimits})",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "requests: {{container}}",
-          "range": true,
-          "refId": "request"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
           "expr": "max by (container, name) (max_over_time(container_memory_max_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{container}}, name={{name}} max",
+          "legendFormat": "{{container}} 2 max, name={{name}}",
           "range": true,
           "refId": "max"
         },
@@ -1575,7 +1725,7 @@
           "editorMode": "code",
           "expr": "max by (container, name) (max_over_time(container_memory_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))",
           "instant": false,
-          "legendFormat": "{{container}}, name={{name}} raw",
+          "legendFormat": "{{container}} 3 raw, name={{name}}",
           "range": true,
           "refId": "raw"
         },
@@ -1588,7 +1738,7 @@
           "expr": "max by (container, name) (max_over_time(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{container}}, name={{name}} wss",
+          "legendFormat": "{{container}} 4 wss, name={{name}}",
           "range": true,
           "refId": "wss"
         },
@@ -1601,9 +1751,35 @@
           "expr": "max by (container, name) (max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{container}}, name={{name}} rss",
+          "legendFormat": "{{container}} 6 rss, name={{name}}",
           "range": true,
           "refId": "rss"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (container) (kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\", invalid=$enableLimits})",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} 1 limits",
+          "range": true,
+          "refId": "limit"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (container) (kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\", invalid=$enableLimits})",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} 5 requests",
+          "range": true,
+          "refId": "request"
         }
       ],
       "title": "Memory Usage",
@@ -1611,8 +1787,8 @@
         {
           "id": "renameByRegex",
           "options": {
-            "regex": "(.*), name=(.{8})(.*) (.*)",
-            "renamePattern": "$1, $2 $4"
+            "regex": "(.*), name=(.{8})(.*)",
+            "renamePattern": "$1, $2"
           }
         }
       ],
@@ -1743,7 +1919,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 69
+        "y": 76
       },
       "id": 33,
       "maxDataPoints": 100,
@@ -1755,7 +1931,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Name",
+          "sortDesc": false
         },
         "tooltip": {
           "hideZeros": false,
@@ -1773,7 +1951,7 @@
           "expr": "max by (container, name) (max_over_time(container_memory_max_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\", invalid=$enableLimits})",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{container}}, name={{name}} max",
+          "legendFormat": "{{container}} 1 max, name={{name}}",
           "range": true,
           "refId": "max"
         },
@@ -1785,7 +1963,7 @@
           "editorMode": "code",
           "expr": "max by (container, name) (max_over_time(container_memory_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\", invalid=$enableLimits})",
           "instant": false,
-          "legendFormat": "{{container}}, name={{name}} raw",
+          "legendFormat": "{{container}} 2 raw, name={{name}}",
           "range": true,
           "refId": "raw"
         },
@@ -1798,7 +1976,7 @@
           "expr": "max by (container, name) (max_over_time(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\", invalid=$enableLimits})",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{container}}, name={{name}} wss",
+          "legendFormat": "{{container}} 3 wss, name={{name}}",
           "range": true,
           "refId": "wss"
         },
@@ -1811,7 +1989,7 @@
           "expr": "max by (container, name) (max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\", invalid=$enableLimits})",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{container}}, name={{name}} rss",
+          "legendFormat": "{{container}} 4 rss, name={{name}}",
           "range": true,
           "refId": "rss"
         }
@@ -1821,8 +1999,8 @@
         {
           "id": "renameByRegex",
           "options": {
-            "regex": "(.*), name=(.{8})(.*) (.*)",
-            "renamePattern": "$1, $2 $4"
+            "regex": "(.*), name=(.{8})(.*)",
+            "renamePattern": "$1, $2"
           }
         }
       ],
@@ -1953,7 +2131,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 69
+        "y": 76
       },
       "id": 34,
       "maxDataPoints": 100,
@@ -1965,7 +2143,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Name",
+          "sortDesc": false
         },
         "tooltip": {
           "hideZeros": false,
@@ -1983,7 +2163,7 @@
           "expr": "max by (container, name) (max_over_time(container_memory_max_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\", invalid=$enableLimits})",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{container}}, name={{name}} max",
+          "legendFormat": "{{container}} 1 max, name={{name}}",
           "range": true,
           "refId": "max"
         },
@@ -1995,7 +2175,7 @@
           "editorMode": "code",
           "expr": "max by (container, name) (max_over_time(container_memory_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\", invalid=$enableLimits})",
           "instant": false,
-          "legendFormat": "{{container}}, name={{name}} raw",
+          "legendFormat": "{{container}} 2 raw, name={{name}}",
           "range": true,
           "refId": "raw"
         },
@@ -2008,7 +2188,7 @@
           "expr": "max by (container, name) (max_over_time(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\", invalid=$enableLimits})",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{container}}, name={{name}} wss",
+          "legendFormat": "{{container}} 3 wss, name={{name}}",
           "range": true,
           "refId": "wss"
         },
@@ -2021,7 +2201,7 @@
           "expr": "max by (container, name) (max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\", invalid=$enableLimits})",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{container}}, name={{name}} rss",
+          "legendFormat": "{{container}} 4 rss, name={{name}}",
           "range": true,
           "refId": "rss"
         }
@@ -2031,8 +2211,8 @@
         {
           "id": "renameByRegex",
           "options": {
-            "regex": "(.*), name=(.{8})(.*) (.*)",
-            "renamePattern": "$1, $2 $4"
+            "regex": "(.*), name=(.{8})(.*)",
+            "renamePattern": "$1, $2"
           }
         }
       ],
@@ -2154,7 +2334,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 77
+        "y": 84
       },
       "id": 29,
       "maxDataPoints": 100,
@@ -2316,7 +2496,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 77
+        "y": 84
       },
       "id": 26,
       "maxDataPoints": 100,
@@ -2368,7 +2548,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 85
+        "y": 92
       },
       "id": 19,
       "panels": [],
@@ -2440,7 +2620,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 86
+        "y": 93
       },
       "id": 28,
       "maxDataPoints": 100,
@@ -2542,7 +2722,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 86
+        "y": 93
       },
       "id": 7,
       "maxDataPoints": 100,
@@ -2644,7 +2824,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 93
+        "y": 100
       },
       "id": 10,
       "maxDataPoints": 100,
@@ -2746,7 +2926,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 93
+        "y": 100
       },
       "id": 11,
       "maxDataPoints": 100,
@@ -2789,7 +2969,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 100
+        "y": 107
       },
       "id": 17,
       "panels": [],
@@ -2844,7 +3024,7 @@
         "h": 7,
         "w": 17,
         "x": 1,
-        "y": 101
+        "y": 108
       },
       "id": 16,
       "options": {
@@ -3019,7 +3199,7 @@
         "h": 7,
         "w": 4,
         "x": 18,
-        "y": 101
+        "y": 108
       },
       "id": 24,
       "options": {
@@ -3099,7 +3279,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 108
+        "y": 115
       },
       "id": 13,
       "maxDataPoints": 200,
