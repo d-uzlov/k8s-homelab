@@ -28,6 +28,11 @@ service:
   port: 80
   portName: http-web
 
+podLabels:
+  cgroup.meoe.io/burst: enable
+podAnnotations:
+  cgroup.meoe.io/burst: grafana=300m,grafana-sc-dashboard=100m,grafana-sc-datasources=100m
+
 resources:
   limits:
     cpu: 300m
@@ -73,7 +78,9 @@ admin:
 sidecar:
   resources:
     limits:
-      cpu: 200m
+      # on startup sidecar containers need several minutes to start even with 50m limit
+      # are they written in Java?
+      cpu: 50m
       # memory usage per sidecar is consistently high :-(
       memory: 100Mi
     requests:
@@ -84,21 +91,12 @@ sidecar:
   # logLevel: INFO
   alerts:
     enabled: false
-    # watch resources only with following label
-    label: grafana_alert
-    labelValue: ""
-    # null for own namespace, ALL for all, otherwise match name
+    label: grafana.com/alert
+    labelValue: main
     searchNamespace: null
-    # search in configmap, secret or both
     resource: both
-    # watchServerTimeout: request to the server, asking it to cleanly close the connection after that.
-    # defaults to 60sec; much higher values like 3600 seconds (1h) are feasible for non-Azure K8S
-    # watchServerTimeout: 3600
-    # watchClientTimeout: is a client-side timeout, configuring your local socket.
-    # If you have a network outage dropping all packets with no RST/FIN,
-    # this is how long your client waits before realizing & dropping the connection.
-    # defaults to 66sec (sic!)
-    # watchClientTimeout: 60
+    watchServerTimeout: 3600
+    watchClientTimeout: 10
   dashboards:
     enabled: true
     SCProvider: true
@@ -115,16 +113,13 @@ sidecar:
     folderAnnotation: null
     # watchServerTimeout: request to the server, asking it to cleanly close the connection after that.
     # defaults to 60sec; much higher values like 3600 seconds (1h) are feasible for non-Azure K8S
-    # watchServerTimeout: 3600
+    watchServerTimeout: 3600
     # watchClientTimeout: is a client-side timeout, configuring your local socket.
     # If you have a network outage dropping all packets with no RST/FIN,
     # this is how long your client waits before realizing & dropping the connection.
     # defaults to 66sec (sic!)
-    # watchClientTimeout: 60
-    #
-    # provider configuration that lets grafana manage the dashboards
+    watchClientTimeout: 10
     provider:
-      # name of the provider, should be unique
       name: sidecarProvider
       # orgid as configured in grafana
       orgid: 1
@@ -132,64 +127,33 @@ sidecar:
       folder: ''
       # <string> folder UID. will be automatically generated if not specified
       folderUid: ''
-      # type of the provider
-      type: file
-      # disableDelete to activate a import-only behaviour
       disableDelete: false
       # allow updating provisioned dashboards from the UI
       allowUiUpdates: false
-      # allow Grafana to replicate dashboard structure from filesystem
       foldersFromFilesStructure: false
   datasources:
     enabled: true
-    # watch resources only with following label
     label: grafana.com/datasource
     labelValue: main
-    # null for own namespace, ALL for all, otherwise match name
     searchNamespace: null
-    # search in configmap, secret or both
     resource: configmap
-    # watchServerTimeout: request to the server, asking it to cleanly close the connection after that.
-    # defaults to 60sec; much higher values like 3600 seconds (1h) are feasible for non-Azure K8S
-    # watchServerTimeout: 3600
-    # watchClientTimeout: is a client-side timeout, configuring your local socket.
-    # If you have a network outage dropping all packets with no RST/FIN,
-    # this is how long your client waits before realizing & dropping the connection.
-    # defaults to 66sec (sic!)
-    # watchClientTimeout: 60
+    watchServerTimeout: 3600
+    watchClientTimeout: 10
   plugins:
     enabled: false
-    # watch resources only with following label
-    label: grafana_plugin
-    labelValue: ""
-    # null for own namespace, ALL for all, otherwise match name
+    label: grafana.com/plugin
+    labelValue: main
     searchNamespace: null
-    # search in configmap, secret or both
     resource: both
-    # watchServerTimeout: request to the server, asking it to cleanly close the connection after that.
-    # defaults to 60sec; much higher values like 3600 seconds (1h) are feasible for non-Azure K8S
-    # watchServerTimeout: 3600
-    # watchClientTimeout: is a client-side timeout, configuring your local socket.
-    # If you have a network outage dropping all packets with no RST/FIN,
-    # this is how long your client waits before realizing & dropping the connection.
-    # defaults to 66sec (sic!)
-    # watchClientTimeout: 60
+    watchServerTimeout: 3600
+    watchClientTimeout: 10
   notifiers:
     enabled: false
-    # watch resources only with following label
-    label: grafana_notifier
-    labelValue: ""
-    # null for own namespace, ALL for all, otherwise match name
+    label: grafana.com/notifier
+    labelValue: main
     searchNamespace: null
-    # search in configmap, secret or both
     resource: both
-    # watchServerTimeout: request to the server, asking it to cleanly close the connection after that.
-    # defaults to 60sec; much higher values like 3600 seconds (1h) are feasible for non-Azure K8S
-    # watchServerTimeout: 3600
-    # watchClientTimeout: is a client-side timeout, configuring your local socket.
-    # If you have a network outage dropping all packets with no RST/FIN,
-    # this is how long your client waits before realizing & dropping the connection.
-    # defaults to 66sec (sic!)
-    # watchClientTimeout: 60
+    watchServerTimeout: 3600
+    watchClientTimeout: 10
 
 useStatefulSet: false
