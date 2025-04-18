@@ -82,7 +82,8 @@ so you will get much higher latencies.
 
 # CPU burst setting
 
-There is a solution. But k8s doesn't support it yet.
+~~There is a solution. But k8s doesn't support it yet.~~
+See [below](#linux-is-bad) why this will not work as described.
 
 In 2021 linux got support for `cpu.cfs_burst_us` option:
 - https://lwn.net/Articles/844976/
@@ -104,6 +105,30 @@ In 2025 k8s started _considering_ to add some support,
 _maybe_, _some time in the future_, _if someone wants to work on this_:
 - https://github.com/kubernetes/kubernetes/issues/104516
 
+# Linux is bad
+
+There was a solution, but linux kernel developers ruined it:
+
+https://github.com/torvalds/linux/blob/7cdabafc001202de9984f22c973305f424e0a8b7/kernel/sched/core.c#L9477-L9479
+
+```c
+if (quota != RUNTIME_INF && (burst > quota ||
+            burst + quota > max_cfs_runtime))
+  return -EINVAL;
+```
+
+Let's return to the first example.
+
+Your container works for `5m`, then sleeps for `5s`. It is `1m` on average.
+If you set CPU limit to `1m`, then the absolute maximum you can set CPU burst to is `1m`. Which is absolutely useless.
+
+Even worse is that CPU burst is measured in CFS periods.
+Meaning you basically get x2 on the CPU limit for a time of a SINGLE SCHEDULING PERIOD !
+If your scheduling period is `100ms`, then `1m` is `0.1ms`, and burst will provide an additional `0.1ms`.
+
+This is so stupid.
+And nobody is speaking about this.
+
 # Alt solutions
 
 There is a project from a chinese developer that can adjust `cfs_burst_us` externally to k8s:
@@ -111,8 +136,14 @@ There is a project from a chinese developer that can adjust `cfs_burst_us` exter
 - https://medium.com/@christian.cadieux/support-for-cfs-burst-in-kubernetes-ac7fae302c99
 - https://www.alibabacloud.com/blog/kill-the-annoying-cpu-throttling-and-make-containers-run-faster_598738
 - https://github.com/christiancadieux/kubernetes-cfs-burst
+- https://medium.com/@christian.cadieux/kubernetes-throttling-and-bursting-with-cgroup-v2-57d98cf49d72
 
 Unfortunately, it's only for cgroup v1, so it will not work with most modern k8s deployments.
+
+I created another application that is inspired by `cfs_burst_us`.
+It works with cgroup v2 and have more customization options.
+
+- https://github.com/d-uzlov/k8s-cgroup-burst-controller
 
 # Containerd config
 
