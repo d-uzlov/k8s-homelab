@@ -16,7 +16,7 @@ You only need to do this if you change `values.yaml` file.
 helm repo add kubelet-csr-approver https://postfinance.github.io/kubelet-csr-approver
 helm repo update kubelet-csr-approver
 helm search repo kubelet-csr-approver/kubelet-csr-approver --versions --devel | head
-helm show values kubelet-csr-approver/kubelet-csr-approver > ./k8s-core/kubelet-csr-approver/default-values.yaml
+helm show values kubelet-csr-approver/kubelet-csr-approver --version 1.2.7 > ./k8s-core/kubelet-csr-approver/default-values.yaml
 ```
 
 ```bash
@@ -24,7 +24,7 @@ helm show values kubelet-csr-approver/kubelet-csr-approver > ./k8s-core/kubelet-
 helm template \
   csr-approver \
   kubelet-csr-approver/kubelet-csr-approver \
-  --version 1.0.7 \
+  --version 1.2.7 \
   --values ./k8s-core/kubelet-csr-approver/values.yaml \
   --namespace csr-approver \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' -e '\|app.kubernetes.io/version|d' \
@@ -57,6 +57,8 @@ You need to make sure `serverTLSBootstrap` is enabled in kubelet config before d
 ```bash
 
 kl create ns csr-approver
+kl label ns csr-approver pod-security.kubernetes.io/enforce=baseline
+
 kl apply -k ./k8s-core/kubelet-csr-approver/
 kl -n csr-approver get pod -o wide
 
