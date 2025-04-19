@@ -47,9 +47,9 @@ For example: [kube-vip for control plane](../../network/kube-vip-control-plane/r
 cp_node1=
 # you can print the default config
 # this is just for reference, you don't really need it
-ssh $cp_node1 sudo kubeadm config print init-defaults --component-configs KubeletConfiguration,KubeProxyConfiguration > ./k8s-core/docsenv/kconf-default.yaml
-echo --- >> ./k8s-core/docsenv/kconf-default.yaml
-ssh $cp_node1 sudo kubeadm config print join-defaults >> ./k8s-core/docsenv/kconf-default.yaml
+ssh $cp_node1 sudo kubeadm config print init-defaults --component-configs KubeletConfiguration,KubeProxyConfiguration > ./k8s-core/docs/env/kconf-default.yaml
+echo --- >> ./k8s-core/docs/env/kconf-default.yaml
+ssh $cp_node1 sudo kubeadm config print join-defaults >> ./k8s-core/docs/env/kconf-default.yaml
 
 control_plane_endpoint=cp.k8s.lan
 serverTLSBootstrap=true
@@ -65,18 +65,18 @@ sed -e "s/REPLACE_ME_CONTROL_PLANE_ENDPOINT/$control_plane_endpoint/" \
   -e "s|REPLACE_ME_ETCD_ENDPOINT1|$etcd_endpoint1|" \
   -e "s|REPLACE_ME_ETCD_ENDPOINT2|$etcd_endpoint2|" \
   -e "s|REPLACE_ME_ETCD_ENDPOINT3|$etcd_endpoint3|" \
-  ./k8s-core/docskubeadm-config/init.yaml \
-  ./k8s-core/docskubeadm-config/cluster.yaml \
-  ./k8s-core/docskubeadm-config/kubelet.yaml \
-  ./k8s-core/docskubeadm-config/kube-proxy.yaml \
-  > ./k8s-core/docsenv/kconf-$control_plane_endpoint.yaml
+  ./k8s-core/docs/kubeadm-config/init.yaml \
+  ./k8s-core/docs/kubeadm-config/cluster.yaml \
+  ./k8s-core/docs/kubeadm-config/kubelet.yaml \
+  ./k8s-core/docs/kubeadm-config/kube-proxy.yaml \
+  > ./k8s-core/docs/env/kconf-$control_plane_endpoint.yaml
 # review kconf.yaml before copying it to make sure everything is OK
-scp ./k8s-core/docsenv/kconf-$control_plane_endpoint.yaml $cp_node1:kconf.yaml
+scp ./k8s-core/docs/env/kconf-$control_plane_endpoint.yaml $cp_node1:kconf.yaml
 
 # Later you will be able to configure auth without changes in the apiserver config.
 # apiserver watches changes in the auth-config file.
 ssh $cp_node1 sudo mkdir -p /etc/k8s-auth/
-ssh $cp_node1 sudo tee '>' /dev/null /etc/k8s-auth/auth-config.yaml < ./k8s-core/docsauth-config-init.yaml
+ssh $cp_node1 sudo tee '>' /dev/null /etc/k8s-auth/auth-config.yaml < ./k8s-core/docs/auth-config-init.yaml
 
 ```
 
@@ -88,11 +88,11 @@ ssh $cp_node1 kubeadm config validate --config ./kconf.yaml
 
 # if you are using external etcd, copy etcd certs
 ssh $cp_node1 sudo mkdir -p /etc/etcd/pki/
-ssh $cp_node1 sudo tee '>' /dev/null /etc/etcd/pki/ca.pem              < ./k8s-core/docsetcd/env/ca.pem
-ssh $cp_node1 sudo tee '>' /dev/null /etc/etcd/pki/etcd-client.pem     < ./k8s-core/docsetcd/env/etcd-client.pem
-ssh $cp_node1 sudo tee '>' /dev/null /etc/etcd/pki/etcd-client-key.pem < ./k8s-core/docsetcd/env/etcd-client-key.pem
+ssh $cp_node1 sudo tee '>' /dev/null /etc/etcd/pki/ca.pem              < ./k8s-core/docs/etcd/env/ca.pem
+ssh $cp_node1 sudo tee '>' /dev/null /etc/etcd/pki/etcd-client.pem     < ./k8s-core/docs/etcd/env/etcd-client.pem
+ssh $cp_node1 sudo tee '>' /dev/null /etc/etcd/pki/etcd-client-key.pem < ./k8s-core/docs/etcd/env/etcd-client-key.pem
 
-scp -r ./k8s-core/docspatches $cp_node1:./patches
+scp -r ./k8s-core/docs/patches $cp_node1:./patches
 
 # if using kube-vip for control plane, you should switch to its commands at this point
 
@@ -128,14 +128,14 @@ Show command to join:
 
 ```bash
 # worker join (doesn't have any special prerequisites)
-ssh $cp_node1 bash -s - < ./k8s-core/docsprint-join.sh worker
+ssh $cp_node1 bash -s - < ./k8s-core/docs/print-join.sh worker
 
 # master join:
 # - requires kconf.yaml on the node generating the command
-scp ./k8s-core/docsenv/kconf-$control_plane_endpoint.yaml $cp_node1:kconf.yaml
-ssh $cp_node1 bash -s - < ./k8s-core/docsprint-join.sh master
+scp ./k8s-core/docs/env/kconf-$control_plane_endpoint.yaml $cp_node1:kconf.yaml
+ssh $cp_node1 bash -s - < ./k8s-core/docs/print-join.sh master
 # - requires patches directory to be present on the node joining the cluster
-scp -r ./k8s-core/docspatches $cp_node1:./patches
+scp -r ./k8s-core/docs/patches $cp_node1:./patches
 ```
 
 Run printed command on additional nodes to join the cluster.

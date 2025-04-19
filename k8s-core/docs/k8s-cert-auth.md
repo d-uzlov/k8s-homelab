@@ -104,7 +104,7 @@ so we create a separate role binding for each user, even though we could use gro
 
 ```bash
 # add convenience role
-kl apply -f ./k8s-core/docsauth-convenience/
+kl apply -f ./k8s-core/docs/auth-convenience/
 
 namespace=test-namespace
 kl create ns "$namespace"

@@ -37,23 +37,23 @@ harbor_address4=harbor4.k8s.lan
 harbor_address5=harbor5.k8s.lan
 harbor_address6=harbor6.k8s.lan
 
-mkdir -p ./k8s-core/docsharbor/env/
+mkdir -p ./k8s-core/docs/harbor/env/
 
 # generate Certificate Authority
-openssl genrsa -out ./k8s-core/docsharbor/env/ca.key 4096
+openssl genrsa -out ./k8s-core/docs/harbor/env/ca.key 4096
 openssl req -x509 -new -nodes -sha512 -days 3650 \
   -subj "/C=CN/O=local-harbor/OU=Personal/CN=$harbor_address" \
-  -key ./k8s-core/docsharbor/env/ca.key \
-  -out ./k8s-core/docsharbor/env/ca.crt
+  -key ./k8s-core/docs/harbor/env/ca.key \
+  -out ./k8s-core/docs/harbor/env/ca.crt
 
 # Generate and sign the server certificate
-openssl genrsa -out ./k8s-core/docsharbor/env/domain.key 4096
+openssl genrsa -out ./k8s-core/docs/harbor/env/domain.key 4096
 openssl req -sha512 -new \
   -subj "/C=CN/O=local-harbor/OU=Personal/CN=$harbor_address" \
-  -key ./k8s-core/docsharbor/env/domain.key \
-  -out ./k8s-core/docsharbor/env/domain.csr
+  -key ./k8s-core/docs/harbor/env/domain.key \
+  -out ./k8s-core/docs/harbor/env/domain.csr
 
-cat > ./k8s-core/docsharbor/env/v3.ext << EOF
+cat > ./k8s-core/docs/harbor/env/v3.ext << EOF
 authorityKeyIdentifier=keyid,issuer
 basicConstraints=CA:FALSE
 keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
@@ -70,12 +70,12 @@ DNS.7=$harbor_address
 EOF
 
 openssl x509 -req -sha512 -days 3650 \
-  -extfile ./k8s-core/docsharbor/env/v3.ext \
-  -CA ./k8s-core/docsharbor/env/ca.crt \
-  -CAkey ./k8s-core/docsharbor/env/ca.key \
+  -extfile ./k8s-core/docs/harbor/env/v3.ext \
+  -CA ./k8s-core/docs/harbor/env/ca.crt \
+  -CAkey ./k8s-core/docs/harbor/env/ca.key \
   -CAcreateserial \
-  -in ./k8s-core/docsharbor/env/domain.csr \
-  -out ./k8s-core/docsharbor/env/domain.crt
+  -in ./k8s-core/docs/harbor/env/domain.csr \
+  -out ./k8s-core/docs/harbor/env/domain.crt
 ```
 
 # Install Harbor
@@ -92,23 +92,23 @@ ssh $harbor_node wget https://github.com/goharbor/harbor/releases/download/$harb
 ssh $harbor_node tar xzvf harbor-online-installer-$harbor_version.tgz
 
 ssh $harbor_node mkdir -p /harbor-data/cert/
-scp ./k8s-core/docsharbor/env/domain.key ./k8s-core/docsharbor/env/domain.crt $harbor_node:/harbor-data/cert/
+scp ./k8s-core/docs/harbor/env/domain.key ./k8s-core/docs/harbor/env/domain.crt $harbor_node:/harbor-data/cert/
 
 # download the default config for reference
-ssh $harbor_node cat ./harbor/harbor.yml.tmpl > ./k8s-core/docsharbor/env/harbor.yml.tmpl
+ssh $harbor_node cat ./harbor/harbor.yml.tmpl > ./k8s-core/docs/harbor/env/harbor.yml.tmpl
 
 harbor_password=
 sed -e "s/REPLACE_ME_HOSTNAME/$harbor_address/" \
   -e "s|REPLACE_ME_CERTIFICATE_CRT|/harbor-data/cert/domain.crt|" \
   -e "s|REPLACE_ME_CERTIFICATE_KAY|/harbor-data/cert/domain.key|" \
   -e "s|REPLACE_ME_PASSWORD|$harbor_password|" \
-  ./k8s-core/docsharbor/config-template.yaml |
+  ./k8s-core/docs/harbor/config-template.yaml |
   ssh $harbor_node cat '>' ./harbor/harbor.yml
 ssh $harbor_node ./harbor/install.sh
 
 # create a systemd service to handle node restarts
 # see here: https://github.com/lamw/harbor-appliance/issues/6
-ssh $harbor_node tee /etc/systemd/system/harbor.service < ./k8s-core/docsharbor/harbor.service
+ssh $harbor_node tee /etc/systemd/system/harbor.service < ./k8s-core/docs/harbor/harbor.service
 ssh $harbor_node systemctl daemon-reload
 ssh $harbor_node systemctl enable harbor
 ssh $harbor_node systemctl restart harbor
@@ -124,7 +124,7 @@ Create `local-test` project in Harbor or adjust repo name in commands.
 
 ```bash
 sudo mkdir -p /etc/docker/certs.d/harbor.k8s.lan/
-sudo cp ./k8s-core/docsharbor/env/ca.crt /etc/docker/certs.d/harbor.k8s.lan/
+sudo cp ./k8s-core/docs/harbor/env/ca.crt /etc/docker/certs.d/harbor.k8s.lan/
 sudo systemctl restart docker
 
 docker pull alpine
