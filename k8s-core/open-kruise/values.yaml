@@ -1,0 +1,70 @@
+
+crds:
+  managed: true
+
+# values for kruise installation
+installation:
+  namespace: kruise-system
+  createNamespace: false
+  roleListGroups:
+  - '*'
+
+# InPlaceWorkloadVerticalScaling is broken in 1.32
+#   https://github.com/openkruise/kruise/issues/1841
+featureGates: AllAlpha=true,AllBeta=true,InPlaceWorkloadVerticalScaling=false
+
+externalCerts:
+  annotations:
+    cert-manager.io/inject-ca-from: kruise-system/kruise-webhook
+
+enableKubeCacheMutationDetector: false
+
+manager:
+  log:
+    level: "4"
+
+  replicas: 1
+
+  loggingFormat: json
+
+  resources:
+    limits:
+      cpu: 200m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+  hostNetwork: false
+
+  nodeAffinity: {}
+  nodeSelector: {}
+  tolerations: []
+
+webhookConfiguration:
+  timeoutSeconds: 30
+
+daemon:
+  log:
+    level: "4"
+
+  socketLocation: "/var/run"
+  socketFile: ""
+
+  nodeSelector: {}
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: type
+            operator: NotIn
+            values:
+            - virtual-kubelet
+  resources:
+    limits:
+      cpu: 50m
+      memory: 128Mi
+    requests:
+      cpu: "0"
+      memory: "0"

@@ -1,0 +1,220 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kruise-daemon-config
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kruise-manager
+  namespace: kruise-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kruise-daemon
+  namespace: kruise-system
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kruise-webhook-service
+  namespace: kruise-system
+spec:
+  ports:
+    - port: 443
+      targetPort: 9876
+  selector:
+    control-plane: controller-manager
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: kruise-daemon
+  namespace: kruise-system
+  labels:
+    control-plane: daemon
+spec:
+  selector:
+    matchLabels:
+      control-plane: daemon
+  minReadySeconds: 3
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 10%
+  template:
+    metadata:
+      labels:
+        control-plane: daemon
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: type
+                    operator: NotIn
+                    values:
+                      - virtual-kubelet
+      containers:
+        - command:
+            - /kruise-daemon
+          args:
+            - --logtostderr=true
+            - --v=4
+            - --addr=:10221
+            - --feature-gates=AllAlpha=true,AllBeta=true,InPlaceWorkloadVerticalScaling=false
+            - --socket-file=
+            - --enable-pprof=true
+            - --pprof-addr=localhost:10222
+          image: openkruise/kruise-manager:v1.8.0
+          imagePullPolicy: Always
+          securityContext:
+            capabilities:
+              drop:
+                - all
+              add: ['NET_BIND_SERVICE']
+            allowPrivilegeEscalation: false
+          name: daemon
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /healthz
+              port: 10221
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              cpu: 50m
+              memory: 128Mi
+            requests:
+              cpu: "0"
+              memory: "0"
+          volumeMounts:
+            - mountPath: /hostvarrun
+              name: runtime-socket
+              readOnly: true
+      tolerations:
+        - operator: Exists
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      terminationGracePeriodSeconds: 10
+      serviceAccountName: kruise-daemon
+      volumes:
+        - hostPath:
+            path: /var/run
+            type: ""
+          name: runtime-socket
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: kruise-controller-manager
+  namespace: kruise-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: controller-manager
+  minReadySeconds: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 100%
+  template:
+    metadata:
+      labels:
+        control-plane: controller-manager
+    spec:
+      containers:
+        - args:
+            - --enable-leader-election
+            - --metrics-addr=:8080
+            - --health-probe-addr=:8000
+            - --logtostderr=true
+            - --leader-election-namespace=kruise-system
+            - --v=4
+            - --feature-gates=AllAlpha=true,AllBeta=true,InPlaceWorkloadVerticalScaling=false
+            - --sync-period=0
+            - --logging-format=json
+          command:
+            - /manager
+          image: openkruise/kruise-manager:v1.8.0
+          imagePullPolicy: Always
+          securityContext:
+            capabilities:
+              drop:
+                - all
+              add: ['NET_BIND_SERVICE']
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 65534
+          name: manager
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: WEBHOOK_PORT
+              value: "9876"
+          ports:
+            - containerPort: 9876
+              name: webhook-server
+              protocol: TCP
+            - containerPort: 8080
+              name: metrics
+              protocol: TCP
+            - containerPort: 8000
+              name: health
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: readyz
+              port: 8000
+          resources:
+            limits:
+              cpu: 200m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+      hostNetwork: false
+      terminationGracePeriodSeconds: 10
+      serviceAccountName: kruise-manager
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: control-plane
+                      operator: In
+                      values:
+                        - controller-manager
+                topologyKey: kubernetes.io/hostname
+              weight: 100
+      topologySpreadConstraints:
+        - labelSelector:
+            matchLabels:
+              control-plane: controller-manager
+          matchLabelKeys:
+            - pod-template-hash
+          maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+---
+
