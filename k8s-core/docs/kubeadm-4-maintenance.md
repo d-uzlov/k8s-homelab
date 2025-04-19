@@ -19,9 +19,9 @@ Cluster config is a composite config for:
 ```bash
 
 # Option 1: download config, edit it, then push it back to cluster
-kl -n kube-system get cm kubeadm-config -o 'go-template={{index .data "ClusterConfiguration"}}' > ./docs/k8s/env/cluster-config.yaml
+kl -n kube-system get cm kubeadm-config -o 'go-template={{index .data "ClusterConfiguration"}}' > ./k8s-core/docsenv/cluster-config.yaml
 
-kl create cm kubeadm-config --dry-run=client -o yaml --from-file ClusterConfiguration=./docs/k8s/env/cluster-config.yaml | kl -n kube-system replace cm kubeadm-config -f -
+kl create cm kubeadm-config --dry-run=client -o yaml --from-file ClusterConfiguration=./k8s-core/docsenv/cluster-config.yaml | kl -n kube-system replace cm kubeadm-config -f -
 
 # Option 2: edit config in place
 kl -n kube-system edit cm kubeadm-config
@@ -37,9 +37,9 @@ sudo kubeadm upgrade node phase control-plane --patches ./patches/
 ```bash
 
 # Option 1: download config, edit it, then push it back to cluster
-kl -n kube-system get cm kubelet-config -o 'go-template={{index .data "kubelet"}}' > ./docs/k8s/env/kubelet-config.yaml
+kl -n kube-system get cm kubelet-config -o 'go-template={{index .data "kubelet"}}' > ./k8s-core/docsenv/kubelet-config.yaml
 
-kl create cm kubelet-config --dry-run=client -o yaml --from-file kubelet=./docs/k8s/env/kubelet-config.yaml | kl -n kube-system replace cm kubelet-config -f -
+kl create cm kubelet-config --dry-run=client -o yaml --from-file kubelet=./k8s-core/docsenv/kubelet-config.yaml | kl -n kube-system replace cm kubelet-config -f -
 
 # Option 2: edit config in place
 kl -n kube-system edit cm kubelet-config

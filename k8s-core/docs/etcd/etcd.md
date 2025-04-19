@@ -51,7 +51,7 @@ mv cfssljson_* cfssljson
 chmod +x cfssl cfssljson
 sudo mv cfssl cfssljson /usr/local/bin/
 
-cfssl gencert -initca ./docs/k8s/etcd/ca-csr.json | cfssljson -bare ./docs/k8s/etcd/env/ca
+cfssl gencert -initca ./k8s-core/docsetcd/ca-csr.json | cfssljson -bare ./k8s-core/docsetcd/env/ca
 
 # all of the addresses (and/or DNS names) that could be used by clients or peers
 node1=
@@ -64,7 +64,7 @@ node_common=
 # node3=k8s1-etcd3.k8s.lan
 # node_common=k8s1-etcd-lb.k8s.lan
 
- cat << EOF > ./docs/k8s/etcd/env/etcd-csr.json
+ cat << EOF > ./k8s-core/docsetcd/env/etcd-csr.json
 {
   "CN": "etcd",
   "hosts": [
@@ -88,22 +88,22 @@ node_common=
 }
 EOF
 
-rm ./docs/k8s/etcd/env/etcd-peer* ./docs/k8s/etcd/env/etcd-client*
+rm ./k8s-core/docsetcd/env/etcd-peer* ./k8s-core/docsetcd/env/etcd-client*
 
 cfssl gencert \
-  -ca ./docs/k8s/etcd/env/ca.pem \
-  -ca-key ./docs/k8s/etcd/env/ca-key.pem \
-  -config ./docs/k8s/etcd/ca-config.json \
+  -ca ./k8s-core/docsetcd/env/ca.pem \
+  -ca-key ./k8s-core/docsetcd/env/ca-key.pem \
+  -config ./k8s-core/docsetcd/ca-config.json \
   -profile=etcd \
-  ./docs/k8s/etcd/env/etcd-csr.json \
-  | cfssljson -bare ./docs/k8s/etcd/env/etcd-peer
+  ./k8s-core/docsetcd/env/etcd-csr.json \
+  | cfssljson -bare ./k8s-core/docsetcd/env/etcd-peer
 cfssl gencert \
-  -ca ./docs/k8s/etcd/env/ca.pem \
-  -ca-key ./docs/k8s/etcd/env/ca-key.pem \
-  -config ./docs/k8s/etcd/ca-config.json \
+  -ca ./k8s-core/docsetcd/env/ca.pem \
+  -ca-key ./k8s-core/docsetcd/env/ca-key.pem \
+  -config ./k8s-core/docsetcd/ca-config.json \
   -profile=etcd \
-  ./docs/k8s/etcd/env/etcd-csr.json \
-  | cfssljson -bare ./docs/k8s/etcd/env/etcd-client
+  ./k8s-core/docsetcd/env/etcd-csr.json \
+  | cfssljson -bare ./k8s-core/docsetcd/env/etcd-client
 ```
 
 References:
@@ -130,10 +130,10 @@ do
 done
 cluster_nodes="${cluster_nodes:1}"
 
-mkdir -p ./docs/k8s/etcd/env/
+mkdir -p ./k8s-core/docsetcd/env/
 for node in $nodes; do
 do
-  cat << EOF > ./docs/k8s/etcd/env/$node.conf
+  cat << EOF > ./k8s-core/docsetcd/env/$node.conf
 NODE_ADDRESS=https://$node:$peers_port
 NODE_NAME=$node
 CLUSTER_NODES=$cluster_nodes
@@ -154,22 +154,22 @@ etcd_username=root
 nodes="$node1 $node2 $node3"
 for node in $nodes; do
   scp \
-    ./docs/k8s/etcd/systemd-service.conf \
+    ./k8s-core/docsetcd/systemd-service.conf \
     $etcd_username@$node:/etc/systemd/system/etcd3.service
 done
 for node in $nodes; do
   ssh $etcd_username@$node mkdir -p /etc/etcd/pki/
   scp \
-    ./docs/k8s/etcd/env/ca.pem \
-    ./docs/k8s/etcd/env/etcd-peer.pem \
-    ./docs/k8s/etcd/env/etcd-peer-key.pem \
-    ./docs/k8s/etcd/env/etcd-client.pem \
-    ./docs/k8s/etcd/env/etcd-client-key.pem \
+    ./k8s-core/docsetcd/env/ca.pem \
+    ./k8s-core/docsetcd/env/etcd-peer.pem \
+    ./k8s-core/docsetcd/env/etcd-peer-key.pem \
+    ./k8s-core/docsetcd/env/etcd-client.pem \
+    ./k8s-core/docsetcd/env/etcd-client-key.pem \
     $etcd_username@$node:/etc/etcd/pki/
 done
 for node in $nodes; do
   scp \
-    ./docs/k8s/etcd/env/$node.conf \
+    ./k8s-core/docsetcd/env/$node.conf \
     $etcd_username@$node:/etc/etcd.conf
 done
 for node in $nodes; do
@@ -200,9 +200,9 @@ rm -rf etcd*
 # you may want to add this to your bashrc
 alias etcdctl="ETCDCTL_API=3 /usr/local/bin/etcdctl \
   --endpoints=https://$node1:$client_port,https://$node2:$client_port,https://$node3:$client_port \
-  --cacert=./docs/k8s/etcd/env/ca.pem \
-  --cert=./docs/k8s/etcd/env/etcd-client.pem \
-  --key=./docs/k8s/etcd/env/etcd-client-key.pem"
+  --cacert=./k8s-core/docsetcd/env/ca.pem \
+  --cert=./k8s-core/docsetcd/env/etcd-client.pem \
+  --key=./k8s-core/docsetcd/env/etcd-client-key.pem"
 etcdctl member list -w table
 etcdctl endpoint status -w table
 etcdctl endpoint health -w table
@@ -220,9 +220,9 @@ Adjust node names and addresses appropriately.
 ```bash
 alias etcdctl="ETCDCTL_API=3 /usr/local/bin/etcdctl \
   --endpoints=https://$node2:$client_port,https://$node3:$client_port \
-  --cacert=./docs/k8s/etcd/env/ca.pem \
-  --cert=./docs/k8s/etcd/env/etcd-client.pem \
-  --key=./docs/k8s/etcd/env/etcd-client-key.pem"
+  --cacert=./k8s-core/docsetcd/env/ca.pem \
+  --cert=./k8s-core/docsetcd/env/etcd-client.pem \
+  --key=./k8s-core/docsetcd/env/etcd-client-key.pem"
 
 etcdctl member list -w table
 # replace ID with your value

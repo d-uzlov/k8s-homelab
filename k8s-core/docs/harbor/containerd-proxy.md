@@ -27,7 +27,7 @@ ssh $containerd_node sudo systemctl restart containerd.service
 
 # copy the ca file used by harbor into the node
 ssh $containerd_node sudo mkdir -p /etc/certs/ &&
-ssh $containerd_node sudo tee '>' /dev/null < ./docs/k8s/harbor/env/ca.crt /etc/certs/harbor-ca.crt
+ssh $containerd_node sudo tee '>' /dev/null < ./k8s-core/docsharbor/env/ca.crt /etc/certs/harbor-ca.crt
 
 ```
 

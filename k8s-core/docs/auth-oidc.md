@@ -6,8 +6,8 @@ Use example as a starting point.
 
 ```bash
 
-mkdir -p ./docs/k8s/env/
-cp ./docs/k8s/auth-config-example.yaml ./docs/k8s/env/auth-config.yaml
+mkdir -p ./k8s-core/docsenv/
+cp ./k8s-core/docsauth-config-example.yaml ./k8s-core/docsenv/auth-config.yaml
 
 ```
 
@@ -19,7 +19,7 @@ Make sure that your k8s apiserver has `authentication-config=/etc/k8s-auth/auth-
 
 # run for each master node
 cp_node1=
-ssh $cp_node1 sudo tee '>' /dev/null /etc/k8s-auth/auth-config.yaml < ./docs/k8s/env/auth-config.yaml
+ssh $cp_node1 sudo tee '>' /dev/null /etc/k8s-auth/auth-config.yaml < ./k8s-core/docsenv/auth-config.yaml
 
 ```
 
