@@ -1,0 +1,63 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: cgroup-burst
+  namespace: cgroup-burst
+spec:
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 100%
+  selector:
+    matchLabels:
+      app: cgroup-burst
+  template:
+    metadata:
+      labels:
+        app: cgroup-burst
+        cgroup.meoe.io/burst: enable
+      annotations:
+        cgroup.meoe.io/burst: cgroup-burst=10m
+    spec:
+      serviceAccountName: cgroup-burst-controller
+      tolerations:
+      - effect: NoSchedule
+        operator: Exists
+      nodeSelector:
+        cgroup.meoe.io/node: enable
+      containers:
+      - name: cgroup-burst
+        image: ghcr.io/d-uzlov/k8s-cgroup-burst-controller:v0.1.13
+        env:
+        - name: LOG_LEVEL
+          value: debug
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
+        - name: CONTAINERD_SOCKET
+          value: /run/containerd/containerd.sock
+        - name: WATCH_TIMEOUT
+          value: 1h
+        - name: LABEL_SELECTOR
+          value: cgroup.meoe.io/burst=enable
+        - name: BURST_ANNOTATION
+          value: cgroup.meoe.io/burst
+        - name: WATCH_CONTAINER_EVENTS
+          value: 'true'
+        resources:
+          requests:
+            cpu: 1m
+            memory: 10Mi
+          limits:
+            cpu: 5m
+            memory: 20Mi
+        volumeMounts:
+        - name: containerd-socket
+          mountPath: /run/containerd/containerd.sock
+      volumes:
+      - name: containerd-socket
+        hostPath:
+          path: /run/containerd/containerd.sock
+          type: Socket
