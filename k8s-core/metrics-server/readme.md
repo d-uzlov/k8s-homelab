@@ -7,7 +7,7 @@ References:
 # Generate config
 
 ```bash
-wget https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.7.2/components.yaml -O ./metrics/metrics-server/secure/metrics-server.yaml
+wget https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.7.2/components.yaml -O ./k8s-core/metrics-server/secure/metrics-server.yaml
 ```
 
 # Install
@@ -18,9 +18,9 @@ kl create ns metrics
 kl label ns metrics pod-security.kubernetes.io/enforce=baseline
 
 # if your cluster have proper TLS certificates
-kl apply -k ./metrics/metrics-server/secure/
+kl apply -k ./k8s-core/metrics-server/secure/
 # if your cluster doesn't have proper TLS certificates
-kl apply -k ./metrics/metrics-server/insecure/
+kl apply -k ./k8s-core/metrics-server/insecure/
 
 kl -n metrics get pod -o wide
 
@@ -32,6 +32,6 @@ kl -n metrics top pod
 # Cleanup
 
 ```bash
-kl delete -k ./metrics/metrics-server/secure/
+kl delete -k ./k8s-core/metrics-server/secure/
 kl delete ns metrics
 ```
