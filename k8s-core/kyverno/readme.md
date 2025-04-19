@@ -18,7 +18,7 @@ helm repo add kyverno https://kyverno.github.io/kyverno/
 helm repo update kyverno
 helm search repo kyverno
 helm search repo kyverno/kyverno --versions --devel | head
-helm show values kyverno/kyverno --version 3.1.4 > ./metrics/kyverno/default-values.yaml
+helm show values kyverno/kyverno --version 3.1.4 > ./k8s-core/kyverno/default-values.yaml
 ```
 
 ```bash
@@ -27,10 +27,10 @@ helm template \
   kyverno \
   kyverno/kyverno \
   --version 3.1.4 \
-  --values ./metrics/kyverno/values.yaml \
+  --values ./k8s-core/kyverno/values.yaml \
   --namespace kyverno \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' -e '\|app.kubernetes.io/version|d' \
-  > ./metrics/kyverno/deployment.gen.yaml
+  > ./k8s-core/kyverno/deployment.gen.yaml
 
 ```
 
@@ -38,15 +38,15 @@ helm template \
 
 ```bash
 
-kl apply -k ./metrics/kyverno/crds/ --server-side
+kl apply -k ./k8s-core/kyverno/crds/ --server-side
 
 kl create ns kyverno
 kl label ns kyverno pod-security.kubernetes.io/enforce=baseline
 
-kl apply -k ./metrics/kyverno/
+kl apply -k ./k8s-core/kyverno/
 kl -n kyverno get pod -o wide
 
-kl apply -k ./metrics/kyverno/common-policies/
+kl apply -k ./k8s-core/kyverno/common-policies/
 kl get clusterpolicy
 
 ```
@@ -54,9 +54,9 @@ kl get clusterpolicy
 # Cleanup
 
 ```bash
-kl delete -k ./metrics/kyverno/
+kl delete -k ./k8s-core/kyverno/
 kl delete ns kyverno
 kl delete validatingwebhookconfiguration -l webhook.kyverno.io/managed-by=kyverno
 kl delete mutatingwebhookconfiguration -l webhook.kyverno.io/managed-by=kyverno
-kl delete -k ./metrics/kyverno/crds/
+kl delete -k ./k8s-core/kyverno/crds/
 ```
