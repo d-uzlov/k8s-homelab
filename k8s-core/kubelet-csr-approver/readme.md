@@ -16,7 +16,7 @@ You only need to do this if you change `values.yaml` file.
 helm repo add kubelet-csr-approver https://postfinance.github.io/kubelet-csr-approver
 helm repo update kubelet-csr-approver
 helm search repo kubelet-csr-approver/kubelet-csr-approver --versions --devel | head
-helm show values kubelet-csr-approver/kubelet-csr-approver > ./metrics/kubelet-csr-approver/default-values.yaml
+helm show values kubelet-csr-approver/kubelet-csr-approver > ./k8s-core/kubelet-csr-approver/default-values.yaml
 ```
 
 ```bash
@@ -25,10 +25,10 @@ helm template \
   csr-approver \
   kubelet-csr-approver/kubelet-csr-approver \
   --version 1.0.7 \
-  --values ./metrics/kubelet-csr-approver/values.yaml \
+  --values ./k8s-core/kubelet-csr-approver/values.yaml \
   --namespace csr-approver \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' -e '\|app.kubernetes.io/version|d' \
-  > ./metrics/kubelet-csr-approver/deployment.gen.yaml
+  > ./k8s-core/kubelet-csr-approver/deployment.gen.yaml
 
 ```
 
@@ -36,8 +36,8 @@ helm template \
 
 ```bash
 
-mkdir -p ./metrics/kubelet-csr-approver/env
- cat << EOF > ./metrics/kubelet-csr-approver/env/rules.env
+mkdir -p ./k8s-core/kubelet-csr-approver/env
+ cat << EOF > ./k8s-core/kubelet-csr-approver/env/rules.env
 # set to true if your node names don't resolve as valid DNS names
 BYPASS_DNS_RESOLUTION=false
 # pattern for allowed node names
@@ -57,7 +57,7 @@ You need to make sure `serverTLSBootstrap` is enabled in kubelet config before d
 ```bash
 
 kl create ns csr-approver
-kl apply -k ./metrics/kubelet-csr-approver/
+kl apply -k ./k8s-core/kubelet-csr-approver/
 kl -n csr-approver get pod -o wide
 
 # check CSRs to make sure they are approved
@@ -68,7 +68,7 @@ kl get csr
 # Cleanup
 
 ```bash
-kl delete -k ./metrics/kubelet-csr-approver/
+kl delete -k ./k8s-core/kubelet-csr-approver/
 kl delete ns csr-approver
 ```
 
