@@ -1,13 +1,7 @@
 
-# CPU burst
-
-TLDR: there is no way to properly configure CPU limits for bursty workloads in k8s.
-
-The only possibility is to run modified `runc` or `containerd`.
-
 # The problem definition
 
-K8s CPU management is NOT at all suited for bursty workloads.
+K8s CPU management is not at all suited for bursty workloads.
 This especially applies to light workloads.
 When using CPU limits, container will often be throttled.
 
