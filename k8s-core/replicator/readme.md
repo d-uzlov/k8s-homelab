@@ -15,7 +15,7 @@ You only need to do this when updating the app.
 helm repo add mittwald https://helm.mittwald.de
 helm repo update mittwald
 helm search repo mittwald/kubernetes-replicator --versions --devel | head
-helm show values mittwald/kubernetes-replicator --version 2.9.2 > ./ingress/replicator/default-values.yaml
+helm show values mittwald/kubernetes-replicator --version 2.9.2 > ./k8s-core/replicator/default-values.yaml
 ```
 
 ```bash
@@ -24,10 +24,10 @@ helm template \
     kubernetes-replicator \
     mittwald/kubernetes-replicator \
     --version 2.9.2 \
-    --values ./ingress/replicator/helm-values.yaml \
+    --values ./k8s-core/replicator/helm-values.yaml \
     --namespace replicator \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' -e '\|app.kubernetes.io/version|d' \
-    > ./ingress/replicator/replicator.gen.yaml
+    > ./k8s-core/replicator/replicator.gen.yaml
 
 ```
 
@@ -38,7 +38,7 @@ helm template \
 kl create ns replicator
 kl label ns replicator pod-security.kubernetes.io/enforce=baseline
 
-kl apply -k ./ingress/replicator/
+kl apply -k ./k8s-core/replicator/
 kl -n replicator get pod -o wide
 
 ```
@@ -47,7 +47,7 @@ kl -n replicator get pod -o wide
 
 ```bash
 # create a test secret
-kl apply -f ./ingress/replicator/test.yaml
+kl apply -f ./k8s-core/replicator/test.yaml
 
 kl create ns replicator-demo
 
