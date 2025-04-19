@@ -44,7 +44,7 @@ rm -rf kubecolor
 # Bash completion
 
 Prerequisites:
-- [.bashrc directory](../bash-setup.md#add-bashrc-directory)
+- [.bashrc directory](../../docs/bash-setup.md#add-bashrc-directory)
 
 ```bash
 

@@ -9,7 +9,7 @@ References:
 # Install
 
 Prerequisites:
-- [.bashrc directory](../bash-setup.md#add-bashrc-directory)
+- [.bashrc directory](../../docs/bash-setup.md#add-bashrc-directory)
 
 References:
 - https://krew.sigs.k8s.io/docs/user-guide/setup/install/
