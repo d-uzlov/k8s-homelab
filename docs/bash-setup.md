@@ -451,3 +451,14 @@ fi
 EOF
 
 ```
+
+# Install useful tools
+
+```bash
+
+which jq > /dev/null || { sudo apt-get update; sudo apt-get install -y jq; }
+
+# yq in the main debian repository seems unusable
+which yq > /dev/null || { sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq; }
+
+```
