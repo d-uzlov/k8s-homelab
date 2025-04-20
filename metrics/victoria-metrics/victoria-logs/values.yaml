@@ -1,0 +1,205 @@
+nameOverride: vlogs-main
+fullnameOverride: vlogs
+
+rbac:
+  create: false
+serviceAccount:
+  create: false
+
+podDisruptionBudget:
+  enabled: false
+  #  minAvailable: 1
+  #  maxUnavailable: 1
+
+server:
+  enabled: true
+  image:
+    registry: ""
+    repository: victoriametrics/victoria-logs
+    tag: ""
+    # -- Image tag suffix, which is appended to `Chart.AppVersion` if no `server.image.tag` is defined
+    variant: victorialogs
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  fullnameOverride: ""
+  # -- Data retention period. Possible units character: h(ours), d(ays), w(eeks), y(ears), if no unit character specified - month. The minimum retention period is 24h. See these [docs](https://docs.victoriametrics.com/victorialogs/#retention)
+  retentionPeriod: 30d
+  # -- Data retention max capacity. Default unit is GiB. See these [docs](https://docs.victoriametrics.com/victorialogs/#retention-by-disk-space-usage)
+  retentionDiskSpaceUsage: ""
+  # -- Extra command line arguments for container of component
+  extraArgs:
+    envflag.enable: true
+    envflag.prefix: VM_
+    loggerFormat: json
+    httpListenAddr: :9428
+
+  extraVolumes: []
+  extraVolumeMounts: []
+
+  emptyDir: {}
+  persistentVolume:
+    # -- Empty dir if false
+    enabled: false
+    name: ""
+
+    accessModes:
+    - ReadWriteOnce
+    storageClassName: ""
+    existingClaim: ""
+    matchLabels: {}
+    # -- Mount path. Server data Persistent Volume mount root path.
+    mountPath: /storage
+    # -- Mount subpath
+    subPath: ""
+    size: 3Gi
+
+  podLabels: {}
+  podAnnotations: {}
+
+  resources: {}
+    # limits:
+    #   cpu: 500m
+    #   memory: 512Mi
+    # requests:
+    #   cpu: 500m
+    #   memory: 512Mi
+
+  ingress:
+    # -- Enable deployment of ingress for server component
+    enabled: false
+
+    # -- Ingress annotations
+    annotations: #   kubernetes.io/ingress.class: nginx
+
+    #   kubernetes.io/tls-acme: 'true'
+
+    # -- Ingress extra labels
+    extraLabels: {}
+
+    # -- Array of host objects
+    hosts:
+    - name: vlogs.local
+      path:
+      - /
+      port: http
+
+    # -- Array of TLS objects
+    tls: []
+    #   - secretName: vmselect-ingress-tls
+    #     hosts:
+    #       - vmselect.local
+
+    # -- Ingress controller class name
+    ingressClassName: ""
+
+    # -- Ingress path type
+    pathType: Prefix
+
+  service:
+    targetPort: http
+    servicePort: 9428
+
+  # -- VictoriaLogs mode: deployment, statefulSet
+  mode: statefulSet
+
+  # -- [K8s Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) specific variables
+  deployment:
+    spec:
+      strategy:
+        # Must be "Recreate" when we have a persistent volume
+        type: Recreate
+
+  # -- [K8s StatefulSet](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/) specific variables
+  statefulSet:
+    spec:
+      # -- Deploy order policy for StatefulSet pods
+      podManagementPolicy: OrderedReady
+      # -- StatefulSet update strategy. Check [here](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies) for details.
+      updateStrategy: {} # type: RollingUpdate
+
+  terminationGracePeriodSeconds: 60
+  serviceMonitor:
+    enabled: false
+    targetPort: http
+  vmServiceScrape:
+    enabled: false
+    targetPort: http
+
+# -- Values for [vector helm chart](https://github.com/vectordotdev/helm-charts/tree/develop/charts/vector)
+vector:
+  # -- Enable deployment of vector
+  enabled: false
+  role: Agent
+  dataDir: /vector-data-dir
+  resources: {}
+  args:
+  - -w
+  - --config-dir
+  - /etc/vector/
+  containerPorts:
+  - name: prom-exporter
+    containerPort: 9090
+    protocol: TCP
+  service:
+    enabled: false
+  existingConfigMaps:
+  - vl-config
+  # -- Forces custom configuration creation in a given namespace even if vector.enabled is false
+  customConfigNamespace: ""
+  customConfig:
+    data_dir: /vector-data-dir
+    api:
+      enabled: false
+      address: 0.0.0.0:8686
+      playground: true
+    sources:
+      k8s:
+        type: kubernetes_logs
+      internal_metrics:
+        type: internal_metrics
+    transforms:
+      parser:
+        type: remap
+        inputs: [ k8s ]
+        source: |
+          .log = parse_json(.message) ?? .message
+          del(.message)
+    sinks:
+      exporter:
+        type: prometheus_exporter
+        address: 0.0.0.0:9090
+        inputs: [ internal_metrics ]
+      vlogs:
+        type: elasticsearch
+        inputs: [ parser ]
+        endpoints: << include "vlogs.es.urls" . >>
+        mode: bulk
+        api_version: v8
+        compression: gzip
+        healthcheck:
+          enabled: false
+        request:
+          headers:
+            VL-Time-Field: timestamp
+            VL-Stream-Fields: stream,kubernetes.pod_name,kubernetes.container_name,kubernetes.pod_namespace
+            VL-Msg-Field: message,msg,_msg,log.msg,log.message,log
+            AccountID: "0"
+            ProjectID: "0"
+
+dashboards:
+  # -- Create VictoriaLogs dashboards
+  enabled: false
+  # -- Dashboard labels
+  labels: {}
+  #  grafana_dashboard: "1"
+  # -- Dashboard annotations
+  annotations: {}
+  # -- Override default namespace, where to create dashboards
+  namespace: ""
+  grafanaOperator:
+    enabled: false
+    spec:
+      instanceSelector:
+        matchLabels:
+          dashboards: "grafana"
+      allowCrossNamespaceImport: false

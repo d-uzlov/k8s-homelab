@@ -1,0 +1,92 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels: 
+    app: server
+    app.kubernetes.io/name: vlogs-main
+  name: vlogs-server
+  namespace: victoria-metrics
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - name: http
+      port: 9428
+      protocol: TCP
+      targetPort: http
+  selector: 
+    app: server
+    app.kubernetes.io/name: vlogs-main
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: vlogs-server
+  namespace: victoria-metrics
+  labels: 
+    app: server
+    app.kubernetes.io/name: vlogs-main
+spec:
+  podManagementPolicy: OrderedReady
+  updateStrategy: {}
+  replicas: 1
+  serviceName: vlogs-server
+  selector:
+    matchLabels: 
+      app: server
+      app.kubernetes.io/name: vlogs-main
+  template:
+    metadata:
+      labels: 
+        app: server
+        app.kubernetes.io/name: vlogs-main
+    spec:
+      securityContext: 
+        fsGroup: 2000
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: vlogs
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+          image: victoriametrics/victoria-logs:v1.19.0-victorialogs
+          imagePullPolicy: IfNotPresent
+          args: 
+            - --envflag.enable
+            - --envflag.prefix=VM_
+            - --httpListenAddr=:9428
+            - --loggerFormat=json
+            - --retentionPeriod=30d
+            - --storageDataPath=/storage
+          ports:
+            - name: http
+              containerPort: 9428
+          readinessProbe: 
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 15
+            timeoutSeconds: 5
+          livenessProbe: 
+            failureThreshold: 10
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            tcpSocket:
+              port: http
+            timeoutSeconds: 5
+          volumeMounts:
+            - name: server-volume
+              mountPath: /storage
+      terminationGracePeriodSeconds: 60
+      volumes:
+        - name: server-volume
+          emptyDir: 
+            {}
