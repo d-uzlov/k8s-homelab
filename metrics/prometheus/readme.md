@@ -42,6 +42,21 @@ spec:
         storageClassName: fast
 EOF
 
+mkdir -p ./metrics/prometheus/env/
+clusterName=
+ cat << EOF > ./metrics/prometheus/env/patch-cluster-tag.yaml
+- op: add
+  path: /spec/endpoints/0/relabelings/-
+  value:
+    targetLabel: cluster
+    replacement: $clusterName
+- op: add
+  path: /spec/endpoints/1/relabelings/-
+  value:
+    targetLabel: cluster
+    replacement: $clusterName
+EOF
+
 ```
 
 # Deploy
