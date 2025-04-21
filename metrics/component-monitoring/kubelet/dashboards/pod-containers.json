@@ -537,6 +537,19 @@
           "legendFormat": "limits: {{container}}",
           "range": true,
           "refId": "limit"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (container, name) (\r\n  (rate(container_cpu_cgroup_burst_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]) )\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} burst, name={{name}}",
+          "range": true,
+          "refId": "burst"
         }
       ],
       "title": "CPU Usage",
@@ -610,66 +623,7 @@
           },
           "unit": "percentunit"
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "limit"
-            },
-            "properties": [
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "fill": "dash"
-                }
-              },
-              {
-                "id": "custom.lineWidth",
-                "value": 2
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              },
-              {
-                "id": "custom.fillOpacity",
-                "value": 0
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "request"
-            },
-            "properties": [
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "fill": "dash"
-                }
-              },
-              {
-                "id": "custom.lineWidth",
-                "value": 2
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "orange",
-                  "mode": "fixed"
-                }
-              },
-              {
-                "id": "custom.fillOpacity",
-                "value": 0
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 7,
@@ -710,7 +664,7 @@
           "instant": false,
           "legendFormat": "{{container}}, name={{name}}",
           "range": true,
-          "refId": "cpu"
+          "refId": "request"
         }
       ],
       "title": "CPU Usage / Request",
@@ -907,7 +861,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds",
+            "mode": "palette-classic",
             "seriesBy": "max"
           },
           "custom": {
@@ -922,7 +876,7 @@
             "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 3,
-            "gradientMode": "scheme",
+            "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
@@ -942,7 +896,7 @@
               "mode": "none"
             },
             "thresholdsStyle": {
-              "mode": "dashed+area"
+              "mode": "off"
             }
           },
           "mappings": [
@@ -962,10 +916,6 @@
             "steps": [
               {
                 "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 0.7
               }
             ]
           },
@@ -1007,12 +957,25 @@
           "expr": "# if container didn't run at some interval, you will have division by zero, so we do ` / increase + epsilon`\r\nmax by (container, name) (\r\n  (increase(container_cpu_cfs_throttled_periods_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]) )\r\n/\r\n  (increase(container_cpu_cfs_periods_total[$__rate_interval]) + 1e-5 )\r\n)",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{container}}, name={{name}}",
+          "legendFormat": "{{container}} throttling, name={{name}}",
           "range": true,
           "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "# if container didn't run at some interval, you will have division by zero, so we do ` / increase + epsilon`\r\nmax by (container, name) (\r\n  (increase(container_cpu_cgroup_burst_periods_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]) )\r\n/ on(container, name)\r\n  (increase(container_cpu_cfs_periods_total[$__rate_interval]) + 1e-5 )\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} burst, name={{name}}",
+          "range": true,
+          "refId": "A"
         }
       ],
-      "title": "CPU Throttling",
+      "title": "CPU Throttling (periods)",
       "transformations": [
         {
           "id": "renameByRegex",
@@ -1266,6 +1229,30 @@
                 "value": 87
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #time"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIso"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Last seen"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 167
+              }
+            ]
           }
         ]
       },
@@ -1439,6 +1426,21 @@
           "legendFormat": "__auto",
           "range": false,
           "refId": "raw"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "max by (container, name) (\r\n  last_over_time(container_last_seen_time{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid!=\"\"}[$__range])\r\n) * 1000",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "time"
         }
       ],
       "title": "Memory Usage (last value)",
@@ -1486,19 +1488,19 @@
             "includeByName": {},
             "indexByName": {
               "Time": 0,
-              "Value #cache": 8,
-              "Value #limit": 6,
-              "Value #max": 10,
-              "Value #raw": 11,
-              "Value #request": 3,
-              "Value #rss": 2,
-              "Value #rss_per_request": 4,
-              "Value #swap": 9,
-              "Value #wss": 5,
-              "Value #wss_limit": 7,
-              "container": 1,
-              "name": 12,
-              "uid": 13
+              "Value #cache": 9,
+              "Value #limit": 7,
+              "Value #max": 11,
+              "Value #raw": 12,
+              "Value #request": 4,
+              "Value #rss": 3,
+              "Value #rss_per_request": 5,
+              "Value #swap": 10,
+              "Value #time": 1,
+              "Value #wss": 6,
+              "Value #wss_limit": 8,
+              "container": 2,
+              "name": 13
             },
             "renameByName": {
               "Value #A": "WSS",
@@ -1519,6 +1521,7 @@
               "Value #rss": "RSS",
               "Value #rss_per_request": "RSS / Req",
               "Value #swap": "Swap",
+              "Value #time": "Last seen",
               "Value #wss": "WSS",
               "Value #wss_limit": "WSS / Lim",
               "Value #wss_percent": "WSS request %",
@@ -3429,7 +3432,7 @@
           "query": "query_result(label_replace(last_over_time(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__range]),\"human_name\", \"$1\",\"name\", \"(.*)\") # for unknown reason,# when I try to match 'name' for both text and value,# they are the same,# despite regexp being different: '[^\"]{8}' and '[^\"]+')",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "/human_name=\"(?<text>[^\"]{8})|name=\"(?<value>[^\"]+)/g",
         "sort": 1,
         "type": "query"

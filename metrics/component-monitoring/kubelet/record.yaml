@@ -117,3 +117,21 @@ spec:
             irate(container_network_transmit_bytes_total{}[40s])
           )
         )
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: record-k8s-container-time
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  groups:
+  - name: record-k8s-namespace-network
+    rules:
+    - record: container_last_seen_time
+      # this is a workaround for the issue that prometheus can't give you first and last timestamp of data vector
+      # with this you can just use min_over_time(container_last_seen_time) and max_over_time(container_last_seen_time)
+      expr: |-
+        timestamp(container_start_time_seconds)
