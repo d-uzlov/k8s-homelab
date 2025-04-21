@@ -1,0 +1,81 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: alert-ephemeral-storage
+spec:
+  groups:
+  - name: k8s.rules.container_resource
+    rules:
+    - alert: ContainerEphemeralStorageUsageAtLimit
+      annotations:
+        description: >-
+          node {{ $labels.node }}:
+          {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }}:
+          {{ $value | humanizePercentage }}%
+        summary: Container ephemeral storage usage is above 85%
+      expr: |-
+        max by (node, namespace, pod, container) (
+          ephemeral_storage_container_limit_percentage{source="container"}
+        ) / 100 > 85.0
+        # ignore pods that haven't been running for some time (e.g. completed jobs)
+        unless on (namespace, pod) (max_over_time(kube_pod_status_phase{phase="Running"}[2m]) == 0)
+      for: 1m
+      labels:
+        severity: warning
+
+    - alert: ContainerEphemeralStorageUsageReachingLimit
+      annotations:
+        description: >-
+          node {{ $labels.node }}:
+          {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }}:
+          {{ $value | humanizePercentage }}%
+        summary: Container ephemeral storage will exceed limit in less than 12 hours
+      expr: |-
+        (
+          max by (node, namespace, pod, container) (
+            ephemeral_storage_container_limit_percentage{source="container"}
+          ) / 100 > 0.33
+          and on (namespace, pod, container)
+          predict_linear(ephemeral_storage_container_limit_percentage{source="container"}[2h], 12 * 3600) > 99
+        )
+        unless on (namespace, pod) (min_over_time(kube_pod_status_phase{phase="Running"}[10m]) == 0)
+      for: 15m
+      labels:
+        severity: warning
+
+    - alert: EphemeralStorageVolumeFilledUp
+      annotations:
+        description: >-
+          node {{ $labels.node }}:
+          {{ $labels.namespace }}/{{ $labels.pod }}:
+          volume {{ $labels.volume_name }}:
+          {{ $value | humanizePercentage }}%
+        summary: Ephemeral storage volume usage is above 85%
+      expr: |-
+        max by (namespace, pod, volume_name) (
+          avg_over_time(ephemeral_storage_container_volume_limit_percentage[5m])
+        ) / 100 > 0.85
+        unless on (namespace, pod) (max_over_time(kube_pod_status_phase{phase="Running"}[2m]) == 0)
+      for: 1m
+      labels:
+        severity: warning
+
+    - alert: EphemeralStorageVolumeFillingUp
+      annotations:
+        description: >-
+          node {{ $labels.node }}:
+          {{ $labels.namespace }}/{{ $labels.pod }}:
+          volume {{ $labels.volume_name }}:
+          {{ $value | humanizePercentage }}%
+        summary: Ephemeral storage volume will fill in less than 12 hours
+      expr: |-
+        max by (namespace, pod, volume_name) (ephemeral_storage_container_volume_limit_percentage) / 100 > 0.33
+        and
+        max by (namespace, pod, volume_name) (
+          predict_linear(ephemeral_storage_container_volume_limit_percentage[2h], 12 * 3600)
+        ) > 99
+        unless on (namespace, pod) (min_over_time(kube_pod_status_phase{phase="Running"}[10m]) == 0)
+      for: 15m
+      labels:
+        severity: warning
