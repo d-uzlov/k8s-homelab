@@ -1,5 +1,5 @@
 ---
-apiVersion: apps/v1
+apiVersion: apps.kruise.io/v1alpha1
 kind: DaemonSet
 metadata:
   name: cgroup-burst
@@ -8,6 +8,7 @@ spec:
   updateStrategy:
     rollingUpdate:
       maxUnavailable: 100%
+      rollingUpdateType: InPlaceIfPossible
   selector:
     matchLabels:
       app: cgroup-burst
@@ -17,7 +18,7 @@ spec:
         app: cgroup-burst
         cgroup.meoe.io/burst: enable
       annotations:
-        cgroup.meoe.io/burst: cgroup-burst=10m
+        cgroup.meoe.io/burst: cgroup-burst=20m
     spec:
       serviceAccountName: cgroup-burst-controller
       tolerations:
@@ -27,7 +28,12 @@ spec:
         cgroup.meoe.io/node: enable
       containers:
       - name: cgroup-burst
-        image: ghcr.io/d-uzlov/k8s-cgroup-burst-controller:v0.1.13
+        image: ghcr.io/d-uzlov/k8s-cgroup-burst-controller:v0.1.46
+        ports:
+        - name: metrics
+          containerPort: 2112
+        securityContext:
+          privileged: true
         env:
         - name: LOG_LEVEL
           value: debug
@@ -36,6 +42,16 @@ spec:
             fieldRef:
               apiVersion: v1
               fieldPath: spec.nodeName
+        - name: OWN_BOOST_ON_STARTUP
+          value: 50m
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
         - name: CONTAINERD_SOCKET
           value: /run/containerd/containerd.sock
         - name: WATCH_TIMEOUT
@@ -46,18 +62,29 @@ spec:
           value: cgroup.meoe.io/burst
         - name: WATCH_CONTAINER_EVENTS
           value: 'true'
+        - name: ENABLE_CGROUP_METRICS
+          value: 'true'
+        - name: PROC_ROOT
+          value: /host-proc
         resources:
           requests:
             cpu: 1m
-            memory: 10Mi
+            memory: 20Mi
           limits:
             cpu: 5m
-            memory: 20Mi
+            memory: 40Mi
         volumeMounts:
-        - name: containerd-socket
-          mountPath: /run/containerd/containerd.sock
+        - mountPath: /run/containerd/containerd.sock
+          name: containerd-socket
+        - mountPath: /host-proc
+          name: proc
+          readOnly: true
       volumes:
       - name: containerd-socket
         hostPath:
           path: /run/containerd/containerd.sock
           type: Socket
+      - name: proc
+        hostPath:
+          path: /proc
+          type: ""

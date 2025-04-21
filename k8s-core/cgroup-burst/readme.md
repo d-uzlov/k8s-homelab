@@ -65,3 +65,11 @@ metadata:
   annotations:
     cgroup.meoe.io/burst: nginx=10ms
 ```
+
+# Manual metric checking
+
+```bash
+kl exec deployments/alpine -- apk add curl
+kl exec deployments/alpine -- curl -sS http://cgroup-burst.cgroup-burst:2112/metrics > ./cgroup-burst-own-metrics.log
+kl exec deployments/alpine -- curl -sS http://cgroup-burst.cgroup-burst:2112/container_metrics > ./cgroup-burst-metrics.log
+```

@@ -1,0 +1,60 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cgroup-burst
+  namespace: cgroup-burst
+  labels:
+    app: cgroup-burst
+spec:
+  selector:
+    app: cgroup-burst
+  ports:
+  - name: metrics
+    port: 2112
+    targetPort: metrics
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: cgroup-burst
+  namespace: cgroup-burst
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  jobLabel: app
+  selector:
+    matchLabels:
+      app: cgroup-burst
+  endpoints:
+  - port: metrics
+    scheme: http
+    relabelings:
+    - targetLabel: instance # turn instance from ip:port into node name
+      sourceLabels: [ __meta_kubernetes_endpoint_node_name ]
+    # - sourceLabels: [ pod ]
+    #   targetLabel: instance
+    # - action: labeldrop
+    #   regex: container|endpoint|namespace|pod|service
+    - targetLabel: cluster_type
+      replacement: k8s
+    metricRelabelings:
+    - action: keep
+      sourceLabels: [ __name__ ]
+      regex: cgroup_burst_.*
+  - port: metrics
+    scheme: http
+    path: /container_metrics
+    honorLabels: true
+    honorTimestamps: true
+    relabelings:
+    - action: labeldrop
+      regex: container|endpoint|namespace|pod|service
+    - targetLabel: cluster_type
+      replacement: k8s
+    metricRelabelings:
+    - action: labeldrop
+      # for some reason, relabelings can't drop instance label
+      regex: instance
