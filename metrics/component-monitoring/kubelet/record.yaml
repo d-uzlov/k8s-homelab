@@ -134,4 +134,8 @@ spec:
       # this is a workaround for the issue that prometheus can't give you first and last timestamp of data vector
       # with this you can just use min_over_time(container_last_seen_time) and max_over_time(container_last_seen_time)
       expr: |-
-        timestamp(container_start_time_seconds)
+        # when using timestamp() different series get different unique time values
+        # this is inconvenient for the case of "sort result table by last_seen, and then sort by name"
+        # using time() solves this issue by giving all series value of time of the recording rule evaluation
+        # timestamp(container_start_time_seconds)
+        container_start_time_seconds * 0 + time()
