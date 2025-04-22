@@ -797,7 +797,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval]))",
+          "expr": "sum (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", invalid=$total}[$__rate_interval]))",
           "hide": false,
           "instant": false,
           "legendFormat": "Total",
@@ -1726,7 +1726,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (max by(pod, container) (max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])))",
+          "expr": "sum (max by(pod, container) (max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", invalid=$total}[$__rate_interval])))",
           "hide": false,
           "instant": false,
           "legendFormat": "Total",
@@ -1933,7 +1933,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (max by(pod, container) (max_over_time(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])))",
+          "expr": "sum (max by(pod, container) (max_over_time(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", invalid=$total}[$__rate_interval])))",
           "hide": false,
           "instant": false,
           "legendFormat": "Total",
@@ -2253,16 +2253,35 @@
             "steps": [
               {
                 "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           },
           "unit": "Bps"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "receive_total"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 7,
@@ -2296,11 +2315,24 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(container_network_receive_bytes_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])) by (pod)",
+          "expr": "sum(rate(container_network_receive_bytes_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", invalid=$total}[$__rate_interval]))",
+          "instant": false,
+          "legendFormat": "Total",
+          "range": true,
+          "refId": "receive_total"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(pod) (rate(container_network_receive_bytes_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval]))",
+          "hide": false,
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
-          "refId": "A"
+          "refId": "receive"
         }
       ],
       "title": "Receive Bandwidth",
@@ -2356,16 +2388,35 @@
             "steps": [
               {
                 "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           },
           "unit": "Bps"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "transmit_total"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 7,
@@ -2399,11 +2450,24 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(container_network_transmit_bytes_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])) by (pod)",
+          "expr": "sum(rate(container_network_transmit_bytes_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", invalid=$total}[$__rate_interval]))",
+          "instant": false,
+          "legendFormat": "Total",
+          "range": true,
+          "refId": "transmit_total"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(pod) (rate(container_network_transmit_bytes_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval]))",
+          "hide": false,
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
-          "refId": "A"
+          "refId": "transmit"
         }
       ],
       "title": "Transmit Bandwidth",
@@ -2656,7 +2720,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(ephemeral_storage_pod_usage{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"})",
+          "expr": "sum(ephemeral_storage_pod_usage{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", invalid=$total})",
           "hide": false,
           "instant": false,
           "legendFormat": "Total",
@@ -2770,6 +2834,24 @@
         "regex": "/pod=\"(?<text>[^\"]+)|pod=\"(?<value>[^\"]+)/g",
         "sort": 1,
         "type": "query"
+      },
+      {
+        "allowCustomValue": false,
+        "name": "total",
+        "options": [
+          {
+            "selected": true,
+            "text": "Show",
+            "value": "\"\""
+          },
+          {
+            "selected": false,
+            "text": "Hide",
+            "value": "\"invalid123\""
+          }
+        ],
+        "query": "Show : \"\", Hide : \"invalid123\"",
+        "type": "custom"
       }
     ]
   },
