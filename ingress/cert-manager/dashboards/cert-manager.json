@@ -160,12 +160,156 @@
                 ]
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #until_renewal"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dtdurations"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #renewal_remaining_percent"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "semi-dark-red"
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 0.5
+                    },
+                    {
+                      "color": "semi-dark-orange",
+                      "value": 0.8
+                    },
+                    {
+                      "color": "dark-green",
+                      "value": 1
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "custom.width",
+                "value": 130
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Until renewal"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 256
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Ready"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 72
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Remaining time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 220
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Certificate name"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 269
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*/"
+            },
+            "properties": [
+              {
+                "id": "filterable"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Issuer"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 225
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Issuer type"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 109
+              }
+            ]
           }
         ]
       },
       "gridPos": {
-        "h": 14,
-        "w": 12,
+        "h": 13,
+        "w": 24,
         "x": 0,
         "y": 1
       },
@@ -181,7 +325,13 @@
           ],
           "show": false
         },
-        "showHeader": true
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Remaining time"
+          }
+        ]
       },
       "targets": [
         {
@@ -190,7 +340,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sort_desc(\r\n  max by (name, namespace) (certmanager_certificate_expiration_timestamp_seconds{cluster=\"$cluster\", namespace=~\"$namespace\"} - time())\r\n)",
+          "expr": "max by (name, namespace, issuer_kind, issuer_name) (certmanager_certificate_expiration_timestamp_seconds{cluster=\"$cluster\", namespace=~\"$namespace\"} - time())",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -208,6 +358,32 @@
           "instant": true,
           "legendFormat": "__auto",
           "refId": "ready"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (name, namespace) (certmanager_certificate_renewal_timestamp_seconds{cluster=\"$cluster\", namespace=~\"$namespace\"} - time())",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "refId": "until_renewal"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (name, namespace) (\r\n  (certmanager_certificate_expiration_timestamp_seconds{cluster=\"$cluster\", namespace=~\"$namespace\"} - time())\r\n  /\r\n  (certmanager_certificate_expiration_timestamp_seconds - certmanager_certificate_renewal_timestamp_seconds)\r\n)",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "refId": "renewal_remaining_percent"
         }
       ],
       "title": "Time Left",
@@ -225,14 +401,23 @@
             "includeByName": {},
             "indexByName": {
               "Time": 0,
-              "Value": 3,
-              "name": 2,
-              "namespace": 1
+              "Value #ready": 6,
+              "Value #remaining": 5,
+              "Value #renewal_remaining_percent": 8,
+              "Value #until_renewal": 7,
+              "issuer_kind": 1,
+              "issuer_name": 2,
+              "name": 4,
+              "namespace": 3
             },
             "renameByName": {
               "Value": "Time left",
               "Value #ready": "Ready",
               "Value #remaining": "Remaining time",
+              "Value #renewal_remaining_percent": "Renewal % left",
+              "Value #until_renewal": "Until renewal",
+              "issuer_kind": "Issuer type",
+              "issuer_name": "Issuer",
               "name": "Certificate name"
             }
           }
@@ -303,10 +488,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
+        "h": 7,
         "w": 12,
-        "x": 12,
-        "y": 1
+        "x": 0,
+        "y": 14
       },
       "id": 13,
       "options": {
@@ -338,7 +523,7 @@
           "step": 1800
         }
       ],
-      "title": "Certificate Ready Status",
+      "title": "Certificate Status",
       "type": "timeseries"
     },
     {
@@ -404,10 +589,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 7,
         "w": 12,
         "x": 12,
-        "y": 7
+        "y": 14
       },
       "id": 23,
       "options": {
@@ -485,7 +670,7 @@
               "mode": "off"
             }
           },
-          "decimals": 2,
+          "decimals": 0,
           "links": [],
           "mappings": [],
           "min": 0,
@@ -501,7 +686,7 @@
               }
             ]
           },
-          "unit": "s"
+          "unit": "dtdurations"
         },
         "overrides": []
       },
@@ -509,7 +694,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 15
+        "y": 21
       },
       "id": 16,
       "options": {
@@ -532,7 +717,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "certmanager_certificate_expiration_timestamp_seconds{cluster=\"$cluster\", namespace=~\"$namespace\"} - time()",
+          "expr": "max by(namespace, name) (certmanager_certificate_expiration_timestamp_seconds{cluster=\"$cluster\", namespace=~\"$namespace\"} - time())",
           "instant": false,
           "intervalFactor": 1,
           "legendFormat": "{{namespace}} / {{name}}",
@@ -608,7 +793,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 23
+        "y": 29
       },
       "id": 22,
       "maxDataPoints": 100,
@@ -669,7 +854,6 @@
           "uid": "${datasource}"
         },
         "definition": "query_result(label_join(up{job=\"kubelet-main\"}, \"human_name\", \"/\", \"cluster_type\", \"cluster\"))",
-        "description": "",
         "name": "cluster",
         "options": [],
         "query": {

@@ -3,20 +3,6 @@
 
 ```bash
 
-kl apply -k ./ingress/cert-manager/dashboards/
-
-```
-
-# Cleanup
-
-```bash
-kl delete -k ./ingress/cert-manager/dashboards/
-```
-
-# Updating dashboards
-
-```bash
-
  # force all panels to use the default data source min interval
  sed -i '/\"interval\":/d' ./ingress/cert-manager/dashboards/*.json
  sed -i '/\"version\":/d' ./ingress/cert-manager/dashboards/*.json
@@ -31,4 +17,12 @@ kl delete -k ./ingress/cert-manager/dashboards/
  # this forces them all to lose "value": null, so that there are less changes in commits
  sed -i -z -r 's/,\n *\"value\": null(\n *})/\1/g' ./ingress/cert-manager/dashboards/*.json
 
+kl apply -k ./ingress/cert-manager/dashboards/
+
+```
+
+# Cleanup
+
+```bash
+kl delete -k ./ingress/cert-manager/dashboards/
 ```
