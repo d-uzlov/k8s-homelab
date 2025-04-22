@@ -30,7 +30,7 @@ kl apply -k ./k8s-core/cgroup-burst/
 
 # add label to all nodes that have compatible kernel
 node=
-kubectl label node $node cgroup.meoe.io/node=enable
+kl label node $node cgroup.meoe.io/node=enable
 
 kl -n cgroup-burst get pod -o wide
 
