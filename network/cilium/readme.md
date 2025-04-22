@@ -13,16 +13,16 @@ References:
 helm repo add cilium https://helm.cilium.io/
 helm repo update cilium
 helm search repo cilium/cilium --versions --devel | head
-helm show values cilium/cilium --version 1.17.0 > ./network/cilium/default-values.yaml
+helm show values cilium/cilium --version 1.17.2 > ./network/cilium/default-values.yaml
 
 helm template cilium cilium/cilium \
-  --version 1.17.0 \
+  --version 1.17.2 \
   --values ./network/cilium/values.yaml \
   --namespace cilium \
   --api-versions gateway.networking.k8s.io/v1/GatewayClass \
   > ./network/cilium/cilium-native.gen.yaml
 helm template cilium cilium/cilium \
-  --version 1.17.0 \
+  --version 1.17.2 \
   --values ./network/cilium/values.yaml \
   --namespace cilium \
   --set routingMode=tunnel \
@@ -64,18 +64,21 @@ kl -n cilium delete job hubble-generate-certs
 
 # choose one of the deployment options:
 # - choose native when using a single L2 segment
+
 (
   . ./network/cilium/env/control-plane-endpoint.env \
   && sed "s/cp-address-automatic-replace/$control_plane_endpoint/" ./network/cilium/cilium-native.gen.yaml \
-  | kl apply -f - --server-side=true
+  | kl apply -f -
 )
+
 # - choose tunnel when nodes are in different L2 segments
 #   tunnel has worse performance than native,
 #   see test/iperf folder for details
+
 (
   . ./network/cilium/env/control-plane-endpoint.env \
   && sed "s/cp-address-automatic-replace/$control_plane_endpoint/" ./network/cilium/cilium-tunnel.gen.yaml \
-  | kl apply -f - --server-side=true
+  | kl apply -f -
 )
 
 kl -n cilium get pod -o wide
@@ -171,4 +174,11 @@ but it seems to have completely different args and output structure.
 
 kl -n cilium exec ds/cilium -c cilium-agent -- cilium status
 
+```
+
+# Manual metric checking
+
+```bash
+kl exec deployments/alpine -- curl -sS http://10.3.10.0:9963/metrics > ./cilium-operator-metrics.log
+kl exec deployments/alpine -- curl -sS http://hubble-metrics.cilium:9965/metrics > ./cilium-hubble-metrics.log
 ```
