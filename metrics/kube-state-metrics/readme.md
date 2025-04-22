@@ -1,5 +1,8 @@
 
-# node-exporter in k8s
+# kube-state-metrics
+
+References:
+- https://github.com/kubernetes/kube-state-metrics
 
 # Generate config
 
@@ -9,7 +12,7 @@ You only need to do this if you change `values.yaml` file.
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update prometheus-community
 helm search repo prometheus-community/kube-state-metrics --versions --devel | head
-helm show values prometheus-community/kube-state-metrics --version 5.28.0 > ./metrics/kube-state-metrics/default-values.yaml
+helm show values prometheus-community/kube-state-metrics --version 5.32.0 > ./metrics/kube-state-metrics/default-values.yaml
 ```
 
 ```bash
@@ -17,7 +20,7 @@ helm show values prometheus-community/kube-state-metrics --version 5.28.0 > ./me
 helm template \
   ksm \
   prometheus-community/kube-state-metrics \
-  --version 5.28.0 \
+  --version 5.32.0 \
   --values ./metrics/kube-state-metrics/values.yaml \
   --namespace kube-state-metrics \
   | sed \
@@ -59,7 +62,7 @@ EOF
 ```bash
 
 kl create ns kube-state-metrics
-kl label ns node-exporter pod-security.kubernetes.io/enforce=baseline
+kl label ns kube-state-metrics pod-security.kubernetes.io/enforce=baseline
 
 kl apply -k ./metrics/kube-state-metrics/
 kl -n kube-state-metrics get pod -o wide
