@@ -275,6 +275,46 @@
                 "value": 105
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*/"
+            },
+            "properties": [
+              {
+                "id": "filterable"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "namespace"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Namespace details",
+                    "url": "/d/vsl6ot4yad5hedtly8ey/k8s-resources-namespace?${datasource:queryparam}&${cluster:queryparam}&var-namespace=${__data.fields.namespace}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #last_seen"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIsoNoDateIfToday"
+              }
+            ]
           }
         ]
       },
@@ -299,7 +339,11 @@
         "sortBy": [
           {
             "desc": true,
-            "displayName": "CPU Usage"
+            "displayName": "Last seen"
+          },
+          {
+            "desc": false,
+            "displayName": "Pod"
           }
         ]
       },
@@ -310,7 +354,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (namespace, pod) (node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate{cluster=\"$cluster\", node=~\"$node\"})",
+          "expr": "sum by (namespace, pod) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", node=~\"$node\", namespace=~\"$namespace\"}[$__rate_interval]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -323,7 +367,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (namespace, pod) (kube_pod_container_resource_requests{cluster=\"$cluster\", node=~\"$node\", resource=\"cpu\"})",
+          "expr": "sum by (namespace, pod) (last_over_time(kube_pod_container_resource_requests{cluster=\"$cluster\", node=~\"$node\", namespace=~\"$namespace\", resource=\"cpu\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -336,7 +380,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (node, namespace, pod) (node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate{cluster=\"$cluster\", node=~\"$node\"}) / on(node) group_left sum by(node) (kube_node_status_capacity{cluster=\"$cluster\", job=\"kube-state-metrics\", node=~\"$node\", resource=\"cpu\"})",
+          "expr": "max by (node, namespace, pod) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", node=~\"$node\", namespace=~\"$namespace\"}[$__rate_interval])) / on(node) group_left sum by(node) (kube_node_status_capacity{cluster=\"$cluster\", node=~\"$node\", resource=\"cpu\"})",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -349,7 +393,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (namespace, pod) (kube_pod_container_resource_limits{cluster=\"$cluster\", node=~\"$node\", resource=\"cpu\"})",
+          "expr": "sum by (namespace, pod) (last_over_time(kube_pod_container_resource_limits{cluster=\"$cluster\", node=~\"$node\", namespace=~\"$namespace\", resource=\"cpu\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -363,7 +407,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (namespace, pod) (container_memory_rss{cluster=\"$cluster\", instance=\"$node\"})",
+          "expr": "sum by (namespace, pod) (container_memory_rss{cluster=\"$cluster\", node=\"$node\", namespace=~\"$namespace\"})",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -378,7 +422,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (namespace, pod) (container_memory_usage_bytes{cluster=\"$cluster\", instance=\"$node\"})",
+          "expr": "sum by (namespace, pod) (container_memory_usage_bytes{cluster=\"$cluster\", node=\"$node\", namespace=~\"$namespace\"})",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -393,7 +437,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (namespace, pod) (kube_pod_container_resource_requests{cluster=\"$cluster\", node=\"$node\", resource=\"memory\"})",
+          "expr": "sum by (namespace, pod) (kube_pod_container_resource_requests{cluster=\"$cluster\", node=\"$node\", namespace=~\"$namespace\", resource=\"memory\"})",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -408,7 +452,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (node, namespace, pod) (kube_pod_container_resource_requests{cluster=\"$cluster\", node=\"$node\", resource=\"memory\"}) / on(node) group_left sum by(node) (kube_node_status_capacity{cluster=\"$cluster\", job=\"kube-state-metrics\", node=~\"$node\", resource=\"memory\"})",
+          "expr": "sum by (node, namespace, pod) (kube_pod_container_resource_requests{cluster=\"$cluster\", node=\"$node\", namespace=~\"$namespace\", resource=\"memory\"}) / on(node) group_left sum by(node) (kube_node_status_capacity{cluster=\"$cluster\", node=~\"$node\", resource=\"memory\"})",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -423,16 +467,31 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (namespace, pod) (kube_pod_container_resource_limits{cluster=\"$cluster\", node=\"$node\", resource=\"memory\"})",
+          "expr": "sum by (namespace, pod) (kube_pod_container_resource_limits{cluster=\"$cluster\", node=\"$node\", namespace=~\"$namespace\", resource=\"memory\"})",
           "format": "table",
           "hide": false,
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
           "refId": "memory_limit"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "max by(namespace, pod) (\r\n  last_over_time(container_last_seen_time{cluster=\"$cluster\", node=\"$node\", namespace=~\"$namespace\"}[$__range])\r\n) * 1000",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "last_seen"
         }
       ],
-      "title": "CPU Quota",
+      "title": "Pod info",
       "transformations": [
         {
           "id": "merge",
@@ -453,18 +512,20 @@
             "includeByName": {},
             "indexByName": {
               "Time": 0,
-              "Value #cpu_limit": 7,
-              "Value #memory_limit": 11,
-              "Value #memory_raw": 9,
-              "Value #memory_request": 10,
-              "Value #memory_request_per_node": 12,
-              "Value #memory_rss": 8,
-              "Value #request": 4,
-              "Value #request_per_node": 6,
-              "Value #usage": 3,
-              "namespace": 1,
-              "node": 5,
-              "pod": 2
+              "Value #cpu_limit": 8,
+              "Value #last_seen": 1,
+              "Value #memory_limit": 12,
+              "Value #memory_raw": 10,
+              "Value #memory_request": 11,
+              "Value #memory_request_per_node": 13,
+              "Value #memory_rss": 9,
+              "Value #request": 5,
+              "Value #request_per_node": 7,
+              "Value #usage": 4,
+              "namespace": 2,
+              "node": 6,
+              "pod": 3,
+              "uid": 14
             },
             "renameByName": {
               "Value #A": "CPU Usage",
@@ -473,6 +534,7 @@
               "Value #D": "CPU Limits",
               "Value #E": "CPU Limits %",
               "Value #cpu_limit": "CPU limit",
+              "Value #last_seen": "Last seen",
               "Value #limit": "CPU Limit",
               "Value #limit_percent": "Max Limit %",
               "Value #memory_limit": "Mem Limit",
@@ -491,6 +553,154 @@
         }
       ],
       "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "sishort"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "pod_capacity"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 13
+      },
+      "id": 1,
+      "maxDataPoints": 300,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (node) (kube_pod_info{cluster=\"$cluster\", node=\"$node\", namespace=~\"$namespace\"})",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{node}} pods",
+          "range": true,
+          "refId": "pods"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (node) (kube_node_status_capacity{cluster=\"$cluster\", node=\"$node\", resource=\"pods\", invalid=$capacity})",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{node}} capacity",
+          "range": true,
+          "refId": "pod_capacity"
+        }
+      ],
+      "title": "Pods",
+      "type": "timeseries"
     },
     {
       "datasource": {
@@ -601,9 +811,9 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 13
+        "y": 21
       },
-      "id": 1,
+      "id": 6,
       "maxDataPoints": 300,
       "options": {
         "legend": {
@@ -631,11 +841,11 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(kube_node_status_capacity{cluster=\"$cluster\", job=\"kube-state-metrics\", node=~\"$node\", resource=\"cpu\"})",
+          "expr": "sum(kube_node_status_capacity{cluster=\"$cluster\", node=~\"$node\", resource=\"cpu\", invalid=$capacity})",
           "instant": false,
           "legendFormat": "max capacity",
           "range": true,
-          "refId": "A"
+          "refId": "capacity"
         },
         {
           "datasource": {
@@ -643,12 +853,12 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate{cluster=\"$cluster\", node=~\"$node\"}) by (pod)",
+          "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", node=~\"$node\", namespace=~\"$namespace\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
           "legendFormat": "{{pod}}",
           "range": true,
-          "refId": "B"
+          "refId": "pods"
         }
       ],
       "title": "CPU Usage",
@@ -842,7 +1052,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 21
+        "y": 29
       },
       "id": 4,
       "maxDataPoints": 200,
@@ -869,7 +1079,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(kube_node_status_capacity{cluster=\"$cluster\", job=\"kube-state-metrics\", node=~\"$node\", resource=\"memory\"})",
+          "expr": "sum(kube_node_status_capacity{cluster=\"$cluster\", node=~\"$node\", resource=\"memory\", invalid=$capacity})",
           "instant": false,
           "legendFormat": "max capacity",
           "range": true,
@@ -881,7 +1091,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(container_memory_rss{cluster=\"$cluster\", instance=~\"$node\"}) by (pod)",
+          "expr": "sum(container_memory_rss{cluster=\"$cluster\", node=~\"$node\", namespace=~\"$namespace\"}) by (pod)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{pod}}",
@@ -894,7 +1104,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(\r\n  node_memory_MemTotal_bytes{job=\"node-exporter\", instance=\"$node\", cluster=\"$cluster\"}\r\n-\r\n  node_memory_MemFree_bytes{job=\"node-exporter\", instance=\"$node\", cluster=\"$cluster\"}\r\n-\r\n  node_memory_Buffers_bytes{job=\"node-exporter\", instance=\"$node\", cluster=\"$cluster\"}\r\n-\r\n  node_memory_Cached_bytes{job=\"node-exporter\", instance=\"$node\", cluster=\"$cluster\"}\r\n)\r\n",
+          "expr": "(\r\n  node_memory_MemTotal_bytes{instance=\"$node\", cluster=\"$cluster\", invalid=$capacity}\r\n-\r\n  node_memory_MemFree_bytes\r\n-\r\n  node_memory_Buffers_bytes\r\n-\r\n  node_memory_Cached_bytes\r\n)\r\n",
           "hide": false,
           "instant": false,
           "legendFormat": "node usage",
@@ -907,7 +1117,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (kube_pod_container_resource_requests{cluster=\"$cluster\", node=\"$node\", resource=\"memory\"})",
+          "expr": "sum (kube_pod_container_resource_requests{cluster=\"$cluster\", node=\"$node\", namespace=~\"$namespace\", resource=\"memory\", invalid=$capacity})",
           "hide": false,
           "instant": false,
           "legendFormat": "pod requests",
@@ -1110,7 +1320,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 29
+        "y": 37
       },
       "id": 3,
       "maxDataPoints": 200,
@@ -1138,7 +1348,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(kube_node_status_capacity{cluster=\"$cluster\", job=\"kube-state-metrics\", node=~\"$node\", resource=\"memory\"})",
+          "expr": "sum(kube_node_status_capacity{cluster=\"$cluster\", node=~\"$node\", resource=\"memory\", invalid=$capacity})",
           "instant": false,
           "legendFormat": "max capacity",
           "range": true,
@@ -1150,7 +1360,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (pod) (container_memory_usage_bytes{cluster=\"$cluster\", instance=~\"$node\"})",
+          "expr": "sum by (pod) (container_memory_usage_bytes{cluster=\"$cluster\", node=~\"$node\", namespace=~\"$namespace\"})",
           "hide": false,
           "instant": false,
           "legendFormat": "{{pod}}",
@@ -1163,7 +1373,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(\r\n  node_memory_MemTotal_bytes{job=\"node-exporter\", instance=\"$node\", cluster=\"$cluster\"}\r\n-\r\n  node_memory_MemFree_bytes{job=\"node-exporter\", instance=\"$node\", cluster=\"$cluster\"}\r\n)\r\n",
+          "expr": "(\r\n  node_memory_MemTotal_bytes{instance=\"$node\", cluster=\"$cluster\", invalid=$capacity}\r\n-\r\n  node_memory_MemFree_bytes\r\n)\r\n",
           "hide": false,
           "instant": false,
           "legendFormat": "node usage",
@@ -1176,7 +1386,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (kube_pod_container_resource_limits{cluster=\"$cluster\", node=\"$node\", resource=\"memory\"})",
+          "expr": "sum (kube_pod_container_resource_limits{cluster=\"$cluster\", node=\"$node\", namespace=~\"$namespace\", resource=\"memory\", invalid=$capacity})",
           "hide": false,
           "instant": false,
           "legendFormat": "pod limits",
@@ -1185,6 +1395,156 @@
         }
       ],
       "title": "Memory Usage (raw)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMin": 0,
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 1,
+            "pointSize": 6,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "capacity"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 3
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 45
+      },
+      "id": 5,
+      "maxDataPoints": 200,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "hoverProximity": 50,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (pod) (ephemeral_storage_pod_usage{cluster=\"$cluster\", node=~\"$node\", namespace=~\"$namespace\"})",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{pod}}",
+          "range": true,
+          "refId": "pod_usage"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "ephemeral_storage_node_available{cluster=\"$cluster\", node=~\"$node\", invalid=$capacity}",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Available capacity",
+          "range": true,
+          "refId": "capacity"
+        }
+      ],
+      "title": "Ephemeral storage",
       "type": "timeseries"
     }
   ],
@@ -1234,6 +1594,44 @@
         "query": "label_values(kube_node_info{cluster=\"$cluster\"}, node)",
         "refresh": 2,
         "type": "query"
+      },
+      {
+        "allowCustomValue": false,
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "label_values(kube_pod_info{cluster=\"$cluster\", node=\"$node\"},namespace)",
+        "includeAll": true,
+        "name": "namespace",
+        "options": [],
+        "query": {
+          "qryType": 1,
+          "query": "label_values(kube_pod_info{cluster=\"$cluster\", node=\"$node\"},namespace)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "",
+        "type": "query"
+      },
+      {
+        "allowCustomValue": false,
+        "description": "",
+        "name": "capacity",
+        "options": [
+          {
+            "selected": false,
+            "text": "Show",
+            "value": "\"\""
+          },
+          {
+            "selected": true,
+            "text": "Hide",
+            "value": "\"invalid123\""
+          }
+        ],
+        "query": "Show : \"\", Hide : \"invalid123\"",
+        "type": "custom"
       }
     ]
   },

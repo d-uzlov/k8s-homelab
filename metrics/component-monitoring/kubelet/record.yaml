@@ -2,26 +2,6 @@
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: record-k8s-container-cpu-usage-seconds-total
-  labels:
-    prometheus.io/instance: main
-    instance.prometheus.io/main: enable
-    instance.prometheus.io/prompp: enable
-spec:
-  groups:
-  - name: record-k8s-container-cpu-usage-seconds-total
-    rules:
-    - expr: |-
-        sum by (cluster, namespace, pod, container) (
-          irate(container_cpu_usage_seconds_total{}[5m])
-        ) * on (cluster, namespace, pod) group_left(node) topk by (cluster, namespace, pod) (
-          1, max by (cluster, namespace, pod, node) (kube_pod_info{node!=""})
-        )
-      record: node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate
----
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
   name: record-k8s-kubelet-pleg
   labels:
     prometheus.io/instance: main
@@ -42,80 +22,60 @@ spec:
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: record-k8s-namespace-memory
+  name: record-k8s-node-namespace
   labels:
     prometheus.io/instance: main
     instance.prometheus.io/main: enable
     instance.prometheus.io/prompp: enable
 spec:
   groups:
-  - name: record-k8s-namespace-memory
+  - name: record-k8s-node-namespace
+    # using max by(container) should fix overlapping data on container restarts
     rules:
-    - record: namespace:container_memory_usage_bytes
+    - record: node_namespace:container_cpu_usage_seconds:irate
       expr: |-
-        sum by (cluster_type, cluster, namespace) (
-          # max by(container) should fix overlapping data on container restarts
-          max by(cluster_type, cluster, namespace, pod, container) (
-            container_memory_usage_bytes{}
-          )
-        )
-    - record: namespace:container_memory_rss
-      expr: |-
-        sum by (cluster_type, cluster, namespace) (
-          # max by(container) should fix overlapping data on container restarts
-          max by(cluster_type, cluster, namespace, pod, container) (
-            container_memory_rss{}
-          )
-        )
----
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: record-k8s-namespace-cpu
-  labels:
-    prometheus.io/instance: main
-    instance.prometheus.io/main: enable
-    instance.prometheus.io/prompp: enable
-spec:
-  groups:
-  - name: record-k8s-namespace-cpu
-    rules:
-    - record: namespace:container_cpu_usage_seconds:irate
-      expr: |-
-        sum by (cluster_type, cluster, namespace) (
-          # max by(container) should fix overlapping data on container restarts
-          max by(cluster_type, cluster, namespace, pod, container) (
+        sum by (cluster_type, cluster, node, namespace) (
+          max by(cluster_type, cluster, node, namespace, pod, container) (
             irate(container_cpu_usage_seconds_total{}[40s])
           )
         )
----
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: record-k8s-namespace-network
-  labels:
-    prometheus.io/instance: main
-    instance.prometheus.io/main: enable
-    instance.prometheus.io/prompp: enable
-spec:
-  groups:
-  - name: record-k8s-namespace-network
-    rules:
-    - record: namespace:container_network_receive_bytes:irate
+    - record: node_namespace:container_memory_usage_bytes
       expr: |-
-        sum by (cluster_type, cluster, namespace) (
-          # max by(container) should fix overlapping data on container restarts
-          max by(cluster_type, cluster, namespace, pod, container) (
-            irate(container_network_receive_bytes_total{}[40s])
+        sum by (cluster_type, cluster, node, namespace) (
+          max by(cluster_type, cluster, node, namespace, pod, container) (
+            container_memory_usage_bytes{}
           )
         )
-    - record: namespace:container_network_transmit_bytes:irate
+    - record: node_namespace:container_memory_rss
       expr: |-
-        sum by (cluster_type, cluster, namespace) (
-          # max by(container) should fix overlapping data on container restarts
-          max by(cluster_type, cluster, namespace, pod, container) (
-            irate(container_network_transmit_bytes_total{}[40s])
+        sum by (cluster_type, cluster, node, namespace) (
+          max by(cluster_type, cluster, node, namespace, pod, container) (
+            container_memory_rss{}
           )
+        )
+    - record: node_namespace:container_network_receive_bytes:irate
+      expr: |-
+        sum by (cluster_type, cluster, node, namespace) (
+          sum by(cluster_type, cluster, node, namespace, pod) (
+            max by(cluster_type, cluster, node, namespace, pod, container) (
+              irate(container_network_receive_bytes_total{}[40s])
+            )
+          )
+          * on(cluster_type, cluster, node, namespace, pod)
+          # pods with hostNetwork have node network statistics, it's meaningless
+          kube_pod_info{host_network="false"}
+        )
+    - record: node_namespace:container_network_transmit_bytes:irate
+      expr: |-
+        sum by (cluster_type, cluster, node, namespace) (
+          sum by(cluster_type, cluster, node, namespace, pod) (
+            max by(cluster_type, cluster, node, namespace, pod, container) (
+              irate(container_network_transmit_bytes_total{}[40s])
+            )
+          )
+          * on(cluster_type, cluster, node, namespace, pod)
+          # pods with hostNetwork have node network statistics, it's meaningless
+          kube_pod_info{host_network="false"}
         )
 ---
 apiVersion: monitoring.coreos.com/v1

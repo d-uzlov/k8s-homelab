@@ -295,9 +295,8 @@ spec:
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubecpuovercommit
         summary: Cluster has overcommitted CPU resource requests and cannot tolerate node failure
       expr: |-
-        # check that cluster without the biggest noe is overcommitted
-        # TODO namespace_cpu:kube_pod_container_resource_requests:sum is missing cluster_type
-        sum by (cluster_type, cluster) (namespace_cpu:kube_pod_container_resource_requests:sum)
+        # check that cluster without the biggest node is overcommitted
+        sum by (cluster_type, cluster) (node_namespace:kube_pod_container_resource_requests{resource="cpu"})
         -
         (
           sum by (cluster_type, cluster) (kube_node_status_allocatable{resource="cpu"})
@@ -323,7 +322,7 @@ spec:
         summary: Cluster has overcommitted memory resource requests and cannot tolerate node failure.
       expr: |-
         # check that cluster without the biggest noe is overcommitted
-        sum by (cluster_type, cluster) (namespace_memory:kube_pod_container_resource_requests:sum)
+        sum by (cluster_type, cluster) (node_namespace:kube_pod_container_resource_requests{resource="memory"})
         -
         (
           sum by (cluster_type, cluster) (kube_node_status_allocatable{resource="memory"})
