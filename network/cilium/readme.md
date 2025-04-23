@@ -181,4 +181,6 @@ kl -n cilium exec ds/cilium -c cilium-agent -- cilium status
 ```bash
 kl exec deployments/alpine -- curl -sS http://10.3.10.0:9963/metrics > ./cilium-operator-metrics.log
 kl exec deployments/alpine -- curl -sS http://hubble-metrics.cilium:9965/metrics > ./cilium-hubble-metrics.log
+# get metrics from a certain node
+kl exec deployments/alpine -- curl -sS http://10.3.10.3:9965/metrics > ./cilium-hubble-metrics.log
 ```

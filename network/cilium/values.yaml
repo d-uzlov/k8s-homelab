@@ -136,13 +136,17 @@ hubble:
     # note that there is no way to count bytes transferred
     #     https://github.com/cilium/cilium/issues/16188
     enabled:
-    - dns:sourceContext=reserved-identity|pod;destinationContext=reserved-identity|pod;labelsContext=source_ip,source_namespace,source_pod,destination_ip,destination_namespace,destination_pod,traffic_direction
-    - drop:sourceContext=reserved-identity|pod;destinationContext=reserved-identity|pod;labelsContext=source_ip,source_namespace,source_pod,destination_ip,destination_namespace,destination_pod,traffic_direction
-    - flow:sourceContext=reserved-identity|pod;destinationContext=reserved-identity|pod;labelsContext=source_ip,source_namespace,source_pod,destination_ip,destination_namespace,destination_pod,traffic_direction
-    - flows-to-world:any-drop;port;sourceContext=reserved-identity|pod;destinationContext=reserved-identity|pod;labelsContext=source_ip,source_namespace,source_pod,destination_ip,destination_namespace,destination_pod,traffic_direction
-    - icmp:sourceContext=reserved-identity|pod;destinationContext=reserved-identity|pod;labelsContext=source_ip,source_namespace,source_pod,destination_ip,destination_namespace,destination_pod,traffic_direction
-    - port-distribution:sourceContext=reserved-identity|pod;destinationContext=reserved-identity|pod;labelsContext=source_ip,source_namespace,source_pod,destination_ip,destination_namespace,destination_pod,traffic_direction
-    - tcp:sourceContext=reserved-identity|pod;destinationContext=reserved-identity|pod;labelsContext=source_ip,source_namespace,source_pod,destination_ip,destination_namespace,destination_pod,traffic_direction
+    # source_ip and destination_ip can sometimes be useful but they create cardinality explosion
+    # flows-to-world:any-drop, flows-to-world:port cause cardinality explosion
+    - dns:sourceContext=reserved-identity|pod;destinationContext=reserved-identity|pod;labelsContext=source_namespace,source_pod,destination_namespace,destination_pod,traffic_direction
+    - drop:sourceContext=reserved-identity|pod;destinationContext=reserved-identity|pod;labelsContext=source_namespace,source_pod,destination_namespace,destination_pod,traffic_direction
+    - flow:sourceContext=reserved-identity|pod;destinationContext=reserved-identity|pod;labelsContext=source_namespace,source_pod,destination_namespace,destination_pod,traffic_direction
+    - flows-to-world:sourceContext=reserved-identity|pod;destinationContext=reserved-identity|pod;labelsContext=source_namespace,source_pod,destination_namespace,destination_pod,traffic_direction
+    - icmp:sourceContext=reserved-identity|pod;destinationContext=reserved-identity|pod;labelsContext=source_namespace,source_pod,destination_namespace,destination_pod,traffic_direction
+    # port-distribution creates cardinality explosion
+    # - port-distribution:sourceContext=reserved-identity|pod;destinationContext=reserved-identity|pod;labelsContext=source_namespace,source_pod,destination_namespace,destination_pod,traffic_direction
+    # tcp flags aren't very useful?
+    # - tcp:sourceContext=reserved-identity|pod;destinationContext=reserved-identity|pod;labelsContext=source_namespace,source_pod,destination_namespace,destination_pod,traffic_direction
   tls:
     auto:
       enabled: true
