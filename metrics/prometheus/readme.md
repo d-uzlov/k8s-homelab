@@ -73,6 +73,8 @@ kl -n prometheus get sts
 kl -n prometheus get pvc
 kl -n prometheus get pod -o wide
 
+kl -n grafana apply -k ./metrics/prometheus/grafana-datasource/
+
 # show list of all relevant prometheus configs
 kl get prometheusrule -A
 kl get servicemonitor -A
