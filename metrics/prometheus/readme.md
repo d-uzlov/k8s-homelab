@@ -117,3 +117,12 @@ kl exec deployments/alpine -- curl -sS http://prometheus-operated.prometheus:909
 kl exec deployments/alpine -- curl -sS http://prometheus-operated.prometheus:8080/metrics
 
 ```
+
+# Prompp deploy
+
+```bash
+
+kl apply -k ./metrics/prometheus/prompp/
+kl -n grafana apply -k ./metrics/prometheus/prompp/grafana-datasource/
+
+```
