@@ -29,6 +29,9 @@ EOF
 kl apply -k ./metrics/prometheus/alertmanager/
 kl -n prometheus get pod -o wide
 
+# usefulness of connecting alertmanager to grafana seems very limited?
+kl -n grafana apply -k ./metrics/prometheus/alertmanager/grafana-datasource/
+
 # private gateway
 kl apply -k ./metrics/prometheus/alertmanager/httproute/
 kl apply -k ./metrics/prometheus/alertmanager/httproute-protected/
