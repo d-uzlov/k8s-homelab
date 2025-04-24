@@ -356,9 +356,39 @@
             {
               "options": {
                 "1": {
-                  "color": "green",
+                  "color": "dark-green",
                   "index": 0,
                   "text": "OK"
+                },
+                "2": {
+                  "color": "orange",
+                  "index": 2,
+                  "text": "Failed"
+                },
+                "3": {
+                  "color": "dark-yellow",
+                  "index": 3,
+                  "text": "Pending"
+                },
+                "4": {
+                  "color": "green",
+                  "index": 4,
+                  "text": "OK"
+                },
+                "5": {
+                  "color": "red",
+                  "index": 5,
+                  "text": "Error"
+                },
+                "6": {
+                  "color": "purple",
+                  "index": 6,
+                  "text": "Success"
+                },
+                "7": {
+                  "color": "#808080",
+                  "index": 7,
+                  "text": "Unknown"
                 }
               },
               "type": "value"
@@ -367,7 +397,7 @@
               "options": {
                 "from": 0,
                 "result": {
-                  "color": "red",
+                  "color": "dark-red",
                   "index": 1,
                   "text": "Error"
                 },
@@ -419,14 +449,14 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "min by(pod) (min_over_time(kube_pod_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", condition=\"true\"}[$__rate_interval]))",
+          "expr": "min by(pod) (\r\n    (kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", phase=\"Failed\"} == 1) * 2\r\n    or\r\n    (kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", phase=\"Pending\"} == 1) * 3\r\n    or\r\n    (\r\n        kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", phase=\"Running\"} == 1\r\n        and on(cluster_type, cluster, namespace, pod)\r\n        min_over_time(kube_pod_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", condition=\"true\"}[$__rate_interval]) == 1\r\n    ) * 4\r\n    or\r\n    (\r\n        kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", phase=\"Running\"} == 1\r\n        and on(cluster_type, cluster, namespace, pod)\r\n        min_over_time(kube_pod_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", condition=\"true\"}[$__rate_interval]) == 0\r\n    ) * 5\r\n    or\r\n    (kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", phase=\"Succeeded\"} == 1) * 6\r\n    or\r\n    (kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", phase=\"Unknown\"} == 1) * 7\r\n)",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Status ready",
+      "title": "Status",
       "type": "state-timeline"
     },
     {

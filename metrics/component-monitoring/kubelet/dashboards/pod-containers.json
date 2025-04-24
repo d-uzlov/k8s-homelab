@@ -149,15 +149,6 @@
             },
             "properties": [
               {
-                "id": "links",
-                "value": [
-                  {
-                    "title": "Drill down to pods",
-                    "url": "/d/mo6wf2ukdv3l72howqnq/k8s-resources-pod?${datasource:queryparam}&${cluster:queryparam}&${namespace:queryparam}&var-pod=${__data.fields.Pod}&${__url_time_range}"
-                  }
-                ]
-              },
-              {
                 "id": "custom.width",
                 "value": 344
               }
@@ -271,6 +262,23 @@
                 ]
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "container"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Filter container",
+                    "url": "/d/mo6wf2ukdv3l72howqnq/kubernetes3a-pod-containers?${datasource:queryparam}&${cluster:queryparam}&${namespace:queryparam}&${pod:queryparam}&var-container=${__data.fields.container}"
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
@@ -309,7 +317,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(pod, workload_type, workload, uid, node, container, name) (\r\n  last_over_time(container_last_seen_time{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container=\"$container\", name=~\"$id\", uid!=\"\"}[$__range])\r\n) * 1000 * on(pod, uid) group_left(workload_type, workload)\r\nmax by(pod, workload_type, workload, uid) (\r\n  last_over_time(namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid!=\"\", workload_type!=\"static-pod\"}[$__range])\r\n)\r\n# using a single query with \"OR\" here because otherwise grafana would show 2 separate \"Last seen\" columns\r\nor\r\nmax by(pod, workload_type, workload, uid, node, container, name) (\r\n  last_over_time(container_last_seen_time{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container=\"$container\", name=~\"$id\", uid!=\"\"}[$__range])\r\n) * 1000 * on(pod) group_left(workload_type, workload)\r\n# omitting uid here because for static pods cadvisor uid does not match kube-state-metrics uid\r\nmax by(pod, workload_type, workload) (\r\n  last_over_time(namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid!=\"\", workload_type=\"static-pod\"}[$__range])\r\n)",
+          "expr": "max by(pod, workload_type, workload, uid, node, container, name) (\r\n  last_over_time(container_last_seen_time{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container=~\"$container\", name=~\"$id\", uid!=\"\"}[$__range])\r\n) * 1000 * on(pod, uid) group_left(workload_type, workload)\r\nmax by(pod, workload_type, workload, uid) (\r\n  last_over_time(namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid!=\"\", workload_type!=\"static-pod\"}[$__range])\r\n)\r\n# using a single query with \"OR\" here because otherwise grafana would show 2 separate \"Last seen\" columns\r\nor\r\nmax by(pod, workload_type, workload, uid, node, container, name) (\r\n  last_over_time(container_last_seen_time{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container=~\"$container\", name=~\"$id\", uid!=\"\"}[$__range])\r\n) * 1000 * on(pod) group_left(workload_type, workload)\r\n# omitting uid here because for static pods cadvisor uid does not match kube-state-metrics uid\r\nmax by(pod, workload_type, workload) (\r\n  last_over_time(namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid!=\"\", workload_type=\"static-pod\"}[$__range])\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -442,7 +450,7 @@
             "properties": [
               {
                 "id": "custom.width",
-                "value": 250
+                "value": 268
               }
             ]
           },
@@ -467,6 +475,17 @@
               {
                 "id": "custom.width",
                 "value": 127
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*/"
+            },
+            "properties": [
+              {
+                "id": "filterable"
               }
             ]
           }
@@ -657,9 +676,44 @@
             {
               "options": {
                 "1": {
-                  "color": "green",
+                  "color": "dark-green",
                   "index": 0,
                   "text": "OK"
+                },
+                "2": {
+                  "color": "orange",
+                  "index": 2,
+                  "text": "Failed"
+                },
+                "3": {
+                  "color": "dark-yellow",
+                  "index": 3,
+                  "text": "Pending"
+                },
+                "4": {
+                  "color": "green",
+                  "index": 4,
+                  "text": "OK"
+                },
+                "5": {
+                  "color": "red",
+                  "index": 5,
+                  "text": "Error"
+                },
+                "6": {
+                  "color": "purple",
+                  "index": 6,
+                  "text": "Success"
+                },
+                "7": {
+                  "color": "#808080",
+                  "index": 7,
+                  "text": "Unknown"
+                },
+                "8": {
+                  "color": "super-light-blue",
+                  "index": 8,
+                  "text": "Unknown Exit Code"
                 }
               },
               "type": "value"
@@ -668,7 +722,7 @@
               "options": {
                 "from": 0,
                 "result": {
-                  "color": "red",
+                  "color": "dark-red",
                   "index": 1,
                   "text": "Error"
                 },
@@ -732,7 +786,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "min by(pod) (min_over_time(kube_pod_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", condition=\"true\"}[$__rate_interval]))",
+          "expr": "min by(pod) (\r\n    (kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", phase=\"Failed\"} == 1) * 2\r\n    or\r\n    (kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", phase=\"Pending\"} == 1) * 3\r\n    or\r\n    (\r\n        kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", phase=\"Running\"} == 1\r\n        and on(cluster_type, cluster, namespace, pod)\r\n        min_over_time(kube_pod_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", condition=\"true\"}[$__rate_interval]) == 1\r\n    ) * 4\r\n    or\r\n    (\r\n        kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", phase=\"Running\"} == 1\r\n        and on(cluster_type, cluster, namespace, pod)\r\n        min_over_time(kube_pod_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", condition=\"true\"}[$__rate_interval]) == 0\r\n    ) * 5\r\n    or\r\n    (kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", phase=\"Succeeded\"} == 1) * 6\r\n    or\r\n    (kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", phase=\"Unknown\"} == 1) * 7\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "Pod",
@@ -745,11 +799,24 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "min by(container) (min_over_time(kube_pod_container_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\"}[$__rate_interval]))",
+          "expr": "min by(container) (\r\n    (\r\n        kube_pod_container_status_waiting{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"} == 1\r\n    ) * 3\r\n    or\r\n    (\r\n        min_over_time(kube_pod_container_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__rate_interval]) == 1\r\n        and\r\n        kube_pod_container_status_running == 1\r\n    ) * 4\r\n    or\r\n    (\r\n        min_over_time(kube_pod_container_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__rate_interval])\r\n        and\r\n        kube_pod_container_status_running == 1\r\n    ) * 5\r\n    or\r\n    (\r\n        (kube_pod_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"} == 1)\r\n        and\r\n        kube_pod_container_status_last_terminated_exitcode == 0\r\n    ) * 6\r\n    or\r\n    (\r\n        (kube_pod_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"} == 1)\r\n        and\r\n        kube_pod_container_status_last_terminated_exitcode != 0\r\n    ) * 2\r\n    or\r\n    # for some reason I don't see kube_pod_container_status_last_terminated_exitcode on some job containers\r\n    (\r\n        (kube_pod_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"} == 1)\r\n    ) * 8\r\n)",
           "instant": false,
           "legendFormat": "{{container}}",
           "range": true,
           "refId": "containers"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", phase=\"Pending\"} == 1) * 0\r\n+ on() group_right\r\nmin by(container) (\r\n    (\r\n        kube_pod_init_container_status_waiting{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"} == 1\r\n        and on(cluster_type, cluster, namespace, pod, container)\r\n        kube_pod_init_container_status_waiting_reason{}\r\n    ) * 3\r\n    or\r\n    (\r\n        kube_pod_init_container_status_waiting{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"} == 1\r\n    ) * 3\r\n    or\r\n    (\r\n        kube_pod_init_container_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"} == 1\r\n        and\r\n        kube_pod_init_container_status_running == 1\r\n    ) * 4\r\n    or\r\n    (\r\n        kube_pod_init_container_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"} != 1\r\n        and\r\n        kube_pod_init_container_status_running == 1\r\n    ) * 5\r\n    or\r\n    (\r\n        (kube_pod_init_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"} == 1)\r\n        and on(cluster_type, cluster, namespace, pod, container)\r\n        kube_pod_init_container_status_terminated_reason{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", reason=\"Completed\"} == 1\r\n    ) * 6\r\n    or\r\n    (\r\n        (kube_pod_init_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\"} == 1)\r\n        and on(cluster_type, cluster, namespace, pod, container)\r\n        count by(cluster_type, cluster, namespace, pod, container) (\r\n            kube_pod_init_container_status_terminated_reason{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", reason!=\"Completed\"} == 1\r\n        ) > 0\r\n    ) * 2\r\n    or\r\n    (\r\n        (kube_pod_init_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"} == 1)\r\n    ) * 8\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}}",
+          "range": true,
+          "refId": "init_containers"
         }
       ],
       "title": "Status ready",
@@ -3945,21 +4012,23 @@
         "type": "query"
       },
       {
+        "allowCustomValue": false,
         "datasource": {
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "label_values(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\"},container)",
+        "definition": "query_result(label_replace(last_over_time(kube_pod_container_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\"}[$__range]), \"human_name\", \"main/$1\", \"container\", \"(.*)\") or ((max_over_time(kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", phase=\"Pending\"}[$__range]) == 1) * 0+ on() group_right label_replace(last_over_time(kube_pod_init_container_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\"}[$__range]), \"human_name\", \"init/$1\", \"container\", \"(.*)\")))",
         "includeAll": true,
         "label": "container",
         "name": "container",
         "options": [],
         "query": {
-          "qryType": 1,
-          "query": "label_values(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\"},container)",
+          "qryType": 3,
+          "query": "query_result(label_replace(last_over_time(kube_pod_container_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\"}[$__range]), \"human_name\", \"main/$1\", \"container\", \"(.*)\") or ((max_over_time(kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", phase=\"Pending\"}[$__range]) == 1) * 0+ on() group_right label_replace(last_over_time(kube_pod_init_container_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\"}[$__range]), \"human_name\", \"init/$1\", \"container\", \"(.*)\")))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
+        "regex": "/human_name=\"(?<text>[^\"]+)|container=\"(?<value>[^\"]+)/g",
         "sort": 1,
         "type": "query"
       },

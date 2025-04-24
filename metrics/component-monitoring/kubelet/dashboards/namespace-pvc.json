@@ -41,6 +41,119 @@
       "fieldConfig": {
         "defaults": {
           "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "persistentvolume"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 387
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 1,
+        "y": 0
+      },
+      "id": 8,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "sum by(namespace, pod, persistentvolumeclaim, volume) (\r\n    last_over_time(kube_pod_spec_volumes_persistentvolumeclaims_info{cluster=\"$cluster\", namespace=\"$namespace\"}[$__range])\r\n)\r\n* on(persistentvolumeclaim, namespace) group_left(persistentvolume)\r\nlabel_replace(\r\nlabel_replace(\r\nlast_over_time(kube_persistentvolume_claim_ref{cluster=\"$cluster\", claim_namespace=\"$namespace\"}[$__range]),\r\n\"persistentvolumeclaim\", \"$1\", \"name\", \"(.*)\"\r\n),\r\n\"namespace\", \"$1\", \"claim_namespace\", \"(.*)\"\r\n)",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Mounts",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Value": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "Time": 0,
+              "Value": 6,
+              "namespace": 1,
+              "persistentvolume": 5,
+              "persistentvolumeclaim": 2,
+              "pod": 3,
+              "volume": 4
+            },
+            "renameByName": {
+              "Value": "",
+              "persistentvolumeclaim": "PVC name",
+              "pod": "",
+              "volume": ""
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
             "mode": "palette-classic"
           },
           "custom": {
@@ -97,7 +210,7 @@
         "h": 8,
         "w": 18,
         "x": 1,
-        "y": 0
+        "y": 8
       },
       "id": 6,
       "maxDataPoints": 300,
@@ -129,6 +242,19 @@
           "legendFormat": "{{persistentvolumeclaim}}",
           "range": true,
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by(persistentvolumeclaim) (kube_persistentvolume_capacity_bytes{cluster=\"$cluster\", namespace=\"$namespace\", persistentvolume=~\"$volume\"})",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{persistentvolumeclaim}}",
+          "range": true,
+          "refId": "B"
         }
       ],
       "title": "Volume Size",
@@ -195,7 +321,7 @@
         "h": 8,
         "w": 18,
         "x": 1,
-        "y": 8
+        "y": 16
       },
       "id": 5,
       "maxDataPoints": 300,
@@ -302,7 +428,7 @@
         "h": 8,
         "w": 18,
         "x": 1,
-        "y": 16
+        "y": 24
       },
       "id": 7,
       "maxDataPoints": 300,
@@ -409,7 +535,7 @@
         "h": 7,
         "w": 18,
         "x": 1,
-        "y": 24
+        "y": 32
       },
       "id": 3,
       "maxDataPoints": 300,
