@@ -1,0 +1,33 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alpine-ephemeral-storage
+spec:
+  selector:
+    matchLabels:
+      app: alpine-ephemeral-storage
+  template:
+    metadata:
+      labels:
+        app: alpine-ephemeral-storage
+    spec:
+      containers:
+      - name: alpine
+        image: docker.io/alpine:3.17.3
+        command: ["/bin/sh", "-c", "trap : TERM INT; sleep infinity & wait"]
+        env:
+        - name: EPHEMERAL_STORAGE_LIMIT
+          valueFrom:
+            resourceFieldRef:
+              containerName: alpine
+              resource: limits.ephemeral-storage
+              divisor: 1Mi
+        resources:
+          requests:
+            ephemeral-storage: 50Mi
+          limits:
+            # When ephemeral storage limit is reached, the pod is evicted.
+            # The only way to learn the limit is from downward API.
+            # Filesystem size will still show full node storage size.
+            ephemeral-storage: 150Mi
