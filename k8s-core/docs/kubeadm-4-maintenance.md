@@ -53,13 +53,14 @@ sudo kubeadm upgrade node phase kubelet-config
 # if something is broken, and you can't connect from node to cluster, you can edit kubelet locally
 sudo nano /var/lib/kubelet/config.yaml
 
+# kubelet configuration does not have extraArgs option
+# but you can edit local environment file with extra args
+sudo nano /etc/default/kubelet
+sudo cat /etc/default/kubelet
+
 # apply new config
 sudo systemctl restart kubelet
 sudo systemctl status kubelet --no-pager
-
-# you can also manually add extra args to kubelet
-sudo nano /etc/default/kubelet
-sudo cat /etc/default/kubelet
 
 ```
 
