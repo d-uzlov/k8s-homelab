@@ -18,7 +18,7 @@ helm repo add kyverno https://kyverno.github.io/kyverno/
 helm repo update kyverno
 helm search repo kyverno
 helm search repo kyverno/kyverno --versions --devel | head
-helm show values kyverno/kyverno --version 3.1.4 > ./k8s-core/kyverno/default-values.yaml
+helm show values kyverno/kyverno --version 3.4.0 > ./k8s-core/kyverno/default-values.yaml
 ```
 
 ```bash
@@ -26,13 +26,16 @@ helm show values kyverno/kyverno --version 3.1.4 > ./k8s-core/kyverno/default-va
 helm template \
   kyverno \
   kyverno/kyverno \
-  --version 3.1.4 \
+  --version 3.4.0 \
   --values ./k8s-core/kyverno/values.yaml \
   --namespace kyverno \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' -e '\|app.kubernetes.io/version|d' \
+  | sed 's/kyverno-admission-controller/kyverno-admission/' \
   > ./k8s-core/kyverno/deployment.gen.yaml
 
 ```
+
+The list of CRDs is manually grabbed from the release files, and manually placed into `./k8s-core/kyverno/crds/kustomization.yaml`
 
 # Deploy
 
@@ -46,6 +49,8 @@ kl label ns kyverno pod-security.kubernetes.io/enforce=baseline
 kl apply -k ./k8s-core/kyverno/
 kl -n kyverno get pod -o wide
 
+kl -n kyverno logs deployments/kyverno-admission
+
 kl apply -k ./k8s-core/kyverno/common-policies/
 kl get clusterpolicy
 
@@ -54,6 +59,7 @@ kl get clusterpolicy
 # Cleanup
 
 ```bash
+kl delete -k ./k8s-core/kyverno/common-policies/
 kl delete -k ./k8s-core/kyverno/
 kl delete ns kyverno
 kl delete validatingwebhookconfiguration -l webhook.kyverno.io/managed-by=kyverno
