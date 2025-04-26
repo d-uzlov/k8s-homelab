@@ -28,8 +28,10 @@ spec:
   relabelings:
   - targetLabel: job
     replacement: kubelet-main
+    action: replace
   - targetLabel: cluster_type
     replacement: k8s
+    action: replace
   metricRelabelings:
   - action: keep
     sourceLabels: [ __name__ ]
@@ -79,62 +81,75 @@ spec:
   relabelings:
   - targetLabel: job
     replacement: kubelet-cadvisor
+    action: replace
   - targetLabel: cluster_type
     replacement: k8s
+    action: replace
   - targetLabel: node
     sourceLabels: [ instance ]
+    action: replace
   metricRelabelings:
   # drop metrics for dummy cgroup containers without name
   - sourceLabels:
     - __name__
     - container
-    action: drop
-    # select only metrics that are linked to containers
-    # for example, network metrics do not have container label by design
-    regex: 'container_(cpu_|fs_|blkio_|memory_|oom_|start_time_|threads|processes|sockets|ulimits_soft).*;'
+    action: keep
+    # for network metrics keep all
+    # for other metrics drop everything without container label
+    # this way we also delete all of the container_fs per-device metrics without container context
+    regex: .*;.+|container_network_.*;.*
     separator: ;
   - sourceLabels:
     - __name__
     - interface
     action: drop
     # drop lxc* interface metrics
-    # they are kinda impossible to correlate with k8s objects
-    # they don't seem to have any real traffic reported
-    # but they give huge cardinality for pods with hostNetwork enabled
-    regex: 'container_network_.*;lxc.*'
+    # ideally you would want to drop all network metrics for hostNetwork pods
+    # but at least we can guard prometheus from network metric explosion with lxc interfaces
+    regex: container_network_.*;lxc.*
     separator: ;
   # iops metrics don't seems to be useful ?
   # - sourceLabels: [__name__]
   #   action: drop
   #   regex: 'container_fs_reads_total|container_fs_writes_total'
-  # Drop less useful container CPU metrics.
   - sourceLabels: [__name__]
     action: drop
-    regex: 'container_cpu_(cfs_throttled_seconds_total|load_average_10s|system_seconds_total|user_seconds_total)'
-  # Drop less useful container / always zero filesystem metrics.
+    # load average is useless?
+    # it can spike when doing many IO operations
+    regex: container_cpu_load_average_10s|container_cpu_load_d_average_10s
   - sourceLabels: [__name__]
     action: drop
-    regex: 'container_fs_(io_current|io_time_seconds_total|io_time_weighted_seconds_total|reads_merged_total|sector_reads_total|sector_writes_total|writes_merged_total)'
-  # Drop less useful / always zero container memory metrics.
+    # container_memory_failcnt is always zero, because when using memory.oom.group=1 container is OOM-killed before allocation fail happens
+    # container_oom_events_total is always zero because when OOM happens, a new container is created, and the old is deleted
+    regex: container_memory_failcnt|container_oom_events_total
   - sourceLabels: [__name__]
     action: drop
-    # regex: 'container_memory_swap|container_memory_kernel_usage|container_memory_mapped_file'
-    regex: 'container_memory_swap|container_memory_kernel_usage'
-  # Drop less useful container process metrics.
+    # container_memory_kernel_usage is always zero
+    #     It seems like cadvisor embedded in k8s 1.32 does not know how to handle kernel and kernel_stack from memory.stat in cgroup v2?
+    # container_memory_swap is always zero because swap is not used on k8s nodes
+    regex: container_memory_swap|container_memory_kernel_usage
+  # - sourceLabels: [__name__]
+  #   action: drop
+  #   # container_processes, container_threads and container_sockets are gauges, which severely limits its usefulness
+  #   regex: container_processes|container_threads|container_sockets
+  # - sourceLabels: [__name__]
+  #   action: drop
+  #   # container_spec_memory_reservation_limit_bytes is always zero because k8s sets neither memory.min not memory.low
+  #   #     https://github.com/kubernetes/kubernetes/issues/131077
+  #   regex: container_spec_memory_reservation_limit_bytes
   - sourceLabels: [__name__]
     action: drop
-    regex: 'container_(file_descriptors|tasks_state|threads_max)'
-  # Drop container spec metrics that overlap with kube-state-metrics.
+    # container_spec_memory_swap_limit_bytes is always zero because swap is not used on k8s nodes
+    regex: container_spec_memory_swap_limit_bytes
   - sourceLabels: [__name__]
     action: drop
-    regex: 'container_spec.*'
-  # Drop cgroup metrics with no pod.
-  - sourceLabels: [id, pod]
-    action: drop
-    regex: '.+;'
-  - sourceLabels: [__name__]
-    action: drop
-    regex: container_last_seen
+    # container_tasks_state is always zero. Additionally, it's a gauge, so it's useless
+    #   https://github.com/google/cadvisor/issues/2739
+    regex: container_tasks_state
+  # # Drop cgroup metrics with no pod.
+  # - sourceLabels: [id, pod]
+  #   action: drop
+  #   regex: '.+;'
   - sourceLabels: [ __name__, scope ]
     action: drop
     # container_memory_failures_total{scope="container"} == container_memory_failures_total{scope="hierarchy"}
@@ -145,36 +160,46 @@ spec:
     # id="/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod7d4659dd_816c_47d3_a7af_5497cd907f03.slice/cri-containerd-2deaac380080854057af38e6d109e8c6561c561011c22d854e31afcde3eb7fc9.scope"
     # new format:
     # id="/kubepods/burstable/pod00183d57-cc1e-425d-adfa-96844aceb81d/240f7c1de56c2f846123a3a97dfb395f35ad72167a79a1a07e8c50e1f08451c9"
+    # note that for static pods the id field does not correspond to pod uid. For example:
+    # id="/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod2a26a30123a101c567ba870dc0a74eb3.slice/cri-containerd-42f2362e50d4ec6312477b88473fe1271de144f6f83a0e8ad2579f260ca535ad.scope"
   - targetLabel: uid
     sourceLabels: [ id ]
+    action: replace
     regex: '/kubepods.slice/.*\.slice/.*-pod([0-9a-z_]*)\.slice/cri-.*'
   - targetLabel: uid
     sourceLabels: [ id ]
     regex: '/kubepods/.*/pod([0-9a-z-]*)/.*'
+    action: replace
   - targetLabel: uid
     sourceLabels: [ uid ]
     regex: (.*)_(.*)
     replacement: '$1-$2'
+    action: replace
   - targetLabel: uid
     sourceLabels: [ uid ]
     regex: (.*)_(.*)
     replacement: '$1-$2'
+    action: replace
   - targetLabel: uid
     sourceLabels: [ uid ]
     regex: (.*)_(.*)
     replacement: '$1-$2'
+    action: replace
   - targetLabel: uid
     sourceLabels: [ uid ]
     regex: (.*)_(.*)
     replacement: '$1-$2'
+    action: replace
   - targetLabel: uid
     sourceLabels: [ uid ]
     regex: (.*)_(.*)
     replacement: '$1-$2'
+    action: replace
   - targetLabel: uid
     sourceLabels: [ uid ]
     regex: (.*)_(.*)
     replacement: '$1-$2'
+    action: replace
 # ---
 # apiVersion: monitoring.coreos.com/v1alpha1
 # kind: ScrapeConfig

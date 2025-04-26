@@ -43,7 +43,9 @@ nodeIp=
 # these metrics are not monitored here
 curl -sS --insecure -H "Authorization: Bearer $bearer" https://$nodeIp:10250/metrics > ./kubelet-metrics.log
 # main container metrics
-curl -sS --insecure -H "Authorization: Bearer $bearer" https://$nodeIp:10250/metrics/cadvisor > ./kubelet-cadvisor.log
+curl -sS --insecure -H "Authorization: Bearer $bearer" https://$nodeIp:10250/metrics/cadvisor > ./kubelet-cadvisor2.log
+# this is metrics used by autoscalers. They partially overlap with cadvisor metrics but there are less labels
+curl -sS --insecure -H "Authorization: Bearer $bearer" https://$nodeIp:10250/metrics/resource > ./kubelet-metrics-resource.log
 # liveness/readiness probe statistics
 curl -sS --insecure -H "Authorization: Bearer $bearer" https://$nodeIp:10250/metrics/probes > ./kubelet-probes.log
 
