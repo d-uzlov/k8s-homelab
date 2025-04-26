@@ -799,7 +799,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "min by(container) (\r\n    (\r\n        kube_pod_container_status_waiting{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"} == 1\r\n    ) * 3\r\n    or\r\n    (\r\n        min_over_time(kube_pod_container_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__rate_interval]) == 1\r\n        and\r\n        kube_pod_container_status_running == 1\r\n    ) * 4\r\n    or\r\n    (\r\n        min_over_time(kube_pod_container_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__rate_interval])\r\n        and\r\n        kube_pod_container_status_running == 1\r\n    ) * 5\r\n    or\r\n    (\r\n        (kube_pod_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"} == 1)\r\n        and\r\n        kube_pod_container_status_last_terminated_exitcode == 0\r\n    ) * 6\r\n    or\r\n    (\r\n        (kube_pod_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"} == 1)\r\n        and\r\n        kube_pod_container_status_last_terminated_exitcode != 0\r\n    ) * 2\r\n    or\r\n    # for some reason I don't see kube_pod_container_status_last_terminated_exitcode on some job containers\r\n    (\r\n        (kube_pod_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"} == 1)\r\n    ) * 8\r\n)",
+          "expr": "min by(container) (\r\n    (\r\n        kube_pod_container_status_waiting{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"} == 1\r\n    ) * 3\r\n    or\r\n    (\r\n        min_over_time(kube_pod_container_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__rate_interval]) == 1\r\n        and\r\n        kube_pod_container_status_running == 1\r\n    ) * 4\r\n    or\r\n    (\r\n        min_over_time(kube_pod_container_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__rate_interval]) == bool 0\r\n        and\r\n        kube_pod_container_status_running == 1\r\n    ) * 5\r\n    or\r\n    (\r\n        (kube_pod_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"} == 1)\r\n        and\r\n        kube_pod_container_status_last_terminated_exitcode == 0\r\n    ) * 6\r\n    or\r\n    (\r\n        (kube_pod_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"} == 1)\r\n        and\r\n        kube_pod_container_status_last_terminated_exitcode != 0\r\n    ) * 2\r\n    or\r\n    # for some reason I don't see kube_pod_container_status_last_terminated_exitcode on some job containers\r\n    (\r\n        (kube_pod_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"} == 1)\r\n    ) * 8\r\n)",
           "instant": false,
           "legendFormat": "{{container}}",
           "range": true,
@@ -983,10 +983,6 @@
             "steps": [
               {
                 "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           },
@@ -1068,6 +1064,35 @@
                 }
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "burst_spec"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "purple",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
           }
         ]
       },
@@ -1108,7 +1133,7 @@
           "expr": "sum by(container, name) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{container}}, name={{name}}",
+          "legendFormat": "{{container}} usage, name={{name}}",
           "range": true,
           "refId": "cpu"
         },
@@ -1121,7 +1146,7 @@
           "expr": "sum (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
-          "legendFormat": "Total",
+          "legendFormat": "Total usage",
           "range": true,
           "refId": "cpu_total"
         },
@@ -1134,7 +1159,7 @@
           "expr": "sum by(container) (\r\n    kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\",container=~\"$container\", invalid=$enableLimits}\r\n)\r\n",
           "hide": false,
           "instant": false,
-          "legendFormat": "requests: {{container}}",
+          "legendFormat": "{{container}} request",
           "range": true,
           "refId": "request"
         },
@@ -1147,7 +1172,7 @@
           "expr": "sum by(container) (\r\n    kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\", container=~\"$container\", invalid=$enableLimits}\r\n)\r\n",
           "hide": false,
           "instant": false,
-          "legendFormat": "limits: {{container}}",
+          "legendFormat": "{{container}} limit",
           "range": true,
           "refId": "limit"
         },
@@ -1162,7 +1187,20 @@
           "instant": false,
           "legendFormat": "{{container}} burst, name={{name}}",
           "range": true,
-          "refId": "burst"
+          "refId": "burst_usage"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(container) (\r\n    kube_pod_container_cgroup_burst{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", invalid=$enableLimits}\r\n)\r\n",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} burst limit",
+          "range": true,
+          "refId": "burst_spec"
         }
       ],
       "title": "CPU Usage (cores)",
@@ -3959,6 +3997,7 @@
           "uid": "${datasource}"
         },
         "definition": "query_result(label_join(last_over_time(namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\"}[$__range]), \"human_name\", \"/\", \"workload_type\", \"workload\"))",
+        "includeAll": true,
         "name": "workload",
         "options": [],
         "query": {

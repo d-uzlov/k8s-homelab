@@ -368,7 +368,7 @@
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
-          "refId": "A"
+          "refId": "pods"
         }
       ],
       "title": "Pods",
@@ -473,7 +473,7 @@
           "instant": false,
           "legendFormat": "{{namespace}}",
           "range": true,
-          "refId": "B"
+          "refId": "ephemeral_storage"
         }
       ],
       "title": "Ephemeral Storage",
@@ -587,11 +587,11 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(namespace) (max_over_time(node_namespace:container_cpu_usage_seconds:irate{cluster=\"$cluster\", namespace=~\"$namespace\"}[$__interval]))",
+          "expr": "sum by(namespace) (max_over_time(node_namespace:container_cpu_usage_seconds:irate{cluster=\"$cluster\", namespace=~\"$namespace\"}[${_safe_interval_200}s]))",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
-          "refId": "A"
+          "refId": "cpu_max"
         }
       ],
       "title": "CPU Usage",
@@ -696,7 +696,7 @@
           "instant": false,
           "legendFormat": "{{namespace}}",
           "range": true,
-          "refId": "B"
+          "refId": "memory_raw"
         }
       ],
       "title": "Memory RAW",
@@ -801,7 +801,7 @@
           "instant": false,
           "legendFormat": "{{namespace}}",
           "range": true,
-          "refId": "B"
+          "refId": "memory_rss"
         }
       ],
       "title": "Memory RSS",
@@ -913,11 +913,12 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (namespace) (max_over_time(node_namespace:container_network_receive_bytes:irate{cluster=\"$cluster\", namespace=~\"$namespace\"}[$__interval]))",
+          "expr": "sum by (namespace) (max_over_time(node_namespace:container_network_receive_bytes:irate{cluster=\"$cluster\", namespace=~\"$namespace\"}[$_safe_interval_200]))",
+          "hide": false,
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
-          "refId": "A"
+          "refId": "net_receive"
         }
       ],
       "title": "Receive Bandwidth",
@@ -1016,11 +1017,12 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (namespace) (max_over_time(node_namespace:container_network_transmit_bytes:irate{cluster=\"$cluster\", namespace=~\"$namespace\"}[$__interval]))",
+          "expr": "sum by (namespace) (max_over_time(node_namespace:container_network_transmit_bytes:irate{cluster=\"$cluster\", namespace=~\"$namespace\"}[$_safe_interval_200]))",
+          "hide": false,
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
-          "refId": "A"
+          "refId": "net_transmit"
         }
       ],
       "title": "Transmit Bandwidth",
@@ -1082,6 +1084,25 @@
         },
         "refresh": 2,
         "sort": 1,
+        "type": "query"
+      },
+      {
+        "allowCustomValue": false,
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "query_result(((($__range_ms / 200) > bool ($__interval_ms * 2))* scalar(round(vector($__range_ms / 200)))+(($__range_ms / 200) <= bool ($__interval_ms * 2))* scalar(round(vector($__interval_ms * 2)))) / 1000# original structure of query is here because in the query input panel line breaks are automatically removed# scalar(round(vector)) is needed because prometheus 2 can't use intervals with non-integer values)",
+        "description": "(\n(($__range_ms / 200) > bool ($__interval_ms * 2))\n* scalar(round(vector($__range_ms / 200)))\n+\n(($__range_ms / 200) <= bool ($__interval_ms * 2))\n* scalar(round(vector($__interval_ms * 2)))\n) / 1000\n\n# original structure of query is here because in the query input panel line breaks are automatically removed\n# scalar(round(vector)) is needed because prometheus 2 can't use intervals with non-integer values",
+        "name": "_safe_interval_200",
+        "options": [],
+        "query": {
+          "qryType": 3,
+          "query": "query_result(((($__range_ms / 200) > bool ($__interval_ms * 2))* scalar(round(vector($__range_ms / 200)))+(($__range_ms / 200) <= bool ($__interval_ms * 2))* scalar(round(vector($__interval_ms * 2)))) / 1000# original structure of query is here because in the query input panel line breaks are automatically removed# scalar(round(vector)) is needed because prometheus 2 can't use intervals with non-integer values)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "",
         "type": "query"
       }
     ]

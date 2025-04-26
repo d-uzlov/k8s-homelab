@@ -88,14 +88,18 @@ metadata:
     instance.prometheus.io/prompp: enable
 spec:
   groups:
-  - name: record-k8s-namespace-network
+  # this is a workaround for the issue that prometheus can't give you first and last timestamp of data vector
+  # with this you can just use min_over_time(container_last_seen_time) and max_over_time(container_last_seen_time)
+  - name: record-k8s-container-time
     rules:
+    # When using timestamp() different series get different unique time values
+    # because cadvisor sets actual datapoint timestamp instead of using scrape timestamp.
+    # This is inconvenient for the case of "sort result table by last_seen, and then sort by name".
+    # Using time() solves this issue by giving all series value of time of the recording rule evaluation
     - record: container_last_seen_time
-      # this is a workaround for the issue that prometheus can't give you first and last timestamp of data vector
-      # with this you can just use min_over_time(container_last_seen_time) and max_over_time(container_last_seen_time)
       expr: |-
-        # when using timestamp() different series get different unique time values
-        # this is inconvenient for the case of "sort result table by last_seen, and then sort by name"
-        # using time() solves this issue by giving all series value of time of the recording rule evaluation
-        # timestamp(container_start_time_seconds)
         container_start_time_seconds * 0 + time()
+    # but using timestamp() gives more accurate values for rate calculation
+    - record: container_scrape_time
+      expr: |-
+        timestamp(container_start_time_seconds)
