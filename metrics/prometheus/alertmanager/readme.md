@@ -19,11 +19,13 @@ clusterName=trixie
   value:
     targetLabel: cluster
     replacement: $clusterName
+    action: replace
 - op: add
   path: /spec/endpoints/1/relabelings/-
   value:
     targetLabel: cluster
     replacement: $clusterName
+    action: replace
 EOF
 
 kl apply -k ./metrics/prometheus/alertmanager/

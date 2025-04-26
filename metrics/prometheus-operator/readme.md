@@ -65,6 +65,7 @@ clusterName=
   value:
     targetLabel: cluster
     replacement: $clusterName
+    action: replace
 EOF
 
 kl apply -f ./metrics/prometheus-operator/crd/ --server-side

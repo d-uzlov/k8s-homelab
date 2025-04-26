@@ -48,6 +48,7 @@ clusterName=
   value:
     targetLabel: cluster
     replacement: $clusterName
+    action: replace
 EOF
 
 ```

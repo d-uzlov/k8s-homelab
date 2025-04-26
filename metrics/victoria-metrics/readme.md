@@ -56,6 +56,7 @@ clusterName=
   value:
     targetLabel: cluster
     replacement: $clusterName
+    action: replace
 EOF
 
 kl create ns victoria-metrics

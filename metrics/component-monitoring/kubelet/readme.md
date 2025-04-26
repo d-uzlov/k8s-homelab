@@ -14,6 +14,7 @@ clusterName=
   value:
     targetLabel: cluster
     replacement: $clusterName
+    action: replace
 EOF
 
 kl apply -k ./metrics/component-monitoring/kubelet/

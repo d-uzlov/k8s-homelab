@@ -41,10 +41,11 @@ mkdir -p ./ingress/cert-manager/env/
 clusterName=
  cat << EOF > ./ingress/cert-manager/env/patch-cluster-tag.yaml
 - op: add
-  path: /spec/relabelings/-
+  path: /spec/endpoints/0/relabelings/-
   value:
     targetLabel: cluster
     replacement: $clusterName
+    action: replace
 EOF
 
 kl apply -f ./ingress/cert-manager/cert-manager.crds.yaml --server-side
