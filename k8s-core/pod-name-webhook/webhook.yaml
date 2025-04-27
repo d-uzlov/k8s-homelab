@@ -1,0 +1,28 @@
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: pod-node-name-webhook
+  annotations:
+    cert-manager.io/inject-ca-from: pod-name-wh/webhook
+webhooks:
+- name: pod-name.meoe.io
+  admissionReviewVersions: ["v1"]
+  clientConfig:
+    service:
+      name: pod-name-wh
+      namespace: pod-name-wh
+      path: /mutate-pod
+      port: 443
+  rules:
+  - operations: ["CREATE"]
+    apiGroups: [""]
+    apiVersions: ["v1"]
+    resources: ["pods"]
+    scope: Namespaced
+  objectSelector:
+    matchLabels:
+      pod-name.meoe.io/mutate: enable
+  sideEffects: None
+  # failurePolicy: Ignore
+  failurePolicy: Fail
