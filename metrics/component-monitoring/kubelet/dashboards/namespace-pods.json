@@ -134,7 +134,7 @@
                 "value": [
                   {
                     "title": "Drill down to pod",
-                    "url": "/d/mo6wf2ukdv3l72howqnq/k8s-resources-pod?${datasource:queryparam}&${cluster:queryparam}&${namespace:queryparam}&${workload:queryparam}&var-pod=${__data.fields.Pod}&${__url_time_range}"
+                    "url": "/d/mo6wf2ukdv3l72howqnq/k8s-resources-pod?${datasource:queryparam}&${cluster:queryparam}&${namespace:queryparam}&${workload:queryparam}&var-pod=${__data.fields.Pod}&var-pod_uid=${__data.fields.uid}&${__url_time_range}"
                   }
                 ]
               },
@@ -299,6 +299,23 @@
                 "value": "dateTimeAsIsoNoDateIfToday"
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "uid"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Filter UID",
+                    "url": "/d/vsl6ot4yad5hedtly8ey/kubernetes3a-namespace-pods?${datasource:queryparam}&${cluster:queryparam}&${namespace:queryparam}&${workload:queryparam}&var-pod=${__data.fields.Pod}&var-pod_uid=${__data.fields.uid}&${__url_time_range}"
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
@@ -340,7 +357,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(pod, workload_type, workload, uid, node) (\r\n  last_over_time(container_last_seen_time{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__range])\r\n) * 1000 * on(pod, uid) group_left(workload_type, workload)\r\nmax by(pod, workload_type, workload, uid) (\r\n  last_over_time(namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid!=\"\", workload_type!=\"static-pod\"}[$__range])\r\n)\r\n# using a single query with \"OR\" here because otherwise grafana would show 2 separate \"Last seen\" columns\r\nor\r\nmax by(pod, workload_type, workload, uid, node) (\r\n  last_over_time(container_last_seen_time{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__range])\r\n) * 1000 * on(pod) group_left(workload_type, workload)\r\n# omitting uid here because for static pods cadvisor uid does not match kube-state-metrics uid\r\nmax by(pod, workload_type, workload) (\r\n  last_over_time(namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid!=\"\", workload_type=\"static-pod\"}[$__range])\r\n)",
+          "expr": "max by(pod, workload_type, workload, uid, node) (\r\n  last_over_time(container_last_seen_time{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__range])\r\n) * 1000 * on(pod, uid) group_left(workload_type, workload)\r\nmax by(pod, workload_type, workload, uid) (\r\n  last_over_time(namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid!=\"\", workload_type!=\"static-pod\"}[$__range])\r\n)\r\n# using a single query with \"OR\" here because otherwise grafana would show 2 separate \"Last seen\" columns\r\nor\r\nmax by(pod, workload_type, workload, uid, node) (\r\n  last_over_time(container_last_seen_time{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__range])\r\n) * 1000 * on(pod) group_left(workload_type, workload)\r\n# omitting uid here because for static pods cadvisor uid does not match kube-state-metrics uid\r\nmax by(pod, workload_type, workload) (\r\n  last_over_time(namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid!=\"\", workload_type=\"static-pod\"}[$__range])\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -355,7 +372,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "round((\r\ntime() -\r\nmax by(pod, uid) (\r\n  last_over_time(container_last_seen_time{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__range])\r\n)\r\n))",
+          "expr": "round((\r\ntime() -\r\nmax by(pod, uid) (\r\n  last_over_time(container_last_seen_time{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__range])\r\n)\r\n))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -370,7 +387,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(pod, uid) (\r\n  last_over_time(kube_pod_created{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__range])\r\n) * 1000",
+          "expr": "max by(pod, uid) (\r\n  last_over_time(kube_pod_created{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__range])\r\n) * 1000",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -574,7 +591,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "min by(pod) (\r\n    (kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", phase=\"Failed\"} == 1) * 2\r\n    or\r\n    (kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", phase=\"Pending\"} == 1) * 3\r\n    or\r\n    (\r\n        kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", phase=\"Running\"} == 1\r\n        and on(cluster_type, cluster, namespace, pod)\r\n        min_over_time(kube_pod_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", condition=\"true\"}[$__rate_interval]) == 1\r\n    ) * 4\r\n    or\r\n    (\r\n        kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", phase=\"Running\"} == 1\r\n        and on(cluster_type, cluster, namespace, pod)\r\n        min_over_time(kube_pod_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", condition=\"true\"}[$__rate_interval]) == 0\r\n    ) * 5\r\n    or\r\n    (kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", phase=\"Succeeded\"} == 1) * 6\r\n    or\r\n    (kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", phase=\"Unknown\"} == 1) * 7\r\n)",
+          "expr": "min by(pod) (\r\n    (kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Failed\"} == 1) * 2\r\n    or\r\n    (kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Pending\"} == 1) * 3\r\n    or\r\n    (\r\n        kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Running\"} == 1\r\n        and on(cluster_type, cluster, namespace, pod)\r\n        min_over_time(kube_pod_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", condition=\"true\"}[$__rate_interval]) == 1\r\n    ) * 4\r\n    or\r\n    (\r\n        kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Running\"} == 1\r\n        and on(cluster_type, cluster, namespace, pod)\r\n        min_over_time(kube_pod_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", condition=\"true\"}[$__rate_interval]) == 0\r\n    ) * 5\r\n    or\r\n    (kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Succeeded\"} == 1) * 6\r\n    or\r\n    (kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Unknown\"} == 1) * 7\r\n)",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -748,7 +765,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (pod) (max_over_time(kube_pod_container_status_restarts_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval]))",
+          "expr": "sum by (pod) (max_over_time(kube_pod_container_status_restarts_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -956,7 +973,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(pod) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval]))",
+          "expr": "sum by(pod) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -969,7 +986,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", invalid=$total}[$__rate_interval]))",
+          "expr": "sum (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", invalid=$total}[$__rate_interval]))",
           "hide": false,
           "instant": false,
           "legendFormat": "Total",
@@ -982,7 +999,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "scalar(max(kube_resourcequota{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", type=\"hard\", resource=\"requests.cpu\"}))",
+          "expr": "scalar(max(kube_resourcequota{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", type=\"hard\", resource=\"requests.cpu\"}))",
           "hide": false,
           "instant": false,
           "legendFormat": "quota - requests",
@@ -995,7 +1012,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "scalar(max(kube_resourcequota{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", type=\"hard\", resource=\"limits.cpu\"}))",
+          "expr": "scalar(max(kube_resourcequota{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", type=\"hard\", resource=\"limits.cpu\"}))",
           "hide": false,
           "instant": false,
           "legendFormat": "quota - limits",
@@ -1190,7 +1207,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(pod) (\r\n  max by(pod, container) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval]))\r\n  /\r\n  max by(pod, container) (kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"cpu\"})\r\n)",
+          "expr": "sum by(pod) (\r\n  max by(pod, container) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__rate_interval]))\r\n  /\r\n  max by(pod, container) (kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"})\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -1421,7 +1438,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "scalar(max(kube_resourcequota{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", type=\"hard\", resource=\"requests.memory\"}))",
+          "expr": "scalar(max(kube_resourcequota{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", type=\"hard\", resource=\"requests.memory\"}))",
           "hide": false,
           "instant": false,
           "legendFormat": "quota - requests",
@@ -1434,7 +1451,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nsum by (pod) (max by(pod, container) (max_over_time(kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"memory\"}[$__interval])))",
+          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nsum by (pod) (max by(pod, container) (max_over_time(kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])))",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -1447,7 +1464,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (max by(pod, container) (max_over_time(kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"memory\"}[$__interval])))",
+          "expr": "sum (max by(pod, container) (max_over_time(kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])))",
           "hide": false,
           "instant": false,
           "legendFormat": "Total",
@@ -1665,7 +1682,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "scalar(max(kube_resourcequota{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", type=\"hard\", resource=\"limits.memory\"}))",
+          "expr": "scalar(max(kube_resourcequota{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", type=\"hard\", resource=\"limits.memory\"}))",
           "hide": false,
           "instant": false,
           "legendFormat": "quota - limits",
@@ -1678,7 +1695,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nsum by (pod) (max by(pod, container) (max_over_time(kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"memory\"}[$__interval])))",
+          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nsum by (pod) (max by(pod, container) (max_over_time(kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])))",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -1691,7 +1708,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (max by(pod, container) (max_over_time(kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"memory\"}[$__interval])))",
+          "expr": "sum (max by(pod, container) (max_over_time(kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])))",
           "hide": false,
           "instant": false,
           "legendFormat": "Total",
@@ -1885,7 +1902,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nsum by (pod) (max by(pod, container) (max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])))",
+          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nsum by (pod) (max by(pod, container) (max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__rate_interval])))",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -1898,7 +1915,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (max by(pod, container) (max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", invalid=$total}[$__rate_interval])))",
+          "expr": "sum (max by(pod, container) (max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", invalid=$total}[$__rate_interval])))",
           "hide": false,
           "instant": false,
           "legendFormat": "Total",
@@ -2092,7 +2109,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nsum by (pod) (max by(pod, container) (max_over_time(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])))",
+          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nsum by (pod) (max by(pod, container) (max_over_time(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__rate_interval])))",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -2105,7 +2122,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (max by(pod, container) (max_over_time(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", invalid=$total}[$__rate_interval])))",
+          "expr": "sum (max by(pod, container) (max_over_time(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", invalid=$total}[$__rate_interval])))",
           "hide": false,
           "instant": false,
           "legendFormat": "Total",
@@ -2228,7 +2245,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nsum by (pod) (max by(pod, container) (max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])) / max by (pod, container) (kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"memory\"}))",
+          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nsum by (pod) (max by(pod, container) (max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__rate_interval])) / max by (pod, container) (kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"memory\"}))",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -2351,7 +2368,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nsum by (pod) (max by(pod, container) (max_over_time(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])) / max by (pod, container) (kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", resource=\"memory\"}))",
+          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nsum by (pod) (max by(pod, container) (max_over_time(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__rate_interval])) / max by (pod, container) (kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}))",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -2487,7 +2504,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(container_network_receive_bytes_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", invalid=$total}[$__rate_interval]))",
+          "expr": "sum(rate(container_network_receive_bytes_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", invalid=$total}[$__rate_interval]))",
           "instant": false,
           "legendFormat": "Total",
           "range": true,
@@ -2499,7 +2516,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(pod) (rate(container_network_receive_bytes_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval]))",
+          "expr": "sum by(pod) (rate(container_network_receive_bytes_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -2622,7 +2639,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(container_network_transmit_bytes_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", invalid=$total}[$__rate_interval]))",
+          "expr": "sum(rate(container_network_transmit_bytes_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", invalid=$total}[$__rate_interval]))",
           "instant": false,
           "legendFormat": "Total",
           "range": true,
@@ -2634,7 +2651,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(pod) (rate(container_network_transmit_bytes_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval]))",
+          "expr": "sum by(pod) (rate(container_network_transmit_bytes_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -2745,7 +2762,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(pod) (rate(container_fs_reads_bytes_total{container!=\"\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval]) + rate(container_fs_writes_bytes_total{container!=\"\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval]))",
+          "expr": "sum by(pod) (rate(container_fs_reads_bytes_total{container!=\"\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__rate_interval]) + rate(container_fs_writes_bytes_total{container!=\"\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__rate_interval]))",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -3004,6 +3021,27 @@
         },
         "refresh": 2,
         "regex": "/pod=\"(?<text>[^\"]+)|pod=\"(?<value>[^\"]+)/g",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allowCustomValue": false,
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "query_result(last_over_time(kube_pod_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__range]))",
+        "includeAll": true,
+        "label": "uid",
+        "name": "pod_uid",
+        "options": [],
+        "query": {
+          "qryType": 3,
+          "query": "query_result(last_over_time(kube_pod_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__range]))",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "/uid=\"(?<text>[^\"]+)|uid=\"(?<value>[^\"]+)/g",
         "sort": 1,
         "type": "query"
       },
