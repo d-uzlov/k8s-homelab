@@ -97,7 +97,7 @@ spec:
         app.kubernetes.io/name: grafana
         cgroup.meoe.io/burst: enable
       annotations:
-        checksum/config: 0e9cbd0ea8e24e32f7dfca5bab17a2ba05652642f0a09a4882833ae88e4cc4a3
+        checksum/config: 29a4cf4ab7d18960319345e0a752d9542bf86317ffa2ef6cf15ad61a6f4fd8e3
         checksum/sc-dashboard-provider-config: e70bf6a851099d385178a76de9757bb0bef8299da6d8443602590e44f05fdf24
         kubectl.kubernetes.io/default-container: grafana
         cgroup.meoe.io/burst: grafana=300m,grafana-sc-dashboard=100m,grafana-sc-datasources=100m
@@ -213,6 +213,57 @@ spec:
           volumeMounts:
             - name: sc-datasources-volume
               mountPath: "/etc/grafana/provisioning/datasources"
+        - name: grafana-sc-plugins
+          image: "quay.io/kiwigrid/k8s-sidecar:1.28.0"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: METHOD
+              value: WATCH
+            - name: LABEL
+              value: "plugin.grafana.com/instance"
+            - name: LABEL_VALUE
+              value: "main"
+            - name: FOLDER
+              value: "/etc/grafana/provisioning/plugins"
+            - name: RESOURCE
+              value: "both"
+            - name: UNIQUE_FILENAMES
+              value: "true"
+            - name: REQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-admin
+                  key: username
+            - name: REQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-admin
+                  key: password
+            - name: REQ_URL
+              value: http://localhost:3000/api/admin/provisioning/plugins/reload
+            - name: REQ_METHOD
+              value: POST
+            - name: WATCH_SERVER_TIMEOUT
+              value: "3600"
+            - name: WATCH_CLIENT_TIMEOUT
+              value: "10"
+          resources:
+            limits:
+              cpu: 50m
+              memory: 100Mi
+            requests:
+              cpu: 1m
+              memory: 85Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: sc-plugins-volume
+              mountPath: "/etc/grafana/provisioning/plugins"
         - name: grafana
           image: "docker.io/grafana/grafana:11.5.1"
           imagePullPolicy: IfNotPresent
@@ -236,6 +287,8 @@ spec:
               subPath: provider.yaml
             - name: sc-datasources-volume
               mountPath: "/etc/grafana/provisioning/datasources"
+            - name: sc-plugins-volume
+              mountPath: "/etc/grafana/provisioning/plugins"
           ports:
             - name: grafana
               containerPort: 3000
@@ -264,6 +317,11 @@ spec:
                 secretKeyRef:
                   name: grafana-admin
                   key: password
+            - name: GF_INSTALL_PLUGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: grafana
+                  key: plugins
             - name: GF_PATHS_DATA
               value: /var/lib/grafana/
             - name: GF_PATHS_LOGS
@@ -308,5 +366,8 @@ spec:
           configMap:
             name: grafana-config-dashboards
         - name: sc-datasources-volume
+          emptyDir:
+            {}
+        - name: sc-plugins-volume
           emptyDir:
             {}
