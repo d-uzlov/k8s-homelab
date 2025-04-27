@@ -73,7 +73,13 @@ kl -n victoria-metrics get htr
 kl apply -k ./metrics/victoria-metrics/vector/
 kl -n victoria-metrics get pod -o wide
 
+kl -n grafana apply -k ./metrics/victoria-metrics/victoria-logs/grafana-datasource/
+
 ```
+
+Grafana integration:
+- Plugin: https://grafana.com/grafana/plugins/victoriametrics-logs-datasource/?tab=overview
+- Example dashboard: https://grafana.com/grafana/dashboards/22759-victorialogs-explorer/
 
 # Cleanup
 
