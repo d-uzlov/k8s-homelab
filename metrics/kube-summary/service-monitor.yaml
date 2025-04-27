@@ -1,0 +1,31 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kube-summary
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  selector:
+    matchLabels:
+      name: kube-summary-exporter
+  endpoints:
+  - path: /nodes
+    port: kube-summary-exporter
+    scheme: http
+    honorLabels: true
+    relabelings:
+    - action: labeldrop
+      regex: container|endpoint|service|namespace|pod
+    - targetLabel: cluster_type
+      replacement: k8s
+      action: replace
+    metricRelabelings:
+    - targetLabel: container
+      sourceLabels: [ name ]
+      action: replace
+    - action: labeldrop
+      # for some reason, relabelings can't drop instance label
+      regex: instance
