@@ -99,7 +99,7 @@ echo $(curl -Ls https://dl.k8s.io/release/stable.txt)
 
 # you need to upgrade one major version at a time
 
-new_version=v1.32
+new_version=v1.33
 sudo rm -f /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 curl -fsSL https://pkgs.k8s.io/core:/stable:/$new_version/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/'"$new_version"'/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
@@ -111,7 +111,7 @@ sudo apt autoremove -y
 
 apt-cache policy kubeadm | head
 
-new_package_version=1.32.3
+new_package_version=1.33.0
 sudo apt-mark unhold kubeadm kubelet && \
 sudo apt-get install -y kubeadm="$new_package_version"'-*' kubelet="$new_package_version"'-*' && \
 sudo apt-mark hold kubeadm kubelet &&
@@ -126,8 +126,8 @@ kubeadm version
 # study the upgrade plan manually
 sudo kubeadm upgrade plan
 # choose a version offered by the upgrade plan
-sudo kubeadm upgrade apply v1.32.3 --patches ./patches/
-sudo kubeadm upgrade apply v1.32.3 --patches ./patches/ --skip-phases addon/kube-proxy
+sudo kubeadm upgrade apply v1.33.0 --patches ./patches/
+sudo kubeadm upgrade apply v1.33.0 --patches ./patches/ --skip-phases addon/kube-proxy
 # if you disabled kube-proxy for your CNI, you need to re-disable it again after the upgrade
 
 # On all remaining master nodes

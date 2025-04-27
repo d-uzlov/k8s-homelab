@@ -83,7 +83,7 @@ sudo runc --version
 
 # Check new versions here:
 # https://github.com/kubernetes-sigs/cri-tools/releases
-crictl_version=v1.32.0 &&
+crictl_version=v1.33.0 &&
 wget https://github.com/kubernetes-sigs/cri-tools/releases/download/$crictl_version/crictl-$crictl_version-linux-amd64.tar.gz &&
 sudo tar zxvf crictl-$crictl_version-linux-amd64.tar.gz -C /usr/local/bin &&
 rm -f crictl-$crictl_version-linux-amd64.tar.gz &&
