@@ -259,6 +259,101 @@
                 ]
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #created"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIsoNoDateIfToday"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #ago"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dtdurations"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "applyToRow": true,
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "#37872d66"
+                    },
+                    {
+                      "color": "#f2495c66",
+                      "value": 60
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "match": "empty",
+                      "result": {
+                        "color": "#c4162a66",
+                        "index": 0
+                      }
+                    },
+                    "type": "special"
+                  },
+                  {
+                    "options": {
+                      "match": "null+nan",
+                      "result": {
+                        "color": "#c4162a66",
+                        "index": 1
+                      }
+                    },
+                    "type": "special"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Created"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 174
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "First seen"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 180
+              }
+            ]
           }
         ]
       },
@@ -296,7 +391,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (node, internal_ip, kernel_version, kubelet_version, os_image, pod_cidr, system_uuid) (last_over_time(kube_node_info{cluster=\"$cluster\", node=~\"$node\"}[$__rate_interval]))",
+          "expr": "sum by (node, internal_ip, kernel_version, kubelet_version, os_image, pod_cidr, system_uuid) (last_over_time(kube_node_info{cluster=\"$cluster\", node=~\"$node\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -311,7 +406,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by(node) (max_over_time(node_namespace:container_cpu_usage_seconds:irate{cluster=\"$cluster\", node=~\"$node\"}[$__rate_interval]))",
+          "expr": "sum by(node) (max_over_time(node_namespace:container_cpu_usage_seconds:irate{cluster=\"$cluster\", node=~\"$node\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -326,7 +421,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (node) (last_over_time(node_namespace:kube_pod_container_resource_requests{cluster=\"$cluster\", node=~\"$node\", resource=\"cpu\"}[$__rate_interval]))",
+          "expr": "sum by (node) (last_over_time(node_namespace:kube_pod_container_resource_requests{cluster=\"$cluster\", node=~\"$node\", resource=\"cpu\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -341,7 +436,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (node) (node_namespace:container_memory_rss{cluster=\"$cluster\", node=~\"$node\"})",
+          "expr": "sum by (node) (last_over_time(node_namespace:container_memory_rss{cluster=\"$cluster\", node=~\"$node\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -356,13 +451,43 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (node) (node_namespace:kube_pod_container_resource_requests{cluster=\"$cluster\", node=~\"$node\", resource=\"memory\"})",
+          "expr": "sum by (node) (last_over_time(node_namespace:kube_pod_container_resource_requests{cluster=\"$cluster\", node=~\"$node\", resource=\"memory\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
           "refId": "memory_request"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "sum by (node) (last_over_time(kube_node_created{cluster=\"$cluster\", node=~\"$node\"}[$__range])) * 1000",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "created"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "time() - sum by (node) (last_over_time(kube_node_created:last_seen{cluster=\"$cluster\", node=~\"$node\"}[$__range]))",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "ago"
         }
       ],
       "title": "Overview",
@@ -391,23 +516,28 @@
             "indexByName": {
               "Time 1": 0,
               "Time 2": 1,
-              "Time 3": 14,
-              "Time 4": 15,
-              "Time 5": 16,
-              "Value #cpu_request": 5,
-              "Value #cpu_usage": 4,
-              "Value #memory_request": 7,
-              "Value #memory_rss": 6,
-              "Value #pods": 3,
-              "internal_ip": 11,
-              "kernel_version": 9,
-              "kubelet_version": 8,
-              "node": 2,
-              "os_image": 10,
-              "pod_cidr": 12,
-              "system_uuid": 13
+              "Time 3": 16,
+              "Time 4": 17,
+              "Time 5": 18,
+              "Time 6": 19,
+              "Time 7": 20,
+              "Value #ago": 3,
+              "Value #cpu_request": 7,
+              "Value #cpu_usage": 6,
+              "Value #created": 2,
+              "Value #memory_request": 9,
+              "Value #memory_rss": 8,
+              "Value #pods": 5,
+              "internal_ip": 13,
+              "kernel_version": 11,
+              "kubelet_version": 10,
+              "node": 4,
+              "os_image": 12,
+              "pod_cidr": 14,
+              "system_uuid": 15
             },
             "renameByName": {
+              "Time 2": "",
               "Value #A": "Pods",
               "Value #B": "Workloads",
               "Value #C": "CPU Usage",
@@ -415,8 +545,10 @@
               "Value #E": "CPU Requests %",
               "Value #F": "CPU Limits",
               "Value #G": "CPU Limits %",
+              "Value #ago": "Seen ago",
               "Value #cpu_request": "CPU Request",
               "Value #cpu_usage": "CPU Usage",
+              "Value #created": "First seen",
               "Value #memory_request": "Memory Request",
               "Value #memory_rss": "Memory RSS",
               "Value #pods": "Pods",

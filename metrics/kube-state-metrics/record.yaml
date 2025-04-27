@@ -123,3 +123,53 @@ spec:
       labels:
         workload_type: free-pod
         workload: '-'
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: record-ksm-container-exit
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  groups:
+  - name: record-ksm-container-exit
+    rules:
+    # KSM gives you 3 metrics related to container exit status: time, exit_code and reason.
+    # But these metrics don't have any unique identifier.
+    # If you do last_over_time() for any of them, and container has restarted more than one time,
+    # you will get a mix of results from different restarts.
+    # By combining them into a single metric with "timestamp" label we ensure that each restart info have a unique set of labels.
+    - record: reason:kube_pod_container_status_last_terminated_timestamp
+      expr: |-
+        kube_pod_container_status_last_terminated_timestamp
+        * on(cluster_type, cluster, namespace, pod, container, uid) group_left(exit_code)
+        count_values without() ("exit_code", kube_pod_container_status_last_terminated_exitcode)
+        * on(cluster_type, cluster, namespace, pod, container, uid) group_left(timestamp)
+        count_values without() ("timestamp", kube_pod_container_status_last_terminated_timestamp)
+        * on(cluster_type, cluster, namespace, pod, container, uid) group_left(reason)
+        kube_pod_container_status_last_terminated_reason
+    # same as reason:kube_pod_container_status_last_terminated_timestamp but value is always 1, for math purposes
+    - record: reason:kube_pod_container_status_last_terminated_info
+      expr: |-
+        reason:kube_pod_container_status_last_terminated_timestamp * 0 + 1
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: record-ksm-node-time
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  groups:
+  - name: record-ksm-node-time
+    rules:
+    - record: kube_node_created:last_seen
+      expr: |-
+        kube_node_created * 0 + time()
+    - record: kube_node_created:scraped
+      expr: |-
+        timestamp(kube_node_created)

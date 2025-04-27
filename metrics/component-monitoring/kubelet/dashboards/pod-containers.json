@@ -124,6 +124,9 @@
       },
       "fieldConfig": {
         "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
           "custom": {
             "align": "auto",
             "cellOptions": {
@@ -196,12 +199,12 @@
             },
             "properties": [
               {
-                "id": "custom.width",
-                "value": 176
-              },
-              {
                 "id": "unit",
                 "value": "dateTimeAsIsoNoDateIfToday"
+              },
+              {
+                "id": "custom.width",
+                "value": 176
               }
             ]
           },
@@ -291,6 +294,30 @@
                 "value": 446
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #start_time"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIsoNoDateIfToday"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Start time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 175
+              }
+            ]
           }
         ]
       },
@@ -336,10 +363,29 @@
           "legendFormat": "__auto",
           "range": false,
           "refId": "last_seen_time"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "max by(container, name) (\r\n  last_over_time(container_start_time_seconds{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container=~\"$container\", name=~\"$id\"}[$__range])\r\n) * 1000",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "start_time"
         }
       ],
       "title": "Pod info",
       "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
         {
           "id": "organize",
           "options": {
@@ -355,15 +401,16 @@
             "includeByName": {},
             "indexByName": {
               "Time": 0,
-              "Value": 1,
-              "container": 7,
-              "image": 8,
-              "name": 9,
-              "node": 5,
-              "pod": 6,
-              "uid": 2,
-              "workload": 4,
-              "workload_type": 3
+              "Value #last_seen_time": 2,
+              "Value #start_time": 1,
+              "container": 8,
+              "image": 9,
+              "name": 10,
+              "node": 6,
+              "pod": 7,
+              "uid": 3,
+              "workload": 5,
+              "workload_type": 4
             },
             "renameByName": {
               "Time": "",
@@ -376,6 +423,7 @@
               "Value #cpu": "CPU (avg)",
               "Value #cpu_limit": "CPU limit",
               "Value #cpu_request": "CPU request",
+              "Value #first_seen": "First seen",
               "Value #last_seen_time": "Last seen",
               "Value #limit_percent": "Limit % (avg)",
               "Value #limit_percent_max": "Limit % (max)",
@@ -386,7 +434,9 @@
               "Value #request_percent": "Request % (avg)",
               "Value #request_percent_max": "Request % (max)",
               "Value #rss": "RSS",
+              "Value #start_time": "Start time",
               "Value #time": "Last seen",
+              "container": "",
               "name": "",
               "node": "Node",
               "pod": "Pod",
@@ -532,124 +582,78 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "last_over_time(kube_pod_container_status_last_terminated_timestamp{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__range])\r\n* 1000",
+          "expr": "last_over_time(reason:kube_pod_container_status_last_terminated_timestamp{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__range])\r\n* 1000",
           "format": "table",
           "hide": false,
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
           "refId": "time"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "last_over_time(kube_pod_container_status_last_terminated_exitcode{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__range])",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "code"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "last_over_time(kube_pod_container_status_last_terminated_reason{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__range])",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "reason"
         }
       ],
       "title": "Last exit status",
       "transformations": [
         {
-          "disabled": true,
-          "id": "merge",
-          "options": {}
-        },
-        {
-          "id": "joinByField",
-          "options": {
-            "byField": "pod",
-            "mode": "inner"
-          }
-        },
-        {
           "id": "organize",
           "options": {
             "excludeByName": {
+              "Time": true,
               "Time 1": true,
               "Time 2": true,
               "Time 3": true,
               "Value #reason": true,
               "__name__ 1": true,
               "__name__ 2": true,
+              "cluster": true,
               "cluster 1": true,
               "cluster 2": true,
               "cluster 3": true,
+              "cluster_type": true,
               "cluster_type 1": true,
               "cluster_type 2": true,
               "cluster_type 3": true,
               "container 2": true,
               "container 3": true,
+              "job": true,
               "job 1": true,
               "job 2": true,
               "job 3": true,
+              "namespace": true,
               "namespace 1": true,
               "namespace 2": true,
               "namespace 3": true,
+              "pod": true,
               "reason": false,
+              "timestamp": true,
               "uid 1": true,
               "uid 2": true,
               "uid 3": true
             },
             "includeByName": {},
             "indexByName": {
-              "Time 1": 5,
-              "Time 2": 12,
-              "Time 3": 20,
-              "Value #code": 4,
-              "Value #reason": 27,
-              "Value #time": 0,
-              "__name__ 1": 6,
-              "__name__ 2": 13,
-              "cluster 1": 7,
-              "cluster 2": 14,
-              "cluster 3": 21,
-              "cluster_type 1": 8,
-              "cluster_type 2": 15,
-              "cluster_type 3": 22,
-              "container 1": 2,
-              "container 2": 16,
-              "container 3": 23,
-              "job 1": 9,
-              "job 2": 17,
-              "job 3": 24,
-              "namespace 1": 10,
-              "namespace 2": 18,
-              "namespace 3": 25,
-              "pod": 1,
+              "Time": 4,
+              "Value": 1,
+              "cluster": 5,
+              "cluster_type": 6,
+              "container": 2,
+              "exit_code": 7,
+              "job": 8,
+              "namespace": 9,
+              "pod": 0,
               "reason": 3,
-              "uid 1": 11,
-              "uid 2": 19,
-              "uid 3": 26
+              "timestamp": 10,
+              "uid": 11
             },
             "renameByName": {
               "Time 1": "",
+              "Value": "Last exit",
               "Value #code": "Exit code",
               "Value #time": "Last exit",
+              "cluster_type": "",
+              "container": "Container",
               "container 1": "Container",
+              "exit_code": "Exit code",
+              "job": "",
               "pod": "Pod",
               "reason": "Reason"
             }
@@ -1204,10 +1208,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(container) (\r\n    kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\", container=~\"$container\", invalid=$enableLimits}\r\n)\r\n",
+          "expr": "sum by(container, name) (\r\n    container_spec_cpu_quota{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$enableLimits} / container_spec_cpu_period\r\n)\r\nor\r\nsum by(container, name) (\r\n    container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$enableLimits} * 0\r\n    + on(container) group_left()\r\n    kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\", container=~\"$container\", invalid=$enableLimits}\r\n)",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{container}} limit",
+          "legendFormat": "{{container}} limit, name={{name}}",
           "range": true,
           "refId": "limit"
         },
@@ -1249,19 +1253,6 @@
           "legendFormat": "{{container}} throttled, name={{name}}",
           "range": true,
           "refId": "throttled"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "sum by(container) (\r\n    container_spec_cpu_quota{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", invalid=$enableLimits} / container_spec_cpu_period\r\n)\r\n",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{container}} limit via spec",
-          "range": true,
-          "refId": "limit_spec"
         }
       ],
       "title": "CPU Usage (cores)",
@@ -1271,6 +1262,13 @@
           "options": {
             "regex": "(.*), name=(.{8})(.*)",
             "renamePattern": "$1, $2"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "(.*), name=",
+            "renamePattern": "$1"
           }
         }
       ],
@@ -1380,25 +1378,12 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(container, name) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\"}[$__rate_interval]))\r\n/ on(container) group_left\r\nsum by(container) (\r\n    kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\",container=~\"$container\"}\r\n)",
+          "expr": "sum by(container, name) (\r\n    sum without(cpu) (\r\n        rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\"}[$__rate_interval])\r\n    )\r\n    / (container_spec_cpu_quota / container_spec_cpu_period)\r\n)\r\nor\r\nsum by(container, name) (\r\n    rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\"}[$__rate_interval])\r\n)\r\n/ on(container) group_left\r\nsum by(container) (\r\n    kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\",container=~\"$container\"}\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} limit %, name={{name}}",
           "range": true,
           "refId": "limit_percent"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "sum by(container, name) (\r\n    sum without(cpu) (\r\n        rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\"}[$__rate_interval])\r\n    )\r\n    / (container_spec_cpu_quota / container_spec_cpu_period)\r\n)",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{container}} limit % via spec, name={{name}}",
-          "range": true,
-          "refId": "limit_precent_spec"
         }
       ],
       "title": "CPU Usage %",
@@ -2536,14 +2521,10 @@
             "steps": [
               {
                 "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           },
-          "unit": "bytes"
+          "unit": "sishort"
         },
         "overrides": [
           {

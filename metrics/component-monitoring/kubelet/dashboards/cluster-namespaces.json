@@ -111,6 +111,90 @@
                 "value": "bytes"
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #created"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIsoNoDateIfToday"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Pods"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 81
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CPU Usage"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 137
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CPU Request"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 121
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Created"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 200
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Memory RSS"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 155
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Memory Request"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 162
+              }
+            ]
           }
         ]
       },
@@ -148,7 +232,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (namespace) (last_over_time(kube_pod_owner{cluster=\"$cluster\", namespace=~\"$namespace\"}[$__rate_interval]))",
+          "expr": "sum by (namespace) (last_over_time(kube_pod_owner{cluster=\"$cluster\", namespace=~\"$namespace\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -163,7 +247,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by(namespace) (max_over_time(node_namespace:container_cpu_usage_seconds:irate{cluster=\"$cluster\", namespace=~\"$namespace\"}[$__rate_interval]))",
+          "expr": "sum by(namespace) (max_over_time(node_namespace:container_cpu_usage_seconds:irate{cluster=\"$cluster\", namespace=~\"$namespace\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -193,7 +277,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (namespace) (node_namespace:container_memory_rss{cluster=\"$cluster\", namespace=~\"$namespace\"})",
+          "expr": "sum by (namespace) (last_over_time(node_namespace:container_memory_rss{cluster=\"$cluster\", namespace=~\"$namespace\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -208,13 +292,28 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (namespace) (node_namespace:kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=~\"$namespace\", resource=\"memory\"})",
+          "expr": "sum by (namespace) (last_over_time(node_namespace:kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=~\"$namespace\", resource=\"memory\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
           "refId": "memory_request"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "sum by (namespace) (last_over_time(kube_namespace_created{cluster=\"$cluster\", namespace=~\"$namespace\"}[$__range])) * 1000",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "created"
         }
       ],
       "title": "Overview",
@@ -247,15 +346,16 @@
               "Time 4": 3,
               "Time 5": 4,
               "Time 6": 5,
-              "Value #E": 10,
-              "Value #F": 11,
-              "Value #G": 12,
-              "Value #cpu_request": 9,
-              "Value #cpu_usage": 8,
-              "Value #pods": 7,
-              "namespace": 6
+              "Value #cpu_request": 10,
+              "Value #cpu_usage": 9,
+              "Value #created": 6,
+              "Value #memory_request": 12,
+              "Value #memory_rss": 11,
+              "Value #pods": 8,
+              "namespace": 7
             },
             "renameByName": {
+              "Time 6": "",
               "Value #A": "Pods",
               "Value #B": "Workloads",
               "Value #C": "CPU Usage",
@@ -265,6 +365,7 @@
               "Value #G": "CPU Limits %",
               "Value #cpu_request": "CPU Request",
               "Value #cpu_usage": "CPU Usage",
+              "Value #created": "Created",
               "Value #memory_request": "Memory Request",
               "Value #memory_rss": "Memory RSS",
               "Value #pods": "Pods",

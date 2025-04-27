@@ -209,6 +209,94 @@
                     "url": "/d/9ays84j4ksi5cwo0n786/kubernetes3a-node-pods?${datasource:queryparam}&${cluster:queryparam}&var-node=${__data.fields.node}&${namespace:queryparam}"
                   }
                 ]
+              },
+              {
+                "id": "custom.inspect",
+                "value": false
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #ago"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dtdurations"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Ago"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 112
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "applyToRow": true,
+                  "mode": "gradient",
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "#37872d66"
+                    },
+                    {
+                      "color": "#c4162a5e",
+                      "value": 60
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "match": "empty",
+                      "result": {
+                        "color": "#c4162a5e",
+                        "index": 0
+                      }
+                    },
+                    "type": "special"
+                  },
+                  {
+                    "options": {
+                      "match": "null+nan",
+                      "result": {
+                        "color": "#c4162a5e",
+                        "index": 1
+                      }
+                    },
+                    "type": "special"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #created"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIsoNoDateIfToday"
               }
             ]
           }
@@ -259,10 +347,44 @@
           "legendFormat": "__auto",
           "range": false,
           "refId": "owner"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "round((\r\ntime() -\r\nmax by(pod, uid) (\r\n  last_over_time(container_last_seen_time{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__range])\r\n)\r\n))",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "ago"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "max by(pod, uid) (\r\n  last_over_time(kube_pod_created{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__range])\r\n) * 1000",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "created"
         }
       ],
       "title": "Pod info",
       "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
         {
           "id": "organize",
           "options": {
@@ -273,19 +395,19 @@
               "Time 3": true,
               "Time 4": true,
               "Time 5": true,
-              "Value #owner": true
+              "Value #owner": false
             },
             "includeByName": {},
             "indexByName": {
               "Time": 0,
-              "Value": 1,
-              "container": 7,
-              "name": 8,
-              "node": 5,
-              "pod": 6,
-              "uid": 2,
-              "workload": 4,
-              "workload_type": 3
+              "Value #ago": 3,
+              "Value #created": 1,
+              "Value #owner": 2,
+              "node": 7,
+              "pod": 8,
+              "uid": 4,
+              "workload": 6,
+              "workload_type": 5
             },
             "renameByName": {
               "Time": "",
@@ -295,14 +417,17 @@
               "Value #C": "CPU Requests %",
               "Value #D": "CPU Limits",
               "Value #E": "CPU Limits %",
+              "Value #ago": "Ago",
               "Value #cpu": "CPU (avg)",
               "Value #cpu_limit": "CPU limit",
               "Value #cpu_request": "CPU request",
+              "Value #created": "Created",
               "Value #limit_percent": "Limit % (avg)",
               "Value #limit_percent_max": "Limit % (max)",
               "Value #memory_limit": "Memory limit",
               "Value #memory_raw": "Memory Raw",
               "Value #memory_request": "Memory request",
+              "Value #owner": "Last seen",
               "Value #request": "Request",
               "Value #request_percent": "Request % (avg)",
               "Value #request_percent_max": "Request % (max)",

@@ -487,3 +487,44 @@ spec:
       for: 15m
       labels:
         severity: warning
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: alert-ksm-container-spec-mismatch
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  groups:
+  - name: alert-ksm-container-spec-mismatch
+    rules:
+    - alert: KubeContainerCpuLimitMismatch
+      annotations:
+        description: >-
+          {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }}:
+          {{ $value | humanize }} times
+        summary: Container real CPU limit does not match k8s spec. Note that CPU limit is capped at minimum 10m
+      expr: |-
+        max by(cluster_type, cluster, namespace, pod, container) (container_spec_cpu_quota / container_spec_cpu_period)
+        /
+        max by(cluster_type, cluster, namespace, pod, container) (kube_pod_container_resource_limits{resource="cpu"})
+        != 1
+      for: 5m
+      labels:
+        severity: warning
+    - alert: KubeContainerMemoryLimitMismatch
+      annotations:
+        description: >-
+          {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }}:
+          {{ $value | humanize }} times
+        summary: Container real memory limit does not match k8s spec
+      expr: |-
+        max by(cluster_type, cluster, namespace, pod, container) (container_spec_memory_limit_bytes)
+        /
+        max by(cluster_type, cluster, namespace, pod, container) (kube_pod_container_resource_limits{resource="memory"})
+        != 1
+      for: 5m
+      labels:
+        severity: warning
