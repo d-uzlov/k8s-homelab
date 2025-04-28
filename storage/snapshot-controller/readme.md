@@ -30,13 +30,17 @@ for file in ${crd_files[@]}; do
 done
 )
 
-(
-cd ./storage/snapshot-controller/controller/
-rm rbac-snapshot-controller.yaml setup-snapshot-controller.yaml
-wget https://github.com/kubernetes-csi/external-snapshotter/raw/refs/heads/release-8.2/deploy/kubernetes/snapshot-controller/rbac-snapshot-controller.yaml
-# wget https://github.com/kubernetes-csi/external-snapshotter/raw/refs/heads/release-8.2/deploy/kubernetes/snapshot-controller/setup-snapshot-controller.yaml
-sed -i 's/kube-system/pv-snapshots/' rbac-snapshot-controller.yaml setup-snapshot-controller.yaml
-)
+wget https://github.com/kubernetes-csi/external-snapshotter/raw/refs/heads/release-8.2/deploy/kubernetes/snapshot-controller/rbac-snapshot-controller.yaml -O ./storage/snapshot-controller/controller/rbac-snapshot-controller.yaml
+
+# you may want to skip downloading the deployment
+wget https://github.com/kubernetes-csi/external-snapshotter/raw/refs/heads/release-8.2/deploy/kubernetes/snapshot-controller/setup-snapshot-controller.yaml -O ./storage/snapshot-controller/controller/setup-snapshot-controller.yaml
+
+sed -i 's/kube-system/pv-snapshots/' \
+  ./storage/snapshot-controller/controller/rbac-snapshot-controller.yaml \
+  ./storage/snapshot-controller/controller/setup-snapshot-controller.yaml
+
+# manually open RBAC file
+# uncomment lines after "Enable this RBAC rule only when using distributed snapshotting"
 
 ```
 
