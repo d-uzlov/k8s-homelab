@@ -1,0 +1,24 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: alert-proxmox
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  groups:
+  - name: alert-proxmox
+    rules:
+    - alert: PveGuestInfoMissing
+      annotations:
+        description: >-
+          {{ $labels.node }}:
+          {{ $labels.id }}
+        summary: Guest info in not complete. Check if pveproxy is OK on affected PVE nodes
+      expr: |-
+        pve_guest_info{name=""}
+      for: 15m
+      labels:
+        severity: warning
