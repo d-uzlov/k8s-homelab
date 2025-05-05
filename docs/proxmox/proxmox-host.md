@@ -160,7 +160,7 @@ postconf -e "inet_protocols = ipv4"
 
 ```bash
 sudo journalctl -b -u pveproxy
-sudo systemctl status pveproxy.service
+sudo systemctl status pveproxy --no-pager
 sudo systemctl restart pveproxy.service
 ```
 

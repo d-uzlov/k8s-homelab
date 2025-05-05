@@ -125,7 +125,7 @@ image-cleanup-EOF
 
 chmod +x ~/cloud-scripts/image-cleanup.sh
 
-curl https://raw.githubusercontent.com/d-uzlov/k8s-homelab/refs/heads/master/docs/bash-setup.md | sed -n '/```bash/,/```/{//!p;}' | sed 's~\$HOME~/etc/skel~g' > ~/cloud-scripts/init-user-skel.sh
+curl https://raw.githubusercontent.com/d-uzlov/k8s-homelab/refs/heads/master/docs/bash-setup.md | sed -n '/```bash/,/```/{//!p;}' | sed '1i\export HOME=/etc/skel' > ~/cloud-scripts/init-user-skel.sh
 
  cat << EOF > ~/cloud-scripts/cloud-systemd/cloud-boot.service
 [Unit]

@@ -93,7 +93,10 @@ EOF
 sudo apt update
 apt-cache madison zfs-linux
 
-sudo apt install -y dpkg-dev linux-headers-generic linux-image-generic
+sudo apt install -y dpkg-dev
+# make sure that you have kernel headers, or ZFS will not be able to compile
+# if you use custom kernel, you will need to get headers elsewhere
+sudo apt install -y linux-headers-generic linux-image-generic
 sudo apt install -y zfs-dkms zfsutils-linux
 
 ```
