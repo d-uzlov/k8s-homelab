@@ -26,14 +26,28 @@ spec:
       - list: request.object.spec.initContainers
         deny:
           conditions:
-            any:
+            all:
+            # skip pods without CPU limit specified
+            - key: "{{ element.resources.limits.cpu || '' }}"
+              operator: NotEqual
+              value: ''
+            # skip pods where limit is 0 (it's effectively disabled)
+            - key: "{{ element.resources.limits.cpu }}"
+              operator: GreaterThan
+              value: 0
             - key: "{{ element.resources.limits.cpu }}"
               operator: LessThan
               value: 10m
       - list: request.object.spec.containers
         deny:
           conditions:
-            any:
+            all:
+            - key: "{{ element.resources.limits.cpu || '' }}"
+              operator: NotEqual
+              value: ''
+            - key: "{{ element.resources.limits.cpu }}"
+              operator: GreaterThan
+              value: 0
             - key: "{{ element.resources.limits.cpu }}"
               operator: LessThan
               value: 10m

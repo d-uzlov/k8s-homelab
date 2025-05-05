@@ -1,0 +1,32 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: validate-termination-period
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+  - name: validate-termination-period-not-zero
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    preconditions:
+      any:
+      - key: "{{ request.operation }}"
+        operator: In
+        value:
+        - CREATE
+        - UPDATE
+    validate:
+      message: >-
+        When terminationGracePeriodSeconds is zero, pod always uses forced deletion,
+        which prevents release of resources used by pod:
+        container is not stopped, volumes are not unmounted, custom resources are not release, shutdown hooks are skipped, etc.
+        This can result in various race conditions. For pods with stable names multiple versions of the pod will exist.
+        Use terminationGracePeriodSeconds=1 when you need quick deletion but want to avoid race conditions and bugs.
+      pattern:
+        spec:
+          terminationGracePeriodSeconds: '>0'
