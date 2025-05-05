@@ -16,7 +16,6 @@ You only need to do this if you change `values.yaml` file.
 ```bash
 helm repo add kyverno https://kyverno.github.io/kyverno/
 helm repo update kyverno
-helm search repo kyverno
 helm search repo kyverno/kyverno --versions --devel | head
 helm show values kyverno/kyverno --version 3.4.0 > ./k8s-core/kyverno/default-values.yaml
 ```

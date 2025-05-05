@@ -1,0 +1,39 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: validate-cpu-limit-above-10m
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+  - name: validate-cpu-limit-above-10m-pod
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    preconditions:
+      any:
+      - key: "{{ request.operation }}"
+        operator: In
+        value:
+        - CREATE
+        - UPDATE
+    validate:
+      message: K8s silently increases CPU limit if it's below 10m. Adjust your limits explicitly
+      foreach:
+      - list: request.object.spec.initContainers
+        deny:
+          conditions:
+            any:
+            - key: "{{ element.resources.limits.cpu }}"
+              operator: LessThan
+              value: 10m
+      - list: request.object.spec.containers
+        deny:
+          conditions:
+            any:
+            - key: "{{ element.resources.limits.cpu }}"
+              operator: LessThan
+              value: 10m
