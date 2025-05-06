@@ -188,6 +188,10 @@ kl -n pgo-cnpg-test port-forward svc/postgres-pgadmin4 8080:80
 # delete pgadmin when you are done with it
 kl cnpg -n pgo-cnpg-test pgadmin4 --dry-run postgres | kl delete -f -
 
+# change primary instance
+kl cnpg -n pgo-cnpg-test promote postgres postgres-1
+kl cnpg -n pgo-cnpg-test promote postgres postgres-2
+
 # warning: PVCs will be deleted automatically
 kl delete -k ./storage/postgres-cnpg/test/
 kl delete ns pgo-cnpg-test
