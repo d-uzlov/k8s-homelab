@@ -111,18 +111,6 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Kernel"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 176
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
               "options": "Internal IP"
             },
             "properties": [
@@ -254,7 +242,7 @@
                 "value": [
                   {
                     "title": "Drill to pods",
-                    "url": "/d/9ays84j4ksi5cwo0n786/kubernetes3a-node-pods?${datasource:queryparam}&${cluster:queryparam}&var-node=${__data.fields.node}"
+                    "url": "/d/9ays84j4ksi5cwo0n786/kubernetes3a-node-pods?${datasource:queryparam}﻿&﻿${cluster:queryparam}﻿&var-node=﻿${__data.fields.node}﻿&${__url_time_range}"
                   }
                 ]
               }
@@ -354,6 +342,46 @@
                 "value": 180
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Kernel"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 256
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #online"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dtdurations"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Online"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 112
+              }
+            ]
           }
         ]
       },
@@ -397,7 +425,7 @@
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
-          "refId": "pods"
+          "refId": "nodes"
         },
         {
           "datasource": {
@@ -481,13 +509,43 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "time() - sum by (node) (last_over_time(kube_node_created:last_seen{cluster=\"$cluster\", node=~\"$node\"}[$__range]))",
+          "expr": "round(time() - sum by (node) (last_over_time(kube_node_created:last_seen{cluster=\"$cluster\", node=~\"$node\"}[$__range])))",
           "format": "table",
           "hide": false,
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
           "refId": "ago"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "sum by(node) (kube_pod_info{cluster=\"$cluster\", node=~\"$node\"})",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "pods"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "round(\r\n    sum by (node) (\r\n        last_over_time(kube_node_created:last_seen{cluster=\"$cluster\", node=~\"$node\"}[$__range])\r\n    )\r\n    -\r\n    sum by (node) (\r\n        label_replace(last_over_time(node_boot_time_seconds{cluster=\"$cluster\", instance=~\"$node\"}[$__range]), \"node\", \"$1\", \"instance\", \"(.*)\")\r\n    )\r\n)",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "online"
         }
       ],
       "title": "Overview",
@@ -510,34 +568,40 @@
               "Time 4": true,
               "Time 5": true,
               "Time 6": true,
-              "Time 7": true
+              "Time 7": true,
+              "Value #nodes": true
             },
             "includeByName": {},
             "indexByName": {
               "Time 1": 0,
               "Time 2": 1,
-              "Time 3": 16,
-              "Time 4": 17,
-              "Time 5": 18,
-              "Time 6": 19,
-              "Time 7": 20,
+              "Time 3": 17,
+              "Time 4": 18,
+              "Time 5": 19,
+              "Time 6": 20,
+              "Time 7": 21,
+              "Time 8": 23,
+              "Time 9": 24,
               "Value #ago": 3,
-              "Value #cpu_request": 7,
-              "Value #cpu_usage": 6,
+              "Value #cpu_request": 8,
+              "Value #cpu_usage": 7,
               "Value #created": 2,
-              "Value #memory_request": 9,
-              "Value #memory_rss": 8,
-              "Value #pods": 5,
-              "internal_ip": 13,
-              "kernel_version": 11,
-              "kubelet_version": 10,
-              "node": 4,
-              "os_image": 12,
-              "pod_cidr": 14,
-              "system_uuid": 15
+              "Value #memory_request": 10,
+              "Value #memory_rss": 9,
+              "Value #nodes": 22,
+              "Value #online": 4,
+              "Value #pods": 6,
+              "internal_ip": 14,
+              "kernel_version": 12,
+              "kubelet_version": 11,
+              "node": 5,
+              "os_image": 13,
+              "pod_cidr": 15,
+              "system_uuid": 16
             },
             "renameByName": {
               "Time 2": "",
+              "Time 9": "",
               "Value #A": "Pods",
               "Value #B": "Workloads",
               "Value #C": "CPU Usage",
@@ -551,6 +615,7 @@
               "Value #created": "First seen",
               "Value #memory_request": "Memory Request",
               "Value #memory_rss": "Memory RSS",
+              "Value #online": "Online",
               "Value #pods": "Pods",
               "internal_ip": "Internal IP",
               "kernel_version": "Kernel",
@@ -565,6 +630,98 @@
         }
       ],
       "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "fieldMinMax": false,
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "Fail"
+                },
+                "1": {
+                  "color": "green",
+                  "index": 1,
+                  "text": "OK"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 15,
+        "w": 24,
+        "x": 0,
+        "y": 11
+      },
+      "id": 29,
+      "maxDataPoints": 300,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "min by(node) (min_over_time(kube_node_status_condition{cluster=\"$cluster\", node=~\"$node\", condition=\"Ready\", status=\"true\"}[$__interval]))",
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "status"
+        }
+      ],
+      "title": "Status",
+      "type": "state-timeline"
     },
     {
       "datasource": {
@@ -626,7 +783,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 11
+        "y": 26
       },
       "id": 28,
       "maxDataPoints": 300,
@@ -644,7 +801,7 @@
         },
         "tooltip": {
           "hideZeros": false,
-          "mode": "single",
+          "mode": "multi",
           "sort": "desc"
         }
       },
@@ -730,7 +887,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 18
+        "y": 33
       },
       "id": 27,
       "maxDataPoints": 300,
@@ -748,8 +905,8 @@
         },
         "tooltip": {
           "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
+          "mode": "multi",
+          "sort": "desc"
         }
       },
       "targets": [
@@ -776,7 +933,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 26
+        "y": 41
       },
       "id": 24,
       "panels": [],
@@ -848,7 +1005,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 27
+        "y": 42
       },
       "id": 7,
       "maxDataPoints": 300,
@@ -867,7 +1024,7 @@
         },
         "tooltip": {
           "hideZeros": false,
-          "mode": "single",
+          "mode": "multi",
           "sort": "desc"
         }
       },
@@ -953,7 +1110,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 34
+        "y": 49
       },
       "id": 9,
       "maxDataPoints": 300,
@@ -971,8 +1128,8 @@
         },
         "tooltip": {
           "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
+          "mode": "multi",
+          "sort": "desc"
         }
       },
       "targets": [
@@ -1058,7 +1215,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 42
+        "y": 57
       },
       "id": 26,
       "maxDataPoints": 300,
@@ -1076,8 +1233,8 @@
         },
         "tooltip": {
           "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
+          "mode": "multi",
+          "sort": "desc"
         }
       },
       "targets": [
@@ -1104,7 +1261,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 50
+        "y": 65
       },
       "id": 23,
       "panels": [],
@@ -1175,7 +1332,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 51
+        "y": 66
       },
       "id": 12,
       "maxDataPoints": 300,
@@ -1191,7 +1348,7 @@
         },
         "tooltip": {
           "hideZeros": false,
-          "mode": "single",
+          "mode": "multi",
           "sort": "desc"
         }
       },
@@ -1276,7 +1433,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 57
+        "y": 72
       },
       "id": 13,
       "maxDataPoints": 300,
@@ -1292,8 +1449,8 @@
         },
         "tooltip": {
           "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
+          "mode": "multi",
+          "sort": "desc"
         }
       },
       "targets": [
@@ -1316,7 +1473,7 @@
   ],
   "preload": false,
   "refresh": "auto",
-  "schemaVersion": 40,
+  "schemaVersion": 41,
   "tags": [
     "maintainer:danil",
     "k8s-cluster"
@@ -1380,5 +1537,5 @@
   "timezone": "browser",
   "title": "Kubernetes: Cluster / Nodes",
   "uid": "ccc0ky0jwjgoks6632q2",
-  "weekStart": ""
+  "version": 0
 }
