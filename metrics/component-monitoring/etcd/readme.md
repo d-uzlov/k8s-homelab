@@ -33,7 +33,7 @@ kl apply -k ./metrics/component-monitoring/etcd/dashboards/
 
  # force all panels to use the default data source min interval
  sed -i '/\"interval\":/d' ./metrics/component-monitoring/etcd/dashboards/*.json
- sed -i '/\"version\":/d' ./metrics/component-monitoring/etcd/dashboards/*.json
+ sed -i 's/\"version\"\: [0-9]*/\"version\": 0/' ./metrics/component-monitoring/etcd/dashboards/*.json
  sed -i '/\"pluginVersion\":/d' ./metrics/component-monitoring/etcd/dashboards/*.json
  # avoid id collisions
  sed -i 's/^  \"id\": .*,/  \"id\": null,/' ./metrics/component-monitoring/etcd/dashboards/*.json

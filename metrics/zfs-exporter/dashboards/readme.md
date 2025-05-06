@@ -19,7 +19,7 @@ kl delete -k ./metrics/zfs-exporter/dashboards/
 
  # force all panels to use the default data source min interval
  sed -i '/\"interval\":/d' ./metrics/zfs-exporter/dashboards/*.json
- sed -i '/\"version\":/d' ./metrics/zfs-exporter/dashboards/*.json
+ sed -i 's/\"version\"\: [0-9]*/\"version\": 0/' ./metrics/zfs-exporter/dashboards/*.json
  sed -i '/\"pluginVersion\":/d' ./metrics/zfs-exporter/dashboards/*.json
  # avoid id collisions
  sed -i 's/^  \"id\": .*,/  \"id\": null,/' ./metrics/zfs-exporter/dashboards/*.json
