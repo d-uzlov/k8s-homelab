@@ -16,12 +16,12 @@ You only need to do this if you change `values.yaml` file.
 helm repo add grafana https://grafana.github.io/helm-charts
 helm repo update grafana
 helm search repo grafana/grafana --versions --devel | head
-helm show values grafana/grafana --version 8.9.0 > ./metrics/grafana/default-values.yaml
+helm show values grafana/grafana --version 8.14.2 > ./metrics/grafana/default-values.yaml
 
 helm template \
   grafana \
   grafana/grafana \
-  --version 8.9.0 \
+  --version 8.14.2 \
   --values ./metrics/grafana/values.yaml \
   --namespace grafana \
   | sed \
