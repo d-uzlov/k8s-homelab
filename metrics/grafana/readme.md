@@ -182,8 +182,14 @@ Add the following CSS patch in any CSS patcher for your browser:
 /* hide loading animation above each of the panels */
 .panel-loading { display: none !important; }
 .css-ol7v04-panel-loading-bar-container { display: none !important; }
+
 /* hide loading animation near variable name */
+/* 11.5.1 */
 .css-1dx36ai * {
+  display: none;
+}
+/* 11.6.1 */
+.css-10cklh6 * {
   display: none;
 }
 ```
