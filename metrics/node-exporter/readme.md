@@ -65,8 +65,6 @@ kl apply -k ./metrics/node-exporter/
 kl -n node-exporter get pod -o wide
 kl -n node-exporter get servicemonitor
 
-kl apply -k ./metrics/node-exporter/dashboards/ --server-side
-
 ```
 
 Don't forget to deploy Grafana dashboards:
