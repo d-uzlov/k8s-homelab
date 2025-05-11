@@ -7,6 +7,23 @@ spec:
   validationFailureAction: Enforce
   background: false
   rules:
+  - name: default-termination-period-10s
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    preconditions:
+      any:
+      - key: "{{ request.operation }}"
+        operator: In
+        value:
+        - CREATE
+        - UPDATE
+    mutate:
+      patchStrategicMerge:
+        spec:
+          +(terminationGracePeriodSeconds): 10
   - name: validate-termination-period-not-zero
     match:
       any:
