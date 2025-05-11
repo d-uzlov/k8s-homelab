@@ -51,7 +51,7 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "enable": false,
+        "enable": true,
         "expr": "sum by (pod, container) (changes(kube_pod_container_status_restarts_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__interval])) > 0",
         "hide": false,
         "iconColor": "orange",
@@ -783,7 +783,7 @@
                 "result": {
                   "color": "dark-red",
                   "index": 1,
-                  "text": "Error"
+                  "text": "Unknown Error"
                 },
                 "to": 1
               },
@@ -845,7 +845,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "min by(pod) (\r\n    (kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Failed\"} == 1) * 2\r\n    or\r\n    (kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Pending\"} == 1) * 3\r\n    or\r\n    (\r\n        kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Running\"} == 1\r\n        and on(cluster_type, cluster, namespace, pod)\r\n        min_over_time(kube_pod_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", condition=\"true\"}[$__rate_interval]) == 1\r\n    ) * 4\r\n    or\r\n    (\r\n        kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Running\"} == 1\r\n        and on(cluster_type, cluster, namespace, pod)\r\n        min_over_time(kube_pod_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", condition=\"true\"}[$__rate_interval]) == 0\r\n    ) * 5\r\n    or\r\n    (kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Succeeded\"} == 1) * 6\r\n    or\r\n    (kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Unknown\"} == 1) * 7\r\n)",
+          "expr": "min by(pod) (\r\n    (kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Failed\"} == 1) * 2\r\n    or\r\n    (kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Pending\"} == 1) * 3\r\n    or\r\n    (\r\n        kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Running\"} == 1\r\n        and on(cluster_type, cluster, namespace, pod)\r\n        min_over_time(kube_pod_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", condition=\"true\"}[$__interval]) == 1\r\n    ) * 4\r\n    or\r\n    (\r\n        kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Running\"} == 1\r\n        and on(cluster_type, cluster, namespace, pod)\r\n        min_over_time(kube_pod_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", condition=\"true\"}[$__interval]) == 0\r\n    ) * 5\r\n    or\r\n    (kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Succeeded\"} == 1) * 6\r\n    or\r\n    (kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Unknown\"} == 1) * 7\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "Pod",
@@ -858,7 +858,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "min by(container) (\r\n    (\r\n        kube_pod_container_status_waiting{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n    ) * 3\r\n    or\r\n    (\r\n        min_over_time(kube_pod_container_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__rate_interval]) == 1\r\n        and\r\n        kube_pod_container_status_running == 1\r\n    ) * 4\r\n    or\r\n    (\r\n        min_over_time(kube_pod_container_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__rate_interval]) == bool 0\r\n        and\r\n        kube_pod_container_status_running == 1\r\n    ) * 5\r\n    or\r\n    (\r\n        (kube_pod_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1)\r\n        and\r\n        kube_pod_container_status_last_terminated_exitcode == 0\r\n    ) * 6\r\n    or\r\n    (\r\n        (kube_pod_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1)\r\n        and\r\n        kube_pod_container_status_last_terminated_exitcode != 0\r\n    ) * 2\r\n    or\r\n    # for some reason I don't see kube_pod_container_status_last_terminated_exitcode on some job containers\r\n    (\r\n        (kube_pod_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1)\r\n    ) * 8\r\n)",
+          "expr": "min by(container) (\r\n    (\r\n        kube_pod_container_status_waiting{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n    ) * 3\r\n    or\r\n    (\r\n        min_over_time(kube_pod_container_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n        and\r\n        kube_pod_container_status_running == 1\r\n    ) * 4\r\n    or\r\n    (\r\n        min_over_time(kube_pod_container_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == bool 0\r\n        and\r\n        kube_pod_container_status_running == 1\r\n    ) * 5\r\n    or\r\n    (\r\n        (kube_pod_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1)\r\n        and\r\n        kube_pod_container_status_last_terminated_exitcode == 0\r\n    ) * 6\r\n    or\r\n    (\r\n        (kube_pod_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1)\r\n        and\r\n        kube_pod_container_status_last_terminated_exitcode != 0\r\n    ) * 2\r\n    or\r\n    # for some reason I don't see kube_pod_container_status_last_terminated_exitcode on some job containers\r\n    (\r\n        (kube_pod_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1)\r\n    ) * 8\r\n)",
           "instant": false,
           "legendFormat": "{{container}}",
           "range": true,
@@ -1051,35 +1051,6 @@
           {
             "matcher": {
               "id": "byFrameRefID",
-              "options": "limit"
-            },
-            "properties": [
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "fill": "dash"
-                }
-              },
-              {
-                "id": "custom.lineWidth",
-                "value": 2
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              },
-              {
-                "id": "custom.fillOpacity",
-                "value": 0
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byFrameRefID",
               "options": "request"
             },
             "properties": [
@@ -1109,7 +1080,7 @@
           {
             "matcher": {
               "id": "byFrameRefID",
-              "options": "cpu_total"
+              "options": "usage_total_split"
             },
             "properties": [
               {
@@ -1156,6 +1127,35 @@
                 "value": 0
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/limit/"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
           }
         ]
       },
@@ -1193,12 +1193,12 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(container, name) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\"}[$__rate_interval]))",
+          "expr": "sum (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{container}} usage, name={{name}}",
+          "legendFormat": "Total usage",
           "range": true,
-          "refId": "cpu"
+          "refId": "usage_total_split"
         },
         {
           "datasource": {
@@ -1206,12 +1206,25 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))",
+          "expr": "sum by(container, name) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\", invalid!=$split_ids}[$__rate_interval]))",
           "hide": false,
           "instant": false,
-          "legendFormat": "Total usage",
+          "legendFormat": "{{container}} usage, name={{name}}",
           "range": true,
-          "refId": "cpu_total"
+          "refId": "usage_split"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(container) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\", invalid=$split_ids}[$__rate_interval]))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} usage",
+          "range": true,
+          "refId": "usage_united"
         },
         {
           "datasource": {
@@ -1232,12 +1245,12 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(container, name) (\r\n    container_spec_cpu_quota{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$enableLimits} / container_spec_cpu_period\r\n)\r\nor\r\nsum by(container, name) (\r\n    container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$enableLimits} * 0\r\n    + on(container) group_left()\r\n    kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\", container=~\"$container\", invalid=$enableLimits}\r\n)",
+          "expr": "sum by(container, name) (\r\n    container_spec_cpu_quota{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$enableLimits, invalid!=$split_ids} / container_spec_cpu_period\r\n)\r\nor\r\nsum by(container, name) (\r\n    container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$enableLimits, invalid!=$split_ids} * 0\r\n    + on(container) group_left()\r\n    kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\", container=~\"$container\", invalid=$enableLimits}\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} limit, name={{name}}",
           "range": true,
-          "refId": "limit"
+          "refId": "limit_split"
         },
         {
           "datasource": {
@@ -1245,12 +1258,38 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container, name) (\r\n  (rate(container_cpu_cgroup_burst_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]) )\r\n)",
+          "expr": "sum by(container) (\r\n    container_spec_cpu_quota{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$enableLimits, invalid=$split_ids} / container_spec_cpu_period\r\n)\r\nor\r\nsum by(container) (\r\n    container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$enableLimits, invalid=$split_ids} * 0\r\n    + on(container) group_left()\r\n    kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\", container=~\"$container\", invalid=$enableLimits}\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} limit",
+          "range": true,
+          "refId": "limit_united"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (container, name) (\r\n  (rate(container_cpu_cgroup_burst_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]) )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} burst, name={{name}}",
           "range": true,
-          "refId": "burst_usage"
+          "refId": "burst_usage_split"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (container) (\r\n  (rate(container_cpu_cgroup_burst_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]) )\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} burst",
+          "range": true,
+          "refId": "burst_usage_united"
         },
         {
           "datasource": {
@@ -1271,12 +1310,25 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container, name) (\r\n  (rate(container_cpu_cfs_throttled_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]) )\r\n)",
+          "expr": "max by (container, name) (\r\n  (rate(container_cpu_cfs_throttled_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]) )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} throttled, name={{name}}",
           "range": true,
           "refId": "throttled"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (container) (\r\n  (rate(container_cpu_cfs_throttled_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]) )\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} throttled",
+          "range": true,
+          "refId": "throttled_united"
         }
       ],
       "title": "CPU Usage (cores)",
@@ -1286,13 +1338,6 @@
           "options": {
             "regex": "(.*), name=(.{8})(.*)",
             "renamePattern": "$1, $2"
-          }
-        },
-        {
-          "id": "renameByRegex",
-          "options": {
-            "regex": "(.*), name=",
-            "renamePattern": "$1"
           }
         }
       ],
@@ -1389,12 +1434,12 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(container, name) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\"}[$__rate_interval]))\r\n/ on(container) group_left\r\nsum by(container) (\r\n    kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\",container=~\"$container\"}\r\n)",
+          "expr": "sum by(container, name) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\", invalid!=$split_ids}[$__rate_interval]))\r\n/ on(container) group_left\r\nsum by(container) (\r\n    kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\",container=~\"$container\"}\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} request %, name={{name}}",
           "range": true,
-          "refId": "request_percent"
+          "refId": "request_percent_split"
         },
         {
           "datasource": {
@@ -1402,12 +1447,38 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(container, name) (\r\n    sum without(cpu) (\r\n        rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\"}[$__rate_interval])\r\n    )\r\n    / (container_spec_cpu_quota / container_spec_cpu_period)\r\n)\r\nor\r\nsum by(container, name) (\r\n    rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\"}[$__rate_interval])\r\n)\r\n/ on(container) group_left\r\nsum by(container) (\r\n    kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\",container=~\"$container\"}\r\n)",
+          "expr": "sum by(container) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\", invalid=$split_ids}[$__rate_interval]))\r\n/\r\nsum by(container) (\r\n    kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\",container=~\"$container\"}\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} request %",
+          "range": true,
+          "refId": "request_percent_united"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(container, name) (\r\n    sum without(cpu) (\r\n        rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\", invalid!=$split_ids}[$__rate_interval])\r\n    )\r\n    / (container_spec_cpu_quota / container_spec_cpu_period)\r\n)\r\nor\r\nsum by(container, name) (\r\n    rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\", invalid!=$split_ids}[$__rate_interval])\r\n)\r\n/ on(container) group_left\r\nsum by(container) (\r\n    kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\",container=~\"$container\"}\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} limit %, name={{name}}",
           "range": true,
-          "refId": "limit_percent"
+          "refId": "limit_percent_split"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(container) (\r\n    sum without(cpu) (\r\n        rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\", invalid=$split_ids}[$__rate_interval])\r\n    )\r\n    / (container_spec_cpu_quota / container_spec_cpu_period)\r\n)\r\nor\r\nsum by(container) (\r\n    rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\", invalid=$split_ids}[$__rate_interval])\r\n)\r\n/ on(container) group_left\r\nsum by(container) (\r\n    kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\",container=~\"$container\"}\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} limit %",
+          "range": true,
+          "refId": "limit_percent_united"
         }
       ],
       "title": "CPU Usage %",
@@ -1523,12 +1594,12 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "# if container didn't run at some interval, you will have division by zero, so we do ` / increase + epsilon`\r\nmax by (container, name) (\r\n  (increase(container_cpu_cfs_throttled_periods_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]) )\r\n/\r\n  (increase(container_cpu_cfs_periods_total[$__rate_interval]) + 1e-5 )\r\n)",
+          "expr": "# if container didn't run at some interval, you will have division by zero, so we do ` / increase + epsilon`\r\nmax by (container, name) (\r\n  (increase(container_cpu_cfs_throttled_periods_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]) )\r\n/\r\n  (increase(container_cpu_cfs_periods_total[$__rate_interval]) + 1e-5 )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} throttling, name={{name}}",
           "range": true,
-          "refId": "B"
+          "refId": "throttle_percent_split"
         },
         {
           "datasource": {
@@ -1536,12 +1607,38 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "# if container didn't run at some interval, you will have division by zero, so we do ` / increase + epsilon`\r\nmax by (container, name) (\r\n  (increase(container_cpu_cgroup_burst_periods_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]) )\r\n/ on(container, name)\r\n  (increase(container_cpu_cfs_periods_total[$__rate_interval]) + 1e-5 )\r\n)",
+          "expr": "# if container didn't run at some interval, you will have division by zero, so we do ` / increase + epsilon`\r\nmax by (container) (\r\n  (increase(container_cpu_cfs_throttled_periods_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]) )\r\n/\r\n  (increase(container_cpu_cfs_periods_total[$__rate_interval]) + 1e-5 )\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} throttling",
+          "range": true,
+          "refId": "throttle_percent_united"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "# if container didn't run at some interval, you will have division by zero, so we do ` / increase + epsilon`\r\nmax by (container, name) (\r\n  (increase(container_cpu_cgroup_burst_periods_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]) )\r\n/ on(container, name)\r\n  (increase(container_cpu_cfs_periods_total[$__rate_interval]) + 1e-5 )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} burst, name={{name}}",
           "range": true,
-          "refId": "A"
+          "refId": "burst_percent_split"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "# if container didn't run at some interval, you will have division by zero, so we do ` / increase + epsilon`\r\nmax by(container) (\r\n  max by (container, name) (\r\n    (increase(container_cpu_cgroup_burst_periods_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]) )\r\n  / on(container, name)\r\n    (increase(container_cpu_cfs_periods_total[$__rate_interval]) + 1e-5 )\r\n  )\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} burst",
+          "range": true,
+          "refId": "burst_percent_united"
         }
       ],
       "title": "CPU Throttling / Burst (periods)",
@@ -1723,12 +1820,12 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container, name) (max_over_time(container_memory_max_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))",
+          "expr": "max by (container, name) (max_over_time(container_memory_max_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]))",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} 2 max, name={{name}}",
           "range": true,
-          "refId": "max"
+          "refId": "max_split"
         },
         {
           "datasource": {
@@ -1736,11 +1833,24 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container, name) (max_over_time(container_memory_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))",
+          "expr": "max by (container) (max_over_time(container_memory_max_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} 2 max",
+          "range": true,
+          "refId": "max_united"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (container, name) (max_over_time(container_memory_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]))",
           "instant": false,
           "legendFormat": "{{container}} 3 raw, name={{name}}",
           "range": true,
-          "refId": "raw"
+          "refId": "raw_split"
         },
         {
           "datasource": {
@@ -1748,12 +1858,25 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container, name) (max_over_time(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))",
+          "expr": "max by (container) (max_over_time(container_memory_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} 3 raw",
+          "range": true,
+          "refId": "raw_united"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (container, name) (max_over_time(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]))",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} 4 wss, name={{name}}",
           "range": true,
-          "refId": "wss"
+          "refId": "wss_split"
         },
         {
           "datasource": {
@@ -1761,12 +1884,38 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container, name) (max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))",
+          "expr": "max by (container) (max_over_time(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} 4 wss",
+          "range": true,
+          "refId": "wss_united"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (container, name) (max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]))",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} 6 rss, name={{name}}",
           "range": true,
-          "refId": "rss"
+          "refId": "rss_split"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (container) (max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} 6 rss",
+          "range": true,
+          "refId": "rss_united"
         },
         {
           "datasource": {
@@ -1985,12 +2134,12 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container, name) (max_over_time(container_memory_max_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
+          "expr": "max by (container, name) (max_over_time(container_memory_max_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} 1 max, name={{name}}",
           "range": true,
-          "refId": "max"
+          "refId": "max_split"
         },
         {
           "datasource": {
@@ -1998,11 +2147,24 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container, name) (max_over_time(container_memory_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
+          "expr": "max by (container) (max_over_time(container_memory_max_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]))\r\n/\r\nmax by (container) (kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} 1 max",
+          "range": true,
+          "refId": "max_united"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (container, name) (max_over_time(container_memory_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
           "instant": false,
           "legendFormat": "{{container}} 2 raw, name={{name}}",
           "range": true,
-          "refId": "raw"
+          "refId": "raw_split"
         },
         {
           "datasource": {
@@ -2010,12 +2172,25 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container, name) (max_over_time(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
+          "expr": "max by (container) (max_over_time(container_memory_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]))\r\n/\r\nmax by (container) (kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} 2 raw",
+          "range": true,
+          "refId": "raw_united"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (container, name) (max_over_time(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} 3 wss, name={{name}}",
           "range": true,
-          "refId": "wss"
+          "refId": "wss_split"
         },
         {
           "datasource": {
@@ -2023,12 +2198,38 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container, name) (max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
+          "expr": "max by (container) (max_over_time(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]))\r\n/\r\nmax by (container) (kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} 3 wss",
+          "range": true,
+          "refId": "wss_united"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (container, name) (max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} 4 rss, name={{name}}",
           "range": true,
-          "refId": "rss"
+          "refId": "rss_split"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (container) (max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} 4 rss",
+          "range": true,
+          "refId": "rss_united"
         }
       ],
       "title": "Memory Usage / Request",
@@ -2197,12 +2398,12 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container, name) (max_over_time(container_memory_max_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
+          "expr": "max by (container, name) (max_over_time(container_memory_max_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} 1 max, name={{name}}",
           "range": true,
-          "refId": "max"
+          "refId": "max_split"
         },
         {
           "datasource": {
@@ -2210,11 +2411,24 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container, name) (max_over_time(container_memory_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
+          "expr": "max by (container) (max_over_time(container_memory_max_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} 1 max",
+          "range": true,
+          "refId": "max_united"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (container, name) (max_over_time(container_memory_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
           "instant": false,
           "legendFormat": "{{container}} 2 raw, name={{name}}",
           "range": true,
-          "refId": "raw"
+          "refId": "raw_split"
         },
         {
           "datasource": {
@@ -2222,12 +2436,25 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container, name) (max_over_time(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
+          "expr": "max by (container) (max_over_time(container_memory_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} 2 raw",
+          "range": true,
+          "refId": "raw_united"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (container, name) (max_over_time(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} 3 wss, name={{name}}",
           "range": true,
-          "refId": "wss"
+          "refId": "wss_split"
         },
         {
           "datasource": {
@@ -2235,12 +2462,38 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container, name) (max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
+          "expr": "max by (container) (max_over_time(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} 3 wss",
+          "range": true,
+          "refId": "wss_united"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (container, name) (max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} 4 rss, name={{name}}",
           "range": true,
-          "refId": "rss"
+          "refId": "rss_split"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (container) (max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} 4 rss",
+          "range": true,
+          "refId": "rss_united"
         }
       ],
       "title": "Memory Usage / Limit",
@@ -2423,12 +2676,12 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container, name)(max_over_time(container_memory_cache{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))",
+          "expr": "max by (container, name)(max_over_time(container_memory_cache{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]))",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} total, name={{name}}",
           "range": true,
-          "refId": "total_cache"
+          "refId": "total_cache_split"
         },
         {
           "datasource": {
@@ -2436,12 +2689,25 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container, name) (container_memory_cache{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"} - container_memory_total_active_file_bytes - container_memory_total_inactive_file_bytes)",
+          "expr": "max by (container)(max_over_time(container_memory_cache{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} total",
+          "range": true,
+          "refId": "total_cache_united"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (container, name) (container_memory_cache{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids} - container_memory_total_active_file_bytes - container_memory_total_inactive_file_bytes)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} rest, name={{name}}",
           "range": true,
-          "refId": "cache_rest"
+          "refId": "cache_rest_split"
         },
         {
           "datasource": {
@@ -2449,12 +2715,25 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container, name) (container_memory_total_active_file_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"})",
+          "expr": "max by (container) (container_memory_cache{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids} - container_memory_total_active_file_bytes - container_memory_total_inactive_file_bytes)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} rest",
+          "range": true,
+          "refId": "cache_rest_united"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (container, name) (container_memory_total_active_file_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids})",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} active, name={{name}}",
           "range": true,
-          "refId": "active_cache"
+          "refId": "active_cache_split"
         },
         {
           "datasource": {
@@ -2462,12 +2741,25 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container, name) (container_memory_total_inactive_file_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"})",
+          "expr": "max by (container) (container_memory_total_active_file_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids})",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} active",
+          "range": true,
+          "refId": "active_cache_united"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (container, name) (container_memory_total_inactive_file_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids})",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} inactive, name={{name}}",
           "range": true,
-          "refId": "inactive"
+          "refId": "inactive_split"
         },
         {
           "datasource": {
@@ -2475,12 +2767,38 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container, name)(max_over_time(container_memory_mapped_file{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))",
+          "expr": "max by (container) (container_memory_total_inactive_file_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids})",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} inactive",
+          "range": true,
+          "refId": "unactive_united"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (container, name)(max_over_time(container_memory_mapped_file{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]))",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} mem-file, name={{name}}",
           "range": true,
-          "refId": "memory_mapped_file"
+          "refId": "memory_mapped_file_split"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (container)(max_over_time(container_memory_mapped_file{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} mem-file",
+          "range": true,
+          "refId": "memory_mapped_file_united"
         }
       ],
       "title": "Cache",
@@ -2634,11 +2952,24 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container, name, failure_type)(rate(container_memory_failures_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))",
+          "expr": "max by (container, name, failure_type)(rate(container_memory_failures_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]))",
           "instant": false,
           "legendFormat": "{{container}} {{failure_type}}, name={{name}}",
           "range": true,
-          "refId": "A"
+          "refId": "pagefault_split"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (container, failure_type)(rate(container_memory_failures_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} {{failure_type}}",
+          "range": true,
+          "refId": "pagefault_united"
         }
       ],
       "title": "Page fault rate",
@@ -2754,7 +3085,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(container_network_receive_bytes_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])) by (interface)",
+          "expr": "sum(rate(container_network_receive_bytes_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__rate_interval])) by (interface)",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -2856,7 +3187,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(container_network_transmit_bytes_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])) by (interface)",
+          "expr": "sum(rate(container_network_transmit_bytes_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__rate_interval])) by (interface)",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -3151,7 +3482,7 @@
               "type": "linear"
             },
             "showPoints": "never",
-            "spanNulls": true,
+            "spanNulls": false,
             "stacking": {
               "group": "A",
               "mode": "none"
@@ -3167,10 +3498,6 @@
             "steps": [
               {
                 "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           },
@@ -3209,7 +3536,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(container) (rate(container_fs_reads_bytes_total{container!=\"\", container=~\"$container\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval]))",
+          "expr": "sum by(container) (rate(container_fs_reads_bytes_total{container!=\"\", container=~\"$container\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__rate_interval]))",
           "instant": false,
           "legendFormat": "Reads: {{container}}",
           "range": true,
@@ -3221,7 +3548,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(container) (rate(container_fs_writes_bytes_total{container!=\"\", container=~\"$container\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval]))",
+          "expr": "sum by(container) (rate(container_fs_writes_bytes_total{container!=\"\", container=~\"$container\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
           "legendFormat": "Writes: {{container}}",
@@ -3354,6 +3681,7 @@
   "templating": {
     "list": [
       {
+        "allowCustomValue": false,
         "label": "Data source",
         "name": "datasource",
         "options": [],
@@ -3364,6 +3692,7 @@
       },
       {
         "allValue": ".*",
+        "allowCustomValue": false,
         "datasource": {
           "type": "prometheus",
           "uid": "${datasource}"
@@ -3383,6 +3712,7 @@
         "type": "query"
       },
       {
+        "allowCustomValue": false,
         "datasource": {
           "type": "prometheus",
           "uid": "${datasource}"
@@ -3520,6 +3850,7 @@
         "type": "query"
       },
       {
+        "allowCustomValue": false,
         "datasource": {
           "type": "prometheus",
           "uid": "${datasource}"
@@ -3540,6 +3871,7 @@
         "type": "query"
       },
       {
+        "allowCustomValue": false,
         "description": "",
         "label": "Show limits",
         "name": "enableLimits",
@@ -3556,6 +3888,26 @@
           }
         ],
         "query": "Show : \"\", Hide : \"invalid123\"",
+        "type": "custom"
+      },
+      {
+        "allowCustomValue": false,
+        "description": "",
+        "label": "Split IDs",
+        "name": "split_ids",
+        "options": [
+          {
+            "selected": true,
+            "text": "Unite",
+            "value": "\"\""
+          },
+          {
+            "selected": false,
+            "text": "Split",
+            "value": "\"invalid123\""
+          }
+        ],
+        "query": "Unite : \"\", Split : \"invalid123\"",
         "type": "custom"
       }
     ]
