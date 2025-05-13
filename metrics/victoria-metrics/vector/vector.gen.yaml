@@ -34,7 +34,7 @@ data:
         type: prometheus_exporter
       vlogs:
         api_version: v8
-        compression: gzip
+        compression: zstd
         endpoints:
         - http://vlogs-server-0.vlogs-server.victoria-metrics.svc.cluster.local.:9428/insert/elasticsearch
         healthcheck:
@@ -46,22 +46,37 @@ data:
           headers:
             AccountID: "0"
             ProjectID: "0"
-            VL-Msg-Field: message,msg,_msg,log.msg,log.message,log
-            VL-Stream-Fields: stream,kubernetes.pod_name,kubernetes.container_name,kubernetes.pod_namespace
+            VL-Msg-Field: message
+            VL-Stream-Fields: stream,kubernetes.pod_namespace,kubernetes.pod_name,kubernetes.container_name
             VL-Time-Field: timestamp
         type: elasticsearch
     sources:
       internal_metrics:
         type: internal_metrics
       k8s:
+        ingestion_timestamp_field: .ingest_timestamp
+        node_annotation_fields:
+          node_labels: ""
         type: kubernetes_logs
     transforms:
       parser:
         inputs:
         - k8s
-        source: |
-          .log = parse_json(.message) ?? .message
-          del(.message)
+        source: ".original_message = .message\n# parse_json: JSON\n# parse_key_value:
+          qwe=asd\n# parse_glog: I20210131 14:48:54.411655 15520 main.c++:9] Hello world!\n#
+          parse_syslog: 1 2020-03-13T20:45:38.119Z dynamicwireless.name non 2426 ID931
+          [exampleSDID@32473 iut=\"3\" eventSource= \"Application\" eventID=\"1011\"]
+          Try to override the THX port, maybe it will reboot the neural interface!\n#
+          parse_common_log: 127.0.0.1 bob frank [10/Oct/2000:13:55:36 -0700] \\\"GET /apache_pb.gif
+          HTTP/1.0\\\" 200 2326\n.log = \n  parse_json(.message) ??\n  parse_key_value(.message)
+          ??\n  parse_glog(.message) ??\n  parse_syslog(.message) ??\n  parse_common_log(.message)
+          ??\n  \"parsing failed\"\n\nif starts_with(string!(.kubernetes.pod_owner), \"Cluster/\")
+          && .log.msg == \"record\" && exists(.log.record) {\n  # handle CNPG logs\n  if
+          exists(.log.record.message) && exists(.log.record.detail) {\n    .message =
+          string!(.log.record.message) + \": \" + string!(.log.record.detail)\n  } else
+          if exists(.log.record.message) {\n    .message = .log.record.message\n  } else
+          {\n    .message = .log.record\n  }\n} else if exists(.log.message) {\n  .message
+          = .log.message\n} else if exists(.log.msg) {\n  .message = .log.msg\n}\n"
         type: remap
 ---
 # Permissions to use Kubernetes API.
@@ -230,6 +245,9 @@ spec:
               name: sysfs
               readOnly: true
       terminationGracePeriodSeconds: 60
+      tolerations:
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/control-plane
       volumes:
         - name: config
           projected:
