@@ -59,10 +59,36 @@ clusterName=
     action: replace
 EOF
 
+mkdir -p ./metrics/victoria-metrics/victoria-logs/env/
+storage_class=
+size=3Gi
+ cat << EOF > ./metrics/victoria-metrics/victoria-logs/env/patch-pvc-template.yaml
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: vlogs-server
+  namespace: victoria-metrics
+spec:
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: server-volume
+    spec:
+      storageClassName: $storage_class
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: $size
+EOF
+
 kl create ns victoria-metrics
 kl label ns victoria-metrics pod-security.kubernetes.io/enforce=baseline
 
 kl apply -k ./metrics/victoria-metrics/victoria-logs/
+kl -n victoria-metrics get pvc
 kl -n victoria-metrics get pod -o wide
 kl -n victoria-metrics logs sts/vlogs-server-0
 
