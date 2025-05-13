@@ -1,4 +1,17 @@
 
+# Rescan files after manual changes in filesystem
+
+```bash
+# for all users
+kl -n nextcloud exec deployments/nextcloud -it -- php occ files:scan --all
+# for a single user
+kl -n nextcloud exec deployments/nextcloud -it -- php occ files:scan -- $userid
+```
+
+Sometimes you can still see files even without rescan.
+But in my experience you can get permission issues: you can read these files but not modify them.
+Running rescan seems to fix it.
+
 # Brute-force protection FAQ
 
 Nextcloud will temporarily lock you out of web UI if you fail several login attempts.
