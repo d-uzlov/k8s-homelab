@@ -1,0 +1,69 @@
+
+data_dir: /vector-data-dir
+api:
+  enabled: true
+  address: 0.0.0.0:8686
+  playground: true
+sources:
+  k8s:
+    type: kubernetes_logs
+    ingestion_timestamp_field: .ingest_timestamp
+    node_annotation_fields:
+      node_labels: ''
+  internal_metrics:
+    type: internal_metrics
+transforms:
+  parser:
+    type: remap
+    inputs: [ k8s ]
+    source: |
+      .original_message = .message
+      # parse_json: JSON
+      # parse_key_value: qwe=asd
+      # parse_glog: I20210131 14:48:54.411655 15520 main.c++:9] Hello world!
+      # parse_syslog: 1 2020-03-13T20:45:38.119Z dynamicwireless.name non 2426 ID931 [exampleSDID@32473 iut="3" eventSource= "Application" eventID="1011"] Try to override the THX port, maybe it will reboot the neural interface!
+      # parse_common_log: 127.0.0.1 bob frank [10/Oct/2000:13:55:36 -0700] \"GET /apache_pb.gif HTTP/1.0\" 200 2326
+      .log = 
+        parse_json(.message) ??
+        parse_key_value(.message) ??
+        parse_glog(.message) ??
+        parse_syslog(.message) ??
+        parse_common_log(.message) ??
+        "parsing failed"
+      
+      if starts_with(string!(.kubernetes.pod_owner), "Cluster/") && .log.msg == "record" && exists(.log.record) {
+        # handle CNPG logs
+        if exists(.log.record.message) && exists(.log.record.detail) {
+          .message = string!(.log.record.message) + ": " + string!(.log.record.detail)
+        } else if exists(.log.record.message) {
+          .message = .log.record.message
+        } else {
+          .message = .log.record
+        }
+      } else if exists(.log.message) {
+        .message = .log.message
+      } else if exists(.log.msg) {
+        .message = .log.msg
+      }
+sinks:
+  exporter:
+    type: prometheus_exporter
+    address: 0.0.0.0:9090
+    inputs: [ internal_metrics ]
+  vlogs:
+    type: elasticsearch
+    inputs: [ parser ]
+    endpoints:
+    - http://vlogs-server-0.vlogs-server.victoria-metrics.svc.cluster.local.:9428/insert/elasticsearch
+    mode: bulk
+    api_version: v8
+    compression: zstd
+    healthcheck:
+      enabled: false
+    request:
+      headers:
+        VL-Time-Field: timestamp
+        VL-Stream-Fields: stream,kubernetes.pod_namespace,kubernetes.pod_name,kubernetes.container_name
+        VL-Msg-Field: message
+        AccountID: "0"
+        ProjectID: "0"

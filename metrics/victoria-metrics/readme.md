@@ -42,6 +42,15 @@ helm template \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' -e '\|app.kubernetes.io/version|d' -e '\|creationTimestamp: null|d' \
   > ./metrics/victoria-metrics/vector/vector.gen.yaml
 
+yq -i '
+  del(
+    select(
+      .kind == "ConfigMap" and
+      .metadata.name == "vector"
+    )
+  )
+' ./metrics/victoria-metrics/vector/vector.gen.yaml
+
 ```
 
 # Deploy
