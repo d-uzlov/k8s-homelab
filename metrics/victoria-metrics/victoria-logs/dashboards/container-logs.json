@@ -57,6 +57,102 @@
         "uid": "${logs_source}"
       },
       "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 21,
+        "x": 0,
+        "y": 0
+      },
+      "id": 3,
+      "maxDataPoints": 250,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "${logs_source}"
+          },
+          "editorMode": "code",
+          "expr": "{\r\nkubernetes.pod_namespace=\"$namespace\"\r\n,kubernetes.pod_name=\"$pod\"\r\n,kubernetes.container_name=\"$container\"\r\n}\r\nkubernetes.container_id:in($id_query)\r\n| stats by (stream) count()",
+          "legendFormat": "{{stream}}",
+          "queryType": "statsRange",
+          "refId": "A"
+        }
+      ],
+      "title": "Count",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "victoriametrics-logs-datasource",
+        "uid": "${logs_source}"
+      },
+      "fieldConfig": {
         "defaults": {},
         "overrides": []
       },
@@ -64,7 +160,7 @@
         "h": 21,
         "w": 21,
         "x": 0,
-        "y": 0
+        "y": 8
       },
       "id": 1,
       "options": {
@@ -85,7 +181,7 @@
             "uid": "${logs_source}"
           },
           "editorMode": "code",
-          "expr": "{\r\nkubernetes.pod_namespace=\"$namespace\"\r\n,kubernetes.pod_name=\"$pod\"\r\n,kubernetes.container_name=\"$container\"\r\n,stream=\"stdout\"\r\n}\r\n($id_query)\r\n| drop file, ingest_timestamp, _stream_id, kubernetes.container_image_id, kubernetes.namespace_labels.kubernetes.io/metadata.name, kubernetes.namespace_labels.pod-security.kubernetes.io/enforce, kubernetes.pod_annotations.kubectl.kubernetes.io/default-container, kubernetes.pod_labels.controller-revision-hash, kubernetes.pod_labels.app.kubernetes.io/instance, kubernetes.pod_labels.app.kubernetes.io/managed-by, kubernetes.pod_labels.apps.kubernetes.io/pod-index, kubernetes.pod_labels.app.kubernetes.io/name, kubernetes.pod_labels.app.kubernetes.io/version, kubernetes.pod_labels.statefulset.kubernetes.io/pod-name, kubernetes.pod_owner, source_type",
+          "expr": "{\r\nkubernetes.pod_namespace=\"$namespace\",\r\nkubernetes.pod_name=\"$pod\",\r\nkubernetes.container_name=\"$container\",\r\nstream=\"stdout\"\r\n}\r\nkubernetes.container_id:in($id_query)\r\n| drop file, ingest_timestamp, _stream_id, kubernetes.container_image_id, kubernetes.namespace_labels.kubernetes.io/metadata.name, kubernetes.namespace_labels.pod-security.kubernetes.io/enforce, kubernetes.pod_annotations.kubectl.kubernetes.io/default-container, kubernetes.pod_labels.controller-revision-hash, kubernetes.pod_labels.app.kubernetes.io/instance, kubernetes.pod_labels.app.kubernetes.io/managed-by, kubernetes.pod_labels.apps.kubernetes.io/pod-index, kubernetes.pod_labels.app.kubernetes.io/name, kubernetes.pod_labels.app.kubernetes.io/version, kubernetes.pod_labels.statefulset.kubernetes.io/pod-name, kubernetes.pod_owner, source_type",
           "queryType": "instant",
           "refId": "A"
         }
@@ -106,7 +202,7 @@
         "h": 21,
         "w": 21,
         "x": 0,
-        "y": 21
+        "y": 29
       },
       "id": 2,
       "options": {
@@ -127,7 +223,7 @@
             "uid": "${logs_source}"
           },
           "editorMode": "code",
-          "expr": "{\r\nkubernetes.pod_namespace=\"$namespace\"\r\n,kubernetes.pod_name=\"$pod\"\r\n,kubernetes.container_name=\"$container\"\r\n,stream=\"stderr\"\r\n}\r\nkubernetes.container_id: \"$id\"\r\n| drop file, ingest_timestamp, _stream_id, kubernetes.container_image_id, kubernetes.namespace_labels.kubernetes.io/metadata.name, kubernetes.namespace_labels.pod-security.kubernetes.io/enforce, kubernetes.pod_annotations.kubectl.kubernetes.io/default-container, kubernetes.pod_labels.controller-revision-hash, kubernetes.pod_labels.app.kubernetes.io/instance, kubernetes.pod_labels.app.kubernetes.io/managed-by, kubernetes.pod_labels.apps.kubernetes.io/pod-index, kubernetes.pod_labels.app.kubernetes.io/name, kubernetes.pod_labels.app.kubernetes.io/version, kubernetes.pod_labels.statefulset.kubernetes.io/pod-name, kubernetes.pod_owner, source_type",
+          "expr": "{\r\nkubernetes.pod_namespace=\"$namespace\",\r\nkubernetes.pod_name=\"$pod\",\r\nkubernetes.container_name=\"$container\",\r\nstream=\"stderr\"\r\n}\r\nkubernetes.container_id:in($id_query)\r\n| drop file, ingest_timestamp, _stream_id, kubernetes.container_image_id, kubernetes.namespace_labels.kubernetes.io/metadata.name, kubernetes.namespace_labels.pod-security.kubernetes.io/enforce, kubernetes.pod_annotations.kubectl.kubernetes.io/default-container, kubernetes.pod_labels.controller-revision-hash, kubernetes.pod_labels.app.kubernetes.io/instance, kubernetes.pod_labels.app.kubernetes.io/managed-by, kubernetes.pod_labels.apps.kubernetes.io/pod-index, kubernetes.pod_labels.app.kubernetes.io/name, kubernetes.pod_labels.app.kubernetes.io/version, kubernetes.pod_labels.statefulset.kubernetes.io/pod-name, kubernetes.pod_owner, source_type",
           "legendFormat": "",
           "queryType": "instant",
           "refId": "logs"
@@ -291,7 +387,7 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(label_replace(label_replace(last_over_time(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__range]),\"human_name\", \"$1\",\"name\", \"(.{8}).*\"),\"id_query\", \"kubernetes.container_id: $1\",\"name\", \"(.+)\"))",
+        "definition": "query_result(label_replace(label_replace(last_over_time(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__range]),\"human_name\", \"$1\",\"name\", \"(.{8}).*\"),\"id_query\", \"containerd://$1\",\"name\", \"(.+)\"))",
         "description": "label_replace(\nlabel_replace(\nlast_over_time(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__range]),\n\"human_name\", \"$1\",\"name\", \"(.{8}).*\"\n),\n\"id_query\", \"kubernetes.container_id: $1\",\"name\", \"(.+)\"\n)",
         "includeAll": true,
         "multi": true,
@@ -299,13 +395,29 @@
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(label_replace(label_replace(last_over_time(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__range]),\"human_name\", \"$1\",\"name\", \"(.{8}).*\"),\"id_query\", \"kubernetes.container_id: $1\",\"name\", \"(.+)\"))",
+          "query": "query_result(label_replace(label_replace(last_over_time(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__range]),\"human_name\", \"$1\",\"name\", \"(.{8}).*\"),\"id_query\", \"containerd://$1\",\"name\", \"(.+)\"))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
         "regex": "/human_name=\"(?<text>[^\"]{8})|id_query=\"(?<value>[^\"]+)/g",
         "sort": 1,
         "type": "query"
+      },
+      {
+        "baseFilters": [],
+        "datasource": {
+          "type": "victoriametrics-logs-datasource",
+          "uid": "${logs_source}"
+        },
+        "filters": [
+          {
+            "key": "log.msg",
+            "operator": "!=",
+            "value": "scrape append"
+          }
+        ],
+        "name": "Filters",
+        "type": "adhoc"
       }
     ]
   },
