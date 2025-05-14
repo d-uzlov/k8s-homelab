@@ -170,7 +170,7 @@
         "prettifyLogMessage": false,
         "showCommonLabels": false,
         "showLabels": false,
-        "showTime": false,
+        "showTime": true,
         "sortOrder": "Descending",
         "wrapLogMessage": false
       },
@@ -223,7 +223,7 @@
             "uid": "${logs_source}"
           },
           "editorMode": "code",
-          "expr": "{\r\nkubernetes.pod_namespace=\"$namespace\",\r\nkubernetes.pod_name=\"$pod\",\r\nkubernetes.container_name=\"$container\",\r\nstream=\"stderr\"\r\n}\r\nkubernetes.container_id:in($id_query)\r\n| drop file, ingest_timestamp, _stream_id, kubernetes.container_image_id, kubernetes.namespace_labels.kubernetes.io/metadata.name, kubernetes.namespace_labels.pod-security.kubernetes.io/enforce, kubernetes.pod_annotations.kubectl.kubernetes.io/default-container, kubernetes.pod_labels.controller-revision-hash, kubernetes.pod_labels.app.kubernetes.io/instance, kubernetes.pod_labels.app.kubernetes.io/managed-by, kubernetes.pod_labels.apps.kubernetes.io/pod-index, kubernetes.pod_labels.app.kubernetes.io/name, kubernetes.pod_labels.app.kubernetes.io/version, kubernetes.pod_labels.statefulset.kubernetes.io/pod-name, kubernetes.pod_owner, source_type",
+          "expr": "{\r\nkubernetes.pod_namespace=\"$namespace\",\r\nkubernetes.pod_name=\"$pod\",\r\nkubernetes.container_name=\"$container\",\r\nstream=\"stderr\"\r\n}\r\nkubernetes.container_id:in($id_query)\r\n| drop file, ingest_timestamp, _stream_id, kubernetes.container_image_id, kubernetes.namespace_labels.kubernetes.io/metadata.name, kubernetes.namespace_labels.pod-security.kubernetes.io/enforce, kubernetes.pod_annotations.kubectl.kubernetes.io/default-container, kubernetes.pod_labels.controller-revision-hash, kubernetes.pod_labels.app.kubernetes.io/instance, kubernetes.pod_labels.app.kubernetes.io/managed-by, kubernetes.pod_labels.apps.kubernetes.io/pod-index, kubernetes.pod_labels.app.kubernetes.io/name, kubernetes.pod_labels.app.kubernetes.io/version, kubernetes.pod_labels.statefulset.kubernetes.io/pod-name, kubernetes.pod_owner, source_type, kubernetes.pod_annotations.cnpg.io/podSpec",
           "legendFormat": "",
           "queryType": "instant",
           "refId": "logs"
@@ -324,17 +324,17 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(label_join(last_over_time(namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", workload=~\"$workload\"}[$__range]) * on(cluster, namespace, pod, uid) group_left() max by(cluster, namespace, pod, uid) (last_over_time(kube_pod_container_status_ready{cluster=\"$cluster\", namespace=\"$namespace\"}[$__range])) * on(cluster, namespace, pod, uid) group_left(node) max by(cluster, namespace, pod, uid, node) (last_over_time(kube_pod_info{cluster=\"$cluster\", namespace=\"$namespace\"}[$__range])), \"human_name\", \"/\", \"node\", \"pod\"))",
+        "definition": "query_result(last_over_time(namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", workload=~\"$workload\"}[$__range]) * on(cluster, namespace, pod, uid) group_left() max by(cluster, namespace, pod, uid) (last_over_time(kube_pod_container_status_ready{cluster=\"$cluster\", namespace=\"$namespace\"}[$__range])))",
         "label": "pod",
         "name": "pod",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(label_join(last_over_time(namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", workload=~\"$workload\"}[$__range]) * on(cluster, namespace, pod, uid) group_left() max by(cluster, namespace, pod, uid) (last_over_time(kube_pod_container_status_ready{cluster=\"$cluster\", namespace=\"$namespace\"}[$__range])) * on(cluster, namespace, pod, uid) group_left(node) max by(cluster, namespace, pod, uid, node) (last_over_time(kube_pod_info{cluster=\"$cluster\", namespace=\"$namespace\"}[$__range])), \"human_name\", \"/\", \"node\", \"pod\"))",
+          "query": "query_result(last_over_time(namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", workload=~\"$workload\"}[$__range]) * on(cluster, namespace, pod, uid) group_left() max by(cluster, namespace, pod, uid) (last_over_time(kube_pod_container_status_ready{cluster=\"$cluster\", namespace=\"$namespace\"}[$__range])))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
-        "regex": "/human_name=\"(?<text>[^\"]+)|pod=\"(?<value>[^\"]+)/g",
+        "regex": "/pod=\"(?<text>[^\"]+)|pod=\"(?<value>[^\"]+)/g",
         "sort": 1,
         "type": "query"
       },
