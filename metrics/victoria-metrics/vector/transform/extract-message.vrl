@@ -1,0 +1,18 @@
+
+if starts_with(string(.kubernetes.pod_owner) ?? "", "Cluster/") && exists(.log.msg) && .log.msg == "record" && exists(.log.record) {
+  # handle CNPG logs
+  # example: {"level":"info","ts":"2025-05-13T22:03:25.01250595Z","logger":"postgres","msg":"record","logging_pod":"nextcloud-cnpg-2","record":{"log_time":"2025-05-13 22:03:25.012 UTC","process_id":"39","session_id":"6823905f.27","session_line_num":"127","session_start_time":"2025-05-13 18:33:03 UTC","transaction_id":"0","error_severity":"LOG","sql_state_code":"00000","message":"restartpoint starting: time","backend_type":"checkpointer","query_id":"0"}}
+  if exists(.log.record.message) && is_string(.log.record.message) && exists(.log.record.detail) && is_string(.log.record.detail) {
+    .message = string!(.log.record.message) + ": " + string!(.log.record.detail)
+  } else if exists(.log.record.message) {
+    .message = .log.record.message
+  } else {
+    .message = .log.record
+  }
+} else if exists(.log.message) {
+  .message = .log.message
+} else if exists(.log.msg) {
+  .message = .log.msg
+} else {
+  .message = .original_message
+}
