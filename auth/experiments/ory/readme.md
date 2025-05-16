@@ -4,6 +4,8 @@
 References:
 - https://www.ory.sh/docs/hydra/self-hosted/install#kubernetes
 
+Too difficult to setup. Documentation is very-very bad.
+
 # Generate config
 
 You only need to do this when updating the app.

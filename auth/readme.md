@@ -4,34 +4,36 @@
 References:
 - https://www.reddit.com/r/homelab/comments/1fm01bj/the_impossible_quest_to_single_signon/
 
-| Area                   | Authelia | Authentik | Casdoor  | Kanidm  | Keycloak  | Zitadel  |
-| ---------------------- | -------- | --------- | -------- | ------- | --------- | -------- |
-| Resource Usage         | ✅ 27MB | ❌ 900MB  | ✅ 32MB | ✅ 17MB | ❌ 760MB | 🟠 124MB |
-| LDAP / AD              | ✅      | ✅        | ✅      | 🟠 1    | ✅       | 🟠 2     |
-| Design                 | ✅      | ❌        | ✅      | ✅      | ✅       | ✅       |
-| Passkey / Webauthn     | ❌ 5    | ✅        | ✅      | ✅      | 🟠 3     | 🟠 2     |
-| AD Groups              | ✅      | ✅        | ❌      | ❌      | ✅ 4     | ✅       |
-| RFC8628 (Device Grant) | 🟠      | ✅        | ❌      | ❌      | ✅       | ✅       |
+| Area                   | Authelia | Authentik  | Casdoor  | Kanidm  | Keycloak  | Zitadel    |
+| ---------------------- | -------- | ---------- | -------- | ------- | --------- | ---------- |
+| Resource Usage         | ✅ 27MB | ❌ 900MB   | ✅ 32MB | ✅ 17MB | ❌ 760MB | 🟠 124MB   |
+| LDAP / AD              | ✅      | ✅         | ✅      | 🟠 1    | ✅       | 🟠 2       |
+| Design                 | ✅      | ❌         | ✅      | ✅      | ✅       | ✅         |
+| Passkey / Webauthn     | ✅      | ✅         | ✅      | ✅      | 🟠 3     | 🟠 2       |
+| AD Groups              | ✅      | ✅         | ❌      | ❌      | ✅ 4     | ✅         |
+| RFC8628 (Device Grant) | 🟠      | ✅         | ✅      | ❌      | ✅       | ✅         |
+| High availability      | 🟠6     | ✅Postgres | ?       | 🟠7     | ?         | ✅Postgres |
 
 1. LDAP server has to support Ldap Sync, and in any case the password from the directory won't be used.
 2. Passkey currently cannot be used with external identity providers like Active Directory
 3. You can implement Passkey in the authentication flow,
-   but you can't implement a logic that would let the user login 
-   with password if no passkey has been defined yet.
-   It's Passkey only, or password only, or both, but not password IF no-passkey-defined
+  but you can't implement a logic that would let the user login 
+  with password if no passkey has been defined yet.
+  It's Passkey only, or password only, or both, but not password IF no-passkey-defined
 4. Authentication based on Client can be done with a third party provider
-5. Passkey is coming with the next major release
+6. Authelia is stateless. I uses postgres for metadata. But you also need LDAP backend with HA support,
+  and it doesn't seem like there there are many available. KaniDM can be used with replication setup, but it has its own issues.
+7. KaniDM does't have a cluster mode. It does have replication with eventual consistency.
 
 Additional notes:
 - Casdoor has very bad support on its github
 - KaniDM: request for Device Grant: https://github.com/kanidm/kanidm/issues/1523
 - - Apparently, it has low priority for them
+- KaniDM: does not support plain HTTP between ingress and server
 - Authentik: request for QR code auth: https://github.com/goauthentik/authentik/issues/9883
 - - No attention from developers
 - Authelia: Device Grant was added in Beta-7: https://www.authelia.com/roadmap/active/openid-connect-1.0-provider/#beta-7
 - - I can't find any info on how to use it in the docs
-- Casdoor: request for Device Grant: https://github.com/casdoor/casdoor/issues/3639
-- - No attention from developers
 
 # Comparison from 
 

@@ -3,6 +3,10 @@
 
 Current version seems to have a memory leak.
 
+References:
+- https://github.com/zitadel/zitadel
+- https://zitadel.com/docs/self-hosting/deploy/kubernetes
+
 # Generate config
 
 You only need to do this when updating the app.

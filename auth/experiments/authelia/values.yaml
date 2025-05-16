@@ -1,0 +1,88 @@
+---
+
+## Kubernetes Version Override allows forcibly overriding the detected KubeVersion for fallback capabilities assessment.
+## The fallback capabilities assessment only occurs if the APIVersions Capabilities list does not include a known
+## APIVersion for a manifest which occurs with some CI/CD tooling. This value will completely override the value
+## detected by helm.
+kubeVersionOverride: ''
+
+## Kubernetes DNS Domain Override allows forcibly overriding the default DNS Domain for Kubernetes 'cluster.local'.
+kubeDNSDomainOverride: ''
+
+# nameOverride: 'authelia-deployment-name'
+# appNameOverride: 'authelia'
+
+rbac:
+  enabled: false
+  serviceAccountName: 'authelia'
+
+service:
+  type: ClusterIP
+  port: 80
+
+pod:
+  # Must be Deployment, DaemonSet, or StatefulSet.
+  kind: Deployment
+  annotations: {}
+  labels: {}
+  command: []
+  args: []
+
+  replicas: 1
+
+  resources:
+    limits: {}
+    # limits:
+    #   cpu: '4.00'
+    #   memory: '125Mi'
+    requests: {}
+    # requests:
+    #   cpu: '0.25'
+    #   memory: '50Mi'
+
+configMap:
+  # Enable the configMap source for the Authelia config.
+  # If this is false you need to provide a volumeMount via PV/PVC or other means that mounts to /config.
+  disabled: false
+
+  key: 'configuration.yaml'
+
+  existingConfigMap: authelia
+
+  extraConfigs: []
+  # extraConfigs:
+  # - '/configuration.oidc.yaml'
+
+  filters:
+    disabled: false
+
+  server:
+    port: 9091
+
+  telemetry:
+    metrics:
+      ## Enable Metrics.
+      enabled: true
+      serviceMonitor:
+        enabled: false
+        annotations: {}
+        labels: {}
+
+secret:
+  disabled: false
+  existingSecret: authelia
+  mountPath: '/secrets'
+
+  ## additionalSecrets contains a list of additional secrets to mount.
+  ## They will all be mounted in the format of '/{mountPath}/{key}' where the '{mountPath}' is the value above and
+  ## '{key}' is the key from the dictionary below (in our example we named it 'example'). If the items are specified
+  ## then those options will be rendered in the volumes spec. See 'example-without-items' for an example that doesn't
+  ## specify this.
+  ##
+  additionalSecrets: {}
+  # additionalSecrets:
+  #   example:
+  #     items:
+  #       - key: 'key-example'
+  #         path: 'path-example'
+  #   example-without-items: {}
