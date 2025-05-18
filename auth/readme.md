@@ -13,6 +13,7 @@ References:
 | AD Groups              | ✅      | ✅         | ❌      | ❌      | ✅ 4     | ✅         |
 | RFC8628 (Device Grant) | 🟠      | ✅         | ✅      | ❌      | ✅       | ✅         |
 | High availability      | 🟠6     | ✅Postgres | ?       | 🟠7     | ?         | ✅Postgres |
+| Custom claims          | ?       | ✅         | ❌8     | ?        | ?         | ❌        |
 
 1. LDAP server has to support Ldap Sync, and in any case the password from the directory won't be used.
 2. Passkey currently cannot be used with external identity providers like Active Directory
@@ -24,6 +25,7 @@ References:
 6. Authelia is stateless. I uses postgres for metadata. But you also need LDAP backend with HA support,
   and it doesn't seem like there there are many available. KaniDM can be used with replication setup, but it has its own issues.
 7. KaniDM does't have a cluster mode. It does have replication with eventual consistency.
+8. https://github.com/casdoor/casdoor/issues/3617
 
 Additional notes:
 - Casdoor has very bad support on its github
