@@ -7,9 +7,14 @@ Use example as a starting point.
 ```bash
 
 mkdir -p ./k8s-core/docs/env/
+# use example config as a reference,
+# customize it for your environment
 cp ./k8s-core/docs/auth-config-example.yaml ./k8s-core/docs/env/auth-config.yaml
 
 ```
+
+Documentation about file configuration:
+https://kubernetes.io/docs/reference/access-authn-authz/authentication/#using-authentication-configuration
 
 # Copy config to master nodes
 
@@ -33,24 +38,30 @@ Entry `reloaded authentication config` means successful config reload.
 # OIDC login in kubectl
 
 Before running this, create OIDC application.
-Make sure that it has `offline_access` claim access.
+Make sure that `offline_access` claim is allowed,
+or you will need to manually re-authenticate when initial token expires.
 
 ```bash
 
 kl krew install oidc-login
+kl krew upgrade oidc-login
 
-# use base issuer URL, without /.well-known/ part
-issuer_url=https://auth.example.com/application/o/app/
+# use base issuer URL, without /.well-known/... part
+issuer_url=https://auth.example.com/token/
 client_id=
+# optional, only set when provider requires it
+client_secret=6583367cc16b0f7d3fb8d9671048f53ad1eaee4c
 
 # test that connection parameters are correct
-kl oidc-login setup --oidc-issuer-url=$issuer_url --oidc-client-id=$client_id --oidc-extra-scope=offline_access --skip-open-browser --grant-type=device-code
+kl oidc-login setup --oidc-issuer-url $issuer_url --oidc-client-id $client_id --oidc-extra-scope offline_access --skip-open-browser --grant-type device-code
+# in case your provider uses setup for confidential client, add client secret param
+kl oidc-login setup --oidc-issuer-url $issuer_url --oidc-client-id $client_id --oidc-extra-scope offline_access --skip-open-browser --grant-type device-code --oidc-client-secret $client_secret
 
 # `oidc-login setup` will print out commands to alter your current kubeconfig.
 # Alternatively, you can alter it manually.
 # Add a new user to `users` section:
 
-# this username is only for client side
+# this username is only for the client side
 username=oidc
 
 cat << EOF
@@ -76,7 +87,7 @@ EOF
 ```
 
 Note that even after you set up authentication (user is verified by the cluster),
-you may need additional authorization setup (user is allowed to do things):
+you will most likely need additional authorization setup (user is allowed to do things):
 
 ```bash
 
@@ -86,7 +97,7 @@ kl create clusterrolebinding oidc-cluster-admin --clusterrole cluster-admin --us
 
 ```
 
-You may want to check current token contents:
+# Check current token contents:
 
 ```bash
 
@@ -105,17 +116,45 @@ jq .id_token -r ~/.kube/cache/oidc-login/2a873c56504aaa8ba00a4f6dfcc252dde71566f
 
 ```bash
 
-issuer_url=https://auth.example.com/application/o/app/
+# =========== public clients (without client secret) ===========
+
+issuer_url=https://auth.example.com/token/
 client_id=
 
+discovery_info=$(curl -sS $issuer_url/.well-known/openid-configuration)
+device_endpoint=$(echo $discovery_info | jq .device_authorization_endpoint -r)
+token_endpoint=$(echo $discovery_info | jq .token_endpoint -r)
+
 # request device node token
-curl -d "client_id=qwe123&scope=offline_access+openid" -X POST $issuer_url/oauth/v2/device_authorization
+request_info=$(curl -sS --data-urlencode client_id=$client_id --data-urlencode "scope=offline_access openid" -X POST $device_endpoint)
+# some applications provide verification_uri_complete, some require user to manually type user_code at verification_uri page, and some provide the complete value in verification_uri
+echo $request_info | jq
 # open the supplied link and confirm the access
 # after access is granted, obtain access token and refresh token
-curl -d "client_id=qwe123&device_code=QhQ4uY6xyXMKvWtnb0aZ8g&grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Adevice_code" -X POST $issuer_url/oauth/v2/token
+device_code=$(echo $request_info | jq .device_code -r)
+token=$(curl -sS --data-urlencode client_id=${client_id} --data-urlencode client_secret=$client_secret --data-urlencode grant_type=urn:ietf:params:oauth:grant-type:device_code --data-urlencode device_code=$device_code -X POST $token_endpoint)
+echo $token | jq
 # extract refresh token
-refresh_token=
+refresh_token=$(echo $token | jq .refresh_token -r)
 # try to refresh access token
-curl -d "client_id=qwe123&grant_type=refresh_token&refresh_token=$refresh_token&scope=offline_access+openid" -X POST $issuer_url/oauth/v2/token
+curl -sS --data-urlencode client_id=$client_id --data-urlencode grant_type=refresh_token --data-urlencode refresh_token=$refresh_token --data-urlencode "scope=offline_access openid" -X POST $token_endpoint | jq
+
+# =========== confidential clients (using client secret) ===========
+
+issuer_url=https://auth.example.com/token/
+client_id=
+client_secret=
+
+discovery_info=$(curl -sS $issuer_url/.well-known/openid-configuration)
+device_endpoint=$(echo $discovery_info | jq .device_authorization_endpoint -r)
+token_endpoint=$(echo $discovery_info | jq .token_endpoint -r)
+
+request_info=$(curl -sS -u "$client_id:$client_secret" --data-urlencode "scope=offline_access openid" -X POST $device_endpoint)
+echo $request_info | jq
+device_code=$(echo $request_info | jq .device_code -r)
+token=$(curl -sS -u "$client_id:$client_secret" --data-urlencode grant_type=urn:ietf:params:oauth:grant-type:device_code --data-urlencode device_code=$device_code -X POST $token_endpoint)
+echo $token | jq
+refresh_token=$(echo $token | jq .refresh_token -r)
+curl -sS -u "$client_id:$client_secret" --data-urlencode grant_type=refresh_token --data-urlencode refresh_token=$refresh_token --data-urlencode "scope=offline_access openid" -X POST $token_endpoint | jq
 
 ```

@@ -3,10 +3,12 @@ apiVersion: apiserver.config.k8s.io/v1beta1
 kind: AuthenticationConfiguration
 jwt:
 - issuer:
-    # url must be unique across all authenticators.
-    # url must not conflict with issuer configured in --service-account-issuer.
+    # url is used as a name, it must be unique across all authenticators
+    # it also must match value returned by discoveryURL
     url: https://auth.example.com/application/o/app/
-    discoveryURL: https://auth.example.com/application/o/app/.well-known/openid-configuration
+    # by default, discoveryURL is url + '/.well-known/openid-configuration'
+    # but you can customize it if your oidc provider uses a different scheme
+    # discoveryURL: https://auth.example.com/application/o/app/.well-known/openid-configuration
     audiences:
     # client-id
     - uroZ7IV5HyJs2aJ2AihcBOno1
@@ -40,7 +42,7 @@ jwt:
       # expression: 'claims.username + ":external-user"'
     groups:
       claim: sub
-      prefix: ""
+      prefix: "authentik:"
       # Mutually exclusive with groups.claim and groups.prefix.
       # expression is a CEL expression that evaluates to a string or a list of strings.
       # expression: 'claims.roles.split(",")'
@@ -52,8 +54,12 @@ jwt:
   userValidationRules:
     # expression is a CEL expression that evaluates to a boolean.
     # all the expressions must evaluate to true for the user to be valid.
-  - expression: "!user.username.startsWith('system:')"
-    # Message customizes the error message seen in the API server logs when the validation fails.
-    message: 'username cannot used reserved system: prefix'
-  - expression: "user.groups.all(group, !group.startsWith('system:'))"
-    message: 'groups cannot used reserved system: prefix'
+  - expression: >-
+      !user.username.startsWith('system:')
+    # Message customizes the error message seen in the API server logs when the validation fails
+    message: >-
+      username cannot used reserved system: prefix
+  - expression: >-
+      user.groups.all(group, !group.startsWith('system:'))
+    message: >-
+      groups cannot used reserved system: prefix
