@@ -6,8 +6,9 @@ metadata:
   annotations:
     cert-manager.io/inject-ca-from: pod-name-wh/webhook
 webhooks:
-- name: pod-name.meoe.io
-  admissionReviewVersions: ["v1"]
+# bootstrap uses failurePolicy=Ignore to avoid blocking critical pods when pod-name webhook is not available
+- name: bootstrap.pod-name.meoe.io
+  admissionReviewVersions: [ "v1" ]
   clientConfig:
     service:
       name: pod-name-wh
@@ -15,14 +16,54 @@ webhooks:
       path: /mutate-pod
       port: 443
   rules:
-  - operations: ["CREATE"]
-    apiGroups: [""]
-    apiVersions: ["v1"]
-    resources: ["pods"]
+  - operations: [ "CREATE" ]
+    apiGroups: [ "" ]
+    apiVersions: [ "v1" ]
+    resources: [ "pods" ]
     scope: Namespaced
   objectSelector:
     matchLabels:
       pod-name.meoe.io/mutate: enable
+  namespaceSelector:
+    matchExpressions:
+    - key: pod-name.meoe.io/policy
+      operator: In
+      values:
+      - ignore
+      - Ignore
   sideEffects: None
-  # failurePolicy: Ignore
+  timeoutSeconds: 1
+  failurePolicy: Ignore
+- name: general.pod-name.meoe.io
+  admissionReviewVersions: [ "v1" ]
+  clientConfig:
+    service:
+      name: pod-name-wh
+      namespace: pod-name-wh
+      path: /mutate-pod
+      port: 443
+  rules:
+  - operations: [ "CREATE" ]
+    apiGroups: [ "" ]
+    apiVersions: [ "v1" ]
+    resources: [ "pods" ]
+    scope: Namespaced
+  objectSelector:
+    matchLabels:
+      pod-name.meoe.io/mutate: enable
+    # extra precaution to avoid locking control plane pods behind potentially unschedulable webhook
+    matchExpressions:
+    - key: tier
+      operator: NotIn
+      values:
+      - control-plane
+  namespaceSelector:
+    matchExpressions:
+    - key: pod-name.meoe.io/policy
+      operator: NotIn
+      values:
+      - ignore
+      - Ignore
+  sideEffects: None
+  timeoutSeconds: 1
   failurePolicy: Fail

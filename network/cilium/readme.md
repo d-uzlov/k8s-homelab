@@ -55,6 +55,8 @@ control_plane_endpoint=cp.k8s.lan
 EOF
 
 kl create ns cilium
+kl label ns cilium pod-security.kubernetes.io/enforce=privileged
+kl label ns cilium pod-name.meoe.io/policy=ignore
 kl create ns cilium-secrets
 
 kl -n cilium apply -f ./network/network-policies/deny-ingress.yaml
