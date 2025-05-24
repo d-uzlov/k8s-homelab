@@ -21,30 +21,67 @@ resources:
     cpu: 50m
     memory: 512Mi
 
+ipv4:
+  enabled: true
+ipv6:
+  # enabling requires nodes to have ipv6 address
+  enabled: false
+
 # native or tunnel
 routingMode: native
 # geneve or vxlan
 # vxlan doesn't support DSR
 tunnelProtocol: geneve
-# set to your cluster CIDR
+
 # https://docs.cilium.io/en/latest/network/concepts/masquerading/
-ipv4NativeRoutingCIDR: 10.201.0.0/16
-autoDirectNodeRoutes: true
+enableIPv4Masquerade: false
+enableIPv6Masquerade: false
+# when masquerading is enabled, ipv4NativeRoutingCIDR disables it for packets sent into specified cidr
+# ipv4NativeRoutingCIDR: 10.201.0.0/16
+
+# required when pod CIDR doesn't match node network CIDR
+# autoDirectNodeRoutes: true
 ipam:
-  mode: kubernetes
+  # mode: kubernetes
+  mode: multi-pool
 k8s:
-  requireIPv4PodCIDR: true
+  requireIPv4PodCIDR: false
+
+endpointRoutes:
+  # creates a /32 or /128 route for each pod
+  # when this is disabled, a single route for node CIDR is created instead
+  # required when using multi-pool ipam because in this case node doesn't have a static CIDR
+  enabled: true
+
+enableIPv4BIGTCP: true
+enableIPv6BIGTCP: true
 
 # automatic MTU detection seems to be working fine for me
 # MTU: 1500
 bpf:
-  masquerade: true
+  # use bpf masquerade instead of linux kernel masquerade
+  # must be disabled when masquerade is not used
+  masquerade: false
   # netkit requirements: Kernel >= 6.8, eBPF host-routing
   datapathMode: netkit
+  lbExternalClusterIP: true
+  # -- (float64) Configure auto-sizing for all BPF maps based on available memory.
+  # ref: https://docs.cilium.io/en/stable/network/ebpf/maps/
+  # @default -- `0.0025`
+  mapDynamicSizeRatio: ~
+  # allocate bpf maps per core instead of per-system
+  # size of each map will decrease according to amount of cores
+  # you can adjust mapDynamicSizeRatio if this is an issue
+  distributedLRU:
+    enabled: true
+bpfClockProbe: true
+installNoConntrackIptablesRules: true
+
 encryption:
-  enabled: false
+  # encryption is slow
   # https://github.com/cilium/cilium/issues/28413
   # also see test/iperf3 folder in this repo
+  enabled: false
   type: wireguard
 
 endpointLockdownOnMapOverflow: true
@@ -75,22 +112,29 @@ envoy:
   # this options decouples it into separate pods
   enabled: true
 l2podAnnouncements:
-  enabled: false
-  interface: eth0
+  # Gratuitous ARP only, you still need proxy_arp to allow connectivity
+  enabled: true
+  # interface: eth1
+  interfacePattern: ^eth.*$
 pmtuDiscovery:
   enabled: true
-# required for l2announcements for .spec.externalIPs
 externalIPs:
+  # when l2 announcements are enabled:
+  # announce values from Service.spec.externalIPs
   enabled: true
 
 loadBalancer:
+  algorithm: maglev
   # mode=snat uses SNAT for services with `externalTrafficPolicy=Cluster`
   # mode=dsr disables SNAT (preserves client IP) but reduces MTU for UDP traffic
   # mode=hybrid disables SNAT for TCP but keeps it for UDP
   mode: dsr
   # opt, ipip, geneve, default opt
   dsrDispatch: opt
-  # acceleration: best-effort
+  acceleration: best-effort
+  # -- experimental enables support for the experimental load-balancing
+  # control-plane.
+  experimental: true
 
 gatewayAPI:
   # This will automatically set enable-envoy-config as well.
