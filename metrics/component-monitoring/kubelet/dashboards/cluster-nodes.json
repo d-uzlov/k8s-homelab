@@ -382,6 +382,90 @@
                 "value": 112
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "RSS from pods"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 115
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mem Request"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 110
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mem Avail"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 87
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CPU Req"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 93
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mem node"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 90
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CPU Avail"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 87
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Pod max"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 77
+              }
+            ]
           }
         ]
       },
@@ -434,7 +518,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by(node) (max_over_time(node_namespace:container_cpu_usage_seconds:irate{cluster=\"$cluster\", node=~\"$node\"}[$__range]))",
+          "expr": "sum by(node) (avg_over_time(node_namespace:container_cpu_usage_seconds:irate{cluster=\"$cluster\", node=~\"$node\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -456,6 +540,21 @@
           "legendFormat": "__auto",
           "range": false,
           "refId": "cpu_request"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "sum by (node) (last_over_time(kube_node_status_allocatable{cluster=\"$cluster\", node=~\"$node\", resource=\"cpu\"}[$__range]))",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "cpu_allocatable"
         },
         {
           "datasource": {
@@ -486,6 +585,36 @@
           "legendFormat": "__auto",
           "range": false,
           "refId": "memory_request"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "sum by (node) (last_over_time(kube_node_status_allocatable{cluster=\"$cluster\", node=~\"$node\", resource=\"memory\"}[$__range]))",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "memory_allocatable"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "sum by (node) (label_replace(last_over_time(node_memory_MemTotal_bytes{cluster=\"$cluster\", instance=~\"$node\"}[$__range]), \"node\", \"$1\", \"instance\", \"(.*)\"))",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "memory_node"
         },
         {
           "datasource": {
@@ -539,6 +668,21 @@
           },
           "editorMode": "code",
           "exemplar": false,
+          "expr": "sum by (node) (last_over_time(kube_node_status_allocatable{cluster=\"$cluster\", node=~\"$node\", resource=\"pods\"}[$__range]))",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "pod_max"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
           "expr": "round(\r\n    sum by (node) (\r\n        last_over_time(kube_node_created:last_seen{cluster=\"$cluster\", node=~\"$node\"}[$__range])\r\n    )\r\n    -\r\n    sum by (node) (\r\n        label_replace(last_over_time(node_boot_time_seconds{cluster=\"$cluster\", instance=~\"$node\"}[$__range]), \"node\", \"$1\", \"instance\", \"(.*)\")\r\n    )\r\n)",
           "format": "table",
           "hide": false,
@@ -574,30 +718,38 @@
             "includeByName": {},
             "indexByName": {
               "Time 1": 0,
+              "Time 10": 29,
+              "Time 11": 30,
+              "Time 12": 31,
+              "Time 13": 32,
               "Time 2": 1,
-              "Time 3": 17,
-              "Time 4": 18,
-              "Time 5": 19,
-              "Time 6": 20,
-              "Time 7": 21,
-              "Time 8": 23,
-              "Time 9": 24,
+              "Time 3": 21,
+              "Time 4": 22,
+              "Time 5": 23,
+              "Time 6": 24,
+              "Time 7": 25,
+              "Time 8": 27,
+              "Time 9": 28,
               "Value #ago": 3,
-              "Value #cpu_request": 8,
-              "Value #cpu_usage": 7,
+              "Value #cpu_allocatable": 10,
+              "Value #cpu_request": 9,
+              "Value #cpu_usage": 8,
               "Value #created": 2,
-              "Value #memory_request": 10,
-              "Value #memory_rss": 9,
-              "Value #nodes": 22,
+              "Value #memory_allocatable": 13,
+              "Value #memory_node": 14,
+              "Value #memory_request": 12,
+              "Value #memory_rss": 11,
+              "Value #nodes": 26,
               "Value #online": 4,
+              "Value #pod_max": 7,
               "Value #pods": 6,
-              "internal_ip": 14,
-              "kernel_version": 12,
-              "kubelet_version": 11,
+              "internal_ip": 18,
+              "kernel_version": 16,
+              "kubelet_version": 15,
               "node": 5,
-              "os_image": 13,
-              "pod_cidr": 15,
-              "system_uuid": 16
+              "os_image": 17,
+              "pod_cidr": 19,
+              "system_uuid": 20
             },
             "renameByName": {
               "Time 2": "",
@@ -610,12 +762,16 @@
               "Value #F": "CPU Limits",
               "Value #G": "CPU Limits %",
               "Value #ago": "Seen ago",
-              "Value #cpu_request": "CPU Request",
+              "Value #cpu_allocatable": "CPU Avail",
+              "Value #cpu_request": "CPU Req",
               "Value #cpu_usage": "CPU Usage",
               "Value #created": "First seen",
-              "Value #memory_request": "Memory Request",
-              "Value #memory_rss": "Memory RSS",
+              "Value #memory_allocatable": "Mem Avail",
+              "Value #memory_node": "Mem node",
+              "Value #memory_request": "Mem Request",
+              "Value #memory_rss": "RSS from pods",
               "Value #online": "Online",
+              "Value #pod_max": "Pod max",
               "Value #pods": "Pods",
               "internal_ip": "Internal IP",
               "kernel_version": "Kernel",
