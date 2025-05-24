@@ -3,6 +3,54 @@
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
+  name: alert-ksm-pod-owner
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  groups:
+  - name: kubelet-k8s-pod-owner
+    rules:
+    - alert: UnknownControllerType
+      annotations:
+        description: >-
+          {{ $labels.namespace }}/{{ $labels.pod }}:
+          {{ $labels.owner_kind }}
+        summary: kube_pod_owner{owner_kind} has unknown value
+      expr: |-
+        kube_pod_owner{
+          # empty means pod is created manually
+          owner_kind!="",
+          owner_kind!="DaemonSet",
+          owner_kind!="Job",
+          # node means static pod
+          owner_kind!="Node",
+          owner_kind!="ReplicaSet",
+          owner_kind!="StatefulSet",
+          # Cluster is CNPG postgres cluster
+          owner_kind!="Cluster",
+          # OpenKruise controllers
+          owner_kind!="BroadcastJob",
+        }
+      labels:
+        severity: warning
+    - alert: PodWithoutController
+      annotations:
+        description: >-
+          {{ $labels.namespace }}/{{ $labels.pod }}
+        summary: Pod without controller has been running for 24 hours
+      expr: |-
+        kube_pod_owner{owner_kind=""}
+      # manually created pods are fine for short testing,
+      # so let's delay this warning
+      for: 24h
+      labels:
+        severity: warning
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
   name: alert-ksm-kube-app-status
   labels:
     prometheus.io/instance: main

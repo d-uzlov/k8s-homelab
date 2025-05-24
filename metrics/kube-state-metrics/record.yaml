@@ -117,6 +117,16 @@ spec:
         workload_type: cnpg
     - record: namespace_workload_pod:kube_pod_owner:relabel
       expr: |-
+        max by (cluster_type, cluster, namespace, workload, pod, uid) (
+          label_replace(
+            kube_pod_owner{owner_kind="BroadcastJob"},
+            "workload", "$1", "owner_name", "(.*)"
+          )
+        )
+      labels:
+        workload_type: broadcast-job
+    - record: namespace_workload_pod:kube_pod_owner:relabel
+      expr: |-
         max by (cluster_type, cluster, node, namespace, workload, pod, uid) (
           kube_pod_owner{owner_kind=""}
         )
