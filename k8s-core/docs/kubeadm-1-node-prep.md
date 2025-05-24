@@ -3,23 +3,6 @@
 
 This file describes how to prepare Linux nodes for kubeadm.
 
-# Fix inotify limits
-
-```bash
-
-cat /etc/sysctl.d/inotify.conf
-
-sudo tee /etc/sysctl.d/inotify.conf << EOF
-fs.inotify.max_user_watches = 4194304
-fs.inotify.max_user_instances = 65536
-EOF
-# reload rules from /etc/sysctl.d
-sudo sysctl --system
-# check new values
-sudo sysctl fs.inotify
-
-```
-
 # Use up-to-date kernel
 
 By default Debian 12 uses kernel `6.1.0-18-amd64`, which is a bit outdated.
@@ -60,9 +43,9 @@ of just rebuild the containerd binaries yourself.
 # https://github.com/containerd/containerd/releases
 # https://github.com/d-uzlov/containerd/releases
 
-containerd_version=2.0.4m
-# containerd_url=https://github.com/containerd/containerd/releases/download/v$containerd_version/containerd-$containerd_version-linux-amd64.tar.gz
-containerd_url=https://github.com/d-uzlov/containerd/releases/download/release-$containerd_version/containerd-$containerd_version-linux-amd64.tar.gz
+containerd_version=2.1.1
+containerd_url=https://github.com/containerd/containerd/releases/download/v$containerd_version/containerd-$containerd_version-linux-amd64.tar.gz
+# containerd_url=https://github.com/d-uzlov/containerd/releases/download/release-$containerd_version/containerd-$containerd_version-linux-amd64.tar.gz
 wget $containerd_url &&
 sudo tar Czxvf /usr/local containerd-$containerd_version-linux-amd64.tar.gz &&
 rm containerd-$containerd_version-linux-amd64.tar.gz &&
@@ -107,28 +90,6 @@ sudo systemctl status containerd --no-pager
 
 ```
 
-# Setup shutdown commands for k8s
-
-Default `shutdown` and `reboot` commands don't allow for k8s graceful shutdown.
-
-TODO reboot and shutdown are overwritten on apt update, but it seems to work fine in the new versions?
-
-```bash
-
-sudo rm /usr/sbin/shutdown &&
-sudo tee /usr/sbin/shutdown << EOF && sudo chmod 755 /usr/sbin/shutdown
-#!/bin/bash
-exec systemctl poweroff
-EOF
-
-sudo rm /usr/sbin/reboot &&
-sudo tee /usr/sbin/reboot << EOF && sudo chmod 755 /usr/sbin/reboot
-#!/bin/bash
-exec systemctl reboot
-EOF
-
-```
-
 # System config for k8s
 
 ```bash
@@ -140,14 +101,6 @@ EOF
   sudo systemctl mask swap.img.swap
   sudo sed -i '/ swap / s/^/#/' /etc/fstab
 }
-
-sudo tee /etc/sysctl.d/kubernetes.conf << EOF &&
-net.bridge.bridge-nf-call-ip6tables = 1
-net.bridge.bridge-nf-call-iptables = 1
-net.ipv4.ip_forward = 1
-EOF
-# reload rules from /etc/sysctl.d
-sudo sysctl --system
 
 ```
 

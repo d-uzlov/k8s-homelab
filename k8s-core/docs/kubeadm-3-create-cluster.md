@@ -120,6 +120,12 @@ kubectl --kubeconfig ./_env/"$control_plane_endpoint".yaml -n kube-system get cs
 # change to your CSR names
 kubectl --kubeconfig ./_env/"$control_plane_endpoint".yaml -n kube-system certificate approve csr-8dhw5 csr-wp6k6 csr-wqd9s csr-zjn49
 kubectl --kubeconfig ./_env/"$control_plane_endpoint".yaml -n kube-system logs -l component=kube-apiserver
+
+# run initial setup
+kubectl --kubeconfig ./_env/"$control_plane_endpoint".yaml apply -f ./k8s-core/docs/update-node-tools/initial-setup-ds-job.yaml
+# after you add all the nodes to your cluster delete the initial setup daemonset
+kubectl --kubeconfig ./_env/"$control_plane_endpoint".yaml delete ds initial-setup
+
 ```
 
 # Join additional nodes
