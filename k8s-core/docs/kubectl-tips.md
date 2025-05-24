@@ -179,3 +179,53 @@ done
 sudo kubeadm certs renew admin.conf
 
 ```
+
+# Test checkpoint API
+
+```bash
+
+sudo mkdir /etc/criu
+sudo nano /etc/criu/runc.conf
+# place a single line:
+# tcp-established
+
+crictl ps
+crictl inspect --output go-template --template '{{.status.id}}' a823881d867d1
+
+crictl checkpoint --export=/tmp/checkpoint.tar a823881d867d1420a79175cbae3fdaabbdefadbfcaa30cca3401b3c0cf4eb5d8
+
+kl apply -f - << EOF
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubelet-access
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubelet-access-binding
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: ServiceAccount
+  name: kubelet-access
+  namespace: default
+EOF
+
+# copy value from kl create token to 'token=' on the target system
+kl create token kubelet-access
+
+# ssh into the node running the pod you want
+namespace=
+pod_name=
+container_namer=
+token=""
+curl -X POST --insecure -H "Authorization: Bearer $token" https://localhost:10250/checkpoint/$namespace/$pod_name/$container_namer
+
+```
+
+Checkpointing has limitations:
+- It operates on containers. Pod context is lost (emptydir content, ip address, etc)
+- It can fail when hostPath mounts are used, at least with some types (`unsupported id 10547`)
