@@ -44,6 +44,7 @@ kl apply -k ./k8s-core/kyverno/crds/ --server-side
 
 kl create ns kyverno
 kl label ns kyverno pod-security.kubernetes.io/enforce=baseline
+kl label ns kyverno kubernetes.io/namespace-type=system-critical --overwrite
 
 kl apply -k ./k8s-core/kyverno/
 kl -n kyverno get pod -o wide

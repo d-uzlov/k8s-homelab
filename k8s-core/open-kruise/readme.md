@@ -77,6 +77,17 @@ yq '
   )
 ' ./k8s-core/open-kruise/env/open-kruise.gen.yaml > ./k8s-core/open-kruise/kruise.gen.yaml
 
+# by default openkruise has additional precautions for kube-system namespace but nothing else
+
+yq -i '
+  (
+    .webhooks[]
+    | select(.namespaceSelector)
+    | .namespaceSelector.matchExpressions
+  ) +=
+    [{"key":"kubernetes.io/namespace-type","operator":"NotIn","values":["system-critical"]}]
+' ./k8s-core/open-kruise/webhook.gen.yaml
+
 ```
 
 # Deploy
@@ -86,8 +97,11 @@ yq '
 kl apply -f ./k8s-core/open-kruise/crds.gen.yaml --server-side
 
 kl create ns kruise-system
+kl label ns kruise-system kubernetes.io/namespace-type=system-critical --overwrite
 kl label ns kruise-system pod-security.kubernetes.io/enforce=privileged --overwrite
 kl label ns kruise-system control-plane=openkruise --overwrite
+
+kl label ns kube-system kubernetes.io/namespace-type=system-critical --overwrite
 
 kl apply -k ./k8s-core/open-kruise/
 kl -n kruise-system get pod -o wide
