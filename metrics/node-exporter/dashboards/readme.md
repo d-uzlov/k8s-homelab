@@ -26,9 +26,3 @@ kl apply -k ./metrics/node-exporter/dashboards/
 ```bash
 kl delete -k ./metrics/node-exporter/dashboards/
 ```
-
-# Updating dashboards
-
-```bash
-
-```
