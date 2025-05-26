@@ -1,0 +1,68 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: alert-cgroup-burst
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  groups:
+  - name: cgroup-burst
+    rules:
+    - alert: CgroupBurstEventErrors
+      annotations:
+        description: >-
+          {{ $labels.instance }}:
+          {{ $value | humanize }}
+        summary: Got more than 2 error events in 1 minute
+      expr: |-
+        increase(cgroup_burst_k8s_watch_events_total{type="error"}[1m]) > 2
+      for: 10m
+      labels:
+        severity: warning
+    - alert: CgroupBurstMissingBookmarks
+      annotations:
+        description: >-
+          {{ $labels.instance }}:
+          {{ $value | humanize }}
+        summary: Received less than 3 bookmark events in 5 minutes
+      expr: |-
+        increase(cgroup_burst_k8s_watch_events_total{type="bookmark"}[5m]) < 3
+      for: 10m
+      labels:
+        severity: warning
+    - alert: CgroupBurstTooManyWatches
+      annotations:
+        description: >-
+          {{ $labels.instance }}:
+          {{ $value | humanize }}
+        summary: Created more than 3 watches in 1 minute
+      expr: |-
+        increase(cgroup_burst_k8s_watch_streams_total[1m]) > 3
+      for: 1m
+      labels:
+        severity: warning
+    - alert: CgroupBurstPodsWithoutAnnotation
+      annotations:
+        description: >-
+          {{ $labels.instance }}:
+          {{ $value | humanize }}
+        summary: Some pods with matching label don't specify burst annotation
+      expr: |-
+        cgroup_burst_pod_annotations_missing_total != 0
+      for: 1m
+      labels:
+        severity: warning
+    - alert: CgroupBurstPodsWithoutAnnotation
+      annotations:
+        description: >-
+          {{ $labels.instance }}:
+          {{ $value | humanize }}
+        summary: Some pods' annotations specify containers that don't exist
+      expr: |-
+        cgroup_burst_pod_annotations_unused_total != 0
+      for: 1m
+      labels:
+        severity: warning

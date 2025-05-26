@@ -26,12 +26,11 @@ kl create ns cgroup-burst
 # cgroup-burst needs access to hostPath volumes to access containerd directly
 kl label ns cgroup-burst pod-security.kubernetes.io/enforce=privileged
 
-kl apply -k ./k8s-core/cgroup-burst/
-
 # add label to all nodes that have compatible kernel
 node=
 kl label node $node cgroup.meoe.io/node=enable
 
+kl apply -k ./k8s-core/cgroup-burst/
 kl -n cgroup-burst get pod -o wide
 
 ```

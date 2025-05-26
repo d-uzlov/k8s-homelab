@@ -29,27 +29,23 @@ spec:
     matchLabels:
       app: cgroup-burst
   endpoints:
+    # app own metrics
   - port: metrics
     scheme: http
     relabelings:
     - targetLabel: instance # turn instance from ip:port into node name
       sourceLabels: [ __meta_kubernetes_endpoint_node_name ]
-    # - sourceLabels: [ pod ]
-    #   targetLabel: instance
-    # - action: labeldrop
-    #   regex: container|endpoint|namespace|pod|service
     - targetLabel: cluster_type
       replacement: k8s
-    metricRelabelings:
-    - action: keep
-      sourceLabels: [ __name__ ]
-      regex: cgroup_burst_.*
+    # metrics for related containers
   - port: metrics
     scheme: http
     path: /container_metrics
     honorLabels: true
     honorTimestamps: true
     relabelings:
+      # metrics on this endpoint are not related to the app instance,
+      # so we need to drop all automatic labels from service discovery
     - action: labeldrop
       regex: container|endpoint|namespace|pod|service
     - targetLabel: cluster_type
