@@ -84,9 +84,9 @@ sudo update-grub
 sudo apt install -y build-* dkms git
 sudo apt install -y proxmox-headers-$(uname -r)
 
-wget https://github.com/strongtz/i915-sriov-dkms/releases/download/2025.02.03/i915-sriov-dkms_2025.02.03_amd64.deb
-sudo dpkg -i ./i915-sriov-dkms_2025.02.03_amd64.deb
-# dkms install can take a long time
+wget https://github.com/strongtz/i915-sriov-dkms/releases/download/2025.05.18/i915-sriov-dkms_2025.05.18_amd64.deb
+sudo dpkg -i ./i915-sriov-dkms_2025.05.18_amd64.deb
+# package installation can take a long time
 sudo dkms status
 # status must be "installed"
 
@@ -114,4 +114,12 @@ ls -la /dev/dri/
 # check GPU capabilities
 sudo apt install -y vainfo
 vainfo
+```
+
+After a kernel update don't forget to delete old kernels, so DKMS don't build modules for them.
+Additionally, remove old kernel references in `/lib/modules/`.
+For example:
+
+```bash
+sudo rm -r /lib/modules/6.8.12-5-pve/
 ```
