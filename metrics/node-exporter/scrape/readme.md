@@ -34,6 +34,7 @@ ExecStart=/usr/local/bin/node_exporter \
   --collector.diskstats.device-exclude='^(zd.*|loop.*)$' \
   --collector.netdev.device-exclude='^(fwbr.*|fwln.*|fwpr.*|tap.*|veth.*)$' \
   --collector.netclass.ignore-invalid-speed \
+  --collector.netdev.address-info \
   --no-collector.netstat \
   --no-collector.nfsd \
   --no-collector.sockstat \
