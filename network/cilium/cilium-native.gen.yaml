@@ -35,13 +35,6 @@ metadata:
   name: "hubble-ui"
   namespace: cilium
 ---
-# Source: cilium/templates/hubble/tls-cronjob/serviceaccount.yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: "hubble-generate-certs"
-  namespace: cilium
----
 # Source: cilium/templates/cilium-configmap.yaml
 apiVersion: v1
 kind: ConfigMap
@@ -924,44 +917,6 @@ rules:
   - list
   - watch
 ---
-# Source: cilium/templates/hubble/tls-cronjob/role.yaml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: hubble-generate-certs
-  namespace: cilium
-  labels:
-    app.kubernetes.io/part-of: cilium
-
-rules:
-  - apiGroups:
-      - ""
-    resources:
-      - secrets
-    verbs:
-      - create
-  - apiGroups:
-      - ""
-    resources:
-      - secrets
-    resourceNames:
-      - hubble-server-certs
-      - hubble-relay-client-certs
-      - hubble-relay-server-certs
-      - hubble-metrics-server-certs
-      - hubble-ui-client-certs
-    verbs:
-      - update
-  - apiGroups:
-      - ""
-    resources:
-      - secrets
-    resourceNames:
-      - cilium-ca
-    verbs:
-      - get
-      - update
----
 # Source: cilium/templates/cilium-agent/rolebinding.yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -994,24 +949,6 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: "cilium"
-  namespace: cilium
----
-# Source: cilium/templates/hubble/tls-cronjob/rolebinding.yaml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: hubble-generate-certs
-  namespace: cilium
-  labels:
-    app.kubernetes.io/part-of: cilium
-
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: hubble-generate-certs
-subjects:
-- kind: ServiceAccount
-  name: "hubble-generate-certs"
   namespace: cilium
 ---
 # Source: cilium/templates/cilium-envoy/service.yaml
@@ -1946,8 +1883,6 @@ spec:
             topologyKey: kubernetes.io/hostname
       nodeSelector:
         kubernetes.io/os: linux
-      tolerations:
-        - operator: Exists
       volumes:
         # To read the configuration from the config map
       - name: cilium-config-path
@@ -2161,82 +2096,54 @@ spec:
       - emptyDir: {}
         name: tmp-dir
 ---
-# Source: cilium/templates/hubble/tls-cronjob/cronjob.yaml
-apiVersion: batch/v1
-kind: CronJob
+# Source: cilium/templates/hubble/tls-certmanager/relay-client-secret.yaml
+apiVersion: cert-manager.io/v1
+kind: Certificate
 metadata:
-  name: hubble-generate-certs
+  name: hubble-relay-client-certs
   namespace: cilium
-  labels:
-    k8s-app: hubble-generate-certs
-    app.kubernetes.io/name: hubble-generate-certs
-    app.kubernetes.io/part-of: cilium
 spec:
-  schedule: "0 0 1 */4 *"
-  concurrencyPolicy: Forbid
-  jobTemplate:
-    spec:
-      template:
-        metadata:
-          labels:
-            k8s-app: hubble-generate-certs
-        spec:
-          securityContext:
-            seccompProfile:
-              type: RuntimeDefault
-          containers:
-            - name: certgen
-              image: "quay.io/cilium/certgen:v0.2.3@sha256:cb3b1480f404489cbf0dbb9ac4576f44392532800180a4d6260ab430b4cbaedc"
-              imagePullPolicy: IfNotPresent
-              securityContext:
-                capabilities:
-                  drop:
-                  - ALL
-                allowPrivilegeEscalation: false
-              command:
-                - "/usr/bin/cilium-certgen"
-              # Because this is executed as a job, we pass the values as command
-              # line args instead of via config map. This allows users to inspect
-              # the values used in past runs by inspecting the completed pod.
-              args:
-                - "--ca-generate=true"
-                - "--ca-reuse-secret"
-                - "--ca-secret-namespace=cilium"
-                - "--ca-secret-name=cilium-ca"
-                - "--ca-common-name=Cilium CA"
-              env:
-                - name: CILIUM_CERTGEN_CONFIG
-                  value: |
-                    certs:
-                    - name: hubble-server-certs
-                      namespace: cilium
-                      commonName: "*.default.hubble-grpc.cilium.io"
-                      hosts:
-                      - "*.default.hubble-grpc.cilium.io"
-                      usage:
-                      - signing
-                      - key encipherment
-                      - server auth
-                      - client auth
-                      validity: 8760h
-                    - name: hubble-relay-client-certs
-                      namespace: cilium
-                      commonName: "*.hubble-relay.cilium.io"
-                      hosts:
-                      - "*.hubble-relay.cilium.io"
-                      usage:
-                      - signing
-                      - key encipherment
-                      - client auth
-                      validity: 8760h
-                
-          hostNetwork: false
-          serviceAccount: "hubble-generate-certs"
-          serviceAccountName: "hubble-generate-certs"
-          automountServiceAccountToken: true
-          restartPolicy: OnFailure
-          affinity:
-      ttlSecondsAfterFinished: 1800
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: cluster-ca
+  secretName: hubble-relay-client-certs
+  commonName: "*.hubble-relay.cilium.io"
+  dnsNames:
+  - "*.hubble-relay.cilium.io"
+  duration: 8760h0m0s
+  privateKey:
+    rotationPolicy: Always
+  isCA: false
+  usages:
+    - signing
+    - key encipherment
+    - client auth
+---
+# Source: cilium/templates/hubble/tls-certmanager/server-secret.yaml
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: hubble-server-certs
+  namespace: cilium
+spec:
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: cluster-ca
+  secretName: hubble-server-certs
+  commonName: "*.default.hubble-grpc.cilium.io"
+  dnsNames:
+  - "*.default.hubble-grpc.cilium.io"
+  duration: 8760h0m0s
+  privateKey:
+    rotationPolicy: Always
+  isCA: false
+  usages:
+    - signing
+    - key encipherment
+    - server auth
+    - client auth
 ---
 # Source: cilium/templates/cilium-gateway-api-class.yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -2246,78 +2153,3 @@ metadata:
 spec:
   controllerName: io.cilium/gateway-controller
   description: The default Cilium GatewayClass
----
-# Source: cilium/templates/hubble/tls-cronjob/job.yaml
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: hubble-generate-certs
-  namespace: cilium
-  labels:
-    k8s-app: hubble-generate-certs
-    app.kubernetes.io/name: hubble-generate-certs
-    app.kubernetes.io/part-of: cilium
-  annotations:
-    "helm.sh/hook": post-install,post-upgrade
-spec:
-  template:
-    metadata:
-      labels:
-        k8s-app: hubble-generate-certs
-    spec:
-      securityContext:
-        seccompProfile:
-          type: RuntimeDefault
-      containers:
-        - name: certgen
-          image: "quay.io/cilium/certgen:v0.2.3@sha256:cb3b1480f404489cbf0dbb9ac4576f44392532800180a4d6260ab430b4cbaedc"
-          imagePullPolicy: IfNotPresent
-          securityContext:
-            capabilities:
-              drop:
-              - ALL
-            allowPrivilegeEscalation: false
-          command:
-            - "/usr/bin/cilium-certgen"
-          # Because this is executed as a job, we pass the values as command
-          # line args instead of via config map. This allows users to inspect
-          # the values used in past runs by inspecting the completed pod.
-          args:
-            - "--ca-generate=true"
-            - "--ca-reuse-secret"
-            - "--ca-secret-namespace=cilium"
-            - "--ca-secret-name=cilium-ca"
-            - "--ca-common-name=Cilium CA"
-          env:
-            - name: CILIUM_CERTGEN_CONFIG
-              value: |
-                certs:
-                - name: hubble-server-certs
-                  namespace: cilium
-                  commonName: "*.default.hubble-grpc.cilium.io"
-                  hosts:
-                  - "*.default.hubble-grpc.cilium.io"
-                  usage:
-                  - signing
-                  - key encipherment
-                  - server auth
-                  - client auth
-                  validity: 8760h
-                - name: hubble-relay-client-certs
-                  namespace: cilium
-                  commonName: "*.hubble-relay.cilium.io"
-                  hosts:
-                  - "*.hubble-relay.cilium.io"
-                  usage:
-                  - signing
-                  - key encipherment
-                  - client auth
-                  validity: 8760h
-            
-      hostNetwork: false
-      serviceAccount: "hubble-generate-certs"
-      serviceAccountName: "hubble-generate-certs"
-      automountServiceAccountToken: true
-      restartPolicy: OnFailure
-      affinity:
-  ttlSecondsAfterFinished: 1800
