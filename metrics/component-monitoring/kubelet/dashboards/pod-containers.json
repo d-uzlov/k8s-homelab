@@ -371,8 +371,9 @@
                 "id": "links",
                 "value": [
                   {
+                    "targetBlank": false,
                     "title": "Logs",
-                    "url": "/d/mo6wf2wqnq/victorialogs3a-container-logs?${datasource:queryparam}&${cluster:queryparam}&${namespace:queryparam}&${pod:queryparam}&${container:queryparam}&${id:queryparam}&${__url_time_range}"
+                    "url": "/d/mo6wf2wqnq/victorialogs3a-container-logs?${datasource:queryparam}&${cluster:queryparam}&${namespace:queryparam}&${pod:queryparam}&${container:queryparam}&var-pod_uid=${__data.fields.uid}&${id:queryparam}&${__url_time_range}"
                   }
                 ]
               }
@@ -3753,7 +3754,6 @@
         "type": "datasource"
       },
       {
-        "allValue": ".*",
         "allowCustomValue": false,
         "datasource": {
           "type": "prometheus",
@@ -3813,14 +3813,35 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(label_join(last_over_time(namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", workload=~\"$workload\"}[$__range]) * on(cluster, namespace, pod, uid) group_left() max by(cluster, namespace, pod, uid) (last_over_time(kube_pod_container_status_ready{cluster=\"$cluster\", namespace=\"$namespace\"}[$__range])) * on(cluster, namespace, pod, uid) group_left(node) max by(cluster, namespace, pod, uid, node) (last_over_time(kube_pod_info{cluster=\"$cluster\", namespace=\"$namespace\", node!=\"\"}[$__range])), \"human_name\", \"/\", \"node\", \"pod\"))",
+        "definition": "query_result(last_over_time(kube_pod_info{cluster=\"$cluster\", namespace=\"$namespace\"}[$__range]))",
+        "includeAll": true,
+        "label": "Node",
+        "name": "node_selector",
+        "options": [],
+        "query": {
+          "qryType": 3,
+          "query": "query_result(last_over_time(kube_pod_info{cluster=\"$cluster\", namespace=\"$namespace\"}[$__range]))",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "/node=\"(?<text>[^\"]+)|node=\"(?<value>[^\"]+)/g",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allowCustomValue": false,
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "query_result(  last_over_time(        namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\",namespace=\"$namespace\",workload=~\"$workload\"}[$__range]      )    * on (cluster, namespace, pod, uid) group_left ()      max by (cluster, namespace, pod, uid) (        last_over_time(kube_pod_container_status_ready{cluster=\"$cluster\",namespace=\"$namespace\"}[$__range])      )  * on (cluster, namespace, pod, uid) group_left (node)    max by (cluster, namespace, pod, uid, node) (      last_over_time(kube_pod_info{cluster=\"$cluster\",namespace=\"$namespace\",node=~\"$node_selector\"}[$__range])    ))",
         "description": "label_join(\n      last_over_time(\n        namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\",namespace=\"$namespace\",workload=~\"$workload\"}[$__range]\n      )\n    * on (cluster, namespace, pod, uid) group_left ()\n      max by (cluster, namespace, pod, uid) (\n        last_over_time(kube_pod_container_status_ready{cluster=\"$cluster\",namespace=\"$namespace\"}[$__range])\n      )\n  * on (cluster, namespace, pod, uid) group_left (node)\n    max by (cluster, namespace, pod, uid, node) (\n      last_over_time(kube_pod_info{cluster=\"$cluster\",namespace=\"$namespace\",node!=\"\"}[$__range])\n    ),\n  \"human_name\",\n  \"/\",\n  \"node\",\n  \"pod\"\n)\n",
         "label": "pod",
         "name": "pod",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(label_join(last_over_time(namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", workload=~\"$workload\"}[$__range]) * on(cluster, namespace, pod, uid) group_left() max by(cluster, namespace, pod, uid) (last_over_time(kube_pod_container_status_ready{cluster=\"$cluster\", namespace=\"$namespace\"}[$__range])) * on(cluster, namespace, pod, uid) group_left(node) max by(cluster, namespace, pod, uid, node) (last_over_time(kube_pod_info{cluster=\"$cluster\", namespace=\"$namespace\", node!=\"\"}[$__range])), \"human_name\", \"/\", \"node\", \"pod\"))",
+          "query": "query_result(  last_over_time(        namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\",namespace=\"$namespace\",workload=~\"$workload\"}[$__range]      )    * on (cluster, namespace, pod, uid) group_left ()      max by (cluster, namespace, pod, uid) (        last_over_time(kube_pod_container_status_ready{cluster=\"$cluster\",namespace=\"$namespace\"}[$__range])      )  * on (cluster, namespace, pod, uid) group_left (node)    max by (cluster, namespace, pod, uid, node) (      last_over_time(kube_pod_info{cluster=\"$cluster\",namespace=\"$namespace\",node=~\"$node_selector\"}[$__range])    ))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -3847,26 +3868,6 @@
         },
         "refresh": 2,
         "regex": "/uid=\"(?<text>[^\"]+)|uid=\"(?<value>[^\"]+)/g",
-        "sort": 1,
-        "type": "query"
-      },
-      {
-        "allowCustomValue": false,
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${datasource}"
-        },
-        "definition": "query_result(kube_pod_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\"})",
-        "hide": 2,
-        "name": "node",
-        "options": [],
-        "query": {
-          "qryType": 3,
-          "query": "query_result(kube_pod_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\"})",
-          "refId": "PrometheusVariableQueryEditor-VariableQuery"
-        },
-        "refresh": 2,
-        "regex": "/node=\"(?<text>[^\"]+)|node=\"(?<value>[^\"]+)/g",
         "sort": 1,
         "type": "query"
       },
@@ -3909,27 +3910,6 @@
         },
         "refresh": 2,
         "regex": "/human_name=\"(?<text>[^\"]{8})|name=\"(?<value>[^\"]+)/g",
-        "sort": 1,
-        "type": "query"
-      },
-      {
-        "allowCustomValue": false,
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${datasource}"
-        },
-        "definition": "label_values(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\"},node)",
-        "hide": 2,
-        "includeAll": false,
-        "label": "Node name",
-        "name": "node_name",
-        "options": [],
-        "query": {
-          "qryType": 1,
-          "query": "label_values(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\"},node)",
-          "refId": "PrometheusVariableQueryEditor-VariableQuery"
-        },
-        "refresh": 2,
         "sort": 1,
         "type": "query"
       },

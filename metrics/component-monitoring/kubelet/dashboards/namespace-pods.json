@@ -3010,14 +3010,35 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(last_over_time(namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", workload=~\"$workload\"}[$__range]) * on(cluster, namespace, pod) group_left() max by(cluster, namespace, pod) (last_over_time(kube_pod_container_status_ready{cluster=\"$cluster\", namespace=\"$namespace\"}[$__range])) # without kube_pod_container_status_ready the list contains pods that were created but were never able to run)",
+        "definition": "query_result(last_over_time(kube_pod_info{cluster=\"$cluster\", namespace=\"$namespace\"}[$__range]))",
+        "includeAll": true,
+        "label": "Node",
+        "name": "node_selector",
+        "options": [],
+        "query": {
+          "qryType": 3,
+          "query": "query_result(last_over_time(kube_pod_info{cluster=\"$cluster\", namespace=\"$namespace\"}[$__range]))",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "/node=\"(?<text>[^\"]+)|node=\"(?<value>[^\"]+)/g",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allowCustomValue": false,
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "query_result(  last_over_time(        namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\",namespace=\"$namespace\",workload=~\"$workload\"}[$__range]      )    * on (cluster, namespace, pod, uid) group_left ()      max by (cluster, namespace, pod, uid) (        last_over_time(kube_pod_container_status_ready{cluster=\"$cluster\",namespace=\"$namespace\"}[$__range])      )  * on (cluster, namespace, pod, uid) group_left (node)    max by (cluster, namespace, pod, uid, node) (      last_over_time(kube_pod_info{cluster=\"$cluster\",namespace=\"$namespace\",node=~\"$node_selector\"}[$__range])    ))",
         "includeAll": true,
         "label": "pod",
         "name": "pod",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(last_over_time(namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", workload=~\"$workload\"}[$__range]) * on(cluster, namespace, pod) group_left() max by(cluster, namespace, pod) (last_over_time(kube_pod_container_status_ready{cluster=\"$cluster\", namespace=\"$namespace\"}[$__range])) # without kube_pod_container_status_ready the list contains pods that were created but were never able to run)",
+          "query": "query_result(  last_over_time(        namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\",namespace=\"$namespace\",workload=~\"$workload\"}[$__range]      )    * on (cluster, namespace, pod, uid) group_left ()      max by (cluster, namespace, pod, uid) (        last_over_time(kube_pod_container_status_ready{cluster=\"$cluster\",namespace=\"$namespace\"}[$__range])      )  * on (cluster, namespace, pod, uid) group_left (node)    max by (cluster, namespace, pod, uid, node) (      last_over_time(kube_pod_info{cluster=\"$cluster\",namespace=\"$namespace\",node=~\"$node_selector\"}[$__range])    ))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,

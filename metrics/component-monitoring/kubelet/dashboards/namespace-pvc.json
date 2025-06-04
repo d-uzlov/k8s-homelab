@@ -58,21 +58,324 @@
                 "color": "green"
               }
             ]
-          }
+          },
+          "unit": "bytes"
         },
         "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "persistentvolume"
+              "options": "__name__"
             },
             "properties": [
               {
                 "id": "custom.width",
-                "value": 387
+                "value": 304
               }
             ]
           },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*/"
+            },
+            "properties": [
+              {
+                "id": "filterable"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #inode_capacity"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "sishort"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #used / Value #capacity"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Capacity"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 96
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Used %"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 78
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Used"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 85
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Free"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 91
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Max inodes"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 103
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Capacity Request"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 143
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 1,
+        "y": 0
+      },
+      "id": 9,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "persistentvolumeclaim"
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "max by(namesapce, persistentvolumeclaim) (kubelet_volume_stats_capacity_bytes{namespace=\"$namespace\"})",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "capacity"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "max by(namesapce, persistentvolumeclaim) (\r\n  kube_persistentvolumeclaim_resource_requests_storage_bytes{namespace=\"$namespace\"}\r\n)",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "capacity_request"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "max by(namesapce, persistentvolumeclaim) (kubelet_volume_stats_available_bytes{namespace=\"$namespace\"})",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "available"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "max by(namesapce, persistentvolumeclaim) (kubelet_volume_stats_used_bytes{namespace=\"$namespace\"})",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "used"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "max by(namesapce, persistentvolumeclaim) (kubelet_volume_stats_inodes{namespace=\"$namespace\"})",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "inode_capacity"
+        }
+      ],
+      "title": "PVC list",
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "alias": "",
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value #used"
+                }
+              },
+              "operator": "/",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value #capacity"
+                }
+              }
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": false
+            },
+            "includeByName": {},
+            "indexByName": {
+              "Time": 0,
+              "Value #available": 6,
+              "Value #capacity": 3,
+              "Value #capacity_request": 2,
+              "Value #inode_capacity": 7,
+              "Value #used": 5,
+              "Value #used / Value #capacity": 4,
+              "persistentvolumeclaim": 1
+            },
+            "renameByName": {
+              "Value #available": "Free",
+              "Value #capacity": "Capacity",
+              "Value #capacity_request": "Capacity Request",
+              "Value #inode_capacity": "Max inodes",
+              "Value #used": "Used",
+              "Value #used / Value #capacity": "Used %",
+              "persistentvolumeclaim": ""
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": [
           {
             "matcher": {
               "id": "byRegexp",
@@ -88,11 +391,11 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 18,
-        "x": 1,
+        "w": 8,
+        "x": 13,
         "y": 0
       },
-      "id": 8,
+      "id": 11,
       "options": {
         "cellHeight": "sm",
         "footer": {
@@ -114,13 +417,272 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by(namespace, pod, persistentvolumeclaim, volume) (\r\n    last_over_time(kube_pod_spec_volumes_persistentvolumeclaims_info{cluster=\"$cluster\", namespace=\"$namespace\"}[$__range])\r\n)\r\n* on(persistentvolumeclaim, namespace) group_left(persistentvolume)\r\nlabel_replace(\r\nlabel_replace(\r\nlast_over_time(kube_persistentvolume_claim_ref{cluster=\"$cluster\", claim_namespace=\"$namespace\"}[$__range]),\r\n\"persistentvolumeclaim\", \"$1\", \"name\", \"(.*)\"\r\n),\r\n\"namespace\", \"$1\", \"claim_namespace\", \"(.*)\"\r\n)",
+          "expr": "max by(persistentvolumeclaim, namespace, persistentvolume) (\r\nlabel_replace(\r\nlabel_replace(\r\nlast_over_time(kube_persistentvolume_claim_ref{cluster=\"$cluster\", claim_namespace=\"$namespace\", name=~\"$volume\"}[$__range]),\r\n\"persistentvolumeclaim\", \"$1\", \"name\", \"(.*)\"\r\n),\r\n\"namespace\", \"$1\", \"claim_namespace\", \"(.*)\"\r\n)\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
-          "refId": "A"
+          "refId": "volume_info"
+        }
+      ],
+      "title": "PVC to Volume mapping",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Time 1": true,
+              "Time 2": true,
+              "Time 3": true,
+              "Value": true,
+              "Value #A": true,
+              "Value #B": true,
+              "Value #C": true,
+              "Value #claim_info": true,
+              "Value #mount_info": true,
+              "Value #volume_info": true,
+              "cluster": true,
+              "cluster_type": true,
+              "namespace": true,
+              "namespace 1": true,
+              "namespace 2": true,
+              "namespace 3": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "Time": 0,
+              "Value": 4,
+              "cluster": 8,
+              "cluster_type": 9,
+              "instance": 1,
+              "namespace": 2,
+              "persistentvolume": 7,
+              "persistentvolumeclaim": 3,
+              "pod": 5,
+              "volume": 6
+            },
+            "renameByName": {
+              "Value": "Size",
+              "instance": "Node",
+              "persistentvolume": "",
+              "persistentvolumeclaim": "PVC name",
+              "pod": "Pod",
+              "volume": "Volume name"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*/"
+            },
+            "properties": [
+              {
+                "id": "filterable"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 13,
+        "w": 12,
+        "x": 1,
+        "y": 8
+      },
+      "id": 8,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Pod"
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "sum by(namespace, pod, persistentvolumeclaim, volume) (\r\n    last_over_time(kube_pod_spec_volumes_persistentvolumeclaims_info{cluster=\"$cluster\", namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"}[$__range])\r\n)",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "claim_info"
+        }
+      ],
+      "title": "Pod PVC usage",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Time 1": true,
+              "Time 2": true,
+              "Time 3": true,
+              "Value": true,
+              "Value #A": true,
+              "Value #B": true,
+              "Value #C": true,
+              "Value #claim_info": true,
+              "Value #mount_info": true,
+              "Value #volume_info": true,
+              "cluster": true,
+              "cluster_type": true,
+              "namespace": true,
+              "namespace 1": true,
+              "namespace 2": true,
+              "namespace 3": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "Time": 0,
+              "Value": 3,
+              "namespace": 1,
+              "persistentvolumeclaim": 5,
+              "pod": 2,
+              "volume": 4
+            },
+            "renameByName": {
+              "Value": "Size",
+              "instance": "Node",
+              "persistentvolume": "",
+              "persistentvolumeclaim": "PVC name",
+              "pod": "Pod",
+              "volume": "Volume name"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*/"
+            },
+            "properties": [
+              {
+                "id": "filterable"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 13,
+        "w": 8,
+        "x": 13,
+        "y": 8
+      },
+      "id": 10,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "max by(namespace, persistentvolumeclaim, instance)\r\n(last_over_time(kubelet_volume_stats_capacity_bytes{cluster=\"$cluster\", namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"}[$__range]))",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "mount_info"
         }
       ],
       "title": "Mounts",
@@ -130,23 +692,43 @@
           "options": {
             "excludeByName": {
               "Time": true,
-              "Value": true
+              "Time 1": true,
+              "Time 2": true,
+              "Time 3": true,
+              "Value": true,
+              "Value #A": true,
+              "Value #B": true,
+              "Value #C": true,
+              "Value #claim_info": true,
+              "Value #mount_info": true,
+              "Value #volume_info": true,
+              "cluster": true,
+              "cluster_type": true,
+              "namespace": true,
+              "namespace 1": true,
+              "namespace 2": true,
+              "namespace 3": true
             },
             "includeByName": {},
             "indexByName": {
               "Time": 0,
-              "Value": 6,
-              "namespace": 1,
-              "persistentvolume": 5,
-              "persistentvolumeclaim": 2,
-              "pod": 3,
-              "volume": 4
+              "Value": 4,
+              "cluster": 8,
+              "cluster_type": 9,
+              "instance": 1,
+              "namespace": 2,
+              "persistentvolume": 7,
+              "persistentvolumeclaim": 3,
+              "pod": 5,
+              "volume": 6
             },
             "renameByName": {
-              "Value": "",
+              "Value": "Size",
+              "instance": "Node",
+              "persistentvolume": "",
               "persistentvolumeclaim": "PVC name",
-              "pod": "",
-              "volume": ""
+              "pod": "Pod",
+              "volume": "Volume name"
             }
           }
         }
@@ -172,7 +754,7 @@
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
-            "fillOpacity": 0,
+            "fillOpacity": 3,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -217,7 +799,7 @@
         "h": 8,
         "w": 18,
         "x": 1,
-        "y": 8
+        "y": 21
       },
       "id": 6,
       "maxDataPoints": 300,
@@ -286,7 +868,7 @@
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
-            "fillOpacity": 10,
+            "fillOpacity": 3,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -328,7 +910,7 @@
         "h": 8,
         "w": 18,
         "x": 1,
-        "y": 16
+        "y": 29
       },
       "id": 5,
       "maxDataPoints": 300,
@@ -384,7 +966,7 @@
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
-            "fillOpacity": 10,
+            "fillOpacity": 3,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -405,7 +987,7 @@
               "mode": "none"
             },
             "thresholdsStyle": {
-              "mode": "area"
+              "mode": "off"
             }
           },
           "mappings": [],
@@ -416,14 +998,6 @@
             "steps": [
               {
                 "color": "green"
-              },
-              {
-                "color": "#EAB839",
-                "value": 0.7
-              },
-              {
-                "color": "red",
-                "value": 0.9
               }
             ]
           },
@@ -435,7 +1009,7 @@
         "h": 8,
         "w": 18,
         "x": 1,
-        "y": 24
+        "y": 37
       },
       "id": 7,
       "maxDataPoints": 300,
@@ -512,9 +1086,10 @@
               "mode": "none"
             },
             "thresholdsStyle": {
-              "mode": "dashed+area"
+              "mode": "off"
             }
           },
+          "decimals": 2,
           "mappings": [],
           "max": 1,
           "min": 0,
@@ -523,14 +1098,6 @@
             "steps": [
               {
                 "color": "green"
-              },
-              {
-                "color": "#EAB839",
-                "value": 0.5
-              },
-              {
-                "color": "red",
-                "value": 0.9
               }
             ]
           },
@@ -542,7 +1109,7 @@
         "h": 7,
         "w": 18,
         "x": 1,
-        "y": 32
+        "y": 45
       },
       "id": 3,
       "maxDataPoints": 300,
@@ -582,7 +1149,7 @@
   ],
   "preload": false,
   "refresh": "auto",
-  "schemaVersion": 40,
+  "schemaVersion": 41,
   "tags": [
     "maintainer:danil",
     "k8s-cluster"
@@ -654,5 +1221,5 @@
   "timezone": "browser",
   "title": "Namespace / PVC",
   "uid": "t4hcwkxp76w9r60uq197",
-  "weekStart": ""
+  "version": 0
 }
