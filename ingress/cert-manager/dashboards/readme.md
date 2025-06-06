@@ -5,7 +5,7 @@
 
  # force all panels to use the default data source min interval
  sed -i '/\"interval\":/d' ./ingress/cert-manager/dashboards/*.json
- sed -i '/\"version\":/d' ./ingress/cert-manager/dashboards/*.json
+ sed -i 's/\"version\"\: [0-9]*/\"version\": 0/' ./ingress/cert-manager/dashboards/*.json
  sed -i '/\"pluginVersion\":/d' ./ingress/cert-manager/dashboards/*.json
  # avoid id collisions
  sed -i 's/^  \"id\": .*,/  \"id\": null,/' ./ingress/cert-manager/dashboards/*.json

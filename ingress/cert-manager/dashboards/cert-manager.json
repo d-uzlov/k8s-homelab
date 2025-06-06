@@ -74,12 +74,6 @@
                 "value": "dtdurations"
               },
               {
-                "id": "custom.cellOptions",
-                "value": {
-                  "type": "color-background"
-                }
-              },
-              {
                 "id": "custom.align"
               },
               {
@@ -89,24 +83,13 @@
                   "steps": [
                     {
                       "color": "rgba(245, 54, 54, 0.9)"
-                    },
-                    {
-                      "color": "rgba(237, 129, 40, 0.89)",
-                      "value": 2592000
-                    },
-                    {
-                      "color": "rgba(50, 172, 45, 0.97)",
-                      "value": 5184000
-                    },
-                    {
-                      "value": 7776000
                     }
                   ]
                 }
               },
               {
                 "id": "decimals",
-                "value": 2
+                "value": 1
               }
             ]
           },
@@ -173,7 +156,7 @@
               },
               {
                 "id": "decimals",
-                "value": 2
+                "value": 1
               }
             ]
           },
@@ -340,7 +323,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (name, namespace, issuer_kind, issuer_name) (certmanager_certificate_expiration_timestamp_seconds{cluster=\"$cluster\", namespace=~\"$namespace\"} - time())",
+          "expr": "min by (name, namespace, issuer_kind, issuer_name) (certmanager_certificate_expiration_timestamp_seconds{cluster=\"$cluster\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", name=~\"$certificate\"} - time())",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -352,7 +335,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (name, namespace) (certmanager_certificate_ready_status{cluster=\"$cluster\", namespace=~\"$namespace\", condition=\"True\"})",
+          "expr": "min by (name, namespace) (certmanager_certificate_ready_status{cluster=\"$cluster\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", name=~\"$certificate\", condition=\"True\"})",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -365,7 +348,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (name, namespace) (certmanager_certificate_renewal_timestamp_seconds{cluster=\"$cluster\", namespace=~\"$namespace\"} - time())",
+          "expr": "min by (name, namespace) (certmanager_certificate_renewal_timestamp_seconds{cluster=\"$cluster\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", name=~\"$certificate\"} - time())",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -378,7 +361,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (name, namespace) (\r\n  (certmanager_certificate_expiration_timestamp_seconds{cluster=\"$cluster\", namespace=~\"$namespace\"} - time())\r\n  /\r\n  (certmanager_certificate_expiration_timestamp_seconds - certmanager_certificate_renewal_timestamp_seconds)\r\n)",
+          "expr": "min by (name, namespace) (\r\n  (certmanager_certificate_expiration_timestamp_seconds{cluster=\"$cluster\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", name=~\"$certificate\"} - time())\r\n  /\r\n  (certmanager_certificate_expiration_timestamp_seconds - certmanager_certificate_renewal_timestamp_seconds)\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -386,7 +369,7 @@
           "refId": "renewal_remaining_percent"
         }
       ],
-      "title": "Time Left",
+      "title": "Currently active certificates",
       "transformations": [
         {
           "id": "merge",
@@ -494,6 +477,7 @@
         "y": 14
       },
       "id": 13,
+      "maxDataPoints": 250,
       "options": {
         "legend": {
           "calcs": [],
@@ -514,7 +498,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (condition) (certmanager_certificate_ready_status{cluster=\"$cluster\", namespace=~\"$namespace\"})",
+          "expr": "sum by (condition) (certmanager_certificate_ready_status{cluster=\"$cluster\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", name=~\"$certificate\"})",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "__auto",
@@ -523,7 +507,7 @@
           "step": 1800
         }
       ],
-      "title": "Certificate Status",
+      "title": "Certificate Status Count",
       "type": "timeseries"
     },
     {
@@ -595,6 +579,7 @@
         "y": 14
       },
       "id": 23,
+      "maxDataPoints": 250,
       "options": {
         "legend": {
           "calcs": [],
@@ -615,7 +600,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (namespace, name) (certmanager_certificate_ready_status{cluster=\"$cluster\", namespace=~\"$namespace\"})",
+          "expr": "min by (namespace, name) (min_over_time(certmanager_certificate_ready_status{cluster=\"$cluster\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", name=~\"$certificate\", condition=\"True\"}[$__interval]))",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{namespace}}/{{name}}",
@@ -670,7 +655,106 @@
               "mode": "off"
             }
           },
-          "decimals": 0,
+          "links": [],
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      },
+      "id": 24,
+      "maxDataPoints": 250,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "max by (name, namespace) (\r\n  (certmanager_certificate_expiration_timestamp_seconds{cluster=\"$cluster\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", name=~\"$certificate\"} - time())\r\n  /\r\n  (certmanager_certificate_expiration_timestamp_seconds - certmanager_certificate_renewal_timestamp_seconds)\r\n)",
+          "instant": false,
+          "intervalFactor": 1,
+          "legendFormat": "{{namespace}} / {{name}}",
+          "refId": "remaining"
+        }
+      ],
+      "title": "Renewal % Left",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
           "links": [],
           "mappings": [],
           "min": 0,
@@ -694,9 +778,10 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 21
+        "y": 29
       },
       "id": 16,
+      "maxDataPoints": 250,
       "options": {
         "legend": {
           "calcs": [],
@@ -717,7 +802,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "max by(namespace, name) (certmanager_certificate_expiration_timestamp_seconds{cluster=\"$cluster\", namespace=~\"$namespace\"} - time())",
+          "expr": "max by(namespace, name) (min_over_time(certmanager_certificate_expiration_timestamp_seconds{cluster=\"$cluster\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", name=~\"$certificate\"}[$__interval]) - time())",
           "instant": false,
           "intervalFactor": 1,
           "legendFormat": "{{namespace}} / {{name}}",
@@ -746,8 +831,8 @@
             "axisPlacement": "auto",
             "barAlignment": 0,
             "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
+            "drawStyle": "bars",
+            "fillOpacity": 3,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -793,7 +878,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 29
+        "y": 37
       },
       "id": 22,
       "maxDataPoints": 100,
@@ -831,7 +916,7 @@
   ],
   "preload": false,
   "refresh": "",
-  "schemaVersion": 40,
+  "schemaVersion": 41,
   "tags": [
     "maintainer:danil"
   ],
@@ -853,12 +938,12 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(label_join(up{job=\"kubelet-main\"}, \"human_name\", \"/\", \"cluster_type\", \"cluster\"))",
+        "definition": "query_result(label_join(last_over_time(up{job=\"kubelet-main\"}[$__range]), \"human_name\", \"/\", \"cluster_type\", \"cluster\"))",
         "name": "cluster",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(label_join(up{job=\"kubelet-main\"}, \"human_name\", \"/\", \"cluster_type\", \"cluster\"))",
+          "query": "query_result(label_join(last_over_time(up{job=\"kubelet-main\"}[$__range]), \"human_name\", \"/\", \"cluster_type\", \"cluster\"))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 1,
@@ -867,23 +952,63 @@
         "type": "query"
       },
       {
-        "allValue": ".*",
         "allowCustomValue": false,
         "datasource": {
           "type": "prometheus",
-          "uid": "prometheus"
+          "uid": "${datasource}"
         },
-        "definition": "query_result(certmanager_certificate_expiration_timestamp_seconds{cluster=\"$cluster\"})",
+        "definition": "query_result(last_over_time(certmanager_certificate_expiration_timestamp_seconds{cluster=\"$cluster\"}[$__range]))",
         "includeAll": true,
         "name": "namespace",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(certmanager_certificate_expiration_timestamp_seconds{cluster=\"$cluster\"})",
+          "query": "query_result(last_over_time(certmanager_certificate_expiration_timestamp_seconds{cluster=\"$cluster\"}[$__range]))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 1,
         "regex": "/namespace=\"(?<text>[^\"]+)|namespace=\"(?<value>[^\"]+)/g",
+        "type": "query"
+      },
+      {
+        "allowCustomValue": false,
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "query_result(last_over_time(certmanager_certificate_ready_status{cluster=\"$cluster\", namespace=~\"$namespace\", condition=\"True\"}[$__range]))",
+        "includeAll": true,
+        "name": "issuer",
+        "options": [],
+        "query": {
+          "qryType": 3,
+          "query": "query_result(last_over_time(certmanager_certificate_ready_status{cluster=\"$cluster\", namespace=~\"$namespace\", condition=\"True\"}[$__range]))",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 1,
+        "regex": "/issuer_name=\"(?<text>[^\"]+)|issuer_name=\"(?<value>[^\"]+)/g",
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "allowCustomValue": false,
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "query_result(last_over_time(certmanager_certificate_ready_status{cluster=\"$cluster\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", condition=\"True\"}[$__range]))",
+        "description": "",
+        "includeAll": true,
+        "name": "certificate",
+        "options": [],
+        "query": {
+          "qryType": 3,
+          "query": "query_result(last_over_time(certmanager_certificate_ready_status{cluster=\"$cluster\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", condition=\"True\"}[$__range]))",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 1,
+        "regex": "/,name=\"(?<text>[^\"]+)|,name=\"(?<value>[^\"]+)/g",
+        "sort": 1,
         "type": "query"
       }
     ]
@@ -896,5 +1021,5 @@
   "timezone": "browser",
   "title": "cert-manager",
   "uid": "cert-manager",
-  "weekStart": ""
+  "version": 0
 }
