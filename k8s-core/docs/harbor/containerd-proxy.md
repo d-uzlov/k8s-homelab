@@ -29,6 +29,16 @@ ssh $containerd_node sudo systemctl restart containerd.service
 ssh $containerd_node sudo mkdir -p /etc/certs/ &&
 ssh $containerd_node sudo tee '>' /dev/null < ./k8s-core/docs/harbor/env/ca.crt /etc/certs/harbor-ca.crt
 
+# == set up certificate for the harbor itself ==
+# set registry to domain of the harbor server
+registry=harbor.k8s.lan
+ssh $containerd_node sudo mkdir -p /etc/containerd/certs.d/$registry/
+ssh $containerd_node sudo tee /etc/containerd/certs.d/$registry/hosts.toml << EOF
+server = "https://$harbor_address/v2/$registry/"
+ca = "/etc/certs/harbor-ca.crt"
+override_path = true
+EOF
+
 ```
 
 # Test connection
