@@ -593,7 +593,16 @@
               },
               {
                 "id": "custom.width",
-                "value": 164
+                "value": 205
+              },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Zoom to error",
+                    "url": "/d/mo6wf2ukdv3l72howqnq/kubernetes3a-pod-containers?${__all_variables}&from=${__data.fields.last_exit_from}&to=${__data.fields.last_exit_to}"
+                  }
+                ]
               }
             ]
           },
@@ -676,7 +685,12 @@
           "show": false
         },
         "showHeader": true,
-        "sortBy": []
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Last exit"
+          }
+        ]
       },
       "targets": [
         {
@@ -760,6 +774,49 @@
               "job": "",
               "pod": "Pod",
               "reason": "Reason"
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "alias": "last_exit_from",
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Last exit"
+                }
+              },
+              "operator": "-",
+              "right": {
+                "fixed": "300000"
+              }
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "alias": "last_exit_to",
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Last exit"
+                }
+              },
+              "right": {
+                "fixed": "300000"
+              }
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
             }
           }
         }
@@ -1295,6 +1352,32 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
+          "expr": "max by (container, name) (\r\n  (rate(container_cpu_cgroup_burst_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]) )\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} burst, name={{name}}",
+          "range": true,
+          "refId": "burst_usage_split"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (container) (\r\n  (rate(container_cpu_cgroup_burst_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]) )\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} burst",
+          "range": true,
+          "refId": "burst_usage_united"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
           "expr": "sum by(container) (\r\n    kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\",container=~\"$container\", invalid=$enableLimits}\r\n)\r\n",
           "hide": false,
           "instant": false,
@@ -1334,32 +1417,6 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container, name) (\r\n  (rate(container_cpu_cgroup_burst_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]) )\r\n)",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{container}} burst, name={{name}}",
-          "range": true,
-          "refId": "burst_usage_split"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "max by (container) (\r\n  (rate(container_cpu_cgroup_burst_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]) )\r\n)",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{container}} burst",
-          "range": true,
-          "refId": "burst_usage_united"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
           "expr": "sum by(container) (\r\n    kube_pod_container_cgroup_burst{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", invalid=$enableLimits}\r\n)\r\n",
           "hide": false,
           "instant": false,
@@ -1373,7 +1430,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container, name) (\r\n  (rate(container_cpu_cfs_throttled_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]) )\r\n)",
+          "expr": "max by (container, name) (\r\n  (rate(container_cpu_cfs_throttled_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$enableLimits, invalid!=$split_ids}[$__rate_interval]) )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} throttled, name={{name}}",
@@ -1386,7 +1443,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container) (\r\n  (rate(container_cpu_cfs_throttled_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]) )\r\n)",
+          "expr": "max by (container) (\r\n  (rate(container_cpu_cfs_throttled_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$enableLimits, invalid=$split_ids}[$__rate_interval]) )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} throttled",
@@ -2461,7 +2518,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container, name) (max_over_time(container_memory_max_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
+          "expr": "max by (container, name) (\r\n    (\r\n        max_over_time(container_memory_max_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__interval])\r\n        or\r\n        container_memory_max_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}\r\n    )\r\n/\r\n    max_over_time(container_spec_memory_limit_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__interval])\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} 1 max, name={{name}}",
@@ -2474,7 +2531,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container) (max_over_time(container_memory_max_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
+          "expr": "max by (container) (\r\n    (\r\n        max_over_time(container_memory_max_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__interval])\r\n        or\r\n        container_memory_max_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}\r\n    )\r\n/\r\n    max_over_time(container_spec_memory_limit_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__interval])\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} 1 max",
@@ -2487,7 +2544,8 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container, name) (max_over_time(container_memory_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
+          "expr": "max by (container, name) (\r\n    (\r\n        max_over_time(container_memory_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__interval])\r\n        or\r\n        container_memory_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}\r\n    )\r\n/\r\n    max_over_time(container_spec_memory_limit_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__interval])\r\n)",
+          "hide": false,
           "instant": false,
           "legendFormat": "{{container}} 2 raw, name={{name}}",
           "range": true,
@@ -2499,7 +2557,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container) (max_over_time(container_memory_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
+          "expr": "max by (container) (\r\n    (\r\n        max_over_time(container_memory_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__interval])\r\n        or\r\n        container_memory_usage_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}\r\n    )\r\n/\r\n    max_over_time(container_spec_memory_limit_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__interval])\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} 2 raw",
@@ -2512,7 +2570,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container, name) (max_over_time(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
+          "expr": "max by (container, name) (\r\n    (\r\n        max_over_time(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__interval])\r\n        or\r\n        container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}\r\n    )\r\n/\r\n    max_over_time(container_spec_memory_limit_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__interval])\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} 3 wss, name={{name}}",
@@ -2525,7 +2583,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container) (max_over_time(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
+          "expr": "max by (container) (\r\n    (\r\n        max_over_time(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__interval])\r\n        or\r\n        container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}\r\n    )\r\n/\r\n    max_over_time(container_spec_memory_limit_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__interval])\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} 3 wss",
@@ -2538,7 +2596,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container, name) (max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
+          "expr": "max by (container, name) (\r\n    (\r\n        max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__interval])\r\n        or\r\n        container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}\r\n    )\r\n/\r\n    max_over_time(container_spec_memory_limit_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__interval])\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} 4 rss, name={{name}}",
@@ -2551,7 +2609,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (container) (max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]))\r\n/ on(container) group_left\r\nmax by (container) (kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"})",
+          "expr": "max by (container) (\r\n    (\r\n        max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__interval])\r\n        or\r\n        container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}\r\n    )\r\n/\r\n    max_over_time(container_spec_memory_limit_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__interval])\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} 4 rss",
