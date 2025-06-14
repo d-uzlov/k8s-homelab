@@ -7,7 +7,7 @@
 sudo crictl config --set runtime-endpoint=unix:///run/containerd/containerd.sock --set image-endpoint=unix:///run/containerd/containerd.sock
 
 # avoid sudo requirement for crictl
-# sudo addgroup --gid 201 containerd
+sudo addgroup --gid 201 containerd
 # sudo chgrp containerd /run/containerd/containerd.sock
 sudo usermod -aG containerd $USER
 newgrp containerd
