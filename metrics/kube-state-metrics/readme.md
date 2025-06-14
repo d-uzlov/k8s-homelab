@@ -12,7 +12,7 @@ You only need to do this if you change `values.yaml` file.
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update prometheus-community
 helm search repo prometheus-community/kube-state-metrics --versions --devel | head
-helm show values prometheus-community/kube-state-metrics --version 5.32.0 > ./metrics/kube-state-metrics/default-values.yaml
+helm show values prometheus-community/kube-state-metrics --version 5.37.0 > ./metrics/kube-state-metrics/default-values.yaml
 ```
 
 ```bash
@@ -20,7 +20,7 @@ helm show values prometheus-community/kube-state-metrics --version 5.32.0 > ./me
 helm template \
   ksm \
   prometheus-community/kube-state-metrics \
-  --version 5.32.0 \
+  --version 5.37.0 \
   --values ./metrics/kube-state-metrics/values.yaml \
   --namespace kube-state-metrics \
   | sed \
@@ -49,12 +49,6 @@ clusterName=
     targetLabel: cluster
     replacement: $clusterName
     action: replace
-- op: add
-  path: /spec/endpoints/1/relabelings/-
-  value:
-    targetLabel: cluster
-    replacement: $clusterName
-    action: replace
 EOF
 
 ```
@@ -77,12 +71,4 @@ kl -n kube-state-metrics get servicemonitor
 ```bash
 kl delete -k ./metrics/kube-state-metrics/
 kl delete ns kube-state-metrics
-```
-
-# Manual metric checking
-
-```bash
-kl -n kube-state-metrics describe svc ksm
-kl exec deployments/alpine -- apk add curl
-kl exec deployments/alpine -- curl -sS http://ksm.kube-state-metrics:8080/metrics > ./ksm.log
 ```

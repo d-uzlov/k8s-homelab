@@ -6,13 +6,21 @@ prometheus:
   monitor:
     enabled: false
 
+replicas: 2
+
 resources:
-  limits:
-    cpu: 50m
-    memory: 64Mi
   requests:
     cpu: 10m
     memory: 32Mi
+  limits:
+    cpu: 50m
+    # on restart memory usage is much higher than on average, and with 64Mi limit ksm frequently failed to start
+    memory: 128Mi
+
+podLabels:
+  cgroup.meoe.io/burst: enable
+podAnnotations:
+  cgroup.meoe.io/burst: kube-state-metrics=100ms
 
 startupProbe:
   enabled: true
