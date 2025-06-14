@@ -60,6 +60,7 @@ ps -o pid,uid,gid,group,supgid -p $(pgrep xray-linux)
 # check that you have high enough ulimit
 cat /proc/$(pgrep x-ui)/limits | grep -e "Max open files" -e ^Limit
 # 524288 seems to be good enough
+
 ```
 
 # System route setup
@@ -69,6 +70,7 @@ Adjust route table to be able to use tproxy.
 Here we also set up systemd service to enable persistence for routing rules.
 
 ```bash
+
  sudo tee /usr/local/sbin/tproxy-route-setup.sh << EOF
 #!/bin/sh
 
@@ -132,6 +134,7 @@ sudo journalctl -u tproxy-route-setup
 # check that everything is working
 ip rule list | grep "from all fwmark 0x2 lookup 100"
 ip route show table 100 | grep "local default dev lo"
+
 ```
 
 # iptables for forwarding
@@ -141,6 +144,7 @@ This redirects external traffic to xray instead of forwarding it by default.
 This is required even if you only want local traffic forwarding.
 
 ```bash
+
 sudo iptables -t mangle -N XRAY_PREROUTING
 # skip chain for connections with special ranges as destination
 sudo iptables -t mangle -A XRAY_PREROUTING --destination 0.0.0.0/8 -j RETURN
@@ -156,7 +160,7 @@ sudo iptables -t mangle -A XRAY_PREROUTING --destination 240.0.0.0/4 -j RETURN
 # --protocol is required by the tproxy target
 sudo iptables -t mangle -A XRAY_PREROUTING --protocol tcp -j TPROXY --on-port 1234 --on-ip 127.0.0.1 --tproxy-mark 0x2
 sudo iptables -t mangle -A XRAY_PREROUTING --protocol udp -j TPROXY --on-port 1234 --on-ip 127.0.0.1 --tproxy-mark 0x2
-# send all incoming traffic to XRAY chain (see PREROUTING in #iptables-chain-diagram)
+# send all incoming traffic to XRAY_PREROUTING chain (see PREROUTING in #iptables-chain-diagram)
 sudo iptables -t mangle -A PREROUTING --protocol tcp -j XRAY_PREROUTING
 sudo iptables -t mangle -A PREROUTING --protocol udp -j XRAY_PREROUTING
 

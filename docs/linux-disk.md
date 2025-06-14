@@ -1,4 +1,19 @@
 
+# Update partition after device resize
+
+If you resize disk in a hypervisor, you can restart the VM to apply changes.
+But you can also update disk info without reboot:
+
+```bash
+
+sudo growpart /dev/sda 1
+
+sudo resize2fs /dev/sda1
+
+```
+
+If your VM has more than 1 disk, change `sda` to your disk name.
+
 # NVMe info
 
 ```bash
