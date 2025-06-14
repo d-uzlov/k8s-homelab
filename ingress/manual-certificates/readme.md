@@ -48,6 +48,10 @@ spec:
   - $domain_name
   - '*.$domain_name'
   secretName: cert-$domain_name-staging
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Always
 EOF
 # add annotations that allow you to copy this certificate automatically between namespaces
 # useful for classic k8s ingress
