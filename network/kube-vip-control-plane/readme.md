@@ -12,6 +12,7 @@ References:
 # Generate template
 
 ```bash
+
 # VIP_STUB and INTERFACE_STUB will be replaced later, using sed
 docker run \
   --network host \
@@ -25,6 +26,7 @@ docker run \
   | sed -e '\|creationTimestamp|d' \
   -e "s|image: .*|image: docker.io/daniluzlov/k8s-snippets:kube-vip-0.7.2-nodename3|" \
   > ./network/kube-vip-control-plane/static-pod-template.gen.yaml
+
 ```
 
 # Deploy static pods
