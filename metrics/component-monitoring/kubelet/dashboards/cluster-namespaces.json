@@ -247,7 +247,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by(namespace) (max_over_time(node_namespace:container_cpu_usage_seconds:irate{cluster=\"$cluster\", namespace=~\"$namespace\"}[$__range]))",
+          "expr": "sum by(namespace) (avg_over_time(node_namespace:container_cpu_usage_seconds:irate{cluster=\"$cluster\", namespace=~\"$namespace\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -262,7 +262,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (namespace) (last_over_time(node_namespace:kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=~\"$namespace\", resource=\"cpu\"}[$__rate_interval]))",
+          "expr": "sum by (namespace) (last_over_time(node_namespace:kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=~\"$namespace\", resource=\"cpu\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -1267,22 +1267,35 @@
         "type": "query"
       },
       {
+        "label": "filter",
+        "name": "namespace_filter",
+        "options": [
+          {
+            "selected": true,
+            "text": "",
+            "value": ""
+          }
+        ],
+        "query": "",
+        "type": "textbox"
+      },
+      {
         "allowCustomValue": false,
         "datasource": {
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "label_values(kube_namespace_status_phase{cluster=\"$cluster\"},namespace)",
+        "definition": "query_result(last_over_time(kube_namespace_created{cluster=\"$cluster\", namespace=~\".*($namespace_filter).*\"}[$__range]))",
         "includeAll": true,
-        "label": "namespace",
         "name": "namespace",
         "options": [],
         "query": {
-          "qryType": 1,
-          "query": "label_values(kube_namespace_status_phase{cluster=\"$cluster\"},namespace)",
+          "qryType": 3,
+          "query": "query_result(last_over_time(kube_namespace_created{cluster=\"$cluster\", namespace=~\".*($namespace_filter).*\"}[$__range]))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
+        "regex": "/namespace=\"(?<text>[^\"]+)|namespace=\"(?<value>[^\"]+)/g",
         "sort": 1,
         "type": "query"
       },

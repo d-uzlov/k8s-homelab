@@ -195,6 +195,30 @@
                 "value": 2
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CPU Req"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 92
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CPU"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 91
+              }
+            ]
           }
         ]
       },
@@ -230,11 +254,11 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (namespace, pod) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", node=~\"$node\", namespace=~\"$namespace\"}[$__range]))",
+          "expr": "sum by (namespace, pod) (\r\n    max by(namespace, pod, container) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", node=~\"$node\", namespace=~\"$namespace\"}[$__range]))\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
-          "refId": "usage"
+          "refId": "cpu_usage"
         },
         {
           "datasource": {
@@ -243,12 +267,12 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (namespace, pod) (last_over_time(kube_pod_container_resource_requests{cluster=\"$cluster\", node=~\"$node\", namespace=~\"$namespace\", resource=\"cpu\"}[$__range]))",
+          "expr": "sum by (namespace, pod) (\r\n    max by(namespace, pod, container) (last_over_time(kube_pod_container_resource_requests{cluster=\"$cluster\", node=~\"$node\", namespace=~\"$namespace\", resource=\"cpu\"}[$__range]))\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
           "range": false,
-          "refId": "request"
+          "refId": "cpu_request"
         },
         {
           "datasource": {
@@ -256,7 +280,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by (node, namespace, pod) (last_over_time(kube_pod_container_resource_requests{cluster=\"$cluster\", node=~\"$node\", namespace=~\"$namespace\", resource=\"cpu\"}[$__range])) / on(node) group_left sum by(node) (kube_node_status_capacity{cluster=\"$cluster\", node=~\"$node\", resource=\"cpu\"})",
+          "expr": "sum by (node, namespace, pod) (\r\n    max by(node, namespace, pod, container) (last_over_time(kube_pod_container_resource_requests{cluster=\"$cluster\", node=~\"$node\", namespace=~\"$namespace\", resource=\"cpu\"}[$__range]))\r\n) / on(node) group_left\r\nsum by(node) (\r\n    kube_node_status_capacity{cluster=\"$cluster\", node=~\"$node\", resource=\"cpu\"}\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -269,7 +293,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (namespace, pod) (last_over_time(kube_pod_container_resource_limits{cluster=\"$cluster\", node=~\"$node\", namespace=~\"$namespace\", resource=\"cpu\"}[$__range]))",
+          "expr": "sum by (namespace, pod) (\r\n    max by(namespace, pod, container) (last_over_time(kube_pod_container_resource_limits{cluster=\"$cluster\", node=~\"$node\", namespace=~\"$namespace\", resource=\"cpu\"}[$__range]))\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -283,7 +307,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (namespace, pod) (last_over_time(container_memory_rss{cluster=\"$cluster\", node=\"$node\", namespace=~\"$namespace\"}[$__range]))",
+          "expr": "sum by (namespace, pod) (\r\n    max by(namespace, pod, container) (last_over_time(container_memory_rss{cluster=\"$cluster\", node=\"$node\", namespace=~\"$namespace\"}[$__range]))\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -298,7 +322,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (namespace, pod) (last_over_time(container_memory_usage_bytes{cluster=\"$cluster\", node=\"$node\", namespace=~\"$namespace\"}[$__range]))",
+          "expr": "sum by (namespace, pod) (\r\n    max by(namespace, pod, container) (last_over_time(container_memory_usage_bytes{cluster=\"$cluster\", node=\"$node\", namespace=~\"$namespace\"}[$__range]))\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -313,7 +337,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (namespace, pod) (last_over_time(kube_pod_container_resource_requests{cluster=\"$cluster\", node=\"$node\", namespace=~\"$namespace\", resource=\"memory\"}[$__range]))",
+          "expr": "sum by (namespace, pod) (\r\n    max by(namespace, pod, container) (last_over_time(kube_pod_container_resource_requests{cluster=\"$cluster\", node=\"$node\", namespace=~\"$namespace\", resource=\"memory\"}[$__range]))\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -328,7 +352,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (node, namespace, pod) (kube_pod_container_resource_requests{cluster=\"$cluster\", node=\"$node\", namespace=~\"$namespace\", resource=\"memory\"}) / on(node) group_left sum by(node) (kube_node_status_capacity{cluster=\"$cluster\", node=~\"$node\", resource=\"memory\"})",
+          "expr": "sum by (node, namespace, pod) (\r\n    max by(node, namespace, pod, container) (kube_pod_container_resource_requests{cluster=\"$cluster\", node=\"$node\", namespace=~\"$namespace\", resource=\"memory\"})\r\n) / on(node) group_left\r\nsum by(node) (\r\n    kube_node_status_capacity{cluster=\"$cluster\", node=~\"$node\", resource=\"memory\"}\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -343,7 +367,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (namespace, pod) (kube_pod_container_resource_limits{cluster=\"$cluster\", node=\"$node\", namespace=~\"$namespace\", resource=\"memory\"})",
+          "expr": "sum by (namespace, pod) (\r\n    max by(namespace, pod, container) (last_over_time(kube_pod_container_resource_limits{cluster=\"$cluster\", node=\"$node\", namespace=~\"$namespace\", resource=\"memory\"}[$__range]))\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -389,19 +413,18 @@
             "indexByName": {
               "Time": 0,
               "Value #cpu_limit": 8,
+              "Value #cpu_request": 6,
+              "Value #cpu_usage": 5,
               "Value #last_seen": 1,
-              "Value #memory_limit": 12,
+              "Value #memory_limit": 13,
               "Value #memory_raw": 10,
               "Value #memory_request": 11,
-              "Value #memory_request_per_node": 13,
+              "Value #memory_request_per_node": 12,
               "Value #memory_rss": 9,
-              "Value #request": 5,
               "Value #request_per_node": 7,
-              "Value #usage": 4,
               "namespace": 2,
-              "node": 6,
-              "pod": 3,
-              "uid": 14
+              "node": 4,
+              "pod": 3
             },
             "renameByName": {
               "Value #A": "CPU Usage",
@@ -410,6 +433,8 @@
               "Value #D": "CPU Limits",
               "Value #E": "CPU Limits %",
               "Value #cpu_limit": "CPU limit",
+              "Value #cpu_request": "CPU Req",
+              "Value #cpu_usage": "CPU",
               "Value #last_seen": "Last seen",
               "Value #limit": "CPU Limit",
               "Value #limit_percent": "Max Limit %",
