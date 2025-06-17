@@ -59,6 +59,11 @@ kl -n ubiquiti get pvc
 
 kl apply -k ./network/ubiquiti/
 kl -n ubiquiti get pod -o wide
+kl -n ubiquiti get cert
+kl -n ubiquiti get secret
+
+kl apply -k ./network/ubiquiti/htr-private/
+kl -n ubiquiti get htr
 
 ```
 
@@ -69,7 +74,6 @@ kl -n ubiquiti get pod -o wide
 kl delete -k ./network/ubiquiti/
 kl delete -k ./network/ubiquiti/pvc/
 kl delete ns ubiquiti
-
 
 ```
 

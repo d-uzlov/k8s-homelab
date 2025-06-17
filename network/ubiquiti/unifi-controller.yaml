@@ -88,6 +88,38 @@ spec:
           periodSeconds: 1
           timeoutSeconds: 1
           failureThreshold: 1
+      - name: nginx
+        # Stupid unifi controller can't listen on HTTP port, and for HTTPS it always uses self-signed certificate.
+        # Stupid unifi controller can't use certificate from a file, it needs a special procedure to load certificate info some Java key storage,
+        # and I just couldn't bother to do it. Adding nginx proxy that simply strips TLS in front of it is just much easier.
+        image: docker.io/peytonyip/nginx-brotli:1.27.4
+        ports:
+        - name: http
+          containerPort: 8081
+        securityContext:
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /etc/nginx/
+          name: nginx-conf
+        - mountPath: /tmp
+          name: nginx-tmp
+        resources:
+          requests:
+            memory: 10Mi
+          limits:
+            memory: 100Mi
+        livenessProbe:
+          failureThreshold: 5
+          periodSeconds: 1
+          httpGet:
+            path: /health
+            port: http
+        readinessProbe:
+          failureThreshold: 1
+          periodSeconds: 1
+          httpGet:
+            path: /health
+            port: http
       volumes:
       - name: entrypoint
         configMap:
@@ -96,6 +128,11 @@ spec:
       - name: config
         persistentVolumeClaim:
           claimName: config
+      - name: nginx-conf
+        configMap:
+          name: nginx-conf
+      - name: nginx-tmp
+        emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
@@ -105,6 +142,9 @@ spec:
   selector:
     app: unifi
   ports:
+  - name: http
+    port: 80
+    targetPort: http
   - name: https
-    port: 8443
+    port: 443
     targetPort: web-https
