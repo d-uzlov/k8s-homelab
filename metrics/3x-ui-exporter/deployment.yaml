@@ -1,0 +1,92 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: xray-3x-ui-exporter
+spec:
+  ports:
+  - name: metrics
+    protocol: TCP
+    port: 80
+    targetPort: metrics
+  selector:
+    app: 3x-ui-exporter
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: 3x-ui-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: 3x-ui-exporter
+  template:
+    metadata:
+      name: 3x-ui-exporter
+      labels:
+        app: 3x-ui-exporter
+    spec:
+      containers:
+      - name: exporter
+        image: docker.io/m4l3vich/3x-ui-prometheus-exporter
+        ports:
+        - name: metrics
+          containerPort: 3000
+        env:
+        - name: XUI_ORIGIN
+          valueFrom:
+            secretKeyRef:
+              name: credentials
+              key: local_url
+        - name: XUI_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: credentials
+              key: username
+        - name: XUI_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: credentials
+              key: password
+      - name: nginx
+        image: docker.io/peytonyip/nginx-brotli:1.27.4
+        ports:
+        - name: http
+          containerPort: 8080
+        securityContext:
+          readOnlyRootFilesystem: true
+        env:
+        - name: UPSTREAM_ADDRESS
+          valueFrom:
+            secretKeyRef:
+              name: credentials
+              key: url
+        volumeMounts:
+        - mountPath: /etc/nginx/
+          name: nginx-conf
+        - mountPath: /tmp
+          name: nginx-tmp
+        resources:
+          requests:
+            memory: 10Mi
+          limits:
+            memory: 100Mi
+        livenessProbe:
+          failureThreshold: 5
+          periodSeconds: 1
+          httpGet:
+            path: /health
+            port: http
+        readinessProbe:
+          failureThreshold: 1
+          periodSeconds: 1
+          httpGet:
+            path: /health
+            port: http
+      volumes:
+      - name: nginx-conf
+        configMap:
+          name: nginx-conf
+      - name: nginx-tmp
+        emptyDir: {}

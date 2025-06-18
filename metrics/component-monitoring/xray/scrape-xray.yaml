@@ -1,0 +1,24 @@
+---
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: xray
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  scheme: HTTP
+  metricsPath: /scrape
+  metricRelabelings:
+  - targetLabel: instance # remove port from instance
+    sourceLabels: [ instance ]
+    regex: (.*):9550
+    action: replace
+  - action: keep
+    sourceLabels: [ __name__ ]
+    regex: "\
+      v2ray_traffic_.*|\
+      v2ray_up|\
+      v2ray_uptime_seconds|\
+      "
