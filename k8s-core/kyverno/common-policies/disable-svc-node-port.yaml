@@ -1,0 +1,29 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disable-svc-node-port
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+  - name: disable-svc-node-port
+    match:
+      any:
+      - resources:
+          kinds:
+          - Service
+          # operations:
+          # - CREATE
+          # - UPDATE
+    preconditions:
+      all:
+      - key: "{{ request.object.spec.type }}"
+        operator: Equals
+        value: LoadBalancer
+    mutate:
+      patchStrategicMerge:
+        spec:
+          # +() doesn't work because API server always sets the value before calling webhooks
+          # +(allocateLoadBalancerNodePorts): false
+          allocateLoadBalancerNodePorts: false
