@@ -36,3 +36,14 @@ References:
 
 References:
 - https://github.com/homarr-labs/dashboard-icons
+
+# Increase login timeout
+
+Authentik keeps its own login info in browser cookies.
+By default authentik uses cookies with automatic timeout, and browser decides when you need to log in again.
+
+You can adjust this to use a fixed-time session with longer duration:
+
+- `Flow and Stages -> Stages -> default-authentication-login -> Stay signed in offset`.
+- - Set to `days=400`
+- - Note that max session duration in your browser can be lower than 400 days.
