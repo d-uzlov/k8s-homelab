@@ -178,6 +178,15 @@
               {
                 "id": "custom.width",
                 "value": 334
+              },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Filter UID",
+                    "url": "/d/mo6wf2ukdv3l72howqnq/pod-containers?${datasource:queryparam}&${cluster:queryparam}&${namespace:queryparam}&${workload:queryparam}&${pod:queryparam}&var-pod_uid=${__data.fields[\"Pod uid\"]}&${container:queryparam}&${container_name:queryparam}&${id:queryparam}&${__url_time_range}"
+                  }
+                ]
               }
             ]
           },
@@ -217,6 +226,15 @@
               {
                 "id": "custom.width",
                 "value": 570
+              },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Filter container ID",
+                    "url": "/d/mo6wf2ukdv3l72howqnq/pod-containers?${datasource:queryparam}&${cluster:queryparam}&${namespace:queryparam}&${workload:queryparam}&${pod:queryparam}&${pod_uid:queryparam}&${container:queryparam}&${container_name:queryparam}&var-id=${__data.fields.name}&${__url_time_range}"
+                  }
+                ]
               }
             ]
           },
@@ -243,7 +261,7 @@
                 "value": [
                   {
                     "title": "Node pods",
-                    "url": "/d/9ays84j4ksi5cwo0n786/kubernetes3a-node-pods?${datasource:queryparam}&${cluster:queryparam}&var-node=${__data.fields.node}&${namespace:queryparam}"
+                    "url": "/d/9ays84j4ksi5cwo0n786/kubernetes3a-node-pods?${datasource:queryparam}&${cluster:queryparam}&var-node=${__data.fields.node}&${namespace:queryparam}&${__url_time_range}"
                   }
                 ]
               }
@@ -416,7 +434,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(pod, workload_type, workload, uid, node, container, name, image) (\r\n  label_replace((\r\n    last_over_time(kube_pod_container_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", container_id!=\"\"}[$__range])\r\n    or\r\n    last_over_time(kube_pod_init_container_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", container_id!=\"\"}[$__range])\r\n  ), \"name\", \"$1\", \"container_id\", \"containerd://(.*)\")\r\n  * on(cluster, namespace, pod, name) group_right(uid)\r\n  max without(uid) (last_over_time(container_last_seen_time{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container=~\"$container\", name=~\"$id\", uid!=\"\"}[$__range]))\r\n) * 1000 * on(pod, uid) group_left(workload_type, workload)\r\nmax by(pod, workload_type, workload, uid) (\r\n  last_over_time(namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid!=\"\"}[$__range])\r\n)",
+          "expr": "max by(pod, workload_type, workload, uid, node, container, name, image) (\r\n  # kube-state-metrics sometimes prints different image_spec for the same container ID,\r\n  # which causes errors with duplicate entries.\r\n  # This is probably related to using AdvancedDaemonSet from OpenKruise\r\n  max without(image_spec) (label_replace((\r\n    last_over_time(kube_pod_container_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", container_id!=\"\"}[$__range])\r\n    or\r\n    last_over_time(kube_pod_init_container_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", container_id!=\"\"}[$__range])\r\n  ), \"name\", \"$1\", \"container_id\", \"containerd://(.*)\"))\r\n  * on(cluster, namespace, pod, name) group_right(uid)\r\n  max without(uid) (last_over_time(container_last_seen_time{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container=~\"$container\", name=~\"$id\", uid!=\"\"}[$__range]))\r\n) * 1000 * on(pod, uid) group_left(workload_type, workload)\r\nmax by(pod, workload_type, workload, uid) (\r\n  last_over_time(namespace_workload_pod:kube_pod_owner:relabel{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid!=\"\"}[$__range])\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -431,7 +449,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(container, name) (\r\n  label_replace((\r\n    last_over_time(kube_pod_container_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", container_id!=\"\"}[$__range])\r\n    or\r\n    last_over_time(kube_pod_init_container_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", container_id!=\"\"}[$__range])\r\n  ), \"name\", \"$1\", \"container_id\", \"containerd://(.*)\")\r\n  * on(cluster, namespace, pod, name) group_right(uid)\r\n  last_over_time(container_start_time_seconds{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container=~\"$container\", name=~\"$id\"}[$__range])\r\n) * 1000",
+          "expr": "max by(container, name) (\r\n  # kube-state-metrics sometimes prints different image_spec for the same container ID,\r\n  # which causes errors with duplicate entries.\r\n  # This is probably related to using AdvancedDaemonSet from OpenKruise\r\n  max without(image_spec) (label_replace((\r\n    last_over_time(kube_pod_container_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", container_id!=\"\"}[$__range])\r\n    or\r\n    last_over_time(kube_pod_init_container_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", container_id!=\"\"}[$__range])\r\n  ), \"name\", \"$1\", \"container_id\", \"containerd://(.*)\"))\r\n  * on(cluster, namespace, pod, name) group_right(uid)\r\n  last_over_time(container_start_time_seconds{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container=~\"$container\", name=~\"$id\"}[$__range])\r\n) * 1000",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -446,7 +464,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "round(\r\ntime() -\r\nmax by(container, name) (\r\n  label_replace((\r\n    last_over_time(kube_pod_container_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", container_id!=\"\"}[$__range])\r\n    or\r\n    last_over_time(kube_pod_init_container_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", container_id!=\"\"}[$__range])\r\n  ), \"name\", \"$1\", \"container_id\", \"containerd://(.*)\")\r\n  * on(cluster, namespace, pod, name) group_right(uid)\r\n  last_over_time(container_last_seen_time{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container=~\"$container\", name=~\"$id\"}[$__range])\r\n)\r\n)",
+          "expr": "round(\r\ntime() -\r\nmax by(container, name) (\r\n  # kube-state-metrics sometimes prints different image_spec for the same container ID,\r\n  # which causes errors with duplicate entries.\r\n  # This is probably related to using AdvancedDaemonSet from OpenKruise\r\n  max without(image_spec) (label_replace((\r\n    last_over_time(kube_pod_container_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", container_id!=\"\"}[$__range])\r\n    or\r\n    last_over_time(kube_pod_init_container_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", container_id!=\"\"}[$__range])\r\n  ), \"name\", \"$1\", \"container_id\", \"containerd://(.*)\"))\r\n  * on(cluster, namespace, pod, name) group_right(uid)\r\n  last_over_time(container_last_seen_time{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container=~\"$container\", name=~\"$id\"}[$__range])\r\n)\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -1740,7 +1758,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "# if container didn't run at some interval, you will have division by zero, so we do ` / increase + epsilon`\r\nmax by (container, name) (\r\n  (increase(container_cpu_cgroup_burst_periods_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]) )\r\n/ on(container, name)\r\n  (increase(container_cpu_cfs_periods_total[$__rate_interval]) + 1e-5 )\r\n)",
+          "expr": "# if container didn't run at some interval, you will have division by zero, so we do ` / increase + epsilon`\r\nclamp_max(\r\n  max by (container, name) (\r\n    (increase(container_cpu_cgroup_burst_periods_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]) )\r\n  / on(container, name)\r\n    (increase(container_cpu_cfs_periods_total[$__rate_interval]) + 1e-5 )\r\n  ),\r\n1)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} burst, name={{name}}",
@@ -1753,7 +1771,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "# if container didn't run at some interval, you will have division by zero, so we do ` / increase + epsilon`\r\nmax by(container) (\r\n  max by (container, name) (\r\n    (increase(container_cpu_cgroup_burst_periods_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]) )\r\n  / on(container, name)\r\n    (increase(container_cpu_cfs_periods_total[$__rate_interval]) + 1e-5 )\r\n  )\r\n)",
+          "expr": "# if container didn't run at some interval, you will have division by zero, so we do ` / increase + epsilon`\r\nclamp_max(\r\n  max by(container) (\r\n    max by (container, name) (\r\n      (increase(container_cpu_cgroup_burst_periods_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]) )\r\n    / on(container, name)\r\n      (increase(container_cpu_cfs_periods_total[$__rate_interval]) + 1e-5 )\r\n    )\r\n  ),\r\n  1\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} burst",
