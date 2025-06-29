@@ -218,7 +218,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "v2ray_uptime_seconds{cluster=\"$cluster\", instance=~\"$instance\"}",
+          "expr": "v2ray_uptime_seconds{cluster_type=\"$cluster_type\", cluster=\"$cluster\", instance=~\"$instance\"}",
           "format": "table",
           "instant": true,
           "legendFormat": "",
@@ -229,7 +229,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (instance) (increase(v2ray_traffic_downlink_bytes_total{cluster=\"$cluster\", instance=~\"$instance\",dimension=\"inbound\"}[$__range]))",
+          "expr": "sum by (instance) (increase(v2ray_traffic_downlink_bytes_total{cluster_type=\"$cluster_type\", cluster=\"$cluster\", instance=~\"$instance\",dimension=\"inbound\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -241,7 +241,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (instance) (increase(v2ray_traffic_uplink_bytes_total{cluster=\"$cluster\", instance=~\"$instance\",dimension=\"inbound\"}[$__range]))",
+          "expr": "sum by (instance) (increase(v2ray_traffic_uplink_bytes_total{cluster_type=\"$cluster_type\", cluster=\"$cluster\", instance=~\"$instance\",dimension=\"inbound\"}[$__range]))",
           "format": "table",
           "instant": true,
           "legendFormat": "",
@@ -324,10 +324,6 @@
             "steps": [
               {
                 "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           },
@@ -336,8 +332,8 @@
         "overrides": [
           {
             "matcher": {
-              "id": "byName",
-              "options": "Uplink"
+              "id": "byRegexp",
+              "options": "/Uplink.*/"
             },
             "properties": [
               {
@@ -360,9 +356,9 @@
         "dataLinks": [],
         "legend": {
           "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -376,20 +372,44 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(v2ray_traffic_downlink_bytes_total{cluster=\"$cluster\", instance=~\"$instance\", dimension=\"inbound\"}[$__rate_interval]))",
-          "legendFormat": "Downlink",
+          "expr": "sum(rate(v2ray_traffic_downlink_bytes_total{cluster_type=\"$cluster_type\", cluster=\"$cluster\", instance=~\"$instance\", dimension=\"inbound\"}[$__rate_interval]))",
+          "hide": false,
+          "legendFormat": "Downlink Avg",
           "range": true,
-          "refId": "A"
+          "refId": "down_avg"
         },
         {
           "datasource": {
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(v2ray_traffic_uplink_bytes_total{cluster=\"$cluster\", instance=~\"$instance\", dimension=\"inbound\"}[$__rate_interval]))",
-          "legendFormat": "Uplink",
+          "expr": "sum(rate(v2ray_traffic_uplink_bytes_total{cluster_type=\"$cluster_type\", cluster=\"$cluster\", instance=~\"$instance\", dimension=\"inbound\"}[$__rate_interval]))",
+          "hide": false,
+          "legendFormat": "Uplink Avg",
           "range": true,
-          "refId": "B"
+          "refId": "up_avg"
+        },
+        {
+          "datasource": {
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(quantile_over_time(0.99, dimension:v2ray_traffic_downlink_bytes_total:irate{cluster_type=\"$cluster_type\", cluster=\"$cluster\", instance=~\"$instance\", dimension=\"inbound\"}[$__rate_interval]))",
+          "hide": false,
+          "legendFormat": "Downlink p99",
+          "range": true,
+          "refId": "down_max"
+        },
+        {
+          "datasource": {
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(quantile_over_time(0.99, dimension:v2ray_traffic_uplink_bytes_total:irate{cluster_type=\"$cluster_type\", cluster=\"$cluster\", instance=~\"$instance\", dimension=\"inbound\"}[$__rate_interval]))",
+          "hide": false,
+          "legendFormat": "Uplink p99",
+          "range": true,
+          "refId": "up_max"
         }
       ],
       "title": "Total Bandwidth",
@@ -570,7 +590,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "increase(v2ray_traffic_downlink_bytes_total{cluster=\"$cluster\", instance=~\"$instance\", target=~\"$target\"}[$__range])",
+          "expr": "increase(v2ray_traffic_downlink_bytes_total{cluster_type=\"$cluster_type\", cluster=\"$cluster\", instance=~\"$instance\", target=~\"$target\"}[$__range])",
           "format": "table",
           "instant": true,
           "legendFormat": "",
@@ -581,7 +601,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "increase(v2ray_traffic_uplink_bytes_total{cluster=\"$cluster\", instance=~\"$instance\", target=~\"$target\"}[$__range])",
+          "expr": "increase(v2ray_traffic_uplink_bytes_total{cluster_type=\"$cluster_type\", cluster=\"$cluster\", instance=~\"$instance\", target=~\"$target\"}[$__range])",
           "format": "table",
           "instant": true,
           "legendFormat": "",
@@ -672,398 +692,6 @@
             "steps": [
               {
                 "color": "green"
-              }
-            ]
-          },
-          "unit": "Bps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 0,
-        "y": 24
-      },
-      "id": 11,
-      "maxDataPoints": 200,
-      "options": {
-        "dataLinks": [],
-        "legend": {
-          "calcs": [
-            "mean",
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "rate(v2ray_traffic_downlink_bytes_total{cluster=\"$cluster\", instance=~\"$instance\", dimension=\"inbound\", target=~\"$target\"}[$__rate_interval])",
-          "legendFormat": "{{target}}",
-          "range": true,
-          "refId": "down"
-        }
-      ],
-      "title": "Download Speed of Inbounds",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "Bps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 12,
-        "y": 24
-      },
-      "id": 12,
-      "maxDataPoints": 200,
-      "options": {
-        "dataLinks": [],
-        "legend": {
-          "calcs": [
-            "mean",
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "rate(v2ray_traffic_uplink_bytes_total{cluster=\"$cluster\", instance=~\"$instance\", dimension=\"inbound\", target=~\"$target\"}[$__rate_interval])",
-          "legendFormat": "{{target}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Upload Speed of Inbounds",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "Bps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 0,
-        "y": 33
-      },
-      "id": 32,
-      "maxDataPoints": 200,
-      "options": {
-        "dataLinks": [],
-        "legend": {
-          "calcs": [
-            "mean",
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "rate(v2ray_traffic_downlink_bytes_total{cluster=\"$cluster\", instance=~\"$instance\",dimension=\"outbound\", target=~\"$target\"}[$__rate_interval])",
-          "legendFormat": "{{target}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Download Speed of Outbounds",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "Bps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 12,
-        "y": 33
-      },
-      "id": 33,
-      "maxDataPoints": 200,
-      "options": {
-        "dataLinks": [],
-        "legend": {
-          "calcs": [
-            "mean",
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "rate(v2ray_traffic_uplink_bytes_total{cluster=\"$cluster\", instance=~\"$instance\", dimension=\"outbound\", target=~\"$target\"}[$__rate_interval])",
-          "legendFormat": "{{target}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Upload Speed of Outbounds",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
               },
               {
                 "color": "red",
@@ -1079,7 +707,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 42
+        "y": 24
       },
       "id": 13,
       "maxDataPoints": 200,
@@ -1087,17 +715,18 @@
         "dataLinks": [],
         "legend": {
           "calcs": [
-            "mean",
-            "max"
+            "mean"
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
           "mode": "multi",
-          "sort": "none"
+          "sort": "desc"
         }
       },
       "targets": [
@@ -1106,13 +735,13 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "rate(v2ray_traffic_downlink_bytes_total{cluster=\"$cluster\", instance=~\"$instance\", dimension=\"user\", target=~\"$target\"}[$__rate_interval])",
-          "legendFormat": "{{target}}",
+          "expr": "rate(v2ray_traffic_downlink_bytes_total{cluster_type=\"$cluster_type\", cluster=\"$cluster\", instance=~\"$instance\", target=~\"$target\"}[$__rate_interval])",
+          "legendFormat": "{{dimension}}/{{target}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Download Speed of Users",
+      "title": "Down speed / avg",
       "type": "timeseries"
     },
     {
@@ -1178,7 +807,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 42
+        "y": 24
       },
       "id": 14,
       "maxDataPoints": 200,
@@ -1186,17 +815,18 @@
         "dataLinks": [],
         "legend": {
           "calcs": [
-            "mean",
-            "max"
+            "mean"
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
           "mode": "multi",
-          "sort": "none"
+          "sort": "desc"
         }
       },
       "targets": [
@@ -1205,13 +835,413 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "rate(v2ray_traffic_uplink_bytes_total{cluster=\"$cluster\", instance=~\"$instance\", dimension=\"user\", target=~\"$target\"}[$__rate_interval])",
+          "expr": "rate(v2ray_traffic_uplink_bytes_total{cluster_type=\"$cluster_type\", cluster=\"$cluster\", instance=~\"$instance\", target=~\"$target\"}[$__rate_interval])",
+          "legendFormat": "{{dimension}}/{{target}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Up speed / avg",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "id": 34,
+      "maxDataPoints": 200,
+      "options": {
+        "dataLinks": [],
+        "legend": {
+          "calcs": [
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Max",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "quantile_over_time(0.95, v2ray_traffic_downlink_bytes_total:irate{cluster_type=\"$cluster_type\", cluster=\"$cluster\", instance=~\"$instance\", target=~\"$target\"}[$__rate_interval])",
           "legendFormat": "{{target}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Upload Speed of Users",
+      "title": "Down speed / p95",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 32
+      },
+      "id": 35,
+      "maxDataPoints": 200,
+      "options": {
+        "dataLinks": [],
+        "legend": {
+          "calcs": [
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Max",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "quantile_over_time(0.95, v2ray_traffic_uplink_bytes_total:irate{cluster_type=\"$cluster_type\", cluster=\"$cluster\", instance=~\"$instance\", target=~\"$target\"}[$__rate_interval])",
+          "legendFormat": "{{target}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Up speed / p95",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 40
+      },
+      "id": 36,
+      "maxDataPoints": 200,
+      "options": {
+        "dataLinks": [],
+        "legend": {
+          "calcs": [
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Max",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "quantile_over_time(0.99, v2ray_traffic_downlink_bytes_total:irate{cluster_type=\"$cluster_type\", cluster=\"$cluster\", instance=~\"$instance\", target=~\"$target\"}[$__rate_interval])",
+          "legendFormat": "{{target}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Down speed / p99",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 40
+      },
+      "id": 37,
+      "maxDataPoints": 200,
+      "options": {
+        "dataLinks": [],
+        "legend": {
+          "calcs": [
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Max",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "quantile_over_time(0.99, v2ray_traffic_uplink_bytes_total:irate{cluster_type=\"$cluster_type\", cluster=\"$cluster\", instance=~\"$instance\", target=~\"$target\"}[$__rate_interval])",
+          "legendFormat": "{{target}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Up speed / p99",
       "type": "timeseries"
     }
   ],
@@ -1237,15 +1267,17 @@
       {
         "allowCustomValue": false,
         "current": {
-          "text": "xray/b2788-vpn",
-          "value": "b2788-vpn"
+          "text": "xray/cluster-name",
+          "value": "xray/cluster-name"
         },
         "datasource": {
           "type": "prometheus",
           "uid": "${datasource}"
         },
         "definition": "query_result(label_join(count_over_time(up{job=\"xray\"}[$__range]), \"human_name\", \"/\", \"cluster_type\", \"cluster\"))",
-        "name": "cluster",
+        "description": "",
+        "label": "Cluster",
+        "name": "type_and_cluster",
         "options": [],
         "query": {
           "qryType": 3,
@@ -1253,7 +1285,57 @@
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
-        "regex": "/human_name=\"(?<text>[^\"]+)|cluster=\"(?<value>[^\"]+)/g",
+        "regex": "/human_name=\"(?<text>[^\"]+)|human_name=\"(?<value>[^\"]+)/g",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allowCustomValue": false,
+        "current": {
+          "text": "xray",
+          "value": "xray"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "query_result(label_replace(label_replace(vector(0), \"tmp_type_cluster\", \"$type_and_cluster\", \"cluster\", \".*\"), \"cluster_type\", \"$1\", \"tmp_type_cluster\", \"(.*)/.*\"))",
+        "description": "",
+        "hide": 2,
+        "name": "cluster_type",
+        "options": [],
+        "query": {
+          "qryType": 3,
+          "query": "query_result(label_replace(label_replace(vector(0), \"tmp_type_cluster\", \"$type_and_cluster\", \"cluster\", \".*\"), \"cluster_type\", \"$1\", \"tmp_type_cluster\", \"(.*)/.*\"))",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "/cluster_type=\"(?<text>[^\"]+)|cluster_type=\"(?<value>[^\"]+)/g",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allowCustomValue": false,
+        "current": {
+          "text": "xray/b2788-vpn",
+          "value": "b2788-vpn"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "query_result(label_replace(label_replace(vector(0), \"tmp_type_cluster\", \"$type_and_cluster\", \"cluster\", \".*\"), \"cluster\", \"$1\", \"tmp_type_cluster\", \".*/(.*)\"))",
+        "description": "",
+        "hide": 2,
+        "name": "cluster",
+        "options": [],
+        "query": {
+          "qryType": 3,
+          "query": "query_result(label_replace(label_replace(vector(0), \"tmp_type_cluster\", \"$type_and_cluster\", \"cluster\", \".*\"), \"cluster\", \"$1\", \"tmp_type_cluster\", \".*/(.*)\"))",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "/cluster=\"(?<text>[^\"]+)|cluster=\"(?<value>[^\"]+)/g",
         "sort": 1,
         "type": "query"
       },
@@ -1286,13 +1368,53 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(label_join(count_over_time(v2ray_traffic_downlink_bytes_total{instance=~\"$instance\"}[$__range]), \"human_name\", \"/\", \"dimension\", \"target\"))",
+        "definition": "query_result(count_over_time(v2ray_traffic_downlink_bytes_total{instance=~\"$instance\", target=~\".*($target_filter).*\"}[$__range]))",
+        "includeAll": true,
+        "name": "dimension",
+        "options": [],
+        "query": {
+          "qryType": 3,
+          "query": "query_result(count_over_time(v2ray_traffic_downlink_bytes_total{instance=~\"$instance\", target=~\".*($target_filter).*\"}[$__range]))",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "/dimension=\"(?<text>[^\"]+)|dimension=\"(?<value>[^\"]+)/g",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "name": "target_filter",
+        "options": [
+          {
+            "selected": true,
+            "text": "",
+            "value": ""
+          }
+        ],
+        "query": "",
+        "type": "textbox"
+      },
+      {
+        "allowCustomValue": false,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "query_result(label_join(count_over_time(v2ray_traffic_downlink_bytes_total{instance=~\"$instance\", dimension=~\"$dimension\", target=~\".*($target_filter).*\"}[$__range]), \"human_name\", \"/\", \"dimension\", \"target\"))",
         "includeAll": true,
         "name": "target",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(label_join(count_over_time(v2ray_traffic_downlink_bytes_total{instance=~\"$instance\"}[$__range]), \"human_name\", \"/\", \"dimension\", \"target\"))",
+          "query": "query_result(label_join(count_over_time(v2ray_traffic_downlink_bytes_total{instance=~\"$instance\", dimension=~\"$dimension\", target=~\".*($target_filter).*\"}[$__range]), \"human_name\", \"/\", \"dimension\", \"target\"))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
