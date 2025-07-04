@@ -1,0 +1,39 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: record-zfs-vdev-quantile
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  groups:
+  - name: zfs-vdev-quantile
+    rules:
+    - record: zfs_vdev_latency_disk_bucket:quantile_irate
+      expr: |-
+        histogram_quantile(0.99, irate(zfs_vdev_latency_disk_bucket[30s])) and (irate(zfs_vdev_latency_disk_count[30s]) != 0)
+      labels:
+        quantile: '0.99'
+    # TODO which buckets would make sense for IO size?
+    # - record: zfs_vdev_io_size_aggregated_bucket:quantile_irate
+    #   expr: |-
+    #     histogram_quantile(0.99, irate(zfs_vdev_io_size_aggregated_bucket[30s])) and (irate(zfs_vdev_io_size_aggregated_count[30s]) != 0)
+    #   labels:
+    #     quantile: '0.99'
+    # - record: zfs_vdev_io_size_individual_bucket:quantile_irate
+    #   expr: |-
+    #     histogram_quantile(0.99, irate(zfs_vdev_io_size_individual_bucket[30s])) and (irate(zfs_vdev_io_size_individual_count[30s]) != 0)
+    #   labels:
+    #     quantile: '0.99'
+    - record: zfs_vdev_queue_latency_bucket:quantile_irate
+      expr: |-
+        histogram_quantile(0.99, irate(zfs_vdev_queue_latency_bucket[30s])) and (irate(zfs_vdev_queue_latency_count[30s]) != 0)
+      labels:
+        quantile: '0.99'
+    - record: zfs_vdev_zio_latency_total_bucket:quantile_irate
+      expr: |-
+        histogram_quantile(0.99, irate(zfs_vdev_zio_latency_total_bucket[30s])) and (irate(zfs_vdev_zio_latency_total_count[30s]) != 0)
+      labels:
+        quantile: '0.99'

@@ -8,7 +8,7 @@
 # Linux installation
 
 References:
-- https://github.com/pdf/zfs_exporter
+- https://github.com/siebenmann/zfs_exporter
 
 Run on the target system:
 

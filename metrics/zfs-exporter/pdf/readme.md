@@ -34,6 +34,9 @@ After=network-online.target
 User=zfs_exporter
 ExecStart=$(which zfs_exporter) \
   --web.listen-address=:9134 \
+  --properties.dataset-filesystem="available,logicalused,quota,referenced,used,usedbydataset,usedbychildren,usedbysnapshots,written,refquota,refreservation,reservation,snapshot_count,snapshot_limit,logicalreferenced,creation" \
+  --properties.dataset-volume="available,logicalused,referenced,used,usedbydataset,volsize,written,usedbysnapshots,logicalreferenced,creation" \
+  --properties.pool="allocated,dedupratio,capacity,expandsize,fragmentation,free,freeing,health,leaked,readonly,size" \
   --web.disable-exporter-metrics
 
 [Install]
