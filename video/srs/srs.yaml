@@ -1,0 +1,101 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: srs
+  labels:
+    app.kubernetes.io/name: srs-server
+    app.kubernetes.io/instance: srs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: srs-server
+      app.kubernetes.io/instance: srs
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: srs-server
+        app.kubernetes.io/instance: srs
+    spec:
+      serviceAccountName: default
+      securityContext: {}
+      containers:
+      - name: srs-server
+        securityContext: {}
+        image: "ossrs/srs:v6.0.166"
+        imagePullPolicy: IfNotPresent
+        command: [ "./objs/srs", "-e" ]
+        ports:
+        - name: rtmp
+          containerPort: 1935
+          protocol: TCP
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        - name: api
+          containerPort: 1985
+          protocol: TCP
+        - name: srt
+          containerPort: 10080
+          protocol: UDP
+        - name: rtc
+          containerPort: 8000
+          protocol: UDP
+        env:
+        # The general default config.
+        - name: SRS_LISTEN
+          value: "1935"
+        - name: SRS_HTTP_SERVER_LISTEN
+          value: "8080"
+        - name: SRS_HTTP_API_LISTEN
+          value: "1985"
+        - name: SRS_SRT_SERVER_LISTEN
+          value: "10080"
+        - name: SRS_RTC_SERVER_LISTEN
+          value: "8000"
+        - name: SRS_RTC_SERVER_USE_AUTO_DETECT_NETWORK_IP
+          value: "off"
+        - name: SRS_PLATFORM
+          value: "helm"
+        # Overwrite the config by conf.
+        - name: SRS_HTTP_API_ENABLED
+          value: "on"
+        - name: SRS_HTTP_SERVER_ENABLED
+          value: "on"
+        - name: SRS_LOG_TANK
+          value: "console"
+        - name: SRS_RTC_SERVER_CANDIDATE
+          value: "10.3.6.17"
+        - name: SRS_RTC_SERVER_ENABLED
+          value: "on"
+        - name: SRS_SRT_SERVER_ENABLED
+          value: "on"
+        - name: SRS_VHOST_HLS_ENABLED
+          value: "on"
+        - name: SRS_VHOST_HTTP_REMUX_ENABLED
+          value: "on"
+        - name: SRS_VHOST_RTC_ENABLED
+          value: "on"
+        - name: SRS_VHOST_RTC_RTC_TO_RTMP
+          value: "on"
+        - name: SRS_VHOST_RTC_RTMP_TO_RTC
+          value: "on"
+        - name: SRS_VHOST_SRT_ENABLED
+          value: "on"
+        - name: SRS_VHOST_SRT_TO_RTMP
+          value: "on"
+        # Overwrite the config by env.
+        # Overwrite by special item.
+        # In docker, should always disable the daemon.
+        - name: SRS_DAEMON
+          value: "off"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+        resources: {}
