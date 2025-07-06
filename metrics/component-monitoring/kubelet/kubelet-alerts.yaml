@@ -1,4 +1,3 @@
-
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
@@ -12,22 +11,64 @@ spec:
   groups:
   - name: k8s-container-cpu-throttling
     rules:
-    - alert: CPUThrottlingHigh
+    - alert: ContainerCPUThrottlingHigh
       annotations:
         description: >-
           {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }}:
           {{ $value | humanizePercentage }}
-        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/cputhrottlinghigh
-        summary: Container throttling rate is above 70%
+        summary: Container throttling rate is above 30%
       expr: |-
         (
           increase(container_cpu_cfs_throttled_periods_total[5m])
           /
           increase(container_cpu_cfs_periods_total[5m])
-        ) > ( 70 / 100 )
+        ) > 0.3
       for: 15m
       labels:
         severity: info
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: alert-k8s-container-memory
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  groups:
+  - name: alert-k8s-container-memory
+    rules:
+    - alert: ContainerRSSCloseToLimit
+      annotations:
+        description: >-
+          {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }}:
+          {{ $value | humanizePercentage }}
+        summary: Container RSS is above 90% of memory limit
+      expr: |-
+        container_memory_rss / container_spec_memory_limit_bytes{} > 0.9
+        and
+        container_memory_working_set_bytes / container_spec_memory_limit_bytes{} > 0.97
+        and
+        container_spec_memory_limit_bytes != 0
+      for: 5m
+      labels:
+        severity: warning
+    - alert: ContainerRSSAtLimit
+      annotations:
+        description: >-
+          {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }}:
+          {{ $value | humanizePercentage }}
+        summary: Container RSS is above 97% of memory limit
+      expr: |-
+        container_memory_rss / container_spec_memory_limit_bytes{} > 0.97
+        and
+        container_memory_working_set_bytes / container_spec_memory_limit_bytes{} > 0.99
+        and
+        container_spec_memory_limit_bytes != 0
+      for: 0m
+      labels:
+        severity: warning
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule

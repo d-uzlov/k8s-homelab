@@ -196,6 +196,22 @@
                 "value": 105
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "size"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 102
+              },
+              {
+                "id": "unit",
+                "value": "bytes"
+              }
+            ]
           }
         ]
       },
@@ -220,6 +236,21 @@
         "sortBy": []
       },
       "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "max by(zpool, state) (zfs_pool_size_bytes{cluster=\"$cluster\", instance=\"$instance\", pool=\"$pool\"})",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "size"
+        },
         {
           "datasource": {
             "type": "prometheus",
@@ -302,11 +333,12 @@
             "includeByName": {},
             "indexByName": {
               "Time": 0,
-              "Value #errors": 5,
-              "Value #load_time": 3,
-              "Value #state": 6,
-              "Value #vdevs": 4,
-              "state": 2,
+              "Value #errors": 6,
+              "Value #load_time": 4,
+              "Value #size": 2,
+              "Value #state": 7,
+              "Value #vdevs": 5,
+              "state": 3,
               "zpool": 1
             },
             "renameByName": {
@@ -324,6 +356,30 @@
         }
       ],
       "type": "table"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 9,
+        "x": 11,
+        "y": 1
+      },
+      "id": 18,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "`allocated` property is only tracked for devices directly under root.\r\n\r\nRead from vdev is usually much smaller than read from dataset, because the majority of data is cached in ARC.\r\n\r\nL2ARC vdev is not tracked by the exporter, and ZFS doesn't expose separate per-pool statistics for L2ARC.\r\n\r\nRead/write latency can be missing in case there were no corresponding operations.",
+        "mode": "markdown"
+      },
+      "title": "Notes",
+      "type": "text"
     },
     {
       "datasource": {
@@ -658,7 +714,12 @@
           "show": false
         },
         "showHeader": true,
-        "sortBy": []
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "vdev"
+          }
+        ]
       },
       "targets": [
         {
@@ -1108,7 +1169,7 @@
             "properties": [
               {
                 "id": "custom.width",
-                "value": 498
+                "value": 651
               }
             ]
           },

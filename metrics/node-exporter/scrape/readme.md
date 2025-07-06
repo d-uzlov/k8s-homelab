@@ -31,7 +31,7 @@ After=network-online.target
 [Service]
 User=node_exporter
 ExecStart=/usr/local/bin/node_exporter \
-  --collector.diskstats.device-exclude='^(zd.*|loop.*)$' \
+  --collector.diskstats.device-exclude='^(loop.*)$' \
   --collector.netdev.device-exclude='^(fwbr.*|fwln.*|fwpr.*|tap.*|veth.*)$' \
   --collector.netclass.ignore-invalid-speed \
   --collector.netdev.address-info \
