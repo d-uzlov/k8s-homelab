@@ -514,7 +514,7 @@ L2ARC statistics:
 - `l2_size` is logical size of data
 - `l2_asize` is size on disk (compressed size can be smaller than logical)
 
-- `prefetch_data_hits` and other `prefetch_` metrics are for "prefetch wants to load this block but it is already in the ARC".
+- `prefetch_data_hits` and other `prefetch_*_hits` metrics are for "prefetch wants to load this block but it is already in the ARC".
 - - This doesn't have anything to do with actual fetching of data from disk.
 
 - `predictive_prefetch` is data prefetched via a runtime heuristic based on user request pattern.

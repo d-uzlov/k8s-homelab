@@ -133,7 +133,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
+        "h": 8,
         "w": 24,
         "x": 0,
         "y": 1
@@ -338,7 +338,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 8
+        "y": 9
       },
       "id": 53,
       "maxDataPoints": 250,
@@ -412,6 +412,30 @@
       "type": "timeseries"
     },
     {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 15,
+        "y": 16
+      },
+      "id": 55,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "- `data` and `meta`: required block is already in ARC\n- `L2`: data required by ARC is already in L2\n- `zfetch`: data access is predictable\n- `adaptive prefetch`: required data is already in ARC because of heuristic\n- `prescient prefetch`: data is prefetched withtout heuristics\n- - prescient prefetch is rarely used but hit rate is usually 100%\n",
+        "mode": "markdown"
+      },
+      "title": "ARC hit rate notes",
+      "type": "text"
+    },
+    {
       "datasource": {
         "type": "prometheus",
         "uid": "${data_source}"
@@ -473,7 +497,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 15
+        "y": 21
       },
       "id": 52,
       "maxDataPoints": 250,
@@ -481,7 +505,6 @@
         "legend": {
           "calcs": [
             "mean",
-            "lastNotNull",
             "min"
           ],
           "displayMode": "table",
@@ -502,7 +525,7 @@
             "uid": "${data_source}"
           },
           "editorMode": "code",
-          "expr": "(rate(node_zfs_arc_demand_data_hits{instance=\"$instance\"}[$__rate_interval])) / (rate(node_zfs_arc_demand_data_hits{instance=\"$instance\"}[$__rate_interval]) + rate(node_zfs_arc_demand_data_misses{instance=\"$instance\"}[$__rate_interval]) + 1)",
+          "expr": "(rate(node_zfs_arc_demand_data_hits{instance=\"$instance\"}[$__rate_interval])) / (rate(node_zfs_arc_demand_data_hits{instance=\"$instance\"}[$__rate_interval]) + rate(node_zfs_arc_demand_data_misses{instance=\"$instance\"}[$__rate_interval]) + 1e-6)",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "data",
@@ -515,7 +538,7 @@
             "uid": "${data_source}"
           },
           "editorMode": "code",
-          "expr": "(rate(node_zfs_arc_demand_metadata_hits{instance=\"$instance\"}[$__rate_interval])) / (rate(node_zfs_arc_demand_metadata_hits{instance=\"$instance\"}[$__rate_interval]) + rate(node_zfs_arc_demand_metadata_misses{instance=\"$instance\"}[$__rate_interval]) + 1)",
+          "expr": "(rate(node_zfs_arc_demand_metadata_hits{instance=\"$instance\"}[$__rate_interval])) / (rate(node_zfs_arc_demand_metadata_hits{instance=\"$instance\"}[$__rate_interval]) + rate(node_zfs_arc_demand_metadata_misses{instance=\"$instance\"}[$__rate_interval]) + 1e-6)",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "metadata",
@@ -528,7 +551,7 @@
             "uid": "${data_source}"
           },
           "editorMode": "code",
-          "expr": "(rate(node_zfs_arc_l2_hits{instance=\"$instance\"}[$__rate_interval])) / (rate(node_zfs_arc_l2_hits{instance=\"$instance\"}[$__rate_interval]) + rate(node_zfs_arc_l2_misses{instance=\"$instance\"}[$__rate_interval]) + 1)",
+          "expr": "(rate(node_zfs_arc_l2_hits{instance=\"$instance\"}[$__rate_interval])) / (rate(node_zfs_arc_l2_hits{instance=\"$instance\"}[$__rate_interval]) + rate(node_zfs_arc_l2_misses{instance=\"$instance\"}[$__rate_interval]) + 1e-6)",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -542,13 +565,13 @@
             "uid": "${data_source}"
           },
           "editorMode": "code",
-          "expr": "(rate(node_zfs_arc_demand_hit_predictive_prefetch{instance=\"$instance\"}[$__rate_interval])) / (rate(node_zfs_arc_predictive_prefetch{instance=\"$instance\"}[$__rate_interval]) + 1)",
+          "expr": "(rate(node_zfs_zfetch_hits{instance=\"$instance\"}[$__rate_interval])) / (rate(node_zfs_zfetch_hits{instance=\"$instance\"}[$__rate_interval]) + rate(node_zfs_zfetch_misses{instance=\"$instance\"}[$__rate_interval]) + 1e-6)",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
-          "legendFormat": "prefetch",
+          "legendFormat": "zfetch",
           "range": true,
-          "refId": "prefetch"
+          "refId": "zfetch"
         },
         {
           "datasource": {
@@ -556,13 +579,27 @@
             "uid": "${data_source}"
           },
           "editorMode": "code",
-          "expr": "(rate(node_zfs_zfetch_hits{instance=\"$instance\"}[$__rate_interval])) / (rate(node_zfs_zfetch_hits{instance=\"$instance\"}[$__rate_interval]) + rate(node_zfs_zfetch_misses{instance=\"$instance\"}[$__rate_interval]) + 1)",
+          "expr": "(rate(node_zfs_arc_demand_hit_predictive_prefetch{instance=\"$instance\"}[$__rate_interval])) / (rate(node_zfs_arc_predictive_prefetch{instance=\"$instance\"}[$__rate_interval]) + 1e-6)",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
-          "legendFormat": "zfetch",
+          "legendFormat": "adaptive prefetch",
           "range": true,
-          "refId": "zfetch"
+          "refId": "adaptive_prefetch"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${data_source}"
+          },
+          "editorMode": "code",
+          "expr": "(rate(node_zfs_arc_demand_hit_prescient_prefetch{instance=\"$instance\"}[$__rate_interval])) / (rate(node_zfs_arc_prescient_prefetch{instance=\"$instance\"}[$__rate_interval]) + 1e-6)",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 1,
+          "legendFormat": "prescient prefetch",
+          "range": true,
+          "refId": "prescient_prefetch"
         }
       ],
       "title": "ARC hit %",
@@ -626,10 +663,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
+        "h": 9,
         "w": 24,
         "x": 0,
-        "y": 22
+        "y": 28
       },
       "id": 10,
       "maxDataPoints": 250,
@@ -637,7 +674,6 @@
         "legend": {
           "calcs": [
             "mean",
-            "lastNotNull",
             "max"
           ],
           "displayMode": "table",
@@ -662,9 +698,9 @@
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
-          "legendFormat": "data hits",
+          "legendFormat": "data hit",
           "range": true,
-          "refId": "B",
+          "refId": "data_hit",
           "step": 2,
           "target": ""
         },
@@ -678,9 +714,9 @@
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
-          "legendFormat": "data misses",
+          "legendFormat": "data miss",
           "range": true,
-          "refId": "I",
+          "refId": "data_miss",
           "step": 2,
           "target": ""
         },
@@ -693,9 +729,9 @@
           "expr": "rate(node_zfs_arc_demand_metadata_hits{instance=\"$instance\"}[20s])",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "meta hits",
+          "legendFormat": "meta hit",
           "range": true,
-          "refId": "A",
+          "refId": "meta_hit",
           "step": 2,
           "target": ""
         },
@@ -708,9 +744,9 @@
           "expr": "rate(node_zfs_arc_demand_metadata_misses{instance=\"$instance\"}[$__rate_interval])",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "meta misses",
+          "legendFormat": "meta miss",
           "range": true,
-          "refId": "C",
+          "refId": "meta_miss",
           "step": 2,
           "target": ""
         },
@@ -724,9 +760,9 @@
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
-          "legendFormat": "L2 hits",
+          "legendFormat": "L2 hit",
           "range": true,
-          "refId": "D",
+          "refId": "l2_hit",
           "step": 2,
           "target": ""
         },
@@ -740,9 +776,9 @@
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
-          "legendFormat": "L2 misses",
+          "legendFormat": "L2 miss",
           "range": true,
-          "refId": "E",
+          "refId": "l2_miss",
           "step": 2,
           "target": ""
         },
@@ -756,9 +792,9 @@
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
-          "legendFormat": "prefetch hits",
+          "legendFormat": "adaptive prefetch hit",
           "range": true,
-          "refId": "F",
+          "refId": "adaptive_prefetch_hit",
           "step": 2,
           "target": ""
         },
@@ -768,13 +804,45 @@
             "uid": "${data_source}"
           },
           "editorMode": "code",
-          "expr": "rate(node_zfs_arc_predictive_prefetch{instance=\"$instance\"}[$__rate_interval])",
+          "expr": "rate(node_zfs_arc_predictive_prefetch{instance=\"$instance\"}[$__rate_interval]) - rate(node_zfs_arc_demand_hit_predictive_prefetch{instance=\"$instance\"}[$__rate_interval])",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
-          "legendFormat": "prefetch issued",
+          "legendFormat": "adaptive prefetch miss",
           "range": true,
-          "refId": "G",
+          "refId": "adaptive_prefetch_miss",
+          "step": 2,
+          "target": ""
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${data_source}"
+          },
+          "editorMode": "code",
+          "expr": "rate(node_zfs_arc_demand_hit_prescient_prefetch{instance=\"$instance\"}[$__rate_interval])",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 1,
+          "legendFormat": "prescient prefetch hit",
+          "range": true,
+          "refId": "prescient_prefetch_hit",
+          "step": 2,
+          "target": ""
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${data_source}"
+          },
+          "editorMode": "code",
+          "expr": "rate(node_zfs_arc_prescient_prefetch{instance=\"$instance\"}[$__rate_interval]) - rate(node_zfs_arc_demand_hit_prescient_prefetch{instance=\"$instance\"}[$__rate_interval])",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 1,
+          "legendFormat": "prescient prefetch miss",
+          "range": true,
+          "refId": "prescient_prefetch_miss",
           "step": 2,
           "target": ""
         }
@@ -847,7 +915,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 29
+        "y": 37
       },
       "id": 5,
       "maxDataPoints": 250,
@@ -951,10 +1019,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
+        "h": 8,
         "w": 24,
         "x": 0,
-        "y": 36
+        "y": 44
       },
       "id": 6,
       "maxDataPoints": 250,
@@ -1003,19 +1071,6 @@
           "legendFormat": "dbuf",
           "range": true,
           "refId": "dbuf"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${data_source}"
-          },
-          "editorMode": "code",
-          "expr": "avg_over_time(node_zfs_arc_size{instance=\"$instance\"}[$__interval])\r\n- avg_over_time(node_zfs_arc_data_size{instance=\"$instance\"}[$__interval])\r\n- avg_over_time(node_zfs_arc_metadata_size{instance=\"$instance\"}[$__interval])\r\n- avg_over_time(node_zfs_arc_hdr_size{instance=\"$instance\"}[$__interval])\r\n- avg_over_time(node_zfs_arc_l2_hdr_size{instance=\"$instance\"}[$__interval])\r\n- avg_over_time(node_zfs_arc_dnode_size{instance=\"$instance\"}[$__interval])\r\n- avg_over_time(node_zfs_arc_dbuf_size{instance=\"$instance\"}[$__interval])\r\n- avg_over_time(node_zfs_arc_abd_chunk_waste_size{instance=\"$instance\"}[$__interval])\r\n- avg_over_time(node_zfs_arc_anon_data[$__interval])",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "Remaining",
-          "range": true,
-          "refId": "remaining"
         },
         {
           "datasource": {
@@ -1155,7 +1210,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 43
+        "y": 52
       },
       "id": 8,
       "maxDataPoints": 250,
@@ -1260,7 +1315,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 50
+        "y": 59
       },
       "id": 9,
       "maxDataPoints": 250,
@@ -1268,7 +1323,6 @@
         "legend": {
           "calcs": [
             "mean",
-            "lastNotNull",
             "max",
             "min"
           ],
@@ -1310,7 +1364,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 57
+        "y": 66
       },
       "id": 54,
       "panels": [],
@@ -1381,7 +1435,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 58
+        "y": 67
       },
       "id": 12,
       "maxDataPoints": 250,
@@ -1389,7 +1443,6 @@
         "legend": {
           "calcs": [
             "mean",
-            "lastNotNull",
             "max",
             "min"
           ],
@@ -1559,7 +1612,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 65
+        "y": 74
       },
       "id": 17,
       "maxDataPoints": 250,
@@ -1695,10 +1748,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
+        "h": 9,
         "w": 24,
         "x": 0,
-        "y": 72
+        "y": 81
       },
       "id": 18,
       "maxDataPoints": 250,
@@ -1706,7 +1759,6 @@
         "legend": {
           "calcs": [
             "mean",
-            "lastNotNull",
             "max"
           ],
           "displayMode": "table",
@@ -1947,7 +1999,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 79
+        "y": 90
       },
       "id": 19,
       "maxDataPoints": 250,
@@ -1955,7 +2007,6 @@
         "legend": {
           "calcs": [
             "mean",
-            "lastNotNull",
             "max",
             "min"
           ],
@@ -2012,7 +2063,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 86
+        "y": 97
       },
       "id": 46,
       "panels": [],
@@ -2083,14 +2134,14 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 87
+        "y": 98
       },
       "id": 39,
       "maxDataPoints": 250,
       "options": {
         "legend": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "displayMode": "table",
           "placement": "right",
@@ -2247,16 +2298,17 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
+        "h": 8,
         "w": 24,
         "x": 0,
-        "y": 94
+        "y": 105
       },
       "id": 40,
+      "maxDataPoints": 250,
       "options": {
         "legend": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "displayMode": "table",
           "placement": "right",
