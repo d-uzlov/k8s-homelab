@@ -1,14 +1,14 @@
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: palworld
 spec:
+  replicas: 1
+  minReadySeconds: 10
   selector:
     matchLabels:
       app: palworld
-  strategy:
-    type: Recreate
   template:
     metadata:
       labels:
@@ -16,10 +16,11 @@ spec:
     spec:
       tolerations:
       - effect: NoSchedule
-        key: dedicated-palworld
-        operator: Exists
+        key: dedicated/gaming
+        operator: Equal
+        value: 'true'
       nodeSelector:
-        dedicated-palworld: ''
+        palworld: allow
       securityContext:
         runAsUser: 1000
         runAsGroup: 1000
@@ -27,8 +28,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
       - name: palworld
-        image: docker.io/thijsvanloef/palworld-server-docker:v0.32.0
-        # image: docker.io/thijsvanloef/palworld-server-docker@sha256:401c2f2de22ecbad2bcca538ac468c718e34741656bb7ab3db5a28e670190937
+        image: docker.io/thijsvanloef/palworld-server-docker:v1.4.2
         ports:
         - name: palworld
           protocol: UDP
@@ -38,51 +38,15 @@ spec:
           containerPort: 27015
         - name: rcon
           containerPort: 25575
+        - name: rest
+          containerPort: 8212
         env:
         - name: PORT
           value: '8211'
         - name: PLAYERS
-          value: '16'
-        - name: SERVER_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: palworld-passwords
-              key: server_password
+          value: '8'
         - name: MULTITHREADING
           value: 'true'
-        - name: DISABLE_GENERATE_ENGINE
-          value: 'false'
-        - name: DISABLE_GENERATE_SETTINGS
-          value: 'false'
-        - name: UPDATE_ON_BOOT
-          valueFrom:
-            configMapKeyRef:
-              name: palworld-settings
-              key: autoupdate
-        - name: AUTO_UPDATE_ENABLED
-          valueFrom:
-            configMapKeyRef:
-              name: palworld-settings
-              key: autoupdate
-        - name: AUTO_REBOOT_ENABLED
-          value: 'false'
-        - name: RCON_ENABLED
-          value: 'true'
-        - name: RCON_PORT
-          value: '25575'
-        - name: QUERY_PORT
-          value: '27015'
-        - name: ADMIN_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: palworld-passwords
-              key: admin_password
-        - name: BACKUP_ENABLED
-          value: 'true'
-        - name: DELETE_OLD_BACKUPS
-          value: 'true'
-        - name: OLD_BACKUP_DAYS
-          value: '30'
         - name: COMMUNITY
           valueFrom:
             configMapKeyRef:
@@ -98,11 +62,60 @@ spec:
             configMapKeyRef:
               name: palworld-settings
               key: server_description
-        - name: DIFFICULTY
+        - name: SERVER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: palworld-passwords
+              key: server_password
+        - name: ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: palworld-passwords
+              key: admin_password
+        - name: UPDATE_ON_BOOT
           valueFrom:
             configMapKeyRef:
               name: palworld-settings
-              key: difficulty
+              key: autoupdate
+        - name: AUTO_UPDATE_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: palworld-settings
+              key: autoupdate
+        - name: RCON_ENABLED
+          value: 'true'
+        - name: RCON_PORT
+          value: '25575'
+        - name: REST_API_ENABLED
+          value: 'true'
+        - name: REST_API_PORT
+          value: '8212'
+        - name: DISABLE_GENERATE_ENGINE
+          value: 'false'
+        - name: DISABLE_GENERATE_SETTINGS
+          value: 'false'
+        - name: AUTO_REBOOT_ENABLED
+          value: 'false'
+        - name: QUERY_PORT
+          value: '27015'
+        - name: CROSSPLAY_PLATFORMS
+          value: (Steam,Xbox,PS5,Mac)
+        - name: BACKUP_ENABLED
+          value: 'true'
+        - name: USE_BACKUP_SAVE_DATA
+          value: 'true'
+        - name: BACKUP_CRON_EXPRESSION
+          # every midnight
+          value: 0 0 * * *
+        - name: DELETE_OLD_BACKUPS
+          value: 'true'
+        - name: OLD_BACKUP_DAYS
+          value: '30'
+        - name: PAL_SPAWN_NUM_RATE
+          valueFrom:
+            configMapKeyRef:
+              name: palworld-settings
+              key: pal_spawn_rate
         - name: ENABLE_PLAYER_TO_PLAYER_DAMAGE
           valueFrom:
             configMapKeyRef:
@@ -128,6 +141,15 @@ spec:
             configMapKeyRef:
               name: palworld-settings
               key: drop_items_timeout_hours
+        # - name: PAL_EGG_DEFAULT_HATCHING_TIME
+        #   valueFrom:
+        #     configMapKeyRef:
+        #       name: palworld-settings
+        #       key: pal_egg_default_hatching_time
+        - name: ALLOW_GLOBAL_PALBOX_EXPORT
+          value: 'True'
+        - name: ALLOW_GLOBAL_PALBOX_IMPORT
+          value: 'True'
         resources:
           requests:
             cpu: 4000m
@@ -135,16 +157,24 @@ spec:
         volumeMounts:
         - mountPath: /palworld
           name: data
-        lifecycle:
-          preStop:
-            exec:
-              command:
-              - /bin/sh
-              - -c
-              - |
-                rcon-cli save
-                backup
-      volumes:
-      - name: data
-        persistentVolumeClaim:
-          claimName: data
+        # lifecycle:
+        #   preStop:
+        #     exec:
+        #       command:
+        #       - /bin/sh
+        #       - -c
+        #       - |
+        #         rcon-cli save
+        #         backup
+      # volumes:
+      # - name: data
+      #   persistentVolumeClaim:
+      #     claimName: data
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
