@@ -1,4 +1,3 @@
----
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -313,14 +312,14 @@ subjects:
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name:  nfd-worker
+  name: nfd-worker
   namespace: hw-nfd
   labels:
     app.kubernetes.io/name: nfd
     app.kubernetes.io/instance: nfd
     role: worker
 spec:
-  revisionHistoryLimit: 
+  revisionHistoryLimit: 3
   selector:
     matchLabels:
       app.kubernetes.io/name: nfd
@@ -333,23 +332,22 @@ spec:
         app.kubernetes.io/instance: nfd
         role: worker
       annotations:
-        checksum/config: d7dcbc35af97952a4e1230e4faa4c54d1f0128db9e90f83510dbbd1a274e8e53
+        checksum/config: d612376345334e4ea9ce5e68dd3341f6b8ec73be7272d37818e382b11399f498
     spec:
       dnsPolicy: ClusterFirstWithHostNet
       serviceAccountName: nfd-worker
-      securityContext:
-        {}
+      securityContext: {}
       hostNetwork: false
       containers:
       - name: worker
         securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-              - ALL
-            readOnlyRootFilesystem: true
-            runAsNonRoot: true
-        image: "registry.k8s.io/nfd/node-feature-discovery:v0.17.2"
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+        image: "registry.k8s.io/nfd/node-feature-discovery:v0.17.3"
         imagePullPolicy: IfNotPresent
         livenessProbe:
           grpc:
@@ -374,11 +372,11 @@ spec:
             fieldRef:
               fieldPath: metadata.uid
         resources:
-            limits:
-              memory: 64Mi
-            requests:
-              cpu: 5m
-              memory: 64Mi
+          limits:
+            memory: 64Mi
+          requests:
+            cpu: 5m
+            memory: 64Mi
         command:
         - "nfd-worker"
         args:
@@ -387,10 +385,10 @@ spec:
         - "-metrics=8081"
         - "-grpc-health=8082"
         ports:
-          - containerPort: 8081
-            name: metrics
-          - containerPort: 8082
-            name: health
+        - containerPort: 8081
+          name: metrics
+        - containerPort: 8082
+          name: health
         volumeMounts:
         - name: host-boot
           mountPath: "/host-boot"
@@ -417,38 +415,41 @@ spec:
           mountPath: "/etc/kubernetes/node-feature-discovery"
           readOnly: true
       volumes:
-        - name: host-boot
-          hostPath:
-            path: "/boot"
-        - name: host-os-release
-          hostPath:
-            path: "/etc/os-release"
-        - name: host-sys
-          hostPath:
-            path: "/sys"
-        - name: host-usr-lib
-          hostPath:
-            path: "/usr/lib"
-        - name: host-lib
-          hostPath:
-            path: "/lib"
-        - name: host-proc-swaps
-          hostPath:
-            path: "/proc/swaps"
-        - name: features-d
-          hostPath:
-            path: "/etc/kubernetes/node-feature-discovery/features.d/"
-        - name: nfd-worker-conf
-          configMap:
-            name: nfd-worker-conf
-            items:
-              - key: nfd-worker.conf
-                path: nfd-worker.conf
+      - name: host-boot
+        hostPath:
+          path: "/boot"
+      - name: host-os-release
+        hostPath:
+          path: "/etc/os-release"
+      - name: host-sys
+        hostPath:
+          path: "/sys"
+      - name: host-usr-lib
+        hostPath:
+          path: "/usr/lib"
+      - name: host-lib
+        hostPath:
+          path: "/lib"
+      - name: host-proc-swaps
+        hostPath:
+          path: "/proc/swaps"
+      - name: features-d
+        hostPath:
+          path: "/etc/kubernetes/node-feature-discovery/features.d/"
+      - name: nfd-worker-conf
+        configMap:
+          name: nfd-worker-conf
+          items:
+          - key: nfd-worker.conf
+            path: nfd-worker.conf
+      tolerations:
+      - effect: NoSchedule
+        operator: Exists
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name:  nfd-master
+  name: nfd-master
   namespace: hw-nfd
   labels:
     app.kubernetes.io/name: nfd
@@ -456,7 +457,7 @@ metadata:
     role: master
 spec:
   replicas: 1
-  revisionHistoryLimit: 
+  revisionHistoryLimit: 3
   selector:
     matchLabels:
       app.kubernetes.io/name: nfd
@@ -469,80 +470,72 @@ spec:
         app.kubernetes.io/instance: nfd
         role: master
       annotations:
-        checksum/config: 8a6c744abef465d150e3262078411ce56810c3a1c4c1e7b5cd7a238377dd3b0a
+        checksum/config: 991a9176b0b36deded323e57b71053596cb1f46bb50cc9f1f1afa37dbc4db2a4
     spec:
       serviceAccountName: nfd
       enableServiceLinks: false
-      securityContext:
-        {}
+      securityContext: {}
       hostNetwork: false
       containers:
-        - name: master
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-              - ALL
-            readOnlyRootFilesystem: true
-            runAsNonRoot: true
-          image: "registry.k8s.io/nfd/node-feature-discovery:v0.17.2"
-          imagePullPolicy: IfNotPresent
-          startupProbe:
-            grpc:
-              port: 8082
-            failureThreshold: 30
-          livenessProbe:
-            grpc:
-              port: 8082
-          readinessProbe:
-            grpc:
-              port: 8082
-            failureThreshold: 10
-          ports:
-          - containerPort: 8081
-            name: metrics
-          - containerPort: 8082
-            name: health
-          env:
-          - name: NODE_NAME
-            valueFrom:
-              fieldRef:
-                fieldPath: spec.nodeName
-          command:
-            - "nfd-master"
-          resources:
-            limits:
-              memory: 70Mi
-            requests:
-              cpu: 1m
-              memory: 50Mi
-          args:
-            - "-enable-leader-election"
-            # Go over featureGates and add the feature-gate flag
-            - "-feature-gates=NodeFeatureGroupAPI=false"
-            - "-metrics=8081"
-            - "-grpc-health=8082"
-          volumeMounts:
-            - name: nfd-master-conf
-              mountPath: "/etc/kubernetes/node-feature-discovery"
-              readOnly: true
-      volumes:
+      - name: master
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+        image: "registry.k8s.io/nfd/node-feature-discovery:v0.17.3"
+        imagePullPolicy: IfNotPresent
+        startupProbe:
+          grpc:
+            port: 8082
+          failureThreshold: 30
+        livenessProbe:
+          grpc:
+            port: 8082
+        readinessProbe:
+          grpc:
+            port: 8082
+          failureThreshold: 10
+        ports:
+        - containerPort: 8081
+          name: metrics
+        - containerPort: 8082
+          name: health
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        command:
+        - "nfd-master"
+        resources:
+          limits:
+            memory: 70Mi
+          requests:
+            cpu: 1m
+            memory: 50Mi
+        args:
+        - "-enable-leader-election"
+        # Go over featureGates and add the feature-gate flag
+        - "-feature-gates=NodeFeatureGroupAPI=false"
+        - "-metrics=8081"
+        - "-grpc-health=8082"
+        volumeMounts:
         - name: nfd-master-conf
-          configMap:
-            name: nfd-master-conf
-            items:
-              - key: nfd-master.conf
-                path: nfd-master.conf
+          mountPath: "/etc/kubernetes/node-feature-discovery"
+          readOnly: true
+      volumes:
+      - name: nfd-master-conf
+        configMap:
+          name: nfd-master-conf
+          items:
+          - key: nfd-master.conf
+            path: nfd-master.conf
       affinity:
         nodeAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
-          - preference:
-              matchExpressions:
-              - key: node-role.kubernetes.io/master
-                operator: In
-                values:
-                - ""
-            weight: 1
           - preference:
               matchExpressions:
               - key: node-role.kubernetes.io/control-plane
@@ -551,14 +544,14 @@ spec:
                 - ""
             weight: 1
       tolerations:
-        - effect: NoSchedule
-          key: node-role.kubernetes.io/master
-          operator: Equal
-          value: ""
-        - effect: NoSchedule
-          key: node-role.kubernetes.io/control-plane
-          operator: Equal
-          value: ""
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+        operator: Equal
+        value: ""
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/control-plane
+        operator: Equal
+        value: ""
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -571,7 +564,7 @@ metadata:
     role: gc
 spec:
   replicas: 1
-  revisionHistoryLimit: 
+  revisionHistoryLimit: 3
   selector:
     matchLabels:
       app.kubernetes.io/name: nfd
@@ -586,12 +579,11 @@ spec:
     spec:
       serviceAccountName: nfd-gc
       dnsPolicy: ClusterFirstWithHostNet
-      securityContext:
-        {}
+      securityContext: {}
       hostNetwork: false
       containers:
       - name: gc
-        image: "registry.k8s.io/nfd/node-feature-discovery:v0.17.2"
+        image: "registry.k8s.io/nfd/node-feature-discovery:v0.17.3"
         imagePullPolicy: "IfNotPresent"
         env:
         - name: NODE_NAME
@@ -599,137 +591,21 @@ spec:
             fieldRef:
               fieldPath: spec.nodeName
         command:
-          - "nfd-gc"
+        - "nfd-gc"
         args:
-          - "-gc-interval=1h"
+        - "-gc-interval=1h"
         resources:
-            limits:
-              memory: 40Mi
-            requests:
-              cpu: 1m
-              memory: 20Mi
+          limits:
+            memory: 40Mi
+          requests:
+            cpu: 1m
+            memory: 20Mi
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
-            drop: [ "ALL" ]
+            drop: ["ALL"]
           readOnlyRootFilesystem: true
           runAsNonRoot: true
         ports:
-          - name: metrics
-            containerPort: 8081
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: nfd-prune
-  namespace: hw-nfd
-  labels:
-    app.kubernetes.io/name: nfd
-    app.kubernetes.io/instance: nfd
-  annotations:
-    "helm.sh/hook": post-delete
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: nfd-prune
-  labels:
-    app.kubernetes.io/name: nfd
-    app.kubernetes.io/instance: nfd
-  annotations:
-    "helm.sh/hook": post-delete
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
-rules:
-- apiGroups:
-  - ""
-  resources:
-  - nodes
-  - nodes/status
-  verbs:
-  - get
-  - patch
-  - update
-  - list
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: nfd-prune
-  labels:
-    app.kubernetes.io/name: nfd
-    app.kubernetes.io/instance: nfd
-  annotations:
-    "helm.sh/hook": post-delete
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: nfd-prune
-subjects:
-- kind: ServiceAccount
-  name: nfd-prune
-  namespace: hw-nfd
----
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name:  nfd-prune
-  namespace: hw-nfd
-  labels:
-    app.kubernetes.io/name: nfd
-    app.kubernetes.io/instance: nfd
-  annotations:
-    "helm.sh/hook": post-delete
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
-spec:
-  template:
-    metadata:
-      labels:
-        app.kubernetes.io/name: nfd
-        app.kubernetes.io/instance: nfd
-        role: prune
-    spec:
-      serviceAccountName: nfd-prune
-      containers:
-        - name: nfd-master
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-              - ALL
-            readOnlyRootFilesystem: true
-            runAsNonRoot: true
-          image: "registry.k8s.io/nfd/node-feature-discovery:v0.17.2"
-          imagePullPolicy: IfNotPresent
-          command:
-            - "nfd-master"
-          args:
-            - "-prune"
-      restartPolicy: Never
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - preference:
-              matchExpressions:
-              - key: node-role.kubernetes.io/master
-                operator: In
-                values:
-                - ""
-            weight: 1
-          - preference:
-              matchExpressions:
-              - key: node-role.kubernetes.io/control-plane
-                operator: In
-                values:
-                - ""
-            weight: 1
-      tolerations:
-        - effect: NoSchedule
-          key: node-role.kubernetes.io/master
-          operator: Equal
-          value: ""
-        - effect: NoSchedule
-          key: node-role.kubernetes.io/control-plane
-          operator: Equal
-          value: ""
+        - name: metrics
+          containerPort: 8081
