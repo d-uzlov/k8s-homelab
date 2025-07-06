@@ -62,9 +62,9 @@ node2=
 node3=
 node_common=
 # example:
-# node1=k8s1-etcd1.k8s.lan
-# node2=k8s1-etcd2.k8s.lan
-# node3=k8s1-etcd3.k8s.lan
+node1=k8s1-etcd1.k8s.lan
+node2=k8s1-etcd2.k8s.lan
+node3=k8s1-etcd3.k8s.lan
 # node_common=k8s1-etcd-lb.k8s.lan
 
  cat << EOF > ./k8s-core/docs/etcd/env/etcd-csr.json
@@ -198,7 +198,7 @@ systemctl restart etcd3
 
 ```
 
-# Test connection
+# Setup aliases
 
 ```bash
 
@@ -208,16 +208,42 @@ tar zxf "etcd-${ETCD_VER}-linux-amd64.tar.gz"
 sudo mv "etcd-${ETCD_VER}-linux-amd64"/etcdctl /usr/local/bin/
 rm -rf etcd*
 
+ cat << EOF > ~/.bashrc.d/etcd-aliases.sh
 # you may want to add this to your bashrc
-alias etcdctl="ETCDCTL_API=3 /usr/local/bin/etcdctl \
+alias etcdctl_cluster="ETCDCTL_API=3 /usr/local/bin/etcdctl \
   --endpoints=https://$node1:$client_port,https://$node2:$client_port,https://$node3:$client_port \
   --cacert=./k8s-core/docs/etcd/env/ca.pem \
   --cert=./k8s-core/docs/etcd/env/etcd-client.pem \
   --key=./k8s-core/docs/etcd/env/etcd-client-key.pem"
 
-etcdctl member list -w table
-etcdctl endpoint status -w table
-etcdctl endpoint health -w table
+alias etcdctl_node1="ETCDCTL_API=3 /usr/local/bin/etcdctl \
+  --endpoints=https://$node1:$client_port \
+  --cacert=./k8s-core/docs/etcd/env/ca.pem \
+  --cert=./k8s-core/docs/etcd/env/etcd-client.pem \
+  --key=./k8s-core/docs/etcd/env/etcd-client-key.pem"
+
+alias etcdctl_node2="ETCDCTL_API=3 /usr/local/bin/etcdctl \
+  --endpoints=https://$node2:$client_port \
+  --cacert=./k8s-core/docs/etcd/env/ca.pem \
+  --cert=./k8s-core/docs/etcd/env/etcd-client.pem \
+  --key=./k8s-core/docs/etcd/env/etcd-client-key.pem"
+
+alias etcdctl_node3="ETCDCTL_API=3 /usr/local/bin/etcdctl \
+  --endpoints=https://$node3:$client_port \
+  --cacert=./k8s-core/docs/etcd/env/ca.pem \
+  --cert=./k8s-core/docs/etcd/env/etcd-client.pem \
+  --key=./k8s-core/docs/etcd/env/etcd-client-key.pem"
+EOF
+
+```
+
+# Test connection
+
+```bash
+
+etcdctl_cluster member list -w table
+etcdctl_cluster endpoint status -w table
+etcdctl_cluster endpoint health -w table
 
 ```
 
@@ -271,24 +297,6 @@ etcdctl endpoint status --write-out=json | jq .[].Status.dbSize | numfmt --to=ie
 etcdctl endpoint status --write-out=json | jq .[].Status.header.revision
 # substitute your revision
 etcdctl compact 816183644
-
-alias etcdctl_node1="ETCDCTL_API=3 /usr/local/bin/etcdctl \
-  --endpoints=https://$node1:$client_port \
-  --cacert=./k8s-core/docs/etcd/env/ca.pem \
-  --cert=./k8s-core/docs/etcd/env/etcd-client.pem \
-  --key=./k8s-core/docs/etcd/env/etcd-client-key.pem"
-
-alias etcdctl_node2="ETCDCTL_API=3 /usr/local/bin/etcdctl \
-  --endpoints=https://$node2:$client_port \
-  --cacert=./k8s-core/docs/etcd/env/ca.pem \
-  --cert=./k8s-core/docs/etcd/env/etcd-client.pem \
-  --key=./k8s-core/docs/etcd/env/etcd-client-key.pem"
-
-alias etcdctl_node3="ETCDCTL_API=3 /usr/local/bin/etcdctl \
-  --endpoints=https://$node3:$client_port \
-  --cacert=./k8s-core/docs/etcd/env/ca.pem \
-  --cert=./k8s-core/docs/etcd/env/etcd-client.pem \
-  --key=./k8s-core/docs/etcd/env/etcd-client-key.pem"
 
 # defrag one node at a time
 etcdctl_node1 defrag

@@ -8,6 +8,7 @@ Harbor can be used as a registry mirror / proxy.
 Create VM or container.
 
 ```bash
+
 # node address for SSH access
 harbor_node=
 # example: harbor_node=root@harbor1.k8s.lan
@@ -16,6 +17,7 @@ ssh $harbor_node apt full-upgrade -y
 ssh $harbor_node apt install curl wget
 ssh $harbor_node curl -fsSL https://get.docker.com -o get-docker.sh
 ssh $harbor_node sh get-docker.sh
+
 ```
 
 # Generate certificates
@@ -27,6 +29,7 @@ References:
 - https://goharbor.io/docs/2.10.0/install-config/configure-https/
 
 ```bash
+
 # common address to be used for client access
 harbor_address=harbor.k8s.lan
 # node addresses (a lot of addresses for future proofing)
@@ -76,6 +79,7 @@ openssl x509 -req -sha512 -days 3650 \
   -CAcreateserial \
   -in ./k8s-core/docs/harbor/env/domain.csr \
   -out ./k8s-core/docs/harbor/env/domain.crt
+
 ```
 
 # Install Harbor
@@ -84,6 +88,7 @@ References:
 - https://goharbor.io/docs/2.10.0/install-config/download-installer/
 
 ```bash
+
 # node address for SSH access
 harbor_node=
 # example: harbor_node=root@harbor1.k8s.lan
@@ -112,6 +117,7 @@ ssh $harbor_node tee /etc/systemd/system/harbor.service < ./k8s-core/docs/harbor
 ssh $harbor_node systemctl daemon-reload
 ssh $harbor_node systemctl enable harbor
 ssh $harbor_node systemctl restart harbor
+
 ```
 
 - Now you can go to `harbor_address` or any of `harbor_addressN` and log in.
@@ -123,6 +129,7 @@ ssh $harbor_node systemctl restart harbor
 Create `local-test` project in Harbor or adjust repo name in commands.
 
 ```bash
+
 sudo mkdir -p /etc/docker/certs.d/harbor.k8s.lan/
 sudo cp ./k8s-core/docs/harbor/env/ca.crt /etc/docker/certs.d/harbor.k8s.lan/
 sudo systemctl restart docker
@@ -137,6 +144,7 @@ docker push harbor.k8s.lan/local-test/alpine:t1
 # remove local image tag to test downloading
 docker image rm harbor.k8s.lan/local-test/alpine:t1 
 docker pull harbor.k8s.lan/local-test/alpine:t1
+
 ```
 
 References:

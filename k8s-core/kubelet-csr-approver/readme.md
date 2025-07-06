@@ -63,7 +63,7 @@ kl apply -k ./k8s-core/kubelet-csr-approver/
 kl -n csr-approver get pod -o wide
 
 # check CSRs to make sure they are approved
-kl get csr
+kl get csr --sort-by=.metadata.creationTimestamp
 
 ```
 

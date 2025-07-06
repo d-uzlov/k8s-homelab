@@ -24,18 +24,6 @@ mkdir -p ~/cloud-scripts/sbin/
 mkdir -p ~/cloud-scripts/logind/
 mkdir -p ~/cloud-scripts/cloud-systemd/
 
-# default shutdown and reboot skip shutdown tasks
-#  cat << EOF > ~/cloud-scripts/sbin/shutdown
-# #!/bin/bash
-# exec systemctl poweroff
-# EOF
-# chmod 755 ~/cloud-scripts/sbin/shutdown
-#  cat << EOF > ~/cloud-scripts/sbin/reboot
-# #!/bin/bash
-# exec systemctl reboot
-# EOF
-# chmod 755 ~/cloud-scripts/sbin/reboot
-
 # enable CPU hot plug
  cat << EOF > ~/cloud-scripts/udev/80-hotplug-cpu.rules
 SUBSYSTEM=="cpu", ACTION=="add", TEST=="online", ATTR{online}=="0", ATTR{online}="1"

@@ -35,13 +35,13 @@ References:
 ## Cloud image: Debian
 
 Check Debian cloud image archive for new versions:
-- https://cloud.debian.org/images/cloud/
+- https://cloud.debian.org/images/cloud/bookworm/
 
 ```bash
 
 # this is just an arbitrary version at the time of writing this
 # this is periodically updated
-version=20250316-2053
+version=20250530-2128
 wget https://cloud.debian.org/images/cloud/bookworm/$version/debian-12-generic-amd64-$version.tar.xz
 
 # tar will produce disk.raw in the current directory
@@ -74,11 +74,6 @@ virt-customize -a disk.raw \
   --copy-in ~/cloud-scripts/cloud-systemd/cloud-boot.service:/etc/systemd/system/ \
   --run-command 'sudo systemctl enable cloud-boot.service' \
   --run ~/cloud-scripts/init-user-skel.sh
-
-  # --copy-in ~/cloud-scripts/sbin/reboot:/usr/sbin/ \
-  # --copy-in ~/cloud-scripts/sbin/shutdown:/usr/sbin/ \
-  # --delete /usr/sbin/shutdown \
-  # --delete /usr/sbin/reboot \
 
 # clean files created during customization
 virt-customize -a disk.raw --run ~/cloud-scripts/image-cleanup.sh --truncate /etc/hostname --truncate /etc/machine-id

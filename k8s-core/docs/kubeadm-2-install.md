@@ -25,7 +25,7 @@ sudo apt-get update
 apt-cache policy kubeadm | head -n 15
 apt-cache madison kubeadm | head
 
-package_version=1.33.0-1.1
+package_version=1.33.2-1.1
 sudo apt-get install -y kubeadm=$package_version kubelet=$package_version --allow-downgrades --allow-change-held-packages &&
 sudo apt-mark hold kubeadm kubelet &&
 sudo systemctl daemon-reload && sudo systemctl restart kubelet
