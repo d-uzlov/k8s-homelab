@@ -461,4 +461,17 @@ which jq > /dev/null || { sudo apt-get update; sudo apt-get install -y jq; }
 # yq in the main debian repository seems unusable
 which yq > /dev/null || { sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq; }
 
+which yamlfmt > /dev/null || {
+  tmp=$(mktemp -d)
+  (
+    cd $tmp;
+    wget https://github.com/google/yamlfmt/releases/download/v0.17.2/yamlfmt_0.17.2_Linux_x86_64.tar.gz -O ./yamlfmt.tar.gz
+    tar -xvzf ./yamlfmt.tar.gz
+    chmod +x ./yamlfmt
+    sudo mv ./yamlfmt /usr/bin/yamlfmt
+    cd /
+    rm -r $tmp
+  )
+}
+
 ```
