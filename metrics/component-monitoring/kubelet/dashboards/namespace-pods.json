@@ -11,6 +11,12 @@
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
         "type": "dashboard"
       },
       {
@@ -19,11 +25,14 @@
           "uid": "${datasource}"
         },
         "enable": true,
-        "expr": "changes(node_boot_time_seconds{cluster=\"$cluster\"}[$__interval]) > 0",
         "hide": false,
         "iconColor": "red",
         "name": "Node reboot",
         "tagKeys": "",
+        "target": {
+          "expr": "changes(node_boot_time_seconds{cluster=\"$cluster\"}[$__interval]) > 0",
+          "refId": "Anno"
+        },
         "textFormat": "{{instance}}",
         "titleFormat": "Node reboot"
       },
@@ -33,10 +42,13 @@
           "uid": "${datasource}"
         },
         "enable": true,
-        "expr": "(node_boot_time_seconds{cluster=\"$cluster\"} offset $__interval unless node_boot_time_seconds{}) unless changes(node_boot_time_seconds{}[$__interval]) > 0",
         "hide": false,
         "iconColor": "super-light-red",
         "name": "Node info missing",
+        "target": {
+          "expr": "(node_boot_time_seconds{cluster=\"$cluster\"} offset $__interval unless node_boot_time_seconds{}) unless changes(node_boot_time_seconds{}[$__interval]) > 0",
+          "refId": "Anno"
+        },
         "textFormat": "{{instance}}",
         "titleFormat": "Node info missing"
       },
@@ -46,11 +58,13 @@
           "uid": "${datasource}"
         },
         "enable": true,
-        "expr": "sum by (pod) (changes(kube_pod_container_status_restarts_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__interval])) > 0",
         "hide": false,
         "iconColor": "orange",
         "name": "Container restart",
-        "step": "1m",
+        "target": {
+          "expr": "sum by (pod) (changes(kube_pod_container_status_restarts_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__interval])) > 0",
+          "refId": "Anno"
+        },
         "textFormat": "{{pod}} restarts"
       },
       {
@@ -59,11 +73,33 @@
           "uid": "${datasource}"
         },
         "enable": true,
-        "expr": "sum by(pod) (last_over_time(kube_pod_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", pod_ip!=\"\"}[$__interval])) > 1",
         "hide": false,
         "iconColor": "purple",
         "name": "Manifest change",
+        "target": {
+          "expr": "sum by(pod) (last_over_time(kube_pod_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", pod_ip!=\"\"}[$__interval])) > 1",
+          "refId": "Anno"
+        },
         "textFormat": "{{pod}} manifest change"
+      },
+      {
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "green",
+        "name": "Manual annotations",
+        "target": {
+          "limit": 100,
+          "matchAny": true,
+          "queryType": "annotations",
+          "tags": [
+            "test"
+          ],
+          "type": "tags"
+        }
       }
     ]
   },
@@ -3085,7 +3121,7 @@
             "value": ".*"
           }
         ],
-        "query": "",
+        "query": "apiserver",
         "type": "textbox"
       },
       {

@@ -17,10 +17,10 @@ spec:
       labels:
         severity: warning
       annotations:
-        summary: ZFS pool out of space
+        summary: ZFS pool has less than 10% free space
         description: >-
           {{ $labels.instance }}: pool {{ $labels.pool }}:
-          {{ $value | humanizePercentage }} left.
+          {{ $value | humanizePercentage }}
     - alert: ZfsPoolUnhealthy
       expr: zfs_pool_health > 0
       for: 0m
@@ -36,3 +36,38 @@ spec:
           {{ if eq $value 4.0 }}UNAVAILABLE{{ end }}
           {{ if eq $value 5.0 }}REMOVED{{ end }}
           {{ if eq $value 6.0 }}SUSPENDED{{ end }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: alert-zfs-dataset
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  groups:
+  - name: zfs-dataset
+    rules:
+    - alert: ZfsDatasetQuota
+      expr: zfs_dataset_used_bytes / (zfs_dataset_quota_bytes != 0) > 0.9
+      for: 0m
+      labels:
+        severity: warning
+      annotations:
+        summary: ZFS dataset used more than 90% of quota
+        description: >-
+          {{ $labels.instance }}:
+          {{ $labels.pool }}/{{ $labels.name }} ({{ $labels.type }}):
+          {{ $value | humanizePercentage }}
+    - alert: ZfsDatasetRefQuota
+      expr: zfs_dataset_referenced_bytes / (zfs_dataset_referenced_quota_bytes != 0) > 0.9
+      for: 0m
+      labels:
+        severity: warning
+      annotations:
+        summary: ZFS dataset used more than 90% of quota
+        description: >-
+          {{ $labels.instance }}:
+          {{ $labels.pool }}/{{ $labels.name }} ({{ $labels.type }}):
+          {{ $value | humanizePercentage }}
