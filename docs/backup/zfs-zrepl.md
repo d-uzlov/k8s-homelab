@@ -302,15 +302,39 @@ Not sure which action helped to solve the issue.
 ```bash
 
 # check metrics manually
-zrepl_host=
+zrepl_host=nas-tulip.storage.lan
 curl $zrepl_host:9811/metrics > ./zrepl-metrics.log
 
-```
+ cat << EOF > ./docs/backup/env/scrape-zrepl.yaml
+---
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: external-zrepl
+  namespace: prometheus
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  scheme: HTTP
+  staticConfigs:
+  - labels:
+      job: zrepl
+      cluster_type: nas
+      cluster: $cluster_name
+    targets:
+    - $zrepl_host:9811
+  metricRelabelings:
+  - targetLabel: instance # remove port from instance
+    action: replace
+    sourceLabels: [ instance ]
+    regex: (.*):\d*
+EOF
 
-Possibly useful metrics:
-- zrepl_replication_bytes_replicated
-- zrepl_replication_filesystem_errors
-- zrepl_replication_last_successful
+kl apply -f ./docs/backup/env/scrape-zrepl.yaml
+
+```
 
 # Release all holds
 
