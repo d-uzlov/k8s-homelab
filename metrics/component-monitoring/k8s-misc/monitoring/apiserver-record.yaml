@@ -1,0 +1,55 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: record-apiserver-histogram
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  groups:
+  - name: apiserver-histogram
+    rules:
+    - record: apiserver_response_sizes_bucket:quantile_irate
+      expr: |-
+        histogram_quantile(0.5, irate(apiserver_response_sizes_bucket[1m]))
+        and
+        (histogram_quantile(0.5, irate(apiserver_response_sizes_bucket[1m])) == histogram_quantile(0.5, irate(apiserver_response_sizes_bucket[1m])))
+      labels:
+        quantile: '0.5'
+    - record: apiserver_response_sizes_bucket:quantile_irate
+      expr: |-
+        histogram_quantile(0.9, irate(apiserver_response_sizes_bucket[1m]))
+        and
+        (histogram_quantile(0.5, irate(apiserver_response_sizes_bucket[1m])) == histogram_quantile(0.5, irate(apiserver_response_sizes_bucket[1m])))
+      labels:
+        quantile: '0.9'
+    - record: apiserver_response_sizes_bucket:quantile_irate
+      expr: |-
+        histogram_quantile(0.95, irate(apiserver_response_sizes_bucket[1m]))
+        and
+        (histogram_quantile(0.5, irate(apiserver_response_sizes_bucket[1m])) == histogram_quantile(0.5, irate(apiserver_response_sizes_bucket[1m])))
+      labels:
+        quantile: '0.95'
+    - record: apiserver_response_sizes_bucket:quantile_irate
+      expr: |-
+        histogram_quantile(0.99, irate(apiserver_response_sizes_bucket[1m]))
+        and
+        (histogram_quantile(0.5, irate(apiserver_response_sizes_bucket[1m])) == histogram_quantile(0.5, irate(apiserver_response_sizes_bucket[1m])))
+      labels:
+        quantile: '0.99'
+    - record: apiserver_flowcontrol_request_execution_seconds_bucket:quantile_irate
+      expr: |-
+        histogram_quantile(0.99, irate(apiserver_flowcontrol_request_execution_seconds_bucket[1m]))
+        and
+        (histogram_quantile(0.5, irate(apiserver_flowcontrol_request_execution_seconds_bucket[1m])) == histogram_quantile(0.5, irate(apiserver_flowcontrol_request_execution_seconds_bucket[1m])))
+      labels:
+        quantile: '0.99'
+    - record: apiserver_flowcontrol_request_wait_duration_seconds_bucket:quantile_irate
+      expr: |-
+        histogram_quantile(0.99, irate(apiserver_flowcontrol_request_wait_duration_seconds_bucket[1m]))
+        and
+        (histogram_quantile(0.5, irate(apiserver_flowcontrol_request_wait_duration_seconds_bucket[1m])) == histogram_quantile(0.5, irate(apiserver_flowcontrol_request_wait_duration_seconds_bucket[1m])))
+      labels:
+        quantile: '0.99'
