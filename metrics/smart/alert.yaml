@@ -1,0 +1,102 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: alert-smartctl-exporter
+  namespace: prometheus
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  groups:
+  - name: smartctl-exporter
+    rules:
+    - alert: ZfsVdevErrors
+      expr: zfs_vdev_errors{path!=""} > 0
+      for: 0m
+      labels:
+        severity: warning
+      annotations:
+        summary: ZFS vdev has errors
+        description: >-
+          {{ $labels.instance }}:
+          pool {{ $labels.zpool }}:
+          device {{ $labels.path }}:
+          {{ $value }} {{ $labels.type }} errors
+    - alert: SmartDeviceTemperature
+      expr: (avg_over_time(smartctl_device_temperature{temperature_type="current"} [5m]) unless on (instance, device) smartctl_device_temperature{temperature_type="drive_trip"}) > 60
+      for: 0m
+      labels:
+        severity: warning
+      annotations:
+        summary: Disk temperature is above 60 degree
+        description: >-
+          {{ $labels.instance }}:
+          drive {{ $labels.device }}:
+          {{ $value | humanize }}
+    - alert: SmartDeviceTemperature
+      expr: (avg_over_time(smartctl_device_temperature{temperature_type="current"} [5m]) unless on (instance, device) smartctl_device_temperature{temperature_type="drive_trip"}) > 80
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: Disk temperature warning is above 80 degree
+        description: >-
+          {{ $labels.instance }}:
+          drive {{ $labels.device }}:
+          {{ $value | humanize }}
+    - alert: SmartDeviceTemperatureOverTripValue
+      expr: max_over_time(smartctl_device_temperature{temperature_type="current"} [10m]) >= on(device, instance) smartctl_device_temperature{temperature_type="drive_trip"}
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: Disk temperature is over trip value
+        description: >-
+          {{ $labels.instance }}:
+          drive {{ $labels.device }}:
+          {{ $value | humanize }}
+    - alert: SmartStatusError
+      expr: smartctl_device_smart_status != 1
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: Disk SMART failed
+        description: >-
+          {{ $labels.instance }}:
+          drive {{ $labels.device }}
+    - alert: SmartCriticalWarning
+      expr: smartctl_device_critical_warning > 0
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: SMART critical warning
+        description: >-
+          {{ $labels.instance }}:
+          drive {{ $labels.device }}
+    - alert: SmartMediaErrors
+      expr: smartctl_device_media_errors > 0
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: SMART media errors
+        description: >-
+          {{ $labels.instance }}:
+          drive {{ $labels.device }}
+    - alert: SmartWearoutIndicator
+      expr: smartctl_device_available_spare < smartctl_device_available_spare_threshold
+      for: 0m
+      labels:
+        severity: critical
+      annotations:
+        summary: Available spare is below threshold
+        description: >-
+          {{ $labels.instance }}:
+          drive {{ $labels.device }}:
+          {{ $value | humanize }}
+
+
