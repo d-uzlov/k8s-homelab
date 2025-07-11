@@ -19,7 +19,7 @@ spec:
         summary: Got more than 2 error events in 1 minute
       expr: |-
         increase(cgroup_burst_k8s_watch_events_total{type="error"}[1m]) > 2
-      for: 10m
+      for: 0m
       labels:
         severity: warning
     - alert: CgroupBurstMissingBookmarks
@@ -27,10 +27,10 @@ spec:
         description: >-
           {{ $labels.instance }}:
           {{ $value | humanize }}
-        summary: Received less than 3 bookmark events in 5 minutes
+        summary: Received less than 3 bookmark events in 30 minutes
       expr: |-
-        increase(cgroup_burst_k8s_watch_events_total{type="bookmark"}[5m]) < 3
-      for: 10m
+        increase(cgroup_burst_k8s_watch_events_total{type="bookmark"}[30m]) < 3
+      for: 0m
       labels:
         severity: warning
     - alert: CgroupBurstTooManyWatches
@@ -48,21 +48,22 @@ spec:
       annotations:
         description: >-
           {{ $labels.instance }}:
-          {{ $value | humanize }}
+          {{ $labels.exported_namespace }}/{{ $labels.exported_pod }}
         summary: Some pods with matching label don't specify burst annotation
       expr: |-
-        cgroup_burst_pod_annotations_missing_total != 0
+        cgroup_burst_pod_missing_annotation
       for: 1m
       labels:
-        severity: warning
-    - alert: CgroupBurstPodsWithoutAnnotation
+        severity: info
+    - alert: CgroupBurstPodsUnusedAnnotation
       annotations:
         description: >-
           {{ $labels.instance }}:
-          {{ $value | humanize }}
+          {{ $labels.exported_namespace }}/{{ $labels.exported_pod }}:
+          {{ $labels.remaining_containers }}
         summary: Some pods' annotations specify containers that don't exist
       expr: |-
-        cgroup_burst_pod_annotations_unused_total != 0
+        cgroup_burst_pod_unused_annotation != 0
       for: 1m
       labels:
-        severity: warning
+        severity: info

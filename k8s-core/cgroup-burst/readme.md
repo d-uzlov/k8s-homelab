@@ -18,6 +18,29 @@ wget https://github.com/d-uzlov/k8s-cgroup-burst-controller/raw/refs/heads/main/
 You need to run a modified Linux kernel for this to work.
 See upstream repo for details.
 
+# Local config setup
+
+```bash
+
+mkdir -p ./metrics/kube-state-metrics/env/
+clusterName=
+ cat << EOF > ./k8s-core/cgroup-burst/env/patch-cluster-tag.yaml
+- op: add
+  path: /spec/endpoints/0/relabelings/-
+  value:
+    targetLabel: cluster
+    replacement: $clusterName
+    action: replace
+- op: add
+  path: /spec/endpoints/1/relabelings/-
+  value:
+    targetLabel: cluster
+    replacement: $clusterName
+    action: replace
+EOF
+
+```
+
 # Deploy
 
 ```bash
