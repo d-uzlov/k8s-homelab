@@ -5,23 +5,28 @@ kind: Kustomization
 namespace: bt-qbittorrent
 
 resources:
-- qbittorrent.yaml
-- web-ui.yaml
+- ./qbittorrent.yaml
+- ./web-ui.yaml
+- ./service-monitor.yaml
 
 configMapGenerator:
 - name: entrypoint
   files:
-  - scripts/entrypoint.sh
-  - scripts/update_config.sh
-  - scripts/update_fastresume.py
-  - added-hook-script.sh=scripts/set-tag.sh
+  - ./scripts/entrypoint.sh
+  - ./scripts/update_config.sh
+  - ./scripts/update_fastresume.py
+  - added-hook-script.sh=./scripts/set-tag.sh
 - name: default-config
   files:
-  - default-config/qBittorrent.conf
-  - default-config/watched_folders.json
+  - ./default-config/qBittorrent.conf
+  - ./default-config/watched_folders.json
 - name: settings
   envs:
-  - env/settings.env
+  - ./env/settings.env
 
 patches:
 - path: ./env/patch.yaml
+- target:
+    kind: ServiceMonitor
+    name: qbittorrent
+  path: ./env/patch-cluster-tag.yaml

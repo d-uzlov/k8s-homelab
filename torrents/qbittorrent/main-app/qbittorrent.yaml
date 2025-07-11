@@ -1,6 +1,6 @@
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: qbittorrent
 spec:
@@ -10,8 +10,6 @@ spec:
   # Second instance will exit right after starting,
   # when it fails to lock the file.
   replicas: 1
-  strategy:
-    type: Recreate
   selector:
     matchLabels:
       app: qbittorrent
@@ -142,6 +140,22 @@ spec:
         #   timeoutSeconds: 10
         #   successThreshold: 1
         #   failureThreshold: 50
+      - name: metrics-exporter
+        image: ghcr.io/martabal/qbittorrent-exporter:v1.10.1
+        ports:
+        - name: metrics
+          containerPort: 8081
+        env:
+        - name: EXPORTER_PORT
+          value: '8081'
+        - name: QBITTORRENT_BASE_URL
+          value: http://localhost:8080
+        - name: ENABLE_TRACKER
+          value: 'false'
+        - name: ENABLE_INCREASED_CARDINALITY
+          value: 'true'
+        - name: ENABLE_LABEL_WITH_HASH
+          value: 'true'
       volumes:
       - name: entrypoint
         configMap:

@@ -77,7 +77,7 @@ EOF
  cat << EOF > ./torrents/qbittorrent/main-app/env/patch.yaml
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: qbittorrent
 spec:
@@ -98,6 +98,16 @@ spec:
           path: /media/watch
           server: nas.example.com
           readOnly: false
+EOF
+
+clusterName=
+ cat << EOF > ./torrents/qbittorrent/main-app/env/patch-cluster-tag.yaml
+- op: add
+  path: /spec/endpoints/0/relabelings/-
+  value:
+    targetLabel: cluster
+    replacement: $clusterName
+    action: replace
 EOF
 
 ```
@@ -166,3 +176,14 @@ Possible web UIs:
 # Add trackers
 
 - https://github.com/ngosang/trackerslist
+
+# Manual metrics checking
+
+- I'm using the following exporter: https://github.com/martabal/qbittorrent-exporter
+
+```bash
+
+kl exec deployments/alpine -- apk add curl
+kl exec deployments/alpine -- curl -sS http://web-ui.bt-qbittorrent:81/metrics > ./qbittorrent-metrics.log
+
+```
