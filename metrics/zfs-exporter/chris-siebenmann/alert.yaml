@@ -45,3 +45,38 @@ spec:
           pool {{ $labels.zpool }}:
           device {{ $labels.path }}:
           {{ $value }} errors
+    - alert: ZfsTrimErrors
+      expr: zfs_vdev_state{path=""} != 7
+      labels:
+        severity: critical
+      annotations:
+        summary: ZFS vdev trim has errors
+        description: >-
+          {{ $labels.instance }}:
+          pool {{ $labels.zpool }}:
+          vdev {{ $labels.vdev }}:
+          {{ if eq $value 0.0 }}unknown{{ end }}
+          {{ if eq $value 1.0 }}closed{{ end }}
+          {{ if eq $value 2.0 }}offline{{ end }}
+          {{ if eq $value 3.0 }}removed{{ end }}
+          {{ if eq $value 4.0 }}can't open{{ end }}
+          {{ if eq $value 5.0 }}faulted{{ end }}
+          {{ if eq $value 6.0 }}degraded{{ end }}
+    - alert: ZfsTrimErrors
+      expr: zfs_vdev_state{path!=""} != 7
+      labels:
+        severity: critical
+      annotations:
+        summary: ZFS vdev trim has errors
+        description: >-
+          {{ $labels.instance }}:
+          pool {{ $labels.zpool }}:
+          vdev {{ $labels.vdev }}:
+          path {{ $labels.path }}:
+          {{ if eq $value 0.0 }}unknown{{ end }}
+          {{ if eq $value 1.0 }}closed{{ end }}
+          {{ if eq $value 2.0 }}offline{{ end }}
+          {{ if eq $value 3.0 }}removed{{ end }}
+          {{ if eq $value 4.0 }}can't open{{ end }}
+          {{ if eq $value 5.0 }}faulted{{ end }}
+          {{ if eq $value 6.0 }}degraded{{ end }}

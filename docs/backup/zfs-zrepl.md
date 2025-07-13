@@ -1,4 +1,10 @@
 
+# zrepl
+
+References:
+- https://github.com/zrepl/zrepl
+- https://github.com/dsh2dsh/zrepl
+
 # Install
 
 ```bash
@@ -333,6 +339,7 @@ spec:
 EOF
 
 kl apply -f ./docs/backup/env/scrape-zrepl.yaml
+kl apply -f ./docs/backup/alert.yaml
 
 ```
 

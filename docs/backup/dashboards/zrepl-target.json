@@ -122,6 +122,88 @@
                 "id": "filterable"
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #last_replication"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIsoNoDateIfToday"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #errors"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "purple"
+                    },
+                    {
+                      "color": "dark-red",
+                      "value": -1
+                    },
+                    {
+                      "color": "dark-green",
+                      "value": 0
+                    },
+                    {
+                      "color": "dark-red",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #last_replication_ago"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dtdurations"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "dark-green"
+                    },
+                    {
+                      "color": "dark-red",
+                      "value": 86400
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              }
+            ]
           }
         ]
       },
@@ -152,16 +234,50 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "last_over_time(zrepl_replication_last_successful{instance=\"$instance\", zrepl_job=~\"$zrepl_job\"}[$__range])",
+          "expr": "last_over_time(zrepl_replication_last_successful{instance=\"$instance\", zrepl_job=~\"$zrepl_job\"}[$__range]) * 1000",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
-          "refId": "A"
+          "refId": "last_replication"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${data_source}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "(time() - last_over_time(zrepl_replication_last_successful{instance=\"$instance\", zrepl_job=~\"$zrepl_job\"}[$__range]))",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "last_replication_ago"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${data_source}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "last_over_time(zrepl_replication_filesystem_errors{instance=\"$instance\", zrepl_job=~\"$zrepl_job\"}[$__range])",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "errors"
         }
       ],
-      "title": "Last successful replication",
+      "title": "zrepl job status",
       "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
         {
           "id": "organize",
           "options": {
@@ -174,8 +290,25 @@
               "job": true
             },
             "includeByName": {},
-            "indexByName": {},
-            "renameByName": {}
+            "indexByName": {
+              "Time": 0,
+              "Value #errors": 9,
+              "Value #last_replication": 7,
+              "Value #last_replication_ago": 8,
+              "__name__": 3,
+              "cluster": 1,
+              "cluster_type": 2,
+              "instance": 4,
+              "job": 5,
+              "zrepl_job": 6
+            },
+            "renameByName": {
+              "Value #errors": "errors",
+              "Value #last_replication": "last replication",
+              "Value #last_replication_ago": "ago",
+              "__name__": "",
+              "zrepl_job": ""
+            }
           }
         }
       ],
@@ -245,13 +378,12 @@
         "x": 0,
         "y": 8
       },
-      "id": 52,
+      "id": 56,
       "maxDataPoints": 250,
       "options": {
         "legend": {
           "calcs": [
-            "mean",
-            "min"
+            "mean"
           ],
           "displayMode": "table",
           "placement": "right",
@@ -270,15 +402,15 @@
             "uid": "${data_source}"
           },
           "editorMode": "code",
-          "expr": "rate(zrepl_replication_bytes_replicated{instance=\"$instance\", filesystem=~\"$filesystem\"}[$__rate_interval])",
+          "expr": "sum by(zrepl_job) (rate(zrepl_replication_bytes_replicated{instance=\"$instance\", filesystem=~\"$filesystem\"}[$__rate_interval]))",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "{{filesystem}}",
+          "legendFormat": "{{zrepl_job}}",
           "range": true,
           "refId": "arc_data"
         }
       ],
-      "title": "Replication speed",
+      "title": "Replication speed (jobs)",
       "type": "timeseries"
     },
     {
@@ -349,8 +481,7 @@
       "options": {
         "legend": {
           "calcs": [
-            "mean",
-            "min"
+            "max"
           ],
           "displayMode": "table",
           "placement": "right",
@@ -369,7 +500,7 @@
             "uid": "${data_source}"
           },
           "editorMode": "code",
-          "expr": "rate(zrepl_replication_filesystem_errors{instance=\"$instance\", zrepl_job=~\"$zrepl_job\"}[$__rate_interval])",
+          "expr": "max_over_time(zrepl_replication_filesystem_errors{instance=\"$instance\", zrepl_job=~\"$zrepl_job\"}[$__rate_interval])",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{zrepl_job}}",
@@ -379,10 +510,208 @@
       ],
       "title": "Errors",
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${data_source}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "dtdurations"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 24
+      },
+      "id": 55,
+      "maxDataPoints": 250,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${data_source}"
+          },
+          "editorMode": "code",
+          "expr": "(time() - min_over_time(zrepl_replication_last_successful{instance=\"$instance\", zrepl_job=~\"$zrepl_job\"}[$__rate_interval]))",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{zrepl_job}}",
+          "range": true,
+          "refId": "arc_data"
+        }
+      ],
+      "title": "Time since last replication",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${data_source}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 32
+      },
+      "id": 52,
+      "maxDataPoints": 250,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${data_source}"
+          },
+          "editorMode": "code",
+          "expr": "rate(zrepl_replication_bytes_replicated{instance=\"$instance\", filesystem=~\"$filesystem\"}[$__rate_interval])",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{filesystem}}",
+          "range": true,
+          "refId": "arc_data"
+        }
+      ],
+      "title": "Replication speed (filesystems)",
+      "type": "timeseries"
     }
   ],
   "preload": false,
-  "refresh": "1m",
+  "refresh": "auto",
   "schemaVersion": 41,
   "tags": [
     "ZFS",

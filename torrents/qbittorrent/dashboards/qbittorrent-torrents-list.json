@@ -25,7 +25,20 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": null,
-  "links": [],
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "dashboard",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": false,
+      "title": "instance",
+      "tooltip": "",
+      "type": "link",
+      "url": "/d/OEyH9tQZk/qbittorrent-torrents-list?${DS_PROMETHEUS:queryparam}﻿&﻿${cluster:queryparam}﻿&﻿${instance:queryparam}﻿&${__url_time_range}"
+    }
+  ],
   "panels": [
     {
       "datasource": {
@@ -371,12 +384,40 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "avg upload"
+              "options": "UL in time range"
             },
             "properties": [
               {
                 "id": "custom.width",
-                "value": 104
+                "value": 140
+              },
+              {
+                "id": "unit",
+                "value": "bytes"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "UL total"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 97
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "UL avg"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 109
               },
               {
                 "id": "unit",
@@ -397,11 +438,16 @@
         "cellHeight": "sm",
         "footer": {
           "countRows": false,
-          "fields": "",
+          "fields": [
+            "Value #size",
+            "Value #uploaded",
+            "Value #uploaded_in_time_range",
+            "Value #avg_upload"
+          ],
           "reducer": [
             "sum"
           ],
-          "show": false
+          "show": true
         },
         "showHeader": true,
         "sortBy": [
@@ -569,6 +615,21 @@
           },
           "editorMode": "code",
           "exemplar": false,
+          "expr": "max by(instance, name, hash) (increase(qbittorrent_torrent_total_uploaded_bytes{instance=\"$instance\", hash=~\"$torrent\"}[$__range]))",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "uploaded_in_time_range"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
           "expr": "max by(instance, name, hash, save_path) (qbittorrent_torrent_save_path{instance=\"$instance\", hash=~\"$torrent\"})",
           "format": "table",
           "hide": false,
@@ -618,29 +679,30 @@
             "includeByName": {},
             "indexByName": {
               "Time": 0,
-              "Value #active_time": 13,
-              "Value #added": 11,
-              "Value #avg_upload": 9,
-              "Value #category": 16,
-              "Value #completed": 12,
-              "Value #eta": 10,
+              "Value #active_time": 14,
+              "Value #added": 12,
+              "Value #avg_upload": 10,
+              "Value #category": 17,
+              "Value #completed": 13,
+              "Value #eta": 11,
               "Value #progress": 6,
               "Value #ratio": 7,
-              "Value #save_path": 18,
+              "Value #save_path": 19,
               "Value #size": 4,
-              "Value #state": 17,
+              "Value #state": 18,
               "Value #uploaded": 8,
+              "Value #uploaded_in_time_range": 9,
               "category": 2,
-              "hash": 15,
+              "hash": 16,
               "instance": 1,
               "name": 3,
-              "save_path": 14,
+              "save_path": 15,
               "state": 5
             },
             "renameByName": {
               "Value #active_time": "active",
               "Value #added": "added",
-              "Value #avg_upload": "avg upload",
+              "Value #avg_upload": "UL avg",
               "Value #category": "",
               "Value #completed": "completed",
               "Value #eta": "ETA",
@@ -648,7 +710,8 @@
               "Value #ratio": "ratio",
               "Value #save_path": "",
               "Value #size": "size",
-              "Value #uploaded": "uploaded",
+              "Value #uploaded": "UL total",
+              "Value #uploaded_in_time_range": "UL in time range",
               "name": ""
             }
           }
@@ -688,19 +751,22 @@
             {
               "options": {
                 "1": {
-                  "color": "green",
+                  "color": "purple",
                   "index": 0,
                   "text": "alloc"
                 },
                 "2": {
+                  "color": "purple",
                   "index": 1,
                   "text": "checkDL"
                 },
                 "3": {
+                  "color": "purple",
                   "index": 2,
                   "text": "check-resume"
                 },
                 "4": {
+                  "color": "purple",
                   "index": 3,
                   "text": "checkUP"
                 },
@@ -715,7 +781,7 @@
                   "text": "error"
                 },
                 "7": {
-                  "color": "blue",
+                  "color": "dark-purple",
                   "index": 6,
                   "text": "metaDL"
                 },
@@ -734,10 +800,12 @@
                   "text": "stalledUL"
                 },
                 "11": {
+                  "color": "blue",
                   "index": 10,
                   "text": "stoppedDL"
                 },
                 "12": {
+                  "color": "blue",
                   "index": 11,
                   "text": "stopperUL"
                 },
@@ -762,12 +830,13 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 14,
+        "h": 19,
         "w": 24,
         "x": 0,
         "y": 25
       },
       "id": 45,
+      "maxDataPoints": 250,
       "options": {
         "alignValue": "left",
         "legend": {
@@ -776,6 +845,7 @@
           "showLegend": false
         },
         "mergeValues": true,
+        "perPage": 30,
         "rowHeight": 0.9,
         "showValue": "auto",
         "tooltip": {
@@ -853,24 +923,51 @@
             "steps": [
               {
                 "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           },
           "unit": "Bps"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "total"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 39
+        "y": 44
       },
       "id": 26,
+      "maxDataPoints": 250,
       "options": {
         "legend": {
           "calcs": [
@@ -895,10 +992,22 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "max_over_time(qbittorrent_torrent_upload_speed_bytes{instance=\"$instance\", hash=~\"$torrent\"}[$__interval]) != 0",
+          "expr": "rate(qbittorrent_torrent_total_uploaded_bytes{instance=\"$instance\", hash=~\"$torrent\"}[$__rate_interval]) != 0",
           "legendFormat": "{{name}}",
           "range": true,
-          "refId": "A"
+          "refId": "upload"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(qbittorrent_torrent_total_uploaded_bytes{instance=\"$instance\", hash=~\"$torrent\"}[$__rate_interval]))",
+          "hide": false,
+          "legendFormat": "total",
+          "range": true,
+          "refId": "upload_total"
         }
       ],
       "title": "Upload Speed by Torrent",
@@ -956,10 +1065,6 @@
             "steps": [
               {
                 "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           }
@@ -970,7 +1075,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 48
+        "y": 53
       },
       "id": 47,
       "maxDataPoints": 250,
@@ -1001,7 +1106,7 @@
           "expr": "max_over_time(qbittorrent_torrent_leechers{instance=\"$instance\", hash=~\"$torrent\"}[$__interval]) != 0",
           "legendFormat": "{{name}}",
           "range": true,
-          "refId": "A"
+          "refId": "leechers"
         }
       ],
       "title": "Leechers",
@@ -1064,15 +1169,46 @@
           },
           "unit": "Bps"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "total"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 57
+        "y": 62
       },
       "id": 18,
+      "maxDataPoints": 250,
       "options": {
         "legend": {
           "calcs": [
@@ -1097,10 +1233,22 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "max_over_time(qbittorrent_torrent_download_speed_bytes{instance=\"$instance\", hash=~\"$torrent\"}[$__interval]) != 0",
+          "expr": "rate(qbittorrent_torrent_total_downloaded_bytes{instance=\"$instance\", hash=~\"$torrent\"}[$__rate_interval]) != 0",
           "legendFormat": "{{name}}",
           "range": true,
-          "refId": "A"
+          "refId": "download"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(qbittorrent_torrent_total_downloaded_bytes{instance=\"$instance\", hash=~\"$torrent\"}[$__rate_interval]))",
+          "hide": false,
+          "legendFormat": "total",
+          "range": true,
+          "refId": "download_total"
         }
       ],
       "title": "Download Speed by Torrent",
@@ -1172,7 +1320,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 67
+        "y": 72
       },
       "id": 48,
       "maxDataPoints": 250,
@@ -1211,7 +1359,7 @@
     }
   ],
   "preload": false,
-  "refresh": "",
+  "refresh": "auto",
   "schemaVersion": 41,
   "tags": [],
   "templating": {
@@ -1271,7 +1419,7 @@
             "value": ""
           }
         ],
-        "query": "e",
+        "query": "",
         "type": "textbox"
       },
       {
@@ -1304,18 +1452,18 @@
           "type": "prometheus",
           "uid": "${DS_PROMETHEUS}"
         },
-        "definition": "query_result(label_join(count_values by(name) (\"count\", qbittorrent_torrent_states{instance=\"$instance\"} != 0), \"human\", \": \", \"name\", \"count\"))",
+        "definition": "query_result(max_over_time(qbittorrent_torrent_states{instance=\"$instance\"}[$__range]) != 0)",
         "includeAll": true,
         "multi": true,
         "name": "state",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(label_join(count_values by(name) (\"count\", qbittorrent_torrent_states{instance=\"$instance\"} != 0), \"human\", \": \", \"name\", \"count\"))",
+          "query": "query_result(max_over_time(qbittorrent_torrent_states{instance=\"$instance\"}[$__range]) != 0)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 1,
-        "regex": "/human=\"(?<text>[^\"]+)|name=\"(?<value>[^\"]+)/g",
+        "regex": "/name=\"(?<text>[^\"]+)|name=\"(?<value>[^\"]+)/g",
         "sort": 1,
         "type": "query"
       },
@@ -1362,7 +1510,7 @@
     ]
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-24h",
     "to": "now"
   },
   "timepicker": {},

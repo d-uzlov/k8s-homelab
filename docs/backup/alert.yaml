@@ -1,0 +1,25 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: alert-zrepl
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  groups:
+  - name: zrepl
+    rules:
+    - alert: ZreplReplicationFailed
+      annotations:
+        description: >-
+          {{ $labels.instance }}:
+          zrepl_job={{ $labels.zrepl_job }}:
+          {{ $value | humanize }}
+        summary: Some filesystems failed last replication
+      expr: |-
+        zrepl_replication_filesystem_errors != 0
+      for: 0m
+      labels:
+        severity: critical
