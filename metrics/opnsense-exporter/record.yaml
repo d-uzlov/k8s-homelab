@@ -1,0 +1,25 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: record-xray
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  groups:
+  - name: record-xray
+    rules:
+    - record: v2ray_traffic_downlink_bytes_total:irate
+      expr: |-
+        irate(v2ray_traffic_downlink_bytes_total{}[1m])
+    - record: v2ray_traffic_uplink_bytes_total:irate
+      expr: |-
+        irate(v2ray_traffic_uplink_bytes_total{}[1m])
+    - record: dimension:v2ray_traffic_downlink_bytes_total:irate
+      expr: |-
+        sum without(target) (irate(v2ray_traffic_downlink_bytes_total{}[1m]))
+    - record: dimension:v2ray_traffic_uplink_bytes_total:irate
+      expr: |-
+        sum without(target) (irate(v2ray_traffic_uplink_bytes_total{}[1m]))
