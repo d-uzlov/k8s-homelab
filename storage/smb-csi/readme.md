@@ -15,7 +15,7 @@ helm repo add csi-driver-smb https://raw.githubusercontent.com/kubernetes-csi/cs
 
 helm repo update csi-driver-smb
 helm search repo csi-driver-smb/csi-driver-smb --versions --devel | head
-helm show values csi-driver-smb/csi-driver-smb > ./storage/smb-csi/default-values.yaml
+helm show values csi-driver-smb/csi-driver-smb --version v1.12.0 > ./storage/smb-csi/default-values.yaml
 ```
 
 ```bash
