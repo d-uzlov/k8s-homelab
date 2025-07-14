@@ -6,7 +6,7 @@ metadata:
   namespace: pgo-cnpg
   labels:
     app.kubernetes.io/name: cloudnative-pg
-    app.kubernetes.io/version: "1.25.1"
+    app.kubernetes.io/version: "1.26.0"
 ---
 #
 # Copyright The CloudNativePG Contributors
@@ -30,7 +30,7 @@ metadata:
   namespace: pgo-cnpg
   labels:
     app.kubernetes.io/name: cloudnative-pg
-    app.kubernetes.io/version: "1.25.1"
+    app.kubernetes.io/version: "1.26.0"
 data:
   {}
 ---
@@ -41,7 +41,7 @@ metadata:
   namespace: pgo-cnpg
   labels:
     app.kubernetes.io/name: cloudnative-pg
-    app.kubernetes.io/version: "1.25.1"
+    app.kubernetes.io/version: "1.26.0"
     cnpg.io/reload: ""
 data:
   queries:
@@ -493,6 +493,38 @@ data:
           - setting:
               usage: "GAUGE"
               description: "Setting value"
+    
+      pg_extensions:
+        query: |
+          SELECT
+           current_database() as datname,
+           name as extname,
+           default_version,
+           installed_version,
+           CASE
+             WHEN default_version = installed_version THEN 0
+             ELSE 1
+          END AS update_available
+          FROM pg_catalog.pg_available_extensions
+          WHERE installed_version IS NOT NULL
+        metrics:
+          - datname:
+              usage: "LABEL"
+              description: "Name of the database"
+          - extname:
+              usage: "LABEL"
+              description: "Extension name"
+          - default_version:
+              usage: "LABEL"
+              description: "Default version"
+          - installed_version:
+              usage: "LABEL"
+              description: "Installed version"
+          - update_available:
+              usage: "GAUGE"
+              description: "An update is available"
+        target_databases:
+          - '*'
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -500,7 +532,7 @@ metadata:
   name: cnpg
   labels:
     app.kubernetes.io/name: cloudnative-pg
-    app.kubernetes.io/version: "1.25.1"
+    app.kubernetes.io/version: "1.26.0"
 rules:
 - apiGroups:
   - ""
@@ -725,7 +757,7 @@ metadata:
   name: cnpg-view
   labels:
     app.kubernetes.io/name: cloudnative-pg
-    app.kubernetes.io/version: "1.25.1"
+    app.kubernetes.io/version: "1.26.0"
 rules:
 - apiGroups:
   - postgresql.cnpg.io
@@ -748,7 +780,7 @@ metadata:
   name: cnpg-edit
   labels:
     app.kubernetes.io/name: cloudnative-pg
-    app.kubernetes.io/version: "1.25.1"
+    app.kubernetes.io/version: "1.26.0"
 rules:
 - apiGroups:
   - postgresql.cnpg.io
@@ -773,7 +805,7 @@ metadata:
   name: cnpg
   labels:
     app.kubernetes.io/name: cloudnative-pg
-    app.kubernetes.io/version: "1.25.1"
+    app.kubernetes.io/version: "1.26.0"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -790,7 +822,7 @@ metadata:
   namespace: pgo-cnpg
   labels:
     app.kubernetes.io/name: cloudnative-pg
-    app.kubernetes.io/version: "1.25.1"
+    app.kubernetes.io/version: "1.26.0"
 spec:
   type: ClusterIP
   ports:
@@ -807,7 +839,7 @@ metadata:
   namespace: pgo-cnpg
   labels:
     app.kubernetes.io/name: cloudnative-pg
-    app.kubernetes.io/version: "1.25.1"
+    app.kubernetes.io/version: "1.26.0"
 spec:
   replicas: 1
   selector:
@@ -816,9 +848,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/rbac: 2fac976980c5671cbf69cea08de4230f54c4dd72cd9f37b60fdb0b2295149917
-        checksum/config: 23194d1654e3c48a1482ba29ba09302b635d376c180dcfda3e6d29b65f9dc29f
-        checksum/monitoring-config: ee9fab9063f41773726fa91a7ad39c17f407b25513350e412fe70b97739ee548
+        checksum/rbac: f7c30870025fdbb695a416e1a081723edcb7ef4706fceb4fc9218ccf0d75ca28
+        checksum/config: 8bbe7e0b5bc7f0b6d5cd328ec65971d494a7bd43fb2038c42fea8592ea1b4841
+        checksum/monitoring-config: 284316c7a26640eaf16e3b77b5a388e75b33f4b58608b5e03fcddf764e42d4b7
       labels:
         app.kubernetes.io/name: cloudnative-pg
     spec:
@@ -833,14 +865,14 @@ spec:
         - /manager
         env:
         - name: OPERATOR_IMAGE_NAME
-          value: "ghcr.io/cloudnative-pg/cloudnative-pg:1.25.1"
+          value: "ghcr.io/cloudnative-pg/cloudnative-pg:1.26.0"
         - name: OPERATOR_NAMESPACE
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
         - name: MONITORING_QUERIES_CONFIGMAP
           value: "cnpg-default-monitoring"
-        image: "ghcr.io/cloudnative-pg/cloudnative-pg:1.25.1"
+        image: "ghcr.io/cloudnative-pg/cloudnative-pg:1.26.0"
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
@@ -1017,7 +1049,7 @@ metadata:
   name: cnpg-mutating-webhook-configuration
   labels:
     app.kubernetes.io/name: cloudnative-pg
-    app.kubernetes.io/version: "1.25.1"
+    app.kubernetes.io/version: "1.26.0"
 webhooks:
 - admissionReviewVersions:
   - v1
@@ -1067,6 +1099,27 @@ webhooks:
     service:
       name: cnpg-webhook-service
       namespace: pgo-cnpg
+      path: /mutate-postgresql-cnpg-io-v1-database
+      port: 443
+  failurePolicy: Fail
+  name: mdatabase.cnpg.io
+  rules:
+  - apiGroups:
+    - postgresql.cnpg.io
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - databases
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: cnpg-webhook-service
+      namespace: pgo-cnpg
       path: /mutate-postgresql-cnpg-io-v1-scheduledbackup
       port: 443
   failurePolicy: Fail
@@ -1089,7 +1142,7 @@ metadata:
   name: cnpg-validating-webhook-configuration
   labels:
     app.kubernetes.io/name: cloudnative-pg
-    app.kubernetes.io/version: "1.25.1"
+    app.kubernetes.io/version: "1.26.0"
 webhooks:
 - admissionReviewVersions:
   - v1
@@ -1153,6 +1206,27 @@ webhooks:
     - UPDATE
     resources:
     - scheduledbackups
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: cnpg-webhook-service
+      namespace: pgo-cnpg
+      path: /validate-postgresql-cnpg-io-v1-database
+      port: 443
+  failurePolicy: Fail
+  name: vdatabase.cnpg.io
+  rules:
+  - apiGroups:
+    - postgresql.cnpg.io
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - databases
   sideEffects: None
 - admissionReviewVersions:
     - v1
