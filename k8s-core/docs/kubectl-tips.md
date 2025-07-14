@@ -229,3 +229,16 @@ curl -X POST --insecure -H "Authorization: Bearer $token" https://localhost:1025
 Checkpointing has limitations:
 - It operates on containers. Pod context is lost (emptydir content, ip address, etc)
 - It can fail when hostPath mounts are used, at least with some types (`unsupported id 10547`)
+
+# API fairness
+
+- Official docs: https://kubernetes.io/docs/concepts/cluster-administration/flow-control/
+- Tutorial: https://itnext.io/kubernetes-api-priority-and-fairness-b1ef2b8a26a2
+- Example when flow control was required: https://blog.palark.com/kubernetes-api-list-case-troubleshooting/
+
+```bash
+
+kl get flowschemas
+kl get prioritylevelconfiguration
+
+```
