@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: technitium-exporter
+spec:
+  selector:
+    matchLabels:
+      app: technitium-exporter
+  template:
+    metadata:
+      labels:
+        app: technitium-exporter
+    spec:
+      containers:
+      - name: technitium-exporter
+        image: docker.io/foxxmd/technitium-dns-exporter:1.1.0
+        ports:
+        - name: http
+          containerPort: 8080
+        envFrom:
+        - secretRef:
+            name: config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: technitium-exporter
+spec:
+  selector:
+    app: technitium-exporter
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
