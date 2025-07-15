@@ -109,6 +109,9 @@ sed -e "s/REPLACE_ME_HOSTNAME/$harbor_address/" \
   -e "s|REPLACE_ME_PASSWORD|$harbor_password|" \
   ./k8s-core/docs/harbor/config-template.yaml |
   ssh $harbor_node cat '>' ./harbor/harbor.yml
+
+# optionally enable metrics in harbor.yml
+
 ssh $harbor_node ./harbor/install.sh
 
 # create a systemd service to handle node restarts
