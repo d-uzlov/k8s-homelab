@@ -1207,35 +1207,6 @@
                 }
               }
             ]
-          },
-          {
-            "__systemRef": "hideSeriesFrom",
-            "matcher": {
-              "id": "byNames",
-              "options": {
-                "mode": "exclude",
-                "names": [
-                  "steal",
-                  "user",
-                  "iowait",
-                  "irq",
-                  "system",
-                  "guest"
-                ],
-                "prefix": "All except:",
-                "readOnly": true
-              }
-            },
-            "properties": [
-              {
-                "id": "custom.hideFrom",
-                "value": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": true
-                }
-              }
-            ]
           }
         ]
       },
@@ -1270,11 +1241,11 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "# usually this should not exist,\r\n# but in case node-exporter adds a new value for mode, show it\r\nsum(rate(node_cpu_seconds_total{instance=\"$instance\",  mode!~\"system|user|nice|iowait|softirq|irq|idle|steal\"}[$__rate_interval]))",
+          "expr": "# usually this should not exist,\r\n# but in case node-exporter adds a new value for mode, show it\r\nsum by(mode) (rate(node_cpu_seconds_total{instance=\"$instance\", mode!~\"system|user|nice|iowait|softirq|irq|idle|steal|interrupt\"}[$__rate_interval]))",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
-          "legendFormat": "Busy Other",
+          "legendFormat": "Other: {{mode}}",
           "range": true,
           "refId": "other",
           "step": 240
@@ -1292,6 +1263,21 @@
           "legendFormat": "steal",
           "range": true,
           "refId": "steal",
+          "step": 240
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(node_cpu_seconds_total{instance=\"$instance\", mode=\"interrupt\"}[$__rate_interval]))",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 1,
+          "legendFormat": "interrupt",
+          "range": true,
+          "refId": "interrupt",
           "step": 240
         },
         {

@@ -282,6 +282,28 @@ spec:
       for: 10m
       labels:
         severity: warning
+    - alert: NodeEdacCorrectable
+      annotations:
+        description: >-
+          {{ $labels.instance }}:
+          {{ $value | humanize }}
+        summary: Node encountered memory errors that were automatically corrected
+      expr: |-
+        increase(node_edac_correctable_errors_total[1h]) != 0
+      for: 0m
+      labels:
+        severity: critical
+    - alert: NodeEdacUncorrectable
+      annotations:
+        description: >-
+          {{ $labels.instance }}:
+          {{ $value | humanize }}
+        summary: Node encountered memory errors that could not be corrected
+      expr: |-
+        increase(node_edac_uncorrectable_errors_total[1h]) != 0
+      for: 0m
+      labels:
+        severity: critical
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
@@ -299,7 +321,7 @@ spec:
       annotations:
         description: >-
           {{ $labels.instance }}:
-          {{ $value | humanizePercentage }}.
+          {{ $value | humanizePercentage }}
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/node/nodefiledescriptorlimit
         summary: File descriptors usage is above 70%
       expr: |-
@@ -313,7 +335,7 @@ spec:
       annotations:
         description: >-
           {{ $labels.instance }}:
-          {{ $value | humanizePercentage }}.
+          {{ $value | humanizePercentage }}
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/node/nodefiledescriptorlimit
         summary: File descriptors usage is above 90%
       expr: |-

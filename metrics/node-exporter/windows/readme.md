@@ -51,7 +51,7 @@ EOF
 ```bash
 
 # ip or domain name
-node=workstation.example.com
+node=10.3.10.6
 curl -sS --insecure http://$node:9182/metrics > ./windows-exporter.log
 
 ```
