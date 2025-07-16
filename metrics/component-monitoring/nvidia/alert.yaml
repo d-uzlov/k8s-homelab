@@ -1,0 +1,25 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: alert-harbor
+  namespace: prometheus
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  groups:
+  - name: harbor
+    rules:
+    - alert: HarborProjectOutOfSpace
+      annotations:
+        description: >-
+          {{ $labels.instance }}:
+          {{ $labels.project_name }}
+        summary: Project used over 90% of its quota
+      expr: |-
+        harbor_project_quota_usage_byte / (harbor_project_quota_byte != -1) > 0.9
+      for: 30m
+      labels:
+        severity: info
