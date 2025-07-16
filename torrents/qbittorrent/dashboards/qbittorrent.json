@@ -1391,7 +1391,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "qbittorrent has 3 ways or reporting speed:\r\n\r\n1. Instantaneous speed, shown in the footer in webUI.\r\nIt fluctuates a lot, and it isn't really useful.\r\nPrometheus scrapes data once every N seconds. It can be that your speed is 10 MiB/s on average,\r\nbut rigth before the scrape the speed increased to 20 MiB/s. And before next scrape it increased to 15 MiB/s.\r\nYou would think that the average is 15+ MiB/s.\r\n\r\n2. Logical speed.\r\nqbittorrent reports how many data bytes it has transferred.\r\nYou can then get average speed as `delta_bytes / delta_time`.\r\nThe result is less detiled, but mathematically accurate.\r\nOnly actual transferred data blocks are counted.\r\n\r\n3. Real speed. Similar to logical speed, but protocol overhead is now counted.\r\nIt is always bigger than logical speed.\r\nEven if all torents are finished, but you are seeding some torrents,\r\nyou will see non-zero download speed\r\nbecause you are exchanging metadata with other peers.",
+        "content": "qbittorrent has 3 ways of reporting speed:\r\n\r\n1. Instantaneous speed, shown in the footer in webUI.\r\nIt fluctuates a lot, and it isn't really useful.\r\nPrometheus scrapes data once every N seconds. It can be that your speed is 10 MiB/s on average,\r\nbut rigth before the scrape the speed increased to 20 MiB/s. And before next scrape it increased to 15 MiB/s.\r\nYou would think that the average is 15+ MiB/s.\r\n\r\n2. Logical speed.\r\nqbittorrent reports how many data bytes it has transferred.\r\nYou can then get average speed as `delta_bytes / delta_time`.\r\nThe result is less detiled, but mathematically accurate.\r\nOnly actual transferred data blocks are counted.\r\n\r\n3. Real speed. Similar to logical speed, but protocol overhead is now counted.\r\nIt is always bigger than logical speed.\r\nEven if all torents are finished, but you are seeding some torrents,\r\nyou will see non-zero download speed\r\nbecause you are exchanging metadata with other peers.",
         "mode": "markdown"
       },
       "title": "Notes",
@@ -2038,14 +2038,14 @@
           "type": "prometheus",
           "uid": "${DS_PROMETHEUS}"
         },
-        "definition": "query_result(label_join(last_over_time(qbittorrent_app_version[$__range]), \"human_name\", \"/\", \"cluster_type\", \"cluster\"))",
+        "definition": "query_result(count by(human_name, cluster) (label_join(last_over_time(qbittorrent_app_version[$__range]), \"human_name\", \"/\", \"cluster_type\", \"cluster\")))",
         "description": "",
         "includeAll": true,
         "name": "cluster",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(label_join(last_over_time(qbittorrent_app_version[$__range]), \"human_name\", \"/\", \"cluster_type\", \"cluster\"))",
+          "query": "query_result(count by(human_name, cluster) (label_join(last_over_time(qbittorrent_app_version[$__range]), \"human_name\", \"/\", \"cluster_type\", \"cluster\")))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -2058,12 +2058,12 @@
           "type": "prometheus",
           "uid": "${DS_PROMETHEUS}"
         },
-        "definition": "query_result(last_over_time(qbittorrent_app_version{cluster=~\"$cluster\"}[$__range]))",
+        "definition": "query_result(count by(instance) (last_over_time(qbittorrent_app_version{cluster=~\"$cluster\"}[$__range])))",
         "name": "instance",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(last_over_time(qbittorrent_app_version{cluster=~\"$cluster\"}[$__range]))",
+          "query": "query_result(count by(instance) (last_over_time(qbittorrent_app_version{cluster=~\"$cluster\"}[$__range])))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -2076,28 +2076,7 @@
           "type": "prometheus",
           "uid": "${DS_PROMETHEUS}"
         },
-        "definition": "query_result(topk(12, increase(qbittorrent_torrent_total_uploaded_bytes{instance=\"$instance\"}[$__range])) != 0)",
-        "description": "",
-        "hide": 2,
-        "includeAll": true,
-        "name": "top_torrents",
-        "options": [],
-        "query": {
-          "qryType": 3,
-          "query": "query_result(topk(12, increase(qbittorrent_torrent_total_uploaded_bytes{instance=\"$instance\"}[$__range])) != 0)",
-          "refId": "PrometheusVariableQueryEditor-VariableQuery"
-        },
-        "refresh": 2,
-        "regex": "/hash=\"(?<text>[^\"]+)|hash=\"(?<value>[^\"]+)/g",
-        "type": "query"
-      },
-      {
-        "allowCustomValue": false,
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${DS_PROMETHEUS}"
-        },
-        "definition": "query_result(max_over_time(qbittorrent_torrent_states{instance=\"$instance\"}[$__range]) != 0)",
+        "definition": "query_result(count by(name) (max_over_time(qbittorrent_torrent_states{instance=\"$instance\"}[$__range]) != 0))",
         "description": "",
         "hide": 2,
         "includeAll": true,
@@ -2105,7 +2084,7 @@
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(max_over_time(qbittorrent_torrent_states{instance=\"$instance\"}[$__range]) != 0)",
+          "query": "query_result(count by(name) (max_over_time(qbittorrent_torrent_states{instance=\"$instance\"}[$__range]) != 0))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,

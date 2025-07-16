@@ -115,7 +115,7 @@ kl delete ns prometheus
 ```bash
 
 kl -n prometheus describe svc prometheus
-kl exec deployments/alpine -- curl -sS http://prometheus-operated.prometheus:9090/metrics
-kl exec deployments/alpine -- curl -sS http://prometheus-operated.prometheus:8080/metrics
+kl exec deployments/alpine -- curl -sS http://prometheus-operated.prometheus:9090/metrics > ./prometheus-metrics.log
+kl exec deployments/alpine -- curl -sS http://prometheus-operated.prometheus:8080/metrics > ./prometheus-reloader-metrics.log
 
 ```
