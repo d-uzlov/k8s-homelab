@@ -258,47 +258,12 @@
             "steps": [
               {
                 "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           },
           "unit": "short"
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "idle"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "dark-green",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "user"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "dark-red",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 8,
@@ -333,7 +298,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (mode) (rate(windows_cpu_time_total{instance=~\"$instance\"}[$__rate_interval]))",
+          "expr": "sum by (mode) (rate(windows_cpu_time_total{instance=~\"$instance\", mode=~\"interrupt|dpc\"}[$__rate_interval]))",
           "format": "time_series",
           "functions": [],
           "group": {
@@ -354,7 +319,139 @@
             "showDisabledItems": false
           },
           "range": true,
-          "refId": "A",
+          "refId": "irq",
+          "step": 20
+        },
+        {
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "# interrupts seem to be included into privileged mode counter\r\nsum by (mode) (rate(windows_cpu_time_total{instance=~\"$instance\", mode=\"privileged\"}[$__rate_interval])) - on() group_left() sum(rate(windows_cpu_time_total{instance=~\"$instance\", mode=~\"interrupt|dpc\"}[$__rate_interval]))",
+          "format": "time_series",
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "hide": false,
+          "host": {
+            "filter": ""
+          },
+          "intervalFactor": 1,
+          "item": {
+            "filter": ""
+          },
+          "legendFormat": "{{mode}}",
+          "metric": "mysql_global_status_questions",
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "range": true,
+          "refId": "privileged",
+          "step": 20
+        },
+        {
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (mode) (rate(windows_cpu_time_total{instance=~\"$instance\", mode=\"user\"}[$__rate_interval]))",
+          "format": "time_series",
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "hide": false,
+          "host": {
+            "filter": ""
+          },
+          "intervalFactor": 1,
+          "item": {
+            "filter": ""
+          },
+          "legendFormat": "{{mode}}",
+          "metric": "mysql_global_status_questions",
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "range": true,
+          "refId": "user",
+          "step": 20
+        },
+        {
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (mode) (rate(windows_cpu_time_total{instance=~\"$instance\", mode=\"idle\"}[$__rate_interval]))",
+          "format": "time_series",
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "hide": false,
+          "host": {
+            "filter": ""
+          },
+          "intervalFactor": 1,
+          "item": {
+            "filter": ""
+          },
+          "legendFormat": "{{mode}}",
+          "metric": "mysql_global_status_questions",
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "range": true,
+          "refId": "idle",
+          "step": 20
+        },
+        {
+          "application": {
+            "filter": ""
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (mode) (rate(windows_cpu_time_total{instance=~\"$instance\", mode!~\"idle|user|privileged|interrupt|dpc\"}[$__rate_interval]))",
+          "format": "time_series",
+          "functions": [],
+          "group": {
+            "filter": ""
+          },
+          "hide": false,
+          "host": {
+            "filter": ""
+          },
+          "intervalFactor": 1,
+          "item": {
+            "filter": ""
+          },
+          "legendFormat": "{{mode}}",
+          "metric": "mysql_global_status_questions",
+          "mode": 0,
+          "options": {
+            "showDisabledItems": false
+          },
+          "range": true,
+          "refId": "other",
           "step": 20
         }
       ],
@@ -544,6 +641,7 @@
         "y": 22
       },
       "id": 14,
+      "maxDataPoints": 250,
       "options": {
         "alertThreshold": true,
         "legend": {
@@ -1257,6 +1355,7 @@
         "y": 46
       },
       "id": 15,
+      "maxDataPoints": 150,
       "options": {
         "alertThreshold": true,
         "legend": {
@@ -2440,6 +2539,78 @@
                 "value": "bytes"
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "bus_number"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 123
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "luid"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 209
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "phys"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 64
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "system memory"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 135
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "shared memory"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 145
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "video memory"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 139
+              }
+            ]
           }
         ]
       },
@@ -2460,7 +2631,8 @@
           ],
           "show": false
         },
-        "showHeader": true
+        "showHeader": true,
+        "sortBy": []
       },
       "targets": [
         {
@@ -2537,7 +2709,17 @@
               "Value #info": true
             },
             "includeByName": {},
-            "indexByName": {},
+            "indexByName": {
+              "Time": 0,
+              "Value #info": 5,
+              "Value #shared_system_memory": 8,
+              "Value #system_memory_size": 6,
+              "Value #video_memory_size": 7,
+              "bus_number": 1,
+              "luid": 2,
+              "name": 3,
+              "phys": 4
+            },
             "renameByName": {
               "Value #A": "",
               "Value #info": "",
@@ -2643,7 +2825,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "max_over_time(windows_gpu_adapter_memory_committed_bytes{instance=~\"$instance\"}[$__interval])",
+          "expr": "max by(luid) (max_over_time(windows_gpu_adapter_memory_committed_bytes{instance=~\"$instance\"}[$__interval]))",
           "format": "time_series",
           "functions": [],
           "group": {
@@ -2657,7 +2839,7 @@
           "item": {
             "filter": ""
           },
-          "legendFormat": "committed",
+          "legendFormat": "{{luid}}: committed",
           "metric": "mysql_global_status_questions",
           "mode": 0,
           "options": {
@@ -2676,7 +2858,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "max_over_time(windows_gpu_adapter_memory_dedicated_bytes{instance=~\"$instance\"}[$__interval])",
+          "expr": "max by(luid) (max_over_time(windows_gpu_adapter_memory_dedicated_bytes{instance=~\"$instance\"}[$__interval]))",
           "format": "time_series",
           "functions": [],
           "group": {
@@ -2690,7 +2872,7 @@
           "item": {
             "filter": ""
           },
-          "legendFormat": "dedicated",
+          "legendFormat": "{{luid}}: dedicated",
           "metric": "mysql_global_status_questions",
           "mode": 0,
           "options": {
@@ -2709,7 +2891,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "max_over_time(windows_gpu_adapter_memory_shared_bytes{instance=~\"$instance\"}[$__interval])",
+          "expr": "max by(luid) (max_over_time(windows_gpu_adapter_memory_shared_bytes{instance=~\"$instance\"}[$__interval]))",
           "format": "time_series",
           "functions": [],
           "group": {
@@ -2723,7 +2905,7 @@
           "item": {
             "filter": ""
           },
-          "legendFormat": "shared",
+          "legendFormat": "{{luid}}: shared",
           "metric": "mysql_global_status_questions",
           "mode": 0,
           "options": {
@@ -2830,7 +3012,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by(eng, engtype) (rate(windows_gpu_engine_time_seconds{instance=~\"$instance\"}[$__rate_interval]))",
+          "expr": "sum by(luid, eng, engtype) (rate(windows_gpu_engine_time_seconds{instance=~\"$instance\"}[$__rate_interval]))",
           "format": "time_series",
           "functions": [],
           "group": {
@@ -2844,7 +3026,7 @@
           "item": {
             "filter": ""
           },
-          "legendFormat": "{{engtype}} {{eng}}",
+          "legendFormat": "{{luid}}: {{eng}} {{engtype}}",
           "metric": "mysql_global_status_questions",
           "mode": 0,
           "options": {
