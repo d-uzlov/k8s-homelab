@@ -15,13 +15,13 @@ mkdir -p ./metrics/prometheus/alertmanager/env/
 clusterName=trixie
  cat << EOF > ./metrics/prometheus/alertmanager/env/patch-cluster-tag.yaml
 - op: add
-  path: /spec/endpoints/0/relabelings/-
+  path: /spec/endpoints/0/relabelings/0
   value:
     targetLabel: cluster
     replacement: $clusterName
     action: replace
 - op: add
-  path: /spec/endpoints/1/relabelings/-
+  path: /spec/endpoints/1/relabelings/0
   value:
     targetLabel: cluster
     replacement: $clusterName
@@ -55,8 +55,11 @@ kl delete -k ./metrics/alertmanager/
 # Manual metric checking
 
 ```bash
+
 kl -n prometheus describe svc alertmanager
+
 kl exec deployments/alpine -- apk add curl
-kl exec deployments/alpine -- curl -sS http://alertmanager.prometheus:9093/metrics
-kl exec deployments/alpine -- curl -sS http://alertmanager.prometheus:8080/metrics
+kl exec deployments/alpine -- curl -sS http://alertmanager.prometheus:9093/metrics > ./alertmanager-own-metrics.log
+kl exec deployments/alpine -- curl -sS http://alertmanager.prometheus:8080/metrics > ./alertmanager-reloader-metrics.log
+
 ```

@@ -44,11 +44,16 @@ mkdir -p ./metrics/kube-state-metrics/env/
 clusterName=
  cat << EOF > ./metrics/kube-state-metrics/env/patch-cluster-tag.yaml
 - op: add
-  path: /spec/endpoints/0/relabelings/-
+  path: /spec/endpoints/0/relabelings/0
   value:
     targetLabel: cluster
     replacement: $clusterName
     action: replace
+EOF
+ cat << EOF > ./metrics/kube-state-metrics/env/patch-scrape-cluster-tag.yaml
+- op: add
+  path: /spec/staticConfigs/0/labels/cluster
+  value: $clusterName
 EOF
 
 ```
@@ -71,4 +76,16 @@ kl -n kube-state-metrics get servicemonitor
 ```bash
 kl delete -k ./metrics/kube-state-metrics/
 kl delete ns kube-state-metrics
+```
+
+# Manual metric checking
+
+```bash
+
+kl -n kube-state-metrics describe svc ksm
+
+kl exec deployments/alpine -- apk add curl
+kl exec deployments/alpine -- curl -sS http://ksm.kube-state-metrics:8080/metrics > ./ksm-exported-metrics.log
+kl exec deployments/alpine -- curl -sS http://ksm.kube-state-metrics:8081/metrics > ./ksm-own-metrics.log
+
 ```

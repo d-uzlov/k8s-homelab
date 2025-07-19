@@ -51,12 +51,20 @@ sudo journalctl -b -u zfs_exporter_chris
 
 mkdir -p ./metrics/zfs-exporter/chris-siebenmann/env/
 
-[ -f ./metrics/zfs-exporter/chris-siebenmann/env/targets-patch.yaml ] ||
-  cp ./metrics/zfs-exporter/chris-siebenmann/scrape-patch.template.yaml ./metrics/zfs-exporter/chris-siebenmann/env/scrape-patch.yaml
-
 # adjust cluster_type and cluster to your needs
-# repeat if you need to scrape several clusters with different names
- cat << EOF >> ./metrics/zfs-exporter/chris-siebenmann/env/scrape-patch.yaml
+# if scrape-patch.yaml already exists, add more items into staticConfigs list
+ cat << EOF > ./metrics/zfs-exporter/chris-siebenmann/env/scrape-patch.yaml
+ ---
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: external-zfs-exporter-chris
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  staticConfigs:
   - labels:
       job: zfs-exporter
       cluster_type: pve
@@ -64,7 +72,6 @@ mkdir -p ./metrics/zfs-exporter/chris-siebenmann/env/
     targets:
     - node1.example.com:9700
     - node2.example.com:9700
-    - node3.example.com:9700
 EOF
 
 kl apply -k ./metrics/zfs-exporter/chris-siebenmann/

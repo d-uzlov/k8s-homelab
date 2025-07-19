@@ -69,19 +69,20 @@ spec:
   scheme: HTTP
   staticConfigs:
   - labels:
-      job: smartctl_exporter
+      job: smartctl-exporter
       cluster_type: nas
       cluster: my-cluster
     targets:
     - example.com:9633
-  metricRelabelings:
-  - targetLabel: instance # remove port from instance
-    sourceLabels: [ instance ]
+  relabelings:
+  - targetLabel: instance
+    sourceLabels: [ __address__ ]
     regex: (.*):\d*
     action: replace
+  metricRelabelings:
   - action: drop
     sourceLabels: [ __name__ ]
-    regex: node_cpu_scaling_governor
+    regex: go_gc_.*|process_.*
 EOF
 
 kl apply -f ./metrics/smart/env/scrape-smartctl.yaml

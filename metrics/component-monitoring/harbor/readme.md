@@ -36,6 +36,11 @@ spec:
       cluster: my-cluster
     targets:
     - harbor1.example.com:9090
+  relabelings:
+  - targetLabel: instance # remove port from instance
+    sourceLabels: [ __address__ ]
+    regex: (.*):\d*
+    action: replace
   metricRelabelings:
   - targetLabel: instance # remove port from instance
     sourceLabels: [ instance ]
@@ -43,7 +48,7 @@ spec:
     action: replace
   - action: drop
     sourceLabels: [ __name__ ]
-    regex: go_.*|process_.*|promhttp_.*
+    regex: go_.*|promhttp_.*
 EOF
 
 kl apply -f ./metrics/component-monitoring/harbor/env/scrape-harbor.yaml

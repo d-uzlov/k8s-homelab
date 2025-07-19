@@ -19,56 +19,46 @@ spec:
     scheme: http
     scrapeTimeout: 10s
     relabelings:
-    - targetLabel: instance # turn instance from ip:port into node name
+    - targetLabel: instance
       sourceLabels: [ __meta_kubernetes_endpoint_node_name ]
       action: replace
+      separator: /
     - action: labeldrop
       regex: container|endpoint|namespace|pod|service
     - targetLabel: cluster_type
       replacement: k8s
       action: replace
     metricRelabelings:
-    - action: keep
+    - action: drop
       sourceLabels: [ __name__ ]
-      regex: "\
-        node_arp_entries|\
-        node_boot_time_seconds|\
-        node_cpu_seconds_total|\
-        node_cpu_guest_seconds_total|\
-        node_disk_.*|\
-        node_dmi_info|\
-        node_exporter_build_info|\
-        node_filefd_allocated|\
-        node_filefd_maximum|\
-        node_filesystem_.*|\
-        node_forks_total|\
-        node_intr_total|\
-        node_context_switches_total|\
-        node_load.*|\
-        node_memory_.*|\
-        node_network_address_info|\
-        node_network_carrier|\
-        node_network_carrier_changes_total|\
-        node_network_(receive|transmit)_(bytes|packets|drop|errs)_total|\
-        node_network_up|\
-        node_nf_conntrack_entries|\
-        node_nf_conntrack_entries_limit|\
-        node_os_info|\
-        node_pressure_.*|\
-        node_schedstat_.*|\
-        node_selinux_enabled|\
-        node_time_.*|\
-        node_timex_.*|\
-        node_uname_info|\
-        node_vmstat_.*|\
-        "
+      #   https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-class-net
+      # flags are useless? We already have node_network_up
+      # node_network_iface_id and node_network_iface_link seem to enumerate some unstable runtime info
+      # node_network_iface_link_mode is useless?
+      # netdev_group is useless?
+      # protocol_type seems to be some legacy useless stuff, everything is Ethernet nowadays
+      #   https://github.com/torvalds/linux/blob/master/include/uapi/linux/if_arp.h
+      regex: node_network_flags|node_network_iface_id|node_network_iface_link|node_network_iface_link_mode|node_network_net_dev_group|node_network_protocol_type
+    - action: drop
+      sourceLabels: [ __name__ ]
+      # rx_errors already include rx_length_errors, rx_crc_errors, rx_frame_errors
+      # compressed packets don't exist on modern networks
+      regex: node_network_receive_compressed_total|node_network_receive_fifo_total|node_network_receive_frame_total|node_network_receive_nohandler_total
+    - action: drop
+      sourceLabels: [ __name__ ]
+      # tx_errors already includes tx_aborted_errors, tx_carrier_errors, tx_fifo_errors, tx_heartbeat_errors, tx_window_errors
+      #   https://docs.kernel.org/networking/statistics.html
+      # collisions don't exist on modern networks
+      # compressed packets don't exist on modern networks
+      regex: node_network_transmit_carrier_total|node_network_transmit_fifo_total|node_network_transmit_colls_total|node_network_transmit_compressed_total
     - action: drop
       sourceLabels: [ __name__, device ]
-      # drop lxc* interface metrics
-      # they are kinda impossible to correlate with k8s objects
-      # they don't seem to have any real traffic reported
-      regex: node_network_.*;lxc.*
-      separator: ;
+      # drop metrics from generated interfaces
+      regex: node_network_.*;(fwbr.*|fwln.*|fwpr.*|tap.*|veth.*|lxc.*)
+    - action: drop
+      sourceLabels: [ __name__ ]
+      # there are too many metrics, which have too big cardinality, but too little use
+      regex: node_zfs_zpool_dataset_zil_.*
     - action: drop
       sourceLabels: [ __name__, mountpoint ]
       # /run/containerd/ is ephemeral container filesystems

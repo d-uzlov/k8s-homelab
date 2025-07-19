@@ -1,0 +1,32 @@
+---
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: cert-manager
+  namespace: cert-manager
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  scheme: HTTP
+  honorLabels: true
+  staticConfigs:
+  - labels:
+      job: cert-manager
+      cluster_type: k8s
+    targets:
+    - cm.cert-manager:9402
+  relabelings:
+  - targetLabel: instance
+    sourceLabels: [ cluster, __address__ ]
+    separator: ;
+    regex: (.*);(.*):\d*
+    action: replace
+    replacement: $1/$2
+  metricRelabelings:
+  - action: keep
+    sourceLabels: [ __name__ ]
+    regex: certmanager_.*|
+  - action: labeldrop
+    regex: instance

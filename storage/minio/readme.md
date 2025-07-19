@@ -127,11 +127,11 @@ spec:
       cluster: $cluster_name
     targets:
     - $minio_address
-  metricRelabelings:
-  - targetLabel: instance # remove port from instance
-    action: replace
-    sourceLabels: [ instance ]
+  relabelings:
+  - targetLabel: instance
+    sourceLabels: [ __address__ ]
     regex: (.*):\d*
+    action: replace
 EOF
 
 kl apply -f ./storage/minio/env/scrape-minio.yaml

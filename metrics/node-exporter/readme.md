@@ -100,3 +100,8 @@ ZFS IO stats are mostly removed from node-exporter:
 Additional stats are gathered here:
 - [zfs-exporter-pdf](../zfs-exporter/pdf/readme.md)
 - [zfs-exporter-chris](../zfs-exporter/chris-siebenmann/readme.md)
+
+# Network stats
+
+- `node_network_address_assign_type`: mac address: 0=hardware, 1=random, 2=stolen, 3=set_manually
+- `node_network_name_assign_type`: interface name source: 1=enumerated_randomly, 2=stable_automatic_name, 3=set_manually, 4=renamed (?)

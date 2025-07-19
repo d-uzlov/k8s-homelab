@@ -55,6 +55,17 @@ prometheus and related scrape configurations.
 ```bash
 
 mkdir -p ./metrics/grafana/env/
+
+clusterName=
+ cat << EOF > ./metrics/grafana/env/patch-cluster-tag.yaml
+- op: add
+  path: /spec/endpoints/0/relabelings/0
+  value:
+    targetLabel: cluster
+    replacement: $clusterName
+    action: replace
+EOF
+
  cat << EOF > ./metrics/grafana/env/admin.env
 username=admin
 password=$(LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 20)

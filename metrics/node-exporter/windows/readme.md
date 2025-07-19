@@ -34,15 +34,18 @@ spec:
       cluster: my-cluster
     targets:
     - workstation.example.com:9182
-  metricRelabelings:
-  - targetLabel: instance # remove port from instance
-    sourceLabels: [ instance ]
-    regex: (.*):9182
+  relabelings:
+  - targetLabel: instance
+    sourceLabels: [ __address__ ]
+    regex: (.*):\d*
     action: replace
+  metricRelabelings:
   - action: drop
     sourceLabels: [ __name__ ]
     regex: go_.*|process_.*|promhttp_.*|windows_hyperv_virtual_network_adapter_drop_reasons
 EOF
+
+kl apply -f ./metrics/node-exporter/windows/env/scrape-windows-exporter.yaml
 
 ```
 

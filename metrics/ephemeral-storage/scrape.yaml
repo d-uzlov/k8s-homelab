@@ -1,0 +1,42 @@
+---
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: ephemeral-storage
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  scheme: HTTP
+  honorLabels: true
+  staticConfigs:
+  - labels:
+      job: kube-ephemeral-storage
+      cluster_type: k8s
+    targets:
+    - esm.ephemeral-storage:9100
+  relabelings:
+  - targetLabel: instance
+    sourceLabels: [ cluster, __address__ ]
+    separator: ;
+    regex: (.*);(.*):\d*
+    action: replace
+    replacement: $1/$2
+  metricRelabelings:
+  - action: keep
+    sourceLabels: [ __name__ ]
+    regex: ephemeral_storage_.*|
+  - action: labeldrop
+    regex: instance
+  - targetLabel: node
+    sourceLabels: [ node_name ]
+    action: replace
+  - targetLabel: pod
+    sourceLabels: [ pod_name ]
+    action: replace
+  - targetLabel: namespace
+    sourceLabels: [ pod_namespace ]
+    action: replace
+  - action: labeldrop
+    regex: node_name|pod_name|pod_namespace

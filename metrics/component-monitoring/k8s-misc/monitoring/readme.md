@@ -7,7 +7,7 @@ mkdir -p ./metrics/component-monitoring/k8s-misc/monitoring/env/
 clusterName=
  cat << EOF > ./metrics/component-monitoring/k8s-misc/monitoring/env/patch-cluster-tag.yaml
 - op: add
-  path: /spec/endpoints/0/relabelings/-
+  path: /spec/endpoints/0/relabelings/0
   value:
     targetLabel: cluster
     replacement: $clusterName

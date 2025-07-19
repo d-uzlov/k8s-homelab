@@ -61,7 +61,7 @@ mkdir -p ./metrics/prometheus-operator/env/
 clusterName=
  cat << EOF > ./metrics/prometheus-operator/env/patch-cluster-tag.yaml
 - op: add
-  path: /spec/endpoints/0/relabelings/-
+  path: /spec/endpoints/0/relabelings/0
   value:
     targetLabel: cluster
     replacement: $clusterName

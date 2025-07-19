@@ -37,11 +37,8 @@ mkdir -p ./metrics/ephemeral-storage/env/
 clusterName=
  cat << EOF > ./metrics/ephemeral-storage/env/patch-cluster-tag.yaml
 - op: add
-  path: /spec/endpoints/0/relabelings/-
-  value:
-    targetLabel: cluster
-    replacement: $clusterName
-    action: replace
+  path: /spec/staticConfigs/0/labels/cluster
+  value: $clusterName
 EOF
 
 ```

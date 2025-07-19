@@ -16,50 +16,32 @@ spec:
   endpoints:
   - port: http-web
     enableHttp2: true
-    path: "/metrics"
     relabelings:
-    # - targetLabel: instance # turn instance from ip:port into node name
-    #   sourceLabels: [ __meta_kubernetes_endpoint_node_name ]
-    #   action: replace
     # - action: labeldrop
     #   regex: container|endpoint|namespace|pod|service
     - targetLabel: cluster_type
       replacement: k8s
       action: replace
+    - targetLabel: instance
+      action: replace
+      sourceLabels: [ cluster, __meta_kubernetes_namespace, __meta_kubernetes_pod_name ]
+      separator: /
     metricRelabelings:
-    - action: keep
-      regex: "\
-        alertmanager_alerts.*|\
-        alertmanager_build_info|\
-        alertmanager_config_hash|\
-        alertmanager_config_last_reload_successful|\
-        alertmanager_notifications_.*|\
-        process_start_time_seconds|\
-        "
-      sourceLabels:
-      - __name__
+    - action: drop
+      sourceLabels: [ __name__ ]
+      regex: go_.*|promhttp_.*
   - port: reloader-web
-    path: "/metrics"
     relabelings:
-    # - targetLabel: instance # turn instance from ip:port into node name
-    #   sourceLabels: [ __meta_kubernetes_endpoint_node_name ]
-    #   action: replace
     # - action: labeldrop
     #   regex: container|endpoint|namespace|pod|service
     - targetLabel: cluster_type
       replacement: k8s
       action: replace
+    - targetLabel: instance
+      action: replace
+      sourceLabels: [ cluster, __meta_kubernetes_namespace, __meta_kubernetes_pod_name ]
+      separator: /
     metricRelabelings:
-    - action: keep
-      regex: "\
-        reloader_config_apply_operations_failed_total|\
-        reloader_config_apply_operations_total|\
-        reloader_last_reload_success_timestamp_seconds|\
-        reloader_last_reload_successful|\
-        reloader_reloads_failed_total|\
-        reloader_reloads_total|\
-        reloader_watch_errors_total|\
-        reloader_watch_events_total|\
-        "
-      sourceLabels:
-      - __name__
+    - action: drop
+      sourceLabels: [ __name__ ]
+      regex: go_.*|promhttp_.*

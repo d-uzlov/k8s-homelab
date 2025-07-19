@@ -61,12 +61,19 @@ sudo journalctl -b -u node_exporter
 ```bash
 mkdir -p ./metrics/node-exporter/scrape/env/
 
-[ -f ./metrics/node-exporter/scrape/env/targets-patch.yaml ] ||
-  cp ./metrics/node-exporter/scrape/scrape-patch.template.yaml ./metrics/node-exporter/scrape/env/scrape-patch.yaml
-
-# adjust cluster_type and cluster to your needs
-# repeat if you need to scrape several clusters with different names
- cat << EOF >> ./metrics/node-exporter/scrape/env/scrape-patch.yaml
+# if you already have scrape-patch.yaml, add more objects into staticConfigs list
+ cat << EOF > ./metrics/node-exporter/scrape/env/scrape-patch.yaml
+---
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: external-node-exporter
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  staticConfigs:
   - labels:
       job: node-exporter
       cluster_type: pve
@@ -74,7 +81,6 @@ mkdir -p ./metrics/node-exporter/scrape/env/
     targets:
     - node1.example.com:9100
     - node2.example.com:9100
-    - node3.example.com:9100
 EOF
 
 kl apply -k ./metrics/node-exporter/scrape/
@@ -84,7 +90,8 @@ kl apply -k ./metrics/node-exporter/scrape/
 # Manual metric checking
 
 ```bash
-# ip or domain name
+
 node=
 curl -sS --insecure http://$node:9100/metrics > ./node-exporter.log
+
 ```

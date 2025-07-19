@@ -10,7 +10,7 @@ mkdir -p ./metrics/component-monitoring/kubelet/env/
 clusterName=
  cat << EOF > ./metrics/component-monitoring/kubelet/env/patch-cluster-tag.yaml
 - op: add
-  path: /spec/relabelings/-
+  path: /spec/relabelings/0
   value:
     targetLabel: cluster
     replacement: $clusterName

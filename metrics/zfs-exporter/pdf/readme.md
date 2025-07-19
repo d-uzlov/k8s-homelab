@@ -61,8 +61,19 @@ mkdir -p ./metrics/zfs-exporter/pdf/env/
   cp ./metrics/zfs-exporter/pdf/scrape-patch.template.yaml ./metrics/zfs-exporter/pdf/env/scrape-patch.yaml
 
 # adjust cluster_type and cluster to your needs
-# repeat if you need to scrape several clusters with different names
+# if scrape-patch.yaml already exists, add more items into staticConfigs list
  cat << EOF >> ./metrics/zfs-exporter/pdf/env/scrape-patch.yaml
+ ---
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: external-zfs-exporter
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  staticConfigs:
   - labels:
       job: zfs-exporter
       cluster_type: pve
@@ -70,7 +81,6 @@ mkdir -p ./metrics/zfs-exporter/pdf/env/
     targets:
     - node1.example.com:9134
     - node2.example.com:9134
-    - node3.example.com:9134
 EOF
 
 kl apply -k ./metrics/zfs-exporter/pdf/

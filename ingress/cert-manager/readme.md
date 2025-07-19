@@ -41,11 +41,8 @@ mkdir -p ./ingress/cert-manager/env/
 clusterName=
  cat << EOF > ./ingress/cert-manager/env/patch-cluster-tag.yaml
 - op: add
-  path: /spec/endpoints/0/relabelings/-
-  value:
-    targetLabel: cluster
-    replacement: $clusterName
-    action: replace
+  path: /spec/staticConfigs/0/labels/cluster
+  value: $clusterName
 EOF
 
 kl apply -f ./ingress/cert-manager/cert-manager.crds.yaml --server-side
@@ -81,9 +78,10 @@ kl -n cert-manager describe svc cm-cainjector
 kl -n cert-manager describe svc cm-webhook
 
 kl exec deployments/alpine -- apk add curl
-kl exec deployments/alpine -- curl -sS http://cm.cert-manager:9402/metrics > ./cm.log
-kl exec deployments/alpine -- curl -sS http://cm-cainjector.cert-manager:9402/metrics > ./cm-cainjector.log
-kl exec deployments/alpine -- curl -sS http://cm-webhook.cert-manager:9402/metrics > ./cm-webhook.log
+kl exec deployments/alpine -- curl -sS http://cm.cert-manager:9402/metrics > ./cm-metrics.log
+# metrics from other components seem useless
+kl exec deployments/alpine -- curl -sS http://cm-cainjector.cert-manager:9402/metrics > ./cm-cainjector-metrics.log
+kl exec deployments/alpine -- curl -sS http://cm-webhook.cert-manager:9402/metrics > ./cm-webhook-metrics.log
 
 ```
 
