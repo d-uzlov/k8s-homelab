@@ -543,7 +543,7 @@
         "legend": {
           "asTable": true,
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "displayMode": "table",
           "placement": "right",
@@ -564,7 +564,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(namespace) (increase(kube_pod_container_status_restarts_total{cluster=\"$cluster\", namespace=~\"$namespace\"}[$__rate_interval]))",
+          "expr": "sum by(namespace) (rate(kube_pod_container_status_restarts_total{cluster=\"$cluster\", namespace=~\"$namespace\"}[$__rate_interval])) * $__interval_ms / 1000",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -668,7 +668,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (namespace) (max_over_time(ephemeral_storage_pod_usage{cluster=\"$cluster\", namespace=~\"$namespace\"}[$__interval]))",
+          "expr": "# both metrics include all of the ephemeral storage\r\nsum by (namespace) (max_over_time(kube_summary_pod_ephemeral_storage_used_bytes{cluster=\"$cluster\", namespace=~\"$namespace\"}[$__interval]))\r\nor\r\nsum by (namespace) (max_over_time(ephemeral_storage_pod_usage{cluster=\"$cluster\", namespace=~\"$namespace\"}[$__interval]))",
           "hide": false,
           "instant": false,
           "legendFormat": "{{namespace}}",
@@ -765,7 +765,6 @@
         "legend": {
           "asTable": true,
           "calcs": [
-            "lastNotNull",
             "mean"
           ],
           "displayMode": "table",
@@ -1081,7 +1080,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
+        "h": 7,
         "w": 24,
         "x": 0,
         "y": 58
@@ -1185,10 +1184,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
+        "h": 7,
         "w": 24,
         "x": 0,
-        "y": 64
+        "y": 65
       },
       "id": 13,
       "maxDataPoints": 300,
@@ -1253,12 +1252,12 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(label_join(up{job=\"kubelet-main\"}, \"human_name\", \"/\", \"cluster_type\", \"cluster\"))",
+        "definition": "query_result(group by(human_name, cluster) (label_join(up{job=\"kubelet-main\"}, \"human_name\", \"/\", \"cluster_type\", \"cluster\")))",
         "label": "cluster",
         "name": "cluster",
         "query": {
           "qryType": 3,
-          "query": "query_result(label_join(up{job=\"kubelet-main\"}, \"human_name\", \"/\", \"cluster_type\", \"cluster\"))",
+          "query": "query_result(group by(human_name, cluster) (label_join(up{job=\"kubelet-main\"}, \"human_name\", \"/\", \"cluster_type\", \"cluster\")))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -1285,13 +1284,13 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(last_over_time(kube_namespace_created{cluster=\"$cluster\", namespace=~\".*($namespace_filter).*\"}[$__range]))",
+        "definition": "query_result(group by(namespace) (last_over_time(kube_namespace_created{cluster=\"$cluster\", namespace=~\".*($namespace_filter).*\"}[$__range])))",
         "includeAll": true,
         "name": "namespace",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(last_over_time(kube_namespace_created{cluster=\"$cluster\", namespace=~\".*($namespace_filter).*\"}[$__range]))",
+          "query": "query_result(group by(namespace) (last_over_time(kube_namespace_created{cluster=\"$cluster\", namespace=~\".*($namespace_filter).*\"}[$__range])))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,

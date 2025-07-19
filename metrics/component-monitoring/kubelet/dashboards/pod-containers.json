@@ -2450,16 +2450,230 @@
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "limit"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "request"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 63
+      },
+      "id": 49,
+      "maxDataPoints": 200,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Name",
+          "sortDesc": false
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (container, name) (max_over_time(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} wss, name={{name}}",
+          "range": true,
+          "refId": "wss_split"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (container) (max_over_time(container_memory_working_set_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} wss",
+          "range": true,
+          "refId": "wss_united"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (container, name) (max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} rss, name={{name}}",
+          "range": true,
+          "refId": "rss_split"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by (container) (max_over_time(container_memory_rss{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{container}} rss",
+          "range": true,
+          "refId": "rss_united"
+        }
+      ],
+      "title": "memory summary",
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "(.*), name=(.{8})(.*)",
+            "renamePattern": "$1, $2"
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 63
+        "y": 73
       },
       "id": 20,
       "panels": [],
-      "title": "Memory",
+      "repeat": "container",
+      "title": "Memory $container",
       "type": "row"
     },
     {
@@ -2587,7 +2801,7 @@
         "h": 10,
         "w": 19,
         "x": 0,
-        "y": 64
+        "y": 74
       },
       "id": 31,
       "maxDataPoints": 200,
@@ -2761,7 +2975,7 @@
         "h": 10,
         "w": 5,
         "x": 19,
-        "y": 64
+        "y": 74
       },
       "id": 27,
       "options": {
@@ -2901,7 +3115,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 74
+        "y": 84
       },
       "id": 33,
       "maxDataPoints": 100,
@@ -3165,7 +3379,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 74
+        "y": 84
       },
       "id": 34,
       "maxDataPoints": 100,
@@ -3342,7 +3556,7 @@
             "spanNulls": false,
             "stacking": {
               "group": "A",
-              "mode": "normal"
+              "mode": "none"
             },
             "thresholdsStyle": {
               "mode": "off"
@@ -3446,7 +3660,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 82
+        "y": 92
       },
       "id": 29,
       "maxDataPoints": 100,
@@ -3520,32 +3734,6 @@
           "legendFormat": "{{container}} active",
           "range": true,
           "refId": "active_cache_united"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "max by (container, name) (container_memory_total_inactive_file_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids})",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{container}} inactive, name={{name}}",
-          "range": true,
-          "refId": "inactive_split"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "max by (container) (container_memory_total_inactive_file_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids})",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{container}} inactive",
-          "range": true,
-          "refId": "unactive_united"
         },
         {
           "datasource": {
@@ -3698,7 +3886,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 82
+        "y": 92
       },
       "id": 39,
       "maxDataPoints": 100,
@@ -3765,7 +3953,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 90
+        "y": 181
       },
       "id": 19,
       "panels": [],
@@ -3833,7 +4021,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 91
+        "y": 182
       },
       "id": 28,
       "maxDataPoints": 100,
@@ -3937,7 +4125,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 91
+        "y": 182
       },
       "id": 7,
       "maxDataPoints": 100,
@@ -3982,7 +4170,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 98
+        "y": 189
       },
       "id": 17,
       "panels": [],
@@ -4044,7 +4232,7 @@
         "h": 7,
         "w": 17,
         "x": 1,
-        "y": 99
+        "y": 190
       },
       "id": 16,
       "options": {
@@ -4219,7 +4407,7 @@
         "h": 7,
         "w": 4,
         "x": 18,
-        "y": 99
+        "y": 190
       },
       "id": 24,
       "options": {
@@ -4295,7 +4483,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 106
+        "y": 197
       },
       "id": 13,
       "maxDataPoints": 200,
@@ -4313,8 +4501,8 @@
         },
         "tooltip": {
           "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
+          "mode": "multi",
+          "sort": "desc"
         }
       },
       "targets": [
@@ -4395,7 +4583,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 106
+        "y": 197
       },
       "id": 42,
       "maxDataPoints": 200,
@@ -4413,8 +4601,8 @@
         },
         "tooltip": {
           "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
+          "mode": "multi",
+          "sort": "desc"
         }
       },
       "targets": [
@@ -4495,8 +4683,108 @@
       "gridPos": {
         "h": 7,
         "w": 12,
+        "x": 6,
+        "y": 204
+      },
+      "id": 37,
+      "maxDataPoints": 200,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(pod) (kube_summary_pod_ephemeral_storage_used_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\"})\r\nor\r\nsum by(pod) (ephemeral_storage_pod_usage{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\"})",
+          "instant": false,
+          "legendFormat": "{{pod}}",
+          "range": true,
+          "refId": "pod_storage"
+        }
+      ],
+      "title": "ephemeral storage total",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
         "x": 0,
-        "y": 113
+        "y": 211
       },
       "id": 47,
       "maxDataPoints": 200,
@@ -4514,8 +4802,8 @@
         },
         "tooltip": {
           "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
+          "mode": "multi",
+          "sort": "desc"
         }
       },
       "targets": [
@@ -4555,7 +4843,7 @@
             "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 3,
-            "gradientMode": "opacity",
+            "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
@@ -4590,45 +4878,15 @@
           },
           "unit": "bytes"
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "pod_storage"
-            },
-            "properties": [
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "dash": [
-                    10,
-                    10
-                  ],
-                  "fill": "dash"
-                }
-              },
-              {
-                "id": "custom.fillOpacity",
-                "value": 0
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "purple",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 113
+        "y": 211
       },
-      "id": 37,
+      "id": 50,
       "maxDataPoints": 200,
       "options": {
         "legend": {
@@ -4658,24 +4916,112 @@
           "expr": "max by(pod, volume_name) (ephemeral_storage_container_volume_usage{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"})",
           "hide": false,
           "instant": false,
-          "legendFormat": "volume: {{volume_name}}",
+          "legendFormat": "{{volume_name}}",
           "range": true,
           "refId": "pod_volume_storage"
+        }
+      ],
+      "title": "volume usage",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "bytes"
         },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 218
+      },
+      "id": 48,
+      "maxDataPoints": 200,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(pod) (ephemeral_storage_pod_usage{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\"})",
+          "expr": "sum by(container) (kube_summary_container_logs_used_bytes{container!=\"\", container=~\"$container\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"})",
           "instant": false,
-          "legendFormat": "Total",
+          "legendFormat": "{{container}}",
           "range": true,
-          "refId": "pod_storage"
+          "refId": "A"
         }
       ],
-      "title": "volume usage",
+      "title": "logs used",
       "type": "timeseries"
     }
   ],
