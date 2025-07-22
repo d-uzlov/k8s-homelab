@@ -23,7 +23,7 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "id": null,
   "links": [
     {
@@ -104,12 +104,24 @@
                 "value": 203
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 70
+              }
+            ]
           }
         ]
       },
       "gridPos": {
-        "h": 25,
-        "w": 24,
+        "h": 26,
+        "w": 12,
         "x": 0,
         "y": 0
       },
@@ -126,11 +138,26 @@
         "sortBy": [
           {
             "desc": false,
-            "displayName": "rule_group_name"
+            "displayName": "job"
           }
         ]
       },
       "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "count by(job, cluster_type, cluster, instance) (up{job=~\"$job\", cluster=~\"$cluster\", instance=~\"$instance\"})",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "total_targets"
+        },
         {
           "datasource": {
             "type": "prometheus",
@@ -144,7 +171,22 @@
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
-          "refId": "rules_count"
+          "refId": "alive_targets"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "sum by(job, cluster_type, cluster, instance) (scrape_samples_post_metric_relabeling{job=~\"$job\", cluster=~\"$cluster\", instance=~\"$instance\"})",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "samples"
         }
       ],
       "title": "targets",
@@ -170,8 +212,260 @@
               "job": 1
             },
             "renameByName": {
+              "Value #alive_targets": "alive targets",
               "Value #evals": "",
+              "Value #samples": "samples",
+              "Value #targets": "targets",
+              "Value #total_targets": "total targets",
               "rule_group": ""
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*/"
+            },
+            "properties": [
+              {
+                "id": "filterable"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "series count"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 144
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 13,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 56,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "series count"
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "label_replace(count by(job, __name__) ({job=~\"$job\", instance=~\"$instance\"}), \"name\", \"$1\", \"__name__\", \"(.*)\")",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "top series from selected instance",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "Time": 0,
+              "Value": 4,
+              "__name__": 3,
+              "job": 1,
+              "name": 2
+            },
+            "renameByName": {
+              "Value": "series count",
+              "__name__": ""
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*/"
+            },
+            "properties": [
+              {
+                "id": "filterable"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "series count"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 144
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 13,
+        "w": 12,
+        "x": 12,
+        "y": 13
+      },
+      "id": 58,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "series count"
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "label_replace(count by(job, __name__) ({job=~\"$job\", instance=\"\"}), \"name\", \"$1\", \"__name__\", \"(.*)\")",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "top series without instance label",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "Time": 0,
+              "Value": 4,
+              "__name__": 3,
+              "job": 1,
+              "name": 2
+            },
+            "renameByName": {
+              "Value": "series count",
+              "__name__": ""
             }
           }
         }
@@ -232,7 +526,7 @@
         "h": 20,
         "w": 24,
         "x": 0,
-        "y": 25
+        "y": 26
       },
       "id": 50,
       "options": {
@@ -361,7 +655,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 45
+        "y": 46
       },
       "id": 26,
       "maxDataPoints": 250,
@@ -490,7 +784,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 54
+        "y": 55
       },
       "id": 51,
       "maxDataPoints": 250,
@@ -524,7 +818,7 @@
           "refId": "upload"
         }
       ],
-      "title": "average samples in scrape",
+      "title": "samples in scrape (saved)",
       "type": "timeseries"
     },
     {
@@ -619,7 +913,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 63
+        "y": 64
       },
       "id": 52,
       "maxDataPoints": 250,
@@ -749,7 +1043,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 72
+        "y": 73
       },
       "id": 55,
       "maxDataPoints": 250,
@@ -878,7 +1172,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 81
+        "y": 82
       },
       "id": 53,
       "maxDataPoints": 250,
@@ -913,6 +1207,136 @@
         }
       ],
       "title": "new series (sum over time)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "total"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 91
+      },
+      "id": 57,
+      "maxDataPoints": 250,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "max_over_time(scrape_body_size_bytes{job=~\"$job\", cluster=~\"$cluster\", instance=~\"$instance\"}[$__interval])",
+          "legendFormat": "{{job}}: {{instance}} / {{endpoint}}",
+          "range": true,
+          "refId": "upload"
+        }
+      ],
+      "title": "scrape body size",
       "type": "timeseries"
     },
     {
@@ -1008,7 +1432,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 90
+        "y": 100
       },
       "id": 54,
       "maxDataPoints": 250,
