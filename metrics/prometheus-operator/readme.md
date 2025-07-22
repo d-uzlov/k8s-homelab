@@ -21,7 +21,7 @@ You only need to do this if you change `values.yaml` file.
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update prometheus-community
 helm search repo prometheus-community/kube-prometheus-stack --versions --devel | head
-helm show values prometheus-community/kube-prometheus-stack --version 70.4.1 > ./metrics/prometheus-operator/default-values.yaml
+helm show values prometheus-community/kube-prometheus-stack --version 75.12.0 > ./metrics/prometheus-operator/default-values.yaml
 ```
 
 ```bash
@@ -29,7 +29,7 @@ helm show values prometheus-community/kube-prometheus-stack --version 70.4.1 > .
 helm template \
   prometheus-operator \
   prometheus-community/kube-prometheus-stack \
-  --version 70.4.1 \
+  --version 75.12.0 \
   --values ./metrics/prometheus-operator/values.yaml \
   --namespace prometheus-operator \
   | sed \
