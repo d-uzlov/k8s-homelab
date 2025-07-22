@@ -13,6 +13,7 @@ References:
 ```bash
 
 kl apply -k ./metrics/prometheus/prompp/
+kl -n prometheus get prom
 kl -n prometheus get pod -o wide
 
 kl -n grafana apply -k ./metrics/prometheus/prompp/grafana-datasource/

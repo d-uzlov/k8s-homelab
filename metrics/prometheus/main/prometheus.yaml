@@ -2,10 +2,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: prometheus
+  name: prom-main
   labels:
     app: prometheus
-    self-monitor: enable
+    instance: main
 spec:
   selector:
     app.kubernetes.io/name: prometheus
@@ -26,17 +26,20 @@ metadata:
   labels:
     app: prometheus
 spec:
-  version: v3.1.0
+  serviceName: prom-main
+  version: v3.5.0
   paused: false
   replicas: 1
   shards: 1
-  logLevel:  debug
-  logFormat:  logfmt
-  listenLocal: false
+  logLevel: debug
+  logFormat: logfmt
   enableAdminAPI: true
   scrapeInterval: 10s
   evaluationInterval: 10s
-  retention: 10y
+  retention: 1y
+  enableFeatures:
+  - extra-scrape-metrics
+  - created-timestamp-zero-ingestion
   tsdb:
     outOfOrderTimeWindow: 0s
   routePrefix: "/"
@@ -75,14 +78,14 @@ spec:
           labelSelector:
             matchExpressions:
             # prometheus operator creates pods with app.kubernetes.io/name label
-            - {key: app.kubernetes.io/name, operator: In, values: [prometheus]}
+            - { key: app.kubernetes.io/name, operator: In, values: [ prometheus ] }
   portName: http-web
   volumes:
-    - emptyDir: {}
-      name: tmp
+  - emptyDir: {}
+    name: tmp
   volumeMounts:
-    - mountPath: /tmp
-      name: tmp
+  - mountPath: /tmp
+    name: tmp
   hostNetwork: false
   containers:
   - name: prometheus
