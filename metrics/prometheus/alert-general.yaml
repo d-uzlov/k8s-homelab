@@ -65,3 +65,19 @@ spec:
       expr: ALERTS{severity = "info"} == 1 unless on (namespace) ALERTS{alertname != "InfoInhibitor", severity =~ "warning|critical", alertstate="firing"} == 1
       labels:
         severity: none
+    - alert: MismatchedClusterType
+      annotations:
+        description: >-
+          {{ $labels.cluster }}: {{ $value }}
+        summary: There are several metrics that define the same cluster name but different cluster type
+      expr: count by(cluster) (count by(cluster, cluster_type) (up)) > 1
+      labels:
+        severity: info
+    - alert: MismatchedInstanceCluster
+      annotations:
+        description: >-
+          {{ $labels.instance }}: {{ $value }}
+        summary: There are several metrics from single instance that define different cluster value
+      expr: count by(instance) (count by(cluster, instance) (up)) > 1
+      labels:
+        severity: info
