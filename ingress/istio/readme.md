@@ -18,30 +18,36 @@ helm search repo istio/base --versions --devel | head
 ```
 
 ```bash
-helm show values istio/base --version 1.24.0 > ./ingress/istio/base/default-values.yaml
+
+helm show values istio/base --version 1.26.2 > ./ingress/istio/base/default-values.yaml
 helm template \
   --include-crds \
   istio-base \
   istio/base \
-  --version 1.24.0 \
+  --version 1.26.2 \
   --namespace istio \
   --values ./ingress/istio/base/values.yaml \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/instance|d' -e '\|app.kubernetes.io/part-of|d' -e '\|app.kubernetes.io/version|d' -e '\|app.kubernetes.io/name|d' -e '\|Created if this is not a remote istiod, OR if it is and is also a config cluster|d' \
   > ./ingress/istio/base/istio-base.gen.yaml
 
-helm show values istio/istiod --version 1.24.0 > ./ingress/istio/istiod/default-values.yaml
+helm show values istio/istiod --version 1.26.2 > ./ingress/istio/istiod/default-values.yaml
 helm template \
   --include-crds \
   istio-istiod \
   istio/istiod \
-  --version 1.24.0 \
+  --version 1.26.2 \
   --namespace istio \
   --values ./ingress/istio/istiod/values.yaml \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/instance|d' -e '\|app.kubernetes.io/part-of|d' -e '\|app.kubernetes.io/version|d' -e '\|app.kubernetes.io/name|d' -e '\|Created if this is not a remote istiod, OR if it is and is also a config cluster|d' \
   > ./ingress/istio/istiod/istio-istiod.gen.yaml
 
-sed -n '/mesh:/,/---/{//!p}' ./ingress/istio/istiod/istio-istiod.gen.yaml | sed 's/^    //' \
-  > ./ingress/istio/mesh-config/default-mesh-config.yaml
+yq '
+  select(
+    .kind != "ConfigMap"
+    or
+    .metadata.name != "values"
+  )
+' -i ./ingress/istio/istiod/istio-istiod.gen.yaml
 
 ```
 
