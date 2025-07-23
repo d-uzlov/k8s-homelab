@@ -18,17 +18,26 @@ spec:
       serviceAccountName: homepage
       containers:
       - name: homepage
-        image: ghcr.io/gethomepage/homepage:v0.9.10
+        image: ghcr.io/gethomepage/homepage:v1.4.0
         ports:
         - name: http
           containerPort: 3000
           protocol: TCP
-        # env:
+        env:
         # - name: LOG_LEVEL
         #   value: debug
+        - name: HOMEPAGE_ALLOWED_HOSTS 
+          value: '*'
         volumeMounts:
-        - mountPath: /app/config/
+        - mountPath: /app/config/services.yaml
           name: config
+          subPath: services.yaml
+        - mountPath: /app/config/bookmarks.yaml
+          name: config
+          subPath: bookmarks.yaml
+        - mountPath: /app/config/widgets.yaml
+          name: config
+          subPath: widgets.yaml
         - mountPath: /app/config/logs
           name: logs
         startupProbe:
@@ -37,10 +46,16 @@ spec:
           failureThreshold: 10
           initialDelaySeconds: 1
           periodSeconds: 1
+        readinessProbe:
+          httpGet:
+            port: 3000
+          failureThreshold: 3
+          initialDelaySeconds: 0
+          periodSeconds: 1
         livenessProbe:
           httpGet:
             port: 3000
-          failureThreshold: 1
+          failureThreshold: 5
           initialDelaySeconds: 0
           periodSeconds: 10
       volumes:
