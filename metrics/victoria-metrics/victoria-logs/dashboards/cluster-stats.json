@@ -285,7 +285,7 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 9,
+        "w": 15,
         "x": 9,
         "y": 1
       },
@@ -505,27 +505,11 @@
             "steps": [
               {
                 "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           }
         },
         "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Time"
-            },
-            "properties": [
-              {
-                "id": "custom.hidden",
-                "value": true
-              }
-            ]
-          },
           {
             "matcher": {
               "id": "byName",
@@ -535,26 +519,18 @@
               {
                 "id": "custom.width",
                 "value": 85
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "field_value"
-            },
-            "properties": [
+              },
               {
-                "id": "custom.width",
-                "value": 227
+                "id": "unit",
+                "value": "sishort"
               }
             ]
           }
         ]
       },
       "gridPos": {
-        "h": 7,
-        "w": 10,
+        "h": 15,
+        "w": 12,
         "x": 0,
         "y": 14
       },
@@ -579,7 +555,7 @@
             "uid": "${logs_source}"
           },
           "editorMode": "code",
-          "expr": "kubernetes.pod_namespace:in($namespace) kubernetes.pod_name:in($pod) kubernetes.container_name:in($container)\n| $filter\n| facets 3\n| sort by(hits) desc",
+          "expr": "kubernetes.pod_namespace:in($namespace) kubernetes.pod_name:in($pod) kubernetes.container_name:in($container)\n| $filter\n| facets 3\n| filter hits:> 100\n#| sort by(hits) desc\n#| limit 100",
           "legendFormat": "",
           "queryType": "instant",
           "refId": "A"
@@ -590,10 +566,22 @@
         {
           "id": "extractFields",
           "options": {
+            "delimiter": ",",
             "format": "auto",
-            "keepTime": true,
+            "keepTime": false,
             "replace": true,
             "source": "labels"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": false
+            },
+            "includeByName": {},
+            "indexByName": {},
+            "renameByName": {}
           }
         }
       ],
@@ -672,9 +660,9 @@
         ]
       },
       "gridPos": {
-        "h": 7,
-        "w": 14,
-        "x": 10,
+        "h": 15,
+        "w": 12,
+        "x": 12,
         "y": 14
       },
       "id": 25,
@@ -781,9 +769,9 @@
       },
       "gridPos": {
         "h": 10,
-        "w": 10,
+        "w": 12,
         "x": 0,
-        "y": 21
+        "y": 29
       },
       "id": 13,
       "maxDataPoints": 100,
@@ -812,8 +800,8 @@
             "uid": "${logs_source}"
           },
           "editorMode": "code",
-          "expr": "kubernetes.pod_namespace:in($namespace) kubernetes.pod_name:in($pod) kubernetes.container_name:in($container)\n| $filter\n| stats by (kubernetes.pod_name,kubernetes.container_name) rate() logs_rate\n| filter logs_rate: > 0",
-          "legendFormat": "{{kubernetes.pod_name}} ({{kubernetes.container_name}})",
+          "expr": "kubernetes.pod_namespace:in($namespace) kubernetes.pod_name:in($pod) kubernetes.container_name:in($container)\n| $filter\n| stats by (kubernetes.pod_name) rate() logs_rate\n| filter logs_rate: > 0",
+          "legendFormat": "{{kubernetes.pod_name}}",
           "queryType": "statsRange",
           "refId": "A"
         }
@@ -887,9 +875,9 @@
       },
       "gridPos": {
         "h": 10,
-        "w": 14,
-        "x": 10,
-        "y": 21
+        "w": 12,
+        "x": 12,
+        "y": 29
       },
       "id": 8,
       "maxDataPoints": 100,
@@ -922,8 +910,8 @@
             "uid": "${logs_source}"
           },
           "editorMode": "code",
-          "expr": "kubernetes.pod_namespace:in($namespace) kubernetes.pod_name:in($pod) kubernetes.container_name:in($container)\n| $filter\n| stats by (kubernetes.pod_name,kubernetes.container_name) count() logs_total",
-          "legendFormat": "{{kubernetes.pod_name}} ({{kubernetes.container_name}})",
+          "expr": "kubernetes.pod_namespace:in($namespace) kubernetes.pod_name:in($pod) kubernetes.container_name:in($container)\n| $filter\n| stats by (kubernetes.pod_name) count() logs_total",
+          "legendFormat": "{{kubernetes.pod_name}}",
           "queryType": "statsRange",
           "refId": "A"
         }
@@ -937,7 +925,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 31
+        "y": 39
       },
       "id": 27,
       "panels": [],
@@ -958,19 +946,19 @@
         "h": 13,
         "w": 24,
         "x": 0,
-        "y": 32
+        "y": 40
       },
       "id": 1,
       "maxPerRow": 12,
       "options": {
-        "dedupStrategy": "none",
+        "dedupStrategy": "exact",
         "enableInfiniteScrolling": false,
         "enableLogDetails": true,
         "prettifyLogMessage": false,
         "showCommonLabels": false,
         "showLabels": false,
         "showTime": false,
-        "sortOrder": "Descending",
+        "sortOrder": "Ascending",
         "wrapLogMessage": false
       },
       "repeat": "limit",
@@ -1011,6 +999,7 @@
         "type": "datasource"
       },
       {
+        "allowCustomValue": false,
         "datasource": {
           "type": "victoriametrics-logs-datasource",
           "uid": "${logs_source}"
@@ -1027,12 +1016,13 @@
           "refId": "VictoriaLogsVariableQueryEditor-VariableQuery",
           "type": "fieldValue"
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "type": "query"
       },
       {
         "allValue": "*",
+        "allowCustomValue": false,
         "datasource": {
           "type": "victoriametrics-logs-datasource",
           "uid": "${logs_source}"
@@ -1049,12 +1039,13 @@
           "refId": "VictoriaLogsVariableQueryEditor-VariableQuery",
           "type": "fieldValue"
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "type": "query"
       },
       {
         "allValue": "*",
+        "allowCustomValue": false,
         "datasource": {
           "type": "victoriametrics-logs-datasource",
           "uid": "${logs_source}"
@@ -1071,7 +1062,7 @@
           "refId": "VictoriaLogsVariableQueryEditor-VariableQuery",
           "type": "fieldValue"
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "type": "query"
       },

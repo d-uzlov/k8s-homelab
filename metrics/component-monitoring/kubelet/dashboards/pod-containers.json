@@ -3953,7 +3953,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 181
+        "y": 127
       },
       "id": 19,
       "panels": [],
@@ -4021,7 +4021,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 182
+        "y": 128
       },
       "id": 28,
       "maxDataPoints": 100,
@@ -4125,7 +4125,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 182
+        "y": 128
       },
       "id": 7,
       "maxDataPoints": 100,
@@ -4170,7 +4170,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 189
+        "y": 135
       },
       "id": 17,
       "panels": [],
@@ -4232,7 +4232,7 @@
         "h": 7,
         "w": 17,
         "x": 1,
-        "y": 190
+        "y": 136
       },
       "id": 16,
       "options": {
@@ -4407,7 +4407,7 @@
         "h": 7,
         "w": 4,
         "x": 18,
-        "y": 190
+        "y": 136
       },
       "id": 24,
       "options": {
@@ -4483,7 +4483,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 197
+        "y": 143
       },
       "id": 13,
       "maxDataPoints": 200,
@@ -4583,7 +4583,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 197
+        "y": 143
       },
       "id": 42,
       "maxDataPoints": 200,
@@ -4683,8 +4683,8 @@
       "gridPos": {
         "h": 7,
         "w": 12,
-        "x": 6,
-        "y": 204
+        "x": 0,
+        "y": 150
       },
       "id": 37,
       "maxDataPoints": 200,
@@ -4783,10 +4783,10 @@
       "gridPos": {
         "h": 7,
         "w": 12,
-        "x": 0,
-        "y": 211
+        "x": 12,
+        "y": 150
       },
-      "id": 47,
+      "id": 52,
       "maxDataPoints": 200,
       "options": {
         "legend": {
@@ -4813,14 +4813,114 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(container) (kube_summary_container_rootfs_used_bytes{container!=\"\", container=~\"$container\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"})",
+          "expr": "sum by(pod) (kube_summary_pod_ephemeral_storage_used_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\"})\r\n-\r\nsum by(pod) (kube_summary_container_logs_used_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\"})",
+          "instant": false,
+          "legendFormat": "{{pod}}",
+          "range": true,
+          "refId": "pod_storage"
+        }
+      ],
+      "title": "ephemeral storage (without logs)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 157
+      },
+      "id": 48,
+      "maxDataPoints": 200,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(container) (kube_summary_container_logs_used_bytes{container!=\"\", container=~\"$container\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"})",
           "instant": false,
           "legendFormat": "{{container}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "rootfs used",
+      "title": "logs: current",
       "type": "timeseries"
     },
     {
@@ -4884,15 +4984,16 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 211
+        "y": 157
       },
-      "id": 50,
+      "id": 47,
       "maxDataPoints": 200,
       "options": {
         "legend": {
           "asTable": true,
           "calcs": [
-            "mean"
+            "mean",
+            "delta"
           ],
           "displayMode": "table",
           "placement": "right",
@@ -4913,15 +5014,116 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(pod, volume_name) (ephemeral_storage_container_volume_usage{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"})",
-          "hide": false,
+          "expr": "sum by(container) (kube_summary_container_rootfs_used_bytes{container!=\"\", container=~\"$container\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"})",
           "instant": false,
-          "legendFormat": "{{volume_name}}",
+          "legendFormat": "{{container}}",
           "range": true,
-          "refId": "pod_volume_storage"
+          "refId": "A"
         }
       ],
-      "title": "volume usage",
+      "title": "rootfs used",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "Absolute values will change based on time scale, because it's showing total increase over an interval.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 164
+      },
+      "id": 51,
+      "maxDataPoints": 200,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "mean",
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(container) (rate(kube_summary_container_logs_used_bytes{container!=\"\", container=~\"$container\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])) * $__interval_ms / 1000",
+          "instant": false,
+          "legendFormat": "{{container}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "logs written",
       "type": "timeseries"
     },
     {
@@ -4984,16 +5186,17 @@
       "gridPos": {
         "h": 7,
         "w": 12,
-        "x": 0,
-        "y": 218
+        "x": 12,
+        "y": 164
       },
-      "id": 48,
+      "id": 50,
       "maxDataPoints": 200,
       "options": {
         "legend": {
           "asTable": true,
           "calcs": [
-            "mean"
+            "mean",
+            "delta"
           ],
           "displayMode": "table",
           "placement": "right",
@@ -5014,14 +5217,15 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(container) (kube_summary_container_logs_used_bytes{container!=\"\", container=~\"$container\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"})",
+          "expr": "max by(pod, volume_name) (ephemeral_storage_container_volume_usage{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"})",
+          "hide": false,
           "instant": false,
-          "legendFormat": "{{container}}",
+          "legendFormat": "{{volume_name}}",
           "range": true,
-          "refId": "A"
+          "refId": "pod_volume_storage"
         }
       ],
-      "title": "logs used",
+      "title": "volume usage",
       "type": "timeseries"
     }
   ],
