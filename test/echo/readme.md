@@ -16,6 +16,7 @@ kl -n echo get pod -o wide
 kl apply -k ./test/echo/httproute-public/
 kl apply -k ./test/echo/httproute-protected/
 kl -n echo get httproute
+kl -n echo describe htr echo-public
 kl -n gateways get authorizationpolicy
 
 ```
