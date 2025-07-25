@@ -1,0 +1,43 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: alert-kube-summary
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  groups:
+  - name: alert-kube-summary
+    rules:
+    - alert: KubeSummaryLogResets
+      annotations:
+        description: >-
+          {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }}:
+          {{ $value | humanize }}
+        summary: Container has filled the log buffer more than 3 times over lat 30 minutes
+      expr: resets(kube_summary_container_logs_used_bytes[30m]) > 3
+      for: 1m
+      labels:
+        severity: warning
+    - alert: KubeSummaryHighLogRate
+      annotations:
+        description: >-
+          {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }}:
+          {{ $value | humanize1024 }}
+        summary: Container has written more than 1 MiB of logs over the last 5 minutes
+      expr: increase(kube_summary_container_logs_used_bytes[5m]) > 1024 * 1024
+      for: 7m
+      labels:
+        severity: warning
+    - alert: KubeSummaryExtremeLogRate
+      annotations:
+        description: >-
+          {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }}:
+          {{ $value | humanize1024 }}
+        summary: Container has written more than 1 MiB of logs over the last minute
+      expr: increase(kube_summary_container_logs_used_bytes[1m]) > 1024 * 1024
+      for: 2m
+      labels:
+        severity: warning
