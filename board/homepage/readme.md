@@ -87,7 +87,7 @@ kl apply -k ./board/homepage/
 kl -n homepage get pod -o wide
 
 kl apply -k ./board/homepage/httproute-private/
-kl apply -k ./board/homepage/httproute-protected/
+kl apply -k ./board/homepage/httproute-authentik/
 kl -n homepage get httproute
 kl -n homepage describe httproute
 
