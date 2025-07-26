@@ -216,7 +216,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(namesapce, persistentvolumeclaim) (kubelet_volume_stats_capacity_bytes{namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"})",
+          "expr": "max by(namesapce, persistentvolumeclaim) (last_over_time(kubelet_volume_stats_capacity_bytes{namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"}[$__range]))",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -230,7 +230,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(namesapce, persistentvolumeclaim) (\r\n  kube_persistentvolumeclaim_resource_requests_storage_bytes{namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"}\r\n)",
+          "expr": "max by(namesapce, persistentvolumeclaim) (\r\n  last_over_time(kube_persistentvolumeclaim_resource_requests_storage_bytes{namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"}[$__range])\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -245,7 +245,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(namesapce, persistentvolumeclaim) (kubelet_volume_stats_available_bytes{namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"})",
+          "expr": "max by(namesapce, persistentvolumeclaim) (last_over_time(kubelet_volume_stats_available_bytes{namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -260,7 +260,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(namesapce, persistentvolumeclaim) (kubelet_volume_stats_used_bytes{namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\", persistentvolumeclaim=~\"$volume\"})",
+          "expr": "max by(namesapce, persistentvolumeclaim) (last_over_time(kubelet_volume_stats_used_bytes{namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\", persistentvolumeclaim=~\"$volume\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -275,7 +275,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(namesapce, persistentvolumeclaim) (kubelet_volume_stats_inodes{namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"})",
+          "expr": "max by(namesapce, persistentvolumeclaim) (last_over_time(kubelet_volume_stats_inodes{namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -541,7 +541,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "count by(namespace, persistentvolumeclaim, instance) (kubelet_volume_stats_capacity_bytes{cluster=\"$cluster\", namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"})",
+          "expr": "count by(namespace, persistentvolumeclaim, instance) (last_over_time(kubelet_volume_stats_capacity_bytes{cluster=\"$cluster\", namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"}[$__interval]))",
           "instant": false,
           "legendFormat": "{{persistentvolumeclaim}} @ {{instance}}",
           "range": true,
@@ -616,7 +616,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "count by(persistentvolumeclaim, pod) (kube_pod_spec_volumes_persistentvolumeclaims_info{cluster=\"$cluster\", namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"})",
+          "expr": "count by(persistentvolumeclaim, pod) (last_over_time(kube_pod_spec_volumes_persistentvolumeclaims_info{cluster=\"$cluster\", namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"}[$__interval]))",
           "instant": false,
           "legendFormat": "{{persistentvolumeclaim}} @ {{pod}}",
           "range": true,
@@ -717,27 +717,117 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(persistentvolumeclaim) (kubelet_volume_stats_capacity_bytes{cluster=\"$cluster\", namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"})",
+          "expr": "max by(name) (\r\n  max_over_time(kube_persistentvolume_capacity_bytes{}[$__interval])\r\n  * on(persistentvolume) group_left(name)\r\n  last_over_time(kube_persistentvolume_claim_ref{cluster=\"$cluster\", claim_namespace=\"$namespace\", name=~\"$volume\"}[$__interval])\r\n)",
+          "hide": false,
           "instant": false,
-          "legendFormat": "{{persistentvolumeclaim}}",
+          "legendFormat": "{{name}}",
           "range": true,
-          "refId": "A"
+          "refId": "B"
+        }
+      ],
+      "title": "Volume Size (spec)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "bytes"
         },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 18,
+        "x": 1,
+        "y": 32
+      },
+      "id": 14,
+      "maxDataPoints": 300,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(persistentvolumeclaim) (kube_persistentvolume_capacity_bytes{cluster=\"$cluster\", namespace=\"$namespace\", persistentvolume=~\"$volume\"})",
+          "expr": "max by(persistentvolumeclaim) (max_over_time(kubelet_volume_stats_capacity_bytes{cluster=\"$cluster\", namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"}[$__interval]))",
           "hide": false,
           "instant": false,
           "legendFormat": "{{persistentvolumeclaim}}",
           "range": true,
-          "refId": "B"
+          "refId": "A"
         }
       ],
-      "title": "Volume Size",
+      "title": "Volume Size (mounted)",
       "type": "timeseries"
     },
     {
@@ -801,7 +891,7 @@
         "h": 8,
         "w": 18,
         "x": 1,
-        "y": 32
+        "y": 40
       },
       "id": 5,
       "maxDataPoints": 300,
@@ -810,7 +900,7 @@
           "asTable": true,
           "calcs": [
             "lastNotNull",
-            "delta"
+            "diff"
           ],
           "displayMode": "table",
           "placement": "right",
@@ -829,7 +919,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(persistentvolumeclaim) (kubelet_volume_stats_capacity_bytes{cluster=\"$cluster\", namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"} - kubelet_volume_stats_available_bytes{cluster=\"$cluster\", namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"})",
+          "expr": "max by(persistentvolumeclaim) (max_over_time(kubelet_volume_stats_used_bytes{cluster=\"$cluster\", namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"}[$__interval]))",
           "instant": false,
           "legendFormat": "{{persistentvolumeclaim}}",
           "range": true,
@@ -855,6 +945,7 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisSoftMax": 1,
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
@@ -882,8 +973,8 @@
               "mode": "off"
             }
           },
+          "decimals": 1,
           "mappings": [],
-          "max": 1.05,
           "min": 0,
           "thresholds": {
             "mode": "absolute",
@@ -901,7 +992,7 @@
         "h": 8,
         "w": 18,
         "x": 1,
-        "y": 40
+        "y": 48
       },
       "id": 7,
       "maxDataPoints": 300,
@@ -910,7 +1001,7 @@
           "asTable": true,
           "calcs": [
             "lastNotNull",
-            "delta"
+            "diff"
           ],
           "displayMode": "table",
           "placement": "right",
@@ -929,7 +1020,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "1 - max by(persistentvolumeclaim) (kubelet_volume_stats_available_bytes{cluster=\"$cluster\", namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"} / kubelet_volume_stats_capacity_bytes{cluster=\"$cluster\", namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"})",
+          "expr": "max by(persistentvolumeclaim) (max_over_time(kubelet_volume_stats_used_bytes{cluster=\"$cluster\", namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"}[$__interval]) / max_over_time(kubelet_volume_stats_capacity_bytes[$__interval]))",
           "instant": false,
           "legendFormat": "{{persistentvolumeclaim}}",
           "range": true,
@@ -955,6 +1046,7 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisSoftMax": 1,
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
@@ -984,7 +1076,6 @@
           },
           "decimals": 2,
           "mappings": [],
-          "max": 1,
           "min": 0,
           "thresholds": {
             "mode": "absolute",
@@ -1002,7 +1093,7 @@
         "h": 7,
         "w": 18,
         "x": 1,
-        "y": 48
+        "y": 56
       },
       "id": 3,
       "maxDataPoints": 300,
@@ -1011,7 +1102,7 @@
           "asTable": true,
           "calcs": [
             "lastNotNull",
-            "delta"
+            "diff"
           ],
           "displayMode": "table",
           "placement": "right",
@@ -1030,7 +1121,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "max by(persistentvolumeclaim) (kubelet_volume_stats_inodes_used{cluster=\"$cluster\", namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"} / kubelet_volume_stats_inodes{cluster=\"$cluster\", namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"})",
+          "expr": "max by(persistentvolumeclaim) (max_over_time(kubelet_volume_stats_inodes_used{cluster=\"$cluster\", namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"}[$__interval]) / max_over_time(kubelet_volume_stats_inodes[$__interval]))",
           "hide": false,
           "legendFormat": "{{persistentvolumeclaim}}",
           "range": true,

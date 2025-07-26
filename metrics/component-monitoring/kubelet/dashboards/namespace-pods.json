@@ -457,11 +457,11 @@
           "exemplar": false,
           "expr": "max by(pod, uid) (\r\n  last_over_time(kube_pod_created{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__range])\r\n) * 1000",
           "format": "table",
-          "hide": false,
+          "hide": true,
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
-          "refId": "created"
+          "refId": "created0"
         },
         {
           "datasource": {
@@ -470,13 +470,13 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(pod, uid, pod_ip, host_network) (\r\n  last_over_time(kube_pod_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", pod_ip!=\"\"}[$__range])\r\n)",
+          "expr": "max by(pod, uid, host_network, pod_ip) (\r\ntopk by(pod, uid) (1, count_over_time(kube_pod_info{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", pod_ip!=\"\"}[$__range])) * 0\r\n)\r\n+ on(pod, uid) group_left()\r\nmax by(pod, uid) (\r\n  last_over_time(kube_pod_created{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__range])\r\n) * 1000",
           "format": "table",
           "hide": false,
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
-          "refId": "info"
+          "refId": "created"
         }
       ],
       "title": "Pod info",
@@ -1863,76 +1863,6 @@
           "unit": "bytes"
         },
         "overrides": [
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "B"
-            },
-            "properties": [
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "fill": "dash"
-                }
-              },
-              {
-                "id": "custom.lineWidth",
-                "value": 2
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "C"
-            },
-            "properties": [
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "fill": "dash"
-                }
-              },
-              {
-                "id": "custom.lineWidth",
-                "value": 2
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "orange",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byValue",
-              "options": {
-                "op": "gte",
-                "reducer": "allIsNull",
-                "value": 0
-              }
-            },
-            "properties": [
-              {
-                "id": "custom.hideFrom",
-                "value": {
-                  "legend": true,
-                  "tooltip": false,
-                  "viz": false
-                }
-              }
-            ]
-          },
           {
             "matcher": {
               "id": "byName",
@@ -3509,7 +3439,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(pod) (kube_summary_pod_ephemeral_storage_used_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"})\r\nor\r\nmax by(pod) (ephemeral_storage_pod_usage{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"})",
+          "expr": "max by(pod) (kube_summary_pod_ephemeral_storage_used_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"})",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -3521,7 +3451,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(kube_summary_pod_ephemeral_storage_used_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", invalid=$total})\r\nor\r\nsum(ephemeral_storage_pod_usage{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", invalid=$total})",
+          "expr": "sum(kube_summary_pod_ephemeral_storage_used_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", invalid=$total})",
           "hide": false,
           "instant": false,
           "legendFormat": "Total",
@@ -3644,7 +3574,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(pod) (kube_summary_pod_ephemeral_storage_used_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"})\r\n-\r\nsum by(pod) (kube_summary_container_logs_used_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"})",
+          "expr": "max by(pod) (kube_summary_pod_ephemeral_storage_used_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"})\r\n-\r\nsum by(pod) (kube_summary_container_logs_used_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"})",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -3657,7 +3587,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(kube_summary_pod_ephemeral_storage_used_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", invalid=$total})\r\n-\r\nsum(kube_summary_container_logs_used_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", invalid=$total})",
+          "expr": "sum(kube_summary_pod_ephemeral_storage_used_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", invalid=$total})\r\n-\r\nsum(kube_summary_container_logs_used_bytes{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", invalid=$total})",
           "hide": false,
           "instant": false,
           "legendFormat": "Total",
@@ -3781,7 +3711,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(pod) (kube_summary_container_logs_used_bytes{container!=\"\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"})",
+          "expr": "sum by(pod) (kube_summary_container_logs_used_bytes{container!=\"\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"})",
           "instant": false,
           "legendFormat": "{{pod}}",
           "range": true,
@@ -3793,7 +3723,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(kube_summary_container_logs_used_bytes{container!=\"\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", invalid=$total})",
+          "expr": "sum(kube_summary_container_logs_used_bytes{container!=\"\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", invalid=$total})",
           "hide": false,
           "instant": false,
           "legendFormat": "total",
@@ -3897,7 +3827,7 @@
           "asTable": true,
           "calcs": [
             "mean",
-            "delta"
+            "diff"
           ],
           "displayMode": "table",
           "placement": "right",
@@ -3918,7 +3848,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(pod) (kube_summary_container_rootfs_used_bytes{container!=\"\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"})",
+          "expr": "sum by(pod) (kube_summary_container_rootfs_used_bytes{container!=\"\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"})",
           "instant": false,
           "legendFormat": "{{pod}}",
           "range": true,
@@ -3930,7 +3860,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(kube_summary_container_rootfs_used_bytes{container!=\"\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", invalid=$total})",
+          "expr": "sum(kube_summary_container_rootfs_used_bytes{container!=\"\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", invalid=$total})",
           "hide": false,
           "instant": false,
           "legendFormat": "total",
@@ -4056,7 +3986,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(pod) (rate(kube_summary_container_logs_used_bytes{container!=\"\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])) * $__interval_ms / 1000",
+          "expr": "sum by(pod) (rate(kube_summary_container_logs_used_bytes{container!=\"\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__rate_interval])) * $__interval_ms / 1000",
           "instant": false,
           "legendFormat": "{{pod}}",
           "range": true,
@@ -4068,7 +3998,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(kube_summary_container_logs_used_bytes{container!=\"\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", invalid=$total}[$__rate_interval])) * $__interval_ms / 1000",
+          "expr": "sum(rate(kube_summary_container_logs_used_bytes{container!=\"\", cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", invalid=$total}[$__rate_interval])) * $__interval_ms / 1000",
           "hide": false,
           "instant": false,
           "legendFormat": "total",
@@ -4172,7 +4102,7 @@
           "asTable": true,
           "calcs": [
             "mean",
-            "delta"
+            "diff"
           ],
           "displayMode": "table",
           "placement": "right",

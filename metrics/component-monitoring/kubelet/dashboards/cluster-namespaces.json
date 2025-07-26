@@ -195,6 +195,18 @@
                 "value": 162
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "pods w/o mem request"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 176
+              }
+            ]
           }
         ]
       },
@@ -220,7 +232,7 @@
         "sortBy": [
           {
             "desc": true,
-            "displayName": "CPU Usage"
+            "displayName": "Memory Request"
           }
         ]
       },
@@ -314,16 +326,28 @@
           "legendFormat": "__auto",
           "range": false,
           "refId": "created"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "sum by(namespace) (kube_pod_info{cluster=\"$cluster\", namespace=~\"$namespace\"} unless on(cluster, namespace, pod) kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=~\"$namespace\", resource=\"memory\"})",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "pods_without_memory_request"
         }
       ],
       "title": "Overview",
       "transformations": [
         {
-          "id": "joinByField",
-          "options": {
-            "byField": "namespace",
-            "mode": "outer"
-          }
+          "id": "merge",
+          "options": {}
         },
         {
           "id": "organize",
@@ -340,19 +364,15 @@
             },
             "includeByName": {},
             "indexByName": {
-              "Time 1": 0,
-              "Time 2": 1,
-              "Time 3": 2,
-              "Time 4": 3,
-              "Time 5": 4,
-              "Time 6": 5,
-              "Value #cpu_request": 10,
-              "Value #cpu_usage": 9,
-              "Value #created": 6,
-              "Value #memory_request": 12,
-              "Value #memory_rss": 11,
-              "Value #pods": 8,
-              "namespace": 7
+              "Time": 0,
+              "Value #cpu_request": 6,
+              "Value #cpu_usage": 5,
+              "Value #created": 1,
+              "Value #memory_request": 8,
+              "Value #memory_rss": 7,
+              "Value #pods": 3,
+              "Value #pods_without_memory_request": 4,
+              "namespace": 2
             },
             "renameByName": {
               "Time 6": "",
@@ -369,6 +389,7 @@
               "Value #memory_request": "Memory Request",
               "Value #memory_rss": "Memory RSS",
               "Value #pods": "Pods",
+              "Value #pods_without_memory_request": "pods w/o mem request",
               "namespace": "Namespace"
             }
           }
@@ -648,7 +669,7 @@
           "asTable": true,
           "calcs": [
             "lastNotNull",
-            "delta"
+            "diff"
           ],
           "displayMode": "table",
           "placement": "right",
