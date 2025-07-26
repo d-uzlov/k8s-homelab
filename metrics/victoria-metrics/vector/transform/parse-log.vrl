@@ -34,12 +34,22 @@ if false {
   # Python log format
   # example: 2025-05-13 20:48:19,087 INFO: no action. I am (postgres-0), a secondary, and following a leader (postgres-1)
   .log = structured
-  .log_type = "ome"
+  .log_type = "python"
 } else if (structured, err = parse_regex(.message, r'^\[(?<time>\d{2}:\d{2}:\d{2})\] \[(?<level>[A-Z]+)\] \[(?<task_id>\d+)\] (?<component>[^:]+): (?<msg>.+)$'); err == null) {
   # .NET log format
   # example: [10:05:28] [INF] [31] MediaBrowser.MediaEncoding.Transcoding.TranscodeManager: FFmpeg exited with code 0
   .log = structured
   .log_type = "dotnet"
+} else if (structured, err = parse_regex(.message, r'^\[(?<ts>\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\.\d*)\]\[(?<level>[A-Z]+)\]\[(?<worker>\d+)\]\[(?<trace>[^\]]+)\]\s+(?<rest>.*)$'); err == null) {
+  # SRS log format
+  # example: [2025-07-23 07:06:29.469][INFO][1][6qesxl83] HTTP #0 10.3.10.16:59922 GET http://10.3.131.62:8080/, content-length=-1
+  .log = structured
+  .log_type = "srs"
+} else if (structured, err = parse_regex(.message, r'^(?<ts>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)\t(?<level>\w+)\t(?<logger>[^\t]+)\t(?<msg>.*)$'); err == null) {
+  # Golang Zap logger format
+  # example: 2025-07-23T04:43:34.890216Z	error	controllers	error handling gateways/main-private
+  .log = structured
+  .log_type = "zap"
 } else if (structured, err = parse_regex(.message, r'\[(?<level>[A-Z]+)\]\s+(?<client_ip>[\d\.]+):(?<client_port>\d+)\s+-\s+(?<dns_id>\d+)\s+"(?<msg>[^"]+)"\s+(?<rcode>\S+)\s+(?<flags>[^ ]+)\s+(?<response_size>\d+)\s+(?<duration>[\d\.]+)s'); err == null) {
   # CoreDNS log format
   # example: [INFO] 10.3.0.2:49032 - 5131 "A IN grafana-public.example.com. udp 59 false 1232" NOERROR qr,aa,rd 94 0.000142874s
@@ -57,14 +67,46 @@ if false {
       "buf_size": to_int(query_tokens[6]) ?? -1,
     }
   }
-} else if (structured, err = parse_key_value(.message); err == null && contains(.message, "=")) {
+} else if (structured, err = parse_key_value(.message); err == null) {
   # example: @timestamp="Sun Jan 10 16:47:39 EST 2021" level=info msg="Stopping all fetchers" tag#production=stopping_fetchers id=ConsumerFetcherManager-1382721708341 module=kafka.consumer.ConsumerFetcherManager
   # key-value is the last in the list because it seems like it catches almost any log type,
   # by just assigning each space-separated word "qwe" value qwe=true
-  # let's try to sanitize it a little by checking if at least one '=' exists
-  .log = structured
-  .log_type = "key_value"
-} else {
+  # let's try to sanitize it
+
+  true_value_count = 0
+  all_keys_are_valid = true
+  for_each(structured) -> |_index, value| {
+    if value == true {
+      true_value_count = true_value_count + 1
+    }
+    if match(_index, r',|\[|]|\{|}|\(|\)|:|"|;|\?|&|\#|<|>|\*|~|%|`|\\|\t|\s|^0x[a-zA-Z0-9]+') {
+      all_keys_are_valid = false
+    }
+    if match(_index, r'^[0-9]$') {
+      all_keys_are_valid = false
+    }
+    if contains(_index, "'") {
+      all_keys_are_valid = false
+    }
+    if starts_with(_index, "-") || ends_with(_index, "-") {
+      all_keys_are_valid = false
+    }
+    if _index == "and" || _index == "a" || _index == "an" || _index == "the" || _index == "not" {
+      all_keys_are_valid = false
+    }
+    
+    if is_string(value) && ends_with(to_string(value) ?? "", ",") {
+      all_keys_are_valid = false
+    }
+  }
+
+  if (all_keys_are_valid && (true_value_count < 4 || true_value_count < length(structured) * 0.5)) {
+    .log = structured
+    .log_type = "key_value"
+  }
+}
+
+if !exists(.log_type) {
   .log = "parsing failed"
   .log_type = "unknown"
 }
