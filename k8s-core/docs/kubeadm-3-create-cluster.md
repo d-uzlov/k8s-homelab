@@ -83,7 +83,7 @@ ssh $cp_node1 sudo tee '>' /dev/null /etc/k8s-auth/auth-config.yaml < ./k8s-core
 # Setup cluster
 
 ```bash
-cp_node1=
+cp_node1=m2.k8s.lan
 ssh $cp_node1 kubeadm config validate --config ./kconf.yaml
 
 # if you are using external etcd, copy etcd certs
@@ -92,6 +92,7 @@ ssh $cp_node1 sudo tee '>' /dev/null /etc/etcd/pki/ca.pem              < ./k8s-c
 ssh $cp_node1 sudo tee '>' /dev/null /etc/etcd/pki/etcd-client.pem     < ./k8s-core/docs/etcd/env/etcd-client.pem
 ssh $cp_node1 sudo tee '>' /dev/null /etc/etcd/pki/etcd-client-key.pem < ./k8s-core/docs/etcd/env/etcd-client-key.pem
 
+ssh $cp_node1 rm -rf ./patches/
 scp -r ./k8s-core/docs/patches $cp_node1:./patches
 
 # if using kube-vip for control plane, you should switch to its commands at this point

@@ -111,13 +111,13 @@ sudo apt autoremove -y
 
 apt-cache policy kubeadm | head
 
-new_package_version=1.33.0
+new_package_version=1.33.3
 sudo apt-mark unhold kubeadm kubelet && \
 sudo apt-get install -y kubeadm="$new_package_version"'-*' kubelet="$new_package_version"'-*' && \
 sudo apt-mark hold kubeadm kubelet &&
 sudo systemctl daemon-reload && sudo systemctl restart kubelet
 
-kubeadm version
+kubeadm version -o short
 
 # `kubeadm upgrade plan` may fail immediately after kubelet upgrade, wait a bit if this happens
 
@@ -126,8 +126,8 @@ kubeadm version
 # study the upgrade plan manually
 sudo kubeadm upgrade plan
 # choose a version offered by the upgrade plan
-sudo kubeadm upgrade apply v1.33.0 --patches ./patches/
-sudo kubeadm upgrade apply v1.33.0 --patches ./patches/ --skip-phases addon/kube-proxy
+sudo kubeadm upgrade apply v1.33.3 --patches ./patches/
+sudo kubeadm upgrade apply v1.33.3 --patches ./patches/ --skip-phases addon/kube-proxy
 # if you disabled kube-proxy for your CNI, you need to re-disable it again after the upgrade
 
 # On all remaining master nodes
