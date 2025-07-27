@@ -555,7 +555,7 @@
             "uid": "${logs_source}"
           },
           "editorMode": "code",
-          "expr": "kubernetes.pod_namespace:in($namespace) kubernetes.pod_name:in($pod) kubernetes.container_name:in($container)\n| $filter\n| facets 3\n| filter hits:> 100\n#| sort by(hits) desc\n#| limit 100",
+          "expr": "kubernetes.pod_namespace:in($namespace) kubernetes.pod_name:in($pod) kubernetes.container_name:in($container)\n| $filter\n| delete kubernetes.*, _stream_id, level, level_raw, log.level, log.size,\nlog.response_size, log.query.*, log.client_ip, log.user.extra.*, log.record.session_id, log.bytes_sent, log.bytes_received,\nlog.record.session_start_time, log.downstream_remote_address, log.downstream_local_address, log.x_forwarded_for, log.remote_addr, log.upstream_local_address, log.remote,\nlog.authority, log.address.*, log.user.uid, log.maxSegment, log.worker, log.index, log.totalItems,\nlog.outpost, log.orgId, log.userId, log.userID, log.time_ms, log.chat_id, log.cid, log.dsUid, log.record.process_id,\nlog.id, log.line, log.record.transaction_id, log.record.query_id, log.record.virtual_transaction_id,\nlog.desiredPolicyRevision, log.datapathPolicyRevision, log.container-id,\n\"*[*\", \"*{*\", \"*}*\", \"*:*\", \"*,*\",\nlog.conns, log.ct, log.t, log.timer, log.pid, log.clock, log.cpu,\nlog.value.Object.*, log.-*\n| collapse_nums prettify\n| collapse_nums at log.stats prettify\n| collapse_nums at log.caller prettify\n| collapse_nums at log.domain_url prettify\n| collapse_nums at log.host prettify\n| collapse_nums at log.total prettify\n| collapse_nums at log.client prettify\n| collapse_nums at log.x_forwarded_for prettify\n| collapse_nums at log.upstream_host prettify\n| collapse_nums at log.source prettify\n| collapse_nums at log.target prettify\n| collapse_nums at log.alerts prettify\n| collapse_nums at log.identity prettify\n| collapse_nums at log.error prettify\n| collapse_nums at log.walName prettify\n| collapse_nums at log.reflector prettify\n| collapse_nums at log.user_agent prettify\n| facets 3\n| filter hits:> 10\n| sort by(hits) desc",
           "legendFormat": "",
           "queryType": "instant",
           "refId": "A"
@@ -612,10 +612,6 @@
             "steps": [
               {
                 "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           }
@@ -648,12 +644,52 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Line"
+              "options": "kubernetes.pod_namespace"
             },
             "properties": [
               {
                 "id": "custom.width",
-                "value": 991
+                "value": 345
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "kubernetes.pod_name"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 239
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "hits"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 90
+              },
+              {
+                "id": "unit",
+                "value": "sishort"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "namespace"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 230
               }
             ]
           }
@@ -686,21 +722,46 @@
             "uid": "${logs_source}"
           },
           "editorMode": "code",
-          "expr": "kubernetes.pod_namespace:in($namespace) kubernetes.pod_name:in($pod) kubernetes.container_name:in($container)\n| $filter\n| collapse_nums prettify\n| top 10 by(_msg)",
+          "expr": "kubernetes.pod_namespace:in($namespace) kubernetes.pod_name:in($pod) kubernetes.container_name:in($container)\n| $filter\n| collapse_nums prettify\n| top 20 by(kubernetes.pod_namespace, _msg)",
           "legendFormat": "",
           "queryType": "instant",
           "refId": "A"
         }
       ],
-      "title": "Top 10 log patterns (collapse_nums)",
+      "title": "Top 20 log patterns (collapse_nums)",
       "transformations": [
         {
           "id": "extractFields",
           "options": {
+            "delimiter": ",",
             "format": "auto",
             "keepTime": false,
             "replace": false,
             "source": "labels"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Line": false,
+              "Time": false,
+              "labels": false
+            },
+            "includeByName": {},
+            "indexByName": {
+              "Line": 4,
+              "Time": 0,
+              "hits": 5,
+              "kubernetes.pod_name": 3,
+              "kubernetes.pod_namespace": 2,
+              "labels": 1
+            },
+            "renameByName": {
+              "kubernetes.pod_name": "pod",
+              "kubernetes.pod_namespace": "namespace",
+              "labels": ""
+            }
           }
         }
       ],
@@ -1027,7 +1088,7 @@
           "type": "victoriametrics-logs-datasource",
           "uid": "${logs_source}"
         },
-        "definition": "kubernetes.pod_namespace:~ $namespace",
+        "definition": "kubernetes.pod_namespace:~\"^($namespace)$\"",
         "includeAll": true,
         "multi": true,
         "name": "pod",
@@ -1035,7 +1096,7 @@
         "query": {
           "field": "kubernetes.pod_name",
           "limit": 1001,
-          "query": "kubernetes.pod_namespace:~ $namespace",
+          "query": "kubernetes.pod_namespace:~\"^($namespace)$\"",
           "refId": "VictoriaLogsVariableQueryEditor-VariableQuery",
           "type": "fieldValue"
         },
@@ -1050,7 +1111,7 @@
           "type": "victoriametrics-logs-datasource",
           "uid": "${logs_source}"
         },
-        "definition": "kubernetes.pod_namespace:~ $namespace kubernetes.pod_name: $pod",
+        "definition": "kubernetes.pod_namespace:~\"^($namespace)$\" kubernetes.pod_name: $pod",
         "includeAll": true,
         "multi": true,
         "name": "container",
@@ -1058,7 +1119,7 @@
         "query": {
           "field": "kubernetes.container_name",
           "limit": 100,
-          "query": "kubernetes.pod_namespace:~ $namespace kubernetes.pod_name: $pod",
+          "query": "kubernetes.pod_namespace:~\"^($namespace)$\" kubernetes.pod_name: $pod",
           "refId": "VictoriaLogsVariableQueryEditor-VariableQuery",
           "type": "fieldValue"
         },
