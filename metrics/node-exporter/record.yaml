@@ -13,6 +13,7 @@ spec:
     rules:
     - record: node:cpu_cores
       expr: |-
-        count by (cluster_type, cluster, instance) (
-          count by (cluster_type, cluster, instance, cpu) (node_cpu_seconds_total)
-        )
+        count without(cpu) (count without(mode) (node_cpu_seconds_total))
+    - record: instance_mode:node_cpu_seconds:irate
+      expr: |-
+        sum without(cpu) (irate(node_cpu_seconds_total[30s]))

@@ -224,12 +224,28 @@
                 "value": "bytes"
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ago"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 115
+              },
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
           }
         ]
       },
       "gridPos": {
         "h": 7,
-        "w": 9,
+        "w": 13,
         "x": 1,
         "y": 1
       },
@@ -322,6 +338,21 @@
           "legendFormat": "__auto",
           "range": false,
           "refId": "state"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "time() - max by(zpool) (zfs_pool_load_time_seconds{instance=\"$instance\", zpool=\"$pool\"})",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "loaded_ago"
         }
       ],
       "title": "pool list",
@@ -345,11 +376,12 @@
             "includeByName": {},
             "indexByName": {
               "Time": 0,
-              "Value #errors": 6,
+              "Value #errors": 7,
               "Value #load_time": 4,
+              "Value #loaded_ago": 5,
               "Value #size": 2,
-              "Value #state": 7,
-              "Value #vdevs": 5,
+              "Value #state": 8,
+              "Value #vdevs": 6,
               "state": 3,
               "zpool": 1
             },
@@ -359,6 +391,7 @@
               "Value #children": "Children",
               "Value #errors": "errors",
               "Value #load_time": "Load time",
+              "Value #loaded_ago": "ago",
               "Value #size": "size",
               "Value #txg": "txg",
               "Value #vdevs": "vdevs",
@@ -376,8 +409,8 @@
       },
       "gridPos": {
         "h": 7,
-        "w": 9,
-        "x": 11,
+        "w": 8,
+        "x": 14,
         "y": 1
       },
       "id": 18,
@@ -387,7 +420,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "`allocated` property is only tracked for devices directly under root.\r\nThis is usually vdevs (mirror, raidz, etc), but it you don't have redundancy,\r\nit is tracked at the disk level.\r\n\r\nRead from vdev is usually much smaller than read from dataset,\r\nbecause the majority of data is cached in ARC.\r\n\r\nL2ARC vdev is not tracked by the exporter,\r\nand ZFS doesn't expose separate per-pool statistics for L2ARC.\r\n\r\nRead/write latency can be missing in case there were no corresponding operations.\r\n",
+        "content": "`allocated` property is only tracked for devices directly under root.\r\nThis is usually vdevs (mirror, raidz, etc), but if you don't have redundancy,\r\nit is tracked at the disk level.\r\n\r\nRead from vdev is usually much smaller than read from dataset,\r\nbecause the majority of data is cached in ARC.\r\n\r\nL2ARC vdev is not tracked by the exporter,\r\nand ZFS doesn't expose separate per-pool statistics for L2ARC.\r\n\r\nRead/write latency can be missing in case there were no corresponding operations.\r\n",
         "mode": "markdown"
       },
       "title": "Notes",
@@ -980,6 +1013,127 @@
       "fieldConfig": {
         "defaults": {
           "color": {
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "index": 0,
+                  "text": "unknown"
+                },
+                "1": {
+                  "color": "super-light-red",
+                  "index": 1,
+                  "text": "closed"
+                },
+                "2": {
+                  "color": "red",
+                  "index": 2,
+                  "text": "offline"
+                },
+                "3": {
+                  "color": "orange",
+                  "index": 3,
+                  "text": "removed"
+                },
+                "4": {
+                  "color": "dark-red",
+                  "index": 4,
+                  "text": "cant-open"
+                },
+                "5": {
+                  "color": "dark-orange",
+                  "index": 5,
+                  "text": "faulted"
+                },
+                "6": {
+                  "color": "yellow",
+                  "index": 6,
+                  "text": "degraded"
+                },
+                "7": {
+                  "color": "green",
+                  "index": 7,
+                  "text": "healthy"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 19,
+        "x": 1,
+        "y": 21
+      },
+      "id": 19,
+      "maxDataPoints": 150,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "perPage": 10,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "min by(zpool, vdev) (min_over_time(zfs_vdev_state{instance=\"$instance\", zpool=\"$pool\", path=\"\", vdev=~\"$vdev\"}[$__interval]))",
+          "instant": false,
+          "legendFormat": "{{zpool}}/{{vdev}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "vdev state",
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
             "mode": "thresholds"
           },
           "custom": {
@@ -1242,7 +1396,7 @@
         "h": 19,
         "w": 19,
         "x": 1,
-        "y": 21
+        "y": 32
       },
       "id": 2,
       "options": {
@@ -1454,12 +1608,133 @@
       "type": "table"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "index": 0,
+                  "text": "unknown"
+                },
+                "1": {
+                  "color": "super-light-red",
+                  "index": 1,
+                  "text": "closed"
+                },
+                "2": {
+                  "color": "red",
+                  "index": 2,
+                  "text": "offline"
+                },
+                "3": {
+                  "color": "orange",
+                  "index": 3,
+                  "text": "removed"
+                },
+                "4": {
+                  "color": "dark-red",
+                  "index": 4,
+                  "text": "cant-open"
+                },
+                "5": {
+                  "color": "dark-orange",
+                  "index": 5,
+                  "text": "faulted"
+                },
+                "6": {
+                  "color": "yellow",
+                  "index": 6,
+                  "text": "degraded"
+                },
+                "7": {
+                  "color": "green",
+                  "index": 7,
+                  "text": "healthy"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 19,
+        "x": 1,
+        "y": 51
+      },
+      "id": 20,
+      "maxDataPoints": 150,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "perPage": 10,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "min by(zpool, vdev) (min_over_time(zfs_vdev_state{instance=\"$instance\", zpool=\"$pool\", path!=\"\", vdev=~\"$vdev\"}[$__interval]))",
+          "instant": false,
+          "legendFormat": "{{zpool}}/{{vdev}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "disk state",
+      "type": "state-timeline"
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 40
+        "y": 62
       },
       "id": 11,
       "panels": [],
@@ -1510,6 +1785,7 @@
             }
           },
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1526,7 +1802,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 41
+        "y": 63
       },
       "id": 4,
       "maxDataPoints": 100,
@@ -1537,12 +1813,14 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
           "mode": "multi",
-          "sort": "none"
+          "sort": "desc"
         }
       },
       "targets": [
@@ -1552,7 +1830,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(rate(zfs_vdev_bytes{instance=\"$instance\", zpool=\"$pool\", path!=\"\", vdev=~\"$vdev\", path=~\"$disk\", type=\"read\"}[$__rate_interval]), \"path\", \"$1\", \"path\", \".*/([^/]*)\")",
+          "expr": "max by(vdev, path) (label_replace(rate(zfs_vdev_bytes{instance=\"$instance\", zpool=\"$pool\", path!=\"\", vdev=~\"$vdev\", path=~\"$disk\", type=\"read\"}[$__rate_interval]), \"path\", \"$1\", \"path\", \".*/([^/]*)\"))",
           "instant": false,
           "legendFormat": "{{vdev}}: {{path}}",
           "range": true,
@@ -1606,6 +1884,7 @@
             }
           },
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1622,7 +1901,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 41
+        "y": 63
       },
       "id": 5,
       "maxDataPoints": 100,
@@ -1633,12 +1912,14 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
           "mode": "multi",
-          "sort": "none"
+          "sort": "desc"
         }
       },
       "targets": [
@@ -1648,7 +1929,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(rate(zfs_vdev_bytes{instance=\"$instance\", zpool=\"$pool\", path!=\"\", vdev=~\"$vdev\", path=~\"$disk\", type=\"write\"}[$__rate_interval]), \"path\", \"$1\", \"path\", \".*/([^/]*)\")",
+          "expr": "max by(vdev, path) (label_replace(rate(zfs_vdev_bytes{instance=\"$instance\", zpool=\"$pool\", path!=\"\", vdev=~\"$vdev\", path=~\"$disk\", type=\"write\"}[$__rate_interval]), \"path\", \"$1\", \"path\", \".*/([^/]*)\"))",
           "instant": false,
           "legendFormat": "{{vdev}}: {{path}}",
           "range": true,
@@ -1702,6 +1983,7 @@
             }
           },
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1718,7 +2000,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 49
+        "y": 71
       },
       "id": 8,
       "maxDataPoints": 100,
@@ -1729,12 +2011,14 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
           "mode": "multi",
-          "sort": "none"
+          "sort": "desc"
         }
       },
       "targets": [
@@ -1744,7 +2028,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(rate(zfs_vdev_ops{instance=\"$instance\", zpool=\"$pool\", path!=\"\", vdev=~\"$vdev\", path=~\"$disk\", type=\"read\"}[$__rate_interval]), \"path\", \"$1\", \"path\", \".*/([^/]*)\")",
+          "expr": "max by(vdev, path) (label_replace(rate(zfs_vdev_ops{instance=\"$instance\", zpool=\"$pool\", path!=\"\", vdev=~\"$vdev\", path=~\"$disk\", type=\"read\"}[$__rate_interval]), \"path\", \"$1\", \"path\", \".*/([^/]*)\"))",
           "instant": false,
           "legendFormat": "{{vdev}}: {{path}}",
           "range": true,
@@ -1798,6 +2082,7 @@
             }
           },
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1814,7 +2099,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 49
+        "y": 71
       },
       "id": 9,
       "maxDataPoints": 100,
@@ -1825,12 +2110,14 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
           "mode": "multi",
-          "sort": "none"
+          "sort": "desc"
         }
       },
       "targets": [
@@ -1840,7 +2127,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(rate(zfs_vdev_ops{instance=\"$instance\", zpool=\"$pool\", path!=\"\", vdev=~\"$vdev\", path=~\"$disk\", type=\"write\"}[$__rate_interval]), \"path\", \"$1\", \"path\", \".*/([^/]*)\")",
+          "expr": "max by(vdev, path) (label_replace(rate(zfs_vdev_ops{instance=\"$instance\", zpool=\"$pool\", path!=\"\", vdev=~\"$vdev\", path=~\"$disk\", type=\"write\"}[$__rate_interval]), \"path\", \"$1\", \"path\", \".*/([^/]*)\"))",
           "instant": false,
           "legendFormat": "{{vdev}}: {{path}}",
           "range": true,
@@ -1895,6 +2182,7 @@
             }
           },
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1911,7 +2199,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 57
+        "y": 79
       },
       "id": 16,
       "maxDataPoints": 100,
@@ -1922,12 +2210,14 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Max",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
           "mode": "multi",
-          "sort": "none"
+          "sort": "desc"
         }
       },
       "targets": [
@@ -1937,7 +2227,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(max_over_time(zfs_vdev_zio_latency_total_bucket:quantile_irate{instance=\"$instance\", zpool=\"$pool\", path!=\"\", vdev=~\"$vdev\", path=~\"$disk\", type=\"read\", quantile=\"0.99\"}[$__rate_interval]), \"path\", \"$1\", \"path\", \".*/([^/]*)\")",
+          "expr": "max by(vdev, path) (label_replace(max_over_time(zfs_vdev_zio_latency_total_bucket:quantile_irate{instance=\"$instance\", zpool=\"$pool\", path!=\"\", vdev=~\"$vdev\", path=~\"$disk\", type=\"read\", quantile=\"0.99\"}[$__rate_interval]), \"path\", \"$1\", \"path\", \".*/([^/]*)\"))",
           "hide": false,
           "instant": false,
           "legendFormat": "{{vdev}}: {{path}}",
@@ -1993,6 +2283,7 @@
             }
           },
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -2009,7 +2300,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 57
+        "y": 79
       },
       "id": 7,
       "maxDataPoints": 100,
@@ -2020,12 +2311,14 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Max",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
           "mode": "multi",
-          "sort": "none"
+          "sort": "desc"
         }
       },
       "targets": [
@@ -2035,7 +2328,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(max_over_time(zfs_vdev_zio_latency_total_bucket:quantile_irate{instance=\"$instance\", zpool=\"$pool\", path!=\"\", vdev=~\"$vdev\", path=~\"$disk\", type=\"write\", quantile=\"0.99\"}[$__rate_interval]), \"path\", \"$1\", \"path\", \".*/([^/]*)\")",
+          "expr": "max by(vdev, path) (label_replace(max_over_time(zfs_vdev_zio_latency_total_bucket:quantile_irate{instance=\"$instance\", zpool=\"$pool\", path!=\"\", vdev=~\"$vdev\", path=~\"$disk\", type=\"write\", quantile=\"0.99\"}[$__rate_interval]), \"path\", \"$1\", \"path\", \".*/([^/]*)\"))",
           "hide": false,
           "instant": false,
           "legendFormat": "{{vdev}}: {{path}}",
@@ -2091,6 +2384,7 @@
             }
           },
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -2107,7 +2401,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 65
+        "y": 87
       },
       "id": 6,
       "maxDataPoints": 100,
@@ -2118,12 +2412,14 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Max",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
           "mode": "multi",
-          "sort": "none"
+          "sort": "desc"
         }
       },
       "targets": [
@@ -2133,7 +2429,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(max_over_time(zfs_vdev_latency_disk_bucket:quantile_irate{instance=\"$instance\", zpool=\"$pool\", path!=\"\", vdev=~\"$vdev\", path=~\"$disk\", type=\"read\", quantile=\"0.99\"}[$__rate_interval]), \"path\", \"$1\", \"path\", \".*/([^/]*)\")",
+          "expr": "max by(vdev, path) (label_replace(max_over_time(zfs_vdev_latency_disk_bucket:quantile_irate{instance=\"$instance\", zpool=\"$pool\", path!=\"\", vdev=~\"$vdev\", path=~\"$disk\", type=\"read\", quantile=\"0.99\"}[$__rate_interval]), \"path\", \"$1\", \"path\", \".*/([^/]*)\"))",
           "hide": false,
           "instant": false,
           "legendFormat": "{{vdev}}: {{path}}",
@@ -2189,6 +2485,7 @@
             }
           },
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -2205,7 +2502,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 65
+        "y": 87
       },
       "id": 17,
       "maxDataPoints": 100,
@@ -2216,12 +2513,14 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Max",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
           "mode": "multi",
-          "sort": "none"
+          "sort": "desc"
         }
       },
       "targets": [
@@ -2231,7 +2530,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(max_over_time(zfs_vdev_latency_disk_bucket:quantile_irate{instance=\"$instance\", zpool=\"$pool\", path!=\"\", vdev=~\"$vdev\", path=~\"$disk\", type=\"write\", quantile=\"0.99\"}[$__rate_interval]), \"path\", \"$1\", \"path\", \".*/([^/]*)\")",
+          "expr": "max by(vdev, path) (label_replace(max_over_time(zfs_vdev_latency_disk_bucket:quantile_irate{instance=\"$instance\", zpool=\"$pool\", path!=\"\", vdev=~\"$vdev\", path=~\"$disk\", type=\"write\", quantile=\"0.99\"}[$__rate_interval]), \"path\", \"$1\", \"path\", \".*/([^/]*)\"))",
           "instant": false,
           "legendFormat": "{{vdev}}: {{path}}",
           "range": true,
@@ -2247,7 +2546,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 73
+        "y": 95
       },
       "id": 12,
       "panels": [],
@@ -2315,7 +2614,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 74
+        "y": 96
       },
       "id": 15,
       "maxDataPoints": 100,
@@ -2339,7 +2638,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(rate(zfs_vdev_trim_state{instance=\"$instance\", zpool=\"$pool\", path!=\"\", vdev=~\"$vdev\", path=~\"$disk\"}[$__rate_interval]) and (zfs_vdev_trim_unsupported == 0), \"path\", \"$1\", \"path\", \".*/([^/]*)\")",
+          "expr": "max by(vdev, path) (label_replace(rate(zfs_vdev_trim_state{instance=\"$instance\", zpool=\"$pool\", path!=\"\", vdev=~\"$vdev\", path=~\"$disk\"}[$__rate_interval]) and (zfs_vdev_trim_unsupported == 0), \"path\", \"$1\", \"path\", \".*/([^/]*)\"))",
           "instant": false,
           "legendFormat": "{{vdev}}: {{path}}",
           "range": true,
@@ -2409,7 +2708,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 82
+        "y": 104
       },
       "id": 14,
       "maxDataPoints": 100,
@@ -2433,7 +2732,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(rate(zfs_vdev_trim_estimated_bytes{instance=\"$instance\", zpool=\"$pool\", path!=\"\", vdev=~\"$vdev\", path=~\"$disk\"}[$__rate_interval]) and (zfs_vdev_trim_unsupported == 0), \"path\", \"$1\", \"path\", \".*/([^/]*)\")",
+          "expr": "max by(vdev, path) (label_replace(rate(zfs_vdev_trim_estimated_bytes{instance=\"$instance\", zpool=\"$pool\", path!=\"\", vdev=~\"$vdev\", path=~\"$disk\"}[$__rate_interval]) and (zfs_vdev_trim_unsupported == 0), \"path\", \"$1\", \"path\", \".*/([^/]*)\"))",
           "instant": false,
           "legendFormat": "{{vdev}}: {{path}}",
           "range": true,
@@ -2503,7 +2802,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 90
+        "y": 112
       },
       "id": 13,
       "maxDataPoints": 100,
@@ -2527,7 +2826,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(rate(zfs_vdev_trim_processed_bytes{instance=\"$instance\", zpool=\"$pool\", path!=\"\", vdev=~\"$vdev\", path=~\"$disk\"}[$__rate_interval]) and (zfs_vdev_trim_unsupported == 0), \"path\", \"$1\", \"path\", \".*/([^/]*)\")",
+          "expr": "max by(vdev, path) (label_replace(rate(zfs_vdev_trim_processed_bytes{instance=\"$instance\", zpool=\"$pool\", path!=\"\", vdev=~\"$vdev\", path=~\"$disk\"}[$__rate_interval]) and (zfs_vdev_trim_unsupported == 0), \"path\", \"$1\", \"path\", \".*/([^/]*)\"))",
           "instant": false,
           "legendFormat": "{{vdev}}: {{path}}",
           "range": true,

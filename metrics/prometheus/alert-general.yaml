@@ -81,3 +81,12 @@ spec:
       expr: count by(instance) (count by(cluster, instance) (up)) > 1
       labels:
         severity: info
+    - alert: MismatchedInstanceClusterDetails
+      annotations:
+        description: >-
+          job {{ $labels.job }}, cluster {{ $labels.original_cluster }}, instance {{ $labels.instance }}
+        summary: More details for MismatchedInstanceCluster alert
+      expr: |
+        label_replace(label_replace((count by(job, cluster, instance) (up)) and on(instance) (count by(instance) (count by(instance, cluster) (up)) > 1), "original_cluster", "$1", "cluster", "(.*)"), "cluster", "", "cluster", ".*")
+      labels:
+        severity: info
