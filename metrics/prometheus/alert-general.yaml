@@ -73,6 +73,21 @@ spec:
       expr: count by(cluster) (count by(cluster, cluster_type) (up)) > 1
       labels:
         severity: info
+    - alert: MismatchedClusterTypeDetails
+      annotations:
+        description: >-
+          job {{ $labels.job }}, cluster {{ $labels.original_cluster }}, type {{ $labels.original_type }}
+        summary: More details for MismatchedInstanceCluster alert
+      expr: |
+        (count by(job, original_cluster, original_type) (
+          label_replace(label_replace(
+            label_replace(label_replace(up, "original_type", "$1", "cluster_type", "(.*)"), "cluster_type", "", "cluster_type", ".*")
+            and on(cluster)
+            count by(cluster) (count by(cluster, cluster_type) (up)) > 1
+          , "original_cluster", "$1", "cluster", "(.*)"), "cluster", "", "cluster", ".*"))
+        )
+      labels:
+        severity: info
     - alert: MismatchedInstanceCluster
       annotations:
         description: >-
@@ -87,6 +102,10 @@ spec:
           job {{ $labels.job }}, cluster {{ $labels.original_cluster }}, instance {{ $labels.instance }}
         summary: More details for MismatchedInstanceCluster alert
       expr: |
-        label_replace(label_replace((count by(job, cluster, instance) (up)) and on(instance) (count by(instance) (count by(instance, cluster) (up)) > 1), "original_cluster", "$1", "cluster", "(.*)"), "cluster", "", "cluster", ".*")
+        (count by(job, original_cluster, instance) (
+          label_replace(label_replace(up, "original_cluster", "$1", "cluster", "(.*)"), "cluster", "", "cluster", ".*"))
+        )
+        and on(instance) 
+        count by(instance) (group by(instance, cluster) (up)) > 1
       labels:
         severity: info

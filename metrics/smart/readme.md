@@ -70,7 +70,7 @@ spec:
   staticConfigs:
   - labels:
       job: smartctl-exporter
-      cluster_type: nas
+      cluster_type: site
       cluster: my-cluster
     targets:
     - example.com:9633

@@ -75,7 +75,6 @@ metadata:
 spec:
   staticConfigs:
   - labels:
-      job: node-exporter
       cluster_type: pve
       cluster: cluster-name
     targets:

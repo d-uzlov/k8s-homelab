@@ -123,7 +123,7 @@ spec:
   staticConfigs:
   - labels:
       job: minio
-      cluster_type: minio
+      cluster_type: site
       cluster: $cluster_name
     targets:
     - $minio_address

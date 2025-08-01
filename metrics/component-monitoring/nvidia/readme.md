@@ -37,7 +37,7 @@ spec:
   staticConfigs:
   - labels:
       job: nvidia-gpu-exporter
-      cluster_type: workstation
+      cluster_type: site
       cluster: my-cluster
     targets:
     - harbor1.example.com:9835

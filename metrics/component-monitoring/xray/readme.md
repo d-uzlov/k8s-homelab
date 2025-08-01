@@ -58,7 +58,7 @@ mkdir -p ./metrics/component-monitoring/xray/env/
  cat << EOF >> ./metrics/component-monitoring/xray/env/scrape-patch.yaml
   - labels:
       job: xray
-      cluster_type: xray
+      cluster_type: site
       cluster: cluster-name
     targets:
     - xray.example.com:9550

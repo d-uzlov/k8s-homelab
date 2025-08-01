@@ -62,7 +62,7 @@ spec:
   staticConfigs:
   - labels:
       job: opnsense
-      cluster_type: opnsense
+      cluster_type: site
       cluster: my-cluster
     targets:
     - opnsense-exporter.opnsense-exporter

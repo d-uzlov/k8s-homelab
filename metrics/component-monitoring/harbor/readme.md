@@ -32,7 +32,7 @@ spec:
   staticConfigs:
   - labels:
       job: harbor
-      cluster_type: harbor
+      cluster_type: site
       cluster: my-cluster
     targets:
     - harbor1.example.com:9090

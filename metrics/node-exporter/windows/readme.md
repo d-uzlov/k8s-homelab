@@ -30,7 +30,7 @@ spec:
   staticConfigs:
   - labels:
       job: windows-exporter
-      cluster_type: workstation
+      cluster_type: site
       cluster: my-cluster
     targets:
     - workstation.example.com:9182
