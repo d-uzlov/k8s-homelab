@@ -106,14 +106,89 @@ sudo apt remove --no-install-recommends --no-install-suggests linux-image-6.1.0-
 # Fix files permissions
 
 ```bash
+
 # remove extended ACLs
 sudo setfacl -b -R *
 sudo setfacl -b -R -d *
+
 # remove executable bit from everything
 sudo chmod -R a-x *
+
 # add executable bit to folders
 sudo chmod -R a+rwX *
+
 ```
 
 References:
 - https://superuser.com/questions/51838/recursive-chmod-rw-for-files-rwx-for-directories
+
+# Debian backports usage
+
+References:
+- https://backports.debian.org/Instructions/
+
+```bash
+
+ sudo tee /etc/apt/sources.list.d/debian-backports.sources << EOF
+Types: deb deb-src
+URIs: http://deb.debian.org/debian
+Suites: bookworm-backports
+Components: main
+Enabled: yes
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+EOF
+
+sudo apt update
+# install something from backports
+sudo apt install $package_name/bookworm-backports
+# also install dependencies from backports
+sudo apt install -t bookworm-backports $package_name
+
+```
+
+# Debian testing repo
+
+```bash
+
+ sudo tee /etc/apt/apt.conf.d/99-default-release << EOF
+APT::Default-Release "stable";
+EOF
+
+ sudo tee /etc/apt/preferences.d/20-prefer-stable-repo << EOF
+Explanation: Uninstall or do not install any Debian-originated
+Explanation: package versions other than those in the stable distro
+Package: *
+Pin: release a=bookworm
+Pin-Priority: 800
+
+Package: *
+Pin: release a=stable
+Pin-Priority: 800
+EOF
+
+ sudo tee /etc/apt/preferences.d/20-testing-repo-400 << EOF
+Package: *
+Pin: release a=testing
+Pin-Priority: -10
+EOF
+
+ sudo tee /etc/apt/sources.list.d/debian-testing.sources << EOF
+Types: deb deb-src
+URIs: http://deb.debian.org/debian
+Suites: testing
+Components: main contrib non-free non-free-firmware
+Enabled: yes
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+EOF
+
+sudo apt update
+sudo apt list --upgradable
+apt-cache policy udev
+
+# install something from testing
+sudo apt install $package_name/testing
+sudo apt install /testing
+# also install dependencies from testing
+sudo apt install -t testing $package_name
+
+```

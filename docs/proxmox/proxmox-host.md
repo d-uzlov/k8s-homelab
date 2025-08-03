@@ -6,12 +6,14 @@ This file contains some tips for configuring Proxmox host itself.
 # Initial setup
 
 ```bash
+
 # disable subscription warning
 curl https://raw.githubusercontent.com/foundObjects/pve-nag-buster/master/install.sh | bash
 # fix apt update
 mv /etc/apt/sources.list.d/ceph.list /etc/apt/sources.list.d/ceph.list.disabled
 # add sudo for all later commands
 apt update && apt install -y sudo
+
 ```
 
 Add your user for SSH access: [Create user](../linux-users.md#create-new-user).
@@ -19,6 +21,20 @@ Add your user for SSH access: [Create user](../linux-users.md#create-new-user).
 Later commands are assumed to be executed from your new user.
 
 ```bash
+
+# enable debian backports repo
+# see this for instructions: https://backports.debian.org/Instructions/
+ sudo tee /etc/apt/sources.list.d/debian-backports.sources << EOF
+Types: deb deb-src
+URIs: http://deb.debian.org/debian
+Suites: bookworm-backports
+Components: main
+Enabled: yes
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+EOF
+
+sudo apt update
+
 # install utils you will likely need
 sudo apt install -y iperf3 htop pipx gcc make stress fio unzip
 pipx ensurepath
