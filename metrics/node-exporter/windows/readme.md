@@ -46,6 +46,7 @@ spec:
 EOF
 
 kl apply -f ./metrics/node-exporter/windows/env/scrape-windows-exporter.yaml
+kl apply -f ./metrics/node-exporter/windows/record.yaml
 
 ```
 
@@ -55,6 +56,6 @@ kl apply -f ./metrics/node-exporter/windows/env/scrape-windows-exporter.yaml
 
 # ip or domain name
 node=10.3.10.6
-curl -sS --insecure http://$node:9182/metrics > ./windows-exporter.log
+curl -sS http://$node:9182/metrics > ./windows-exporter.log
 
 ```

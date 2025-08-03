@@ -1,0 +1,19 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: record-windows-exporter-cpu
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  groups:
+  - name: record-windows-exporter-cpu
+    rules:
+    - record: node:cpu_cores
+      expr: |-
+        count without(core) (group without(mode) (windows_cpu_time_total))
+    - record: instance_mode:windows_cpu_time:irate
+      expr: |-
+        sum without(core) (irate(windows_cpu_time_total[30s]))
