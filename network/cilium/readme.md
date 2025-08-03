@@ -13,10 +13,10 @@ References:
 helm repo add cilium https://helm.cilium.io/
 helm repo update cilium
 helm search repo cilium/cilium --versions --devel | head
-helm show values cilium/cilium --version 1.18.0-pre.2 > ./network/cilium/default-values.yaml
+helm show values cilium/cilium --version 1.18.0 > ./network/cilium/default-values.yaml
 
 helm template cilium cilium/cilium \
-  --version 1.18.0-pre.2 \
+  --version 1.18.0 \
   --values ./network/cilium/values.yaml \
   --namespace cilium \
   --api-versions gateway.networking.k8s.io/v1/GatewayClass \
@@ -63,8 +63,8 @@ kl -n cilium get pod -o wide
 kl -n cilium delete job hubble-generate-certs
 
 kl apply -k ./network/cilium/hubble-ingress-route/
-kl -n cilium describe httproute hubble
-kl -n cilium get httproute hubble
+kl apply -k ./network/cilium/httproute-hubble-authentik/
+kl -n cilium get htr
 
 ```
 
