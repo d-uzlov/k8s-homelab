@@ -71,7 +71,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           }
@@ -159,12 +160,36 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "alerts"
+              "options": "count"
             },
             "properties": [
               {
                 "id": "custom.width",
                 "value": 88
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #duration"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max duration"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 121
               }
             ]
           }
@@ -188,7 +213,12 @@
           "show": false
         },
         "showHeader": true,
-        "sortBy": []
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "alertname"
+          }
+        ]
       },
       "targets": [
         {
@@ -203,11 +233,30 @@
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
-          "refId": "A"
+          "refId": "count"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "# omitting last_over_time here, because we only need this for alerts existing right now\r\ntime() - max by(alertname, cluster_type, cluster, namespace, instance, pod, severity) (ALERTS_FOR_STATE{alertname=~\"$alertname\"})",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "duration"
         }
       ],
       "title": "list",
       "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
         {
           "id": "organize",
           "options": {
@@ -217,18 +266,22 @@
             "includeByName": {},
             "indexByName": {
               "Time": 0,
-              "Value": 4,
+              "Value #count": 3,
+              "Value #duration": 4,
               "alertname": 1,
               "alertstate": 2,
-              "cluster": 6,
-              "cluster_type": 5,
-              "instance": 7,
-              "namespace": 8,
-              "pod": 9,
-              "severity": 3
+              "cluster": 7,
+              "cluster_type": 6,
+              "instance": 8,
+              "namespace": 9,
+              "pod": 10,
+              "severity": 5
             },
             "renameByName": {
-              "Value": "alerts"
+              "Value": "alerts",
+              "Value #count": "count",
+              "Value #duration": "max duration",
+              "pod": ""
             }
           }
         }
@@ -272,7 +325,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           }
@@ -293,7 +347,9 @@
         "fullHighlight": false,
         "groupWidth": 0.7,
         "legend": {
-          "calcs": [],
+          "calcs": [
+            "last"
+          ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true
@@ -354,32 +410,32 @@
                 "2": {
                   "color": "red",
                   "index": 0,
-                  "text": "firing"
+                  "text": "firing [n]"
                 },
                 "3": {
                   "color": "yellow",
                   "index": 1,
-                  "text": "pending"
+                  "text": "pending [n]"
                 },
                 "4": {
                   "color": "dark-red",
                   "index": 2,
-                  "text": "firing"
+                  "text": "firing [i]"
                 },
                 "5": {
                   "color": "dark-yellow",
                   "index": 3,
-                  "text": "pending"
+                  "text": "pending [i]"
                 },
                 "6": {
                   "color": "super-light-red",
                   "index": 4,
-                  "text": "firing"
+                  "text": "firing [g]"
                 },
                 "7": {
                   "color": "super-light-yellow",
                   "index": 5,
-                  "text": "pending"
+                  "text": "pending [g]"
                 }
               },
               "type": "value"
@@ -389,7 +445,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           }
@@ -433,7 +490,7 @@
           "instant": false,
           "legendFormat": "{{alertname}}: {{namespace}}",
           "range": true,
-          "refId": "A"
+          "refId": "namespaced"
         },
         {
           "datasource": {
@@ -447,7 +504,7 @@
           "instant": false,
           "legendFormat": "{{alertname}}: {{instance}}",
           "range": true,
-          "refId": "B"
+          "refId": "instanced"
         },
         {
           "datasource": {
@@ -461,7 +518,7 @@
           "instant": false,
           "legendFormat": "{{alertname}}",
           "range": true,
-          "refId": "C"
+          "refId": "global"
         }
       ],
       "title": "alert history",
@@ -541,14 +598,32 @@
       {
         "allowCustomValue": false,
         "datasource": "$datasource",
-        "definition": "query_result(count by(alertname) (last_over_time(ALERTS{alertname=~\".*(?i:($name_filter)).*\", $type}[$__range])))",
+        "definition": "query_result(group by(severity) (last_over_time(ALERTS{alertname=~\".*(?i:($name_filter)).*\", $type}[$__range])))",
+        "description": "",
+        "includeAll": true,
+        "name": "severity",
+        "options": [],
+        "query": {
+          "qryType": 3,
+          "query": "query_result(group by(severity) (last_over_time(ALERTS{alertname=~\".*(?i:($name_filter)).*\", $type}[$__range])))",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "/severity=\"(?<text>[^\"]+)|severity=\"(?<value>[^\"]+)/g",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allowCustomValue": false,
+        "datasource": "$datasource",
+        "definition": "query_result(count by(alertname) (last_over_time(ALERTS{alertname=~\".*(?i:($name_filter)).*\", severity=~\"$severity\", $type}[$__range])))",
         "description": "",
         "includeAll": true,
         "name": "alertname",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(count by(alertname) (last_over_time(ALERTS{alertname=~\".*(?i:($name_filter)).*\", $type}[$__range])))",
+          "query": "query_result(count by(alertname) (last_over_time(ALERTS{alertname=~\".*(?i:($name_filter)).*\", severity=~\"$severity\", $type}[$__range])))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,

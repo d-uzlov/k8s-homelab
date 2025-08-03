@@ -129,7 +129,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           }
@@ -168,7 +169,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "failed cltrs"
+              "options": "failed clctrs"
             },
             "properties": [
               {
@@ -201,7 +202,7 @@
             "properties": [
               {
                 "id": "custom.width",
-                "value": 167
+                "value": 204
               },
               {
                 "id": "unit",
@@ -222,6 +223,63 @@
               {
                 "id": "unit",
                 "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "time offset"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 99
+              },
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "dark-red",
+                      "value": 0
+                    },
+                    {
+                      "color": "dark-green",
+                      "value": -1
+                    },
+                    {
+                      "color": "dark-red",
+                      "value": 1
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "match": "null",
+                      "result": {
+                        "color": "#6d4084",
+                        "index": 0
+                      }
+                    },
+                    "type": "special"
+                  }
+                ]
               }
             ]
           }
@@ -260,7 +318,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "count by(cluster, instance) (last_over_time(node_scrape_collector_success{instance=~\"$instance\"}[$__range]))",
+          "expr": "count by(cluster, instance) (last_over_time(node_scrape_collector_success{instance=~\"$instance\"}[$__range]))\r\nor\r\ncount by(cluster, instance) (last_over_time(windows_exporter_collector_success{instance=~\"$instance\"}[$__range]))",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -274,7 +332,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "count by(cluster, instance) (last_over_time(node_scrape_collector_success{instance=~\"$instance\"}[$__range]) == 0)",
+          "expr": "count by(cluster, instance) (last_over_time(node_scrape_collector_success{instance=~\"$instance\"}[$__range]) == 0)\r\nor\r\ncount by(cluster, instance) (last_over_time(windows_exporter_collector_success{instance=~\"$instance\"}[$__range]) == 0)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -289,7 +347,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(cluster, instance) (\r\n  (node_time_seconds{instance=~\"$instance\"} + time() - timestamp(node_time_seconds))\r\n  or\r\n  last_over_time(node_time_seconds{instance=~\"$instance\"}[$__range])\r\n) * 1000",
+          "expr": "max by(cluster, instance) (\r\n  (node_time_seconds{instance=~\"$instance\"} + time() - timestamp(node_time_seconds))\r\n  or\r\n  last_over_time(node_time_seconds{instance=~\"$instance\"}[$__range])\r\n) * 1000\r\nor\r\nmax by(cluster, instance) (\r\n  (windows_time_current_timestamp_seconds{instance=~\"$instance\"} + time() - timestamp(windows_time_current_timestamp_seconds))\r\n  or\r\n  last_over_time(windows_time_current_timestamp_seconds{instance=~\"$instance\"}[$__range])\r\n) * 1000",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -304,7 +362,22 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(cluster, instance) (last_over_time(node_boot_time_seconds{instance=~\"$instance\"}[$__range])) * 1000",
+          "expr": "max by(cluster, instance) (\r\n  (node_time_seconds{instance=~\"$instance\"} - timestamp(node_time_seconds))\r\n)\r\nor\r\nmax by(cluster, instance) (\r\n  (windows_time_current_timestamp_seconds{instance=~\"$instance\"} - timestamp(windows_time_current_timestamp_seconds))\r\n)",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "time_offset"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "max by(cluster, instance) (last_over_time(node_boot_time_seconds{instance=~\"$instance\"}[$__range])) * 1000\r\nor\r\nmax by(cluster, instance) (last_over_time(windows_system_boot_time_timestamp{instance=~\"$instance\"}[$__range])) * 1000",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -319,7 +392,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "time() - max by(cluster, instance) (last_over_time(node_boot_time_seconds{instance=~\"$instance\"}[$__range]))",
+          "expr": "time() - max by(cluster, instance) (last_over_time(node_boot_time_seconds{instance=~\"$instance\"}[$__range]))\r\nor\r\ntime() - max by(cluster, instance) (last_over_time(windows_system_boot_time_timestamp{instance=~\"$instance\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -328,7 +401,7 @@
           "refId": "boot_ago"
         }
       ],
-      "title": "info panel",
+      "title": "info",
       "transformations": [
         {
           "id": "merge",
@@ -343,11 +416,12 @@
             "includeByName": {},
             "indexByName": {
               "Time": 0,
-              "Value #boot_ago": 7,
-              "Value #boot_time": 6,
+              "Value #boot_ago": 8,
+              "Value #boot_time": 7,
               "Value #collectors": 3,
               "Value #current_time": 5,
               "Value #failed_collectors": 4,
+              "Value #time_offset": 6,
               "cluster": 1,
               "instance": 2
             },
@@ -356,7 +430,8 @@
               "Value #boot_time": "boot",
               "Value #collectors": "collectors",
               "Value #current_time": "time",
-              "Value #failed_collectors": "failed cltrs"
+              "Value #failed_collectors": "failed clctrs",
+              "Value #time_offset": "time offset"
             }
           }
         }
@@ -406,7 +481,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           }
@@ -449,7 +525,20 @@
           "instant": false,
           "legendFormat": "{{cluster}}/{{instance}}",
           "range": true,
-          "refId": "A"
+          "refId": "unix_status"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by(cluster, instance) (min_over_time(up{job=\"windows-exporter\", instance=~\"$instance\"}[$__interval]))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{cluster}}/{{instance}}",
+          "range": true,
+          "refId": "windows_status"
         }
       ],
       "title": "status",
@@ -482,7 +571,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -526,7 +616,20 @@
           "instant": false,
           "legendFormat": "{{cluster}}/{{instance}}",
           "range": true,
-          "refId": "A"
+          "refId": "unix_boot"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "$__to / 1000 - max by(cluster, instance) (max_over_time(windows_system_boot_time_timestamp{job=\"windows-exporter\", instance=~\"$instance\"}[$__interval]))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "windows_boot"
         }
       ],
       "title": "boot time (ago)",
@@ -582,7 +685,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -622,8 +726,126 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
+          "expr": "max by(cluster, instance) (\r\n  (node_time_seconds{instance=~\"$instance\"} - timestamp(node_time_seconds))\r\n)\r\nor\r\nmax by(cluster, instance) (\r\n  (windows_time_current_timestamp_seconds{instance=~\"$instance\"} - timestamp(windows_time_current_timestamp_seconds))\r\n)",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{cluster}}/{{instance}}",
+          "range": true,
+          "refId": "time_offset",
+          "step": 240
+        }
+      ],
+      "title": "time offset",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 54
+      },
+      "id": 334,
+      "maxDataPoints": 200,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Last *",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
           "expr": "time() - max by(cluster, instance) (last_over_time(node_boot_time_seconds{instance=~\"$instance\"}[$__interval]))",
           "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{cluster}}/{{instance}}",
+          "range": true,
+          "refId": "unix_uptime",
+          "step": 240
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "time() - max by(cluster, instance) (last_over_time(windows_system_boot_time_timestamp{instance=~\"$instance\"}[$__interval]))",
+          "format": "time_series",
+          "hide": false,
           "intervalFactor": 1,
           "legendFormat": "{{cluster}}/{{instance}}",
           "range": true,
@@ -685,7 +907,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -697,7 +920,7 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 54
+        "y": 66
       },
       "id": 330,
       "maxDataPoints": 200,
@@ -731,7 +954,22 @@
           "intervalFactor": 1,
           "legendFormat": "{{cluster}}/{{instance}}",
           "range": true,
-          "refId": "B",
+          "refId": "unix_cpu",
+          "step": 240
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(cluster, instance) (avg_over_time(instance_mode:windows_cpu_time:irate{instance=~\"$instance\", mode!=\"idle\"}[$__interval]))",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 1,
+          "legendFormat": "{{cluster}}/{{instance}}",
+          "range": true,
+          "refId": "windows_cpu",
           "step": 240
         }
       ],
@@ -790,7 +1028,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -802,7 +1041,7 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 66
+        "y": 78
       },
       "id": 331,
       "maxDataPoints": 200,
@@ -836,7 +1075,22 @@
           "intervalFactor": 1,
           "legendFormat": "{{cluster}}/{{instance}}",
           "range": true,
-          "refId": "B",
+          "refId": "unix_cpu_percent",
+          "step": 240
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(cluster, instance) (avg_over_time(instance_mode:windows_cpu_time:irate{instance=~\"$instance\", mode!~\"idle|steal\"}[$__interval]) / on(instance) group_left() node:cpu_cores)",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 1,
+          "legendFormat": "{{cluster}}/{{instance}}",
+          "range": true,
+          "refId": "windows_cpu_percent",
           "step": 240
         }
       ],
@@ -895,7 +1149,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -907,7 +1162,7 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 78
+        "y": 90
       },
       "id": 332,
       "maxDataPoints": 200,
@@ -957,6 +1212,21 @@
           "range": true,
           "refId": "freebsd",
           "step": 240
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by(cluster, instance) (\r\n(\r\nwindows_memory_physical_total_bytes{instance=~\"$instance\"}\r\n-\r\nwindows_memory_available_bytes\r\n) / windows_memory_physical_total_bytes\r\n)",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 1,
+          "legendFormat": "{{cluster}}/{{instance}}",
+          "range": true,
+          "refId": "windows",
+          "step": 240
         }
       ],
       "title": "memory usage %",
@@ -968,7 +1238,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 90
+        "y": 102
       },
       "id": 265,
       "panels": [],
@@ -993,7 +1263,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "yellow",
@@ -1089,7 +1360,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 91
+        "y": 103
       },
       "id": 326,
       "options": {
@@ -1266,7 +1537,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1278,7 +1550,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 91
+        "y": 103
       },
       "id": 156,
       "options": {
@@ -1368,7 +1640,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1380,7 +1653,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 99
+        "y": 111
       },
       "id": 152,
       "maxDataPoints": 250,
@@ -1469,7 +1742,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1481,7 +1755,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 99
+        "y": 111
       },
       "id": 42,
       "maxDataPoints": 200,
@@ -1541,7 +1815,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 107
+        "y": 119
       },
       "id": 269,
       "panels": [],
@@ -1598,7 +1872,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1614,7 +1889,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 108
+        "y": 120
       },
       "id": 148,
       "maxDataPoints": 200,
@@ -1702,7 +1977,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1714,7 +1990,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 108
+        "y": 120
       },
       "id": 305,
       "maxDataPoints": 200,
@@ -1802,7 +2078,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1818,7 +2095,7 @@
         "h": 6,
         "w": 12,
         "x": 0,
-        "y": 115
+        "y": 127
       },
       "id": 8,
       "maxDataPoints": 250,
@@ -1920,7 +2197,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1932,7 +2210,7 @@
         "h": 6,
         "w": 12,
         "x": 12,
-        "y": 115
+        "y": 127
       },
       "id": 325,
       "maxDataPoints": 200,
@@ -2020,7 +2298,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -2032,7 +2311,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 121
+        "y": 133
       },
       "id": 151,
       "maxDataPoints": 200,
@@ -2119,7 +2398,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -2131,7 +2411,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 121
+        "y": 133
       },
       "id": 306,
       "maxDataPoints": 200,
@@ -2194,14 +2474,14 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(label_join(last_over_time(node_uname_info[$__range]), \"human_name\", \"/\", \"cluster_type\", \"cluster\"))",
+        "definition": "query_result(label_join(last_over_time(node_uname_info[$__range]), \"human_name\", \"/\", \"cluster_type\", \"cluster\") or label_join(last_over_time(windows_system_boot_time_timestamp[$__range]), \"human_name\", \"/\", \"cluster_type\", \"cluster\"))",
         "includeAll": true,
         "label": "Cluster",
         "name": "cluster",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(label_join(last_over_time(node_uname_info[$__range]), \"human_name\", \"/\", \"cluster_type\", \"cluster\"))",
+          "query": "query_result(label_join(last_over_time(node_uname_info[$__range]), \"human_name\", \"/\", \"cluster_type\", \"cluster\") or label_join(last_over_time(windows_system_boot_time_timestamp[$__range]), \"human_name\", \"/\", \"cluster_type\", \"cluster\"))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -2215,14 +2495,14 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(last_over_time(node_uname_info{cluster=~\"$cluster\"}[$__range]))",
+        "definition": "query_result(last_over_time(node_uname_info{cluster=~\"$cluster\"}[$__range]) or last_over_time(windows_system_boot_time_timestamp{cluster=~\"$cluster\"}[$__range]))",
         "includeAll": true,
         "label": "Instance",
         "name": "instance",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(last_over_time(node_uname_info{cluster=~\"$cluster\"}[$__range]))",
+          "query": "query_result(last_over_time(node_uname_info{cluster=~\"$cluster\"}[$__range]) or last_over_time(windows_system_boot_time_timestamp{cluster=~\"$cluster\"}[$__range]))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,

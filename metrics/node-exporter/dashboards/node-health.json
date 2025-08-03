@@ -29,6 +29,233 @@
       "fieldConfig": {
         "defaults": {
           "color": {
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "2": {
+                  "color": "blue",
+                  "index": 0,
+                  "text": "powersave"
+                },
+                "3": {
+                  "color": "orange",
+                  "index": 1,
+                  "text": "performance"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 6,
+      "maxDataPoints": 500,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "perPage": 16,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by(cpu) (\r\n  (max_over_time(node_cpu_scaling_governor{instance=\"$instance\", governor=\"powersave\"}[$__interval]) == 1) * 2\r\n  or\r\n  (max_over_time(node_cpu_scaling_governor{instance=\"$instance\", governor=\"performance\"}[$__interval]) == 1) * 3\r\n)",
+          "instant": false,
+          "legendFormat": "core {{cpu}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "core frequency scaling mode",
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "instance"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 313
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "chip"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 215
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*/"
+            },
+            "properties": [
+              {
+                "id": "filterable"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 15,
+        "x": 2,
+        "y": 12
+      },
+      "id": 1,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "node_hwmon_temp_celsius{instance=\"$instance\"} * on(cluster, instance, chip, sensor) group_right node_hwmon_sensor_label * on(cluster, instance, chip) group_left(chip_name) node_hwmon_chip_names",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "temperature sensors",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "cluster": true,
+              "cluster_type": true,
+              "instance": true,
+              "job": true,
+              "sensor": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "Time": 1,
+              "Value": 9,
+              "chip": 2,
+              "chip_name": 3,
+              "cluster": 4,
+              "cluster_type": 5,
+              "instance": 0,
+              "job": 6,
+              "label": 7,
+              "sensor": 8
+            },
+            "renameByName": {}
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
             "mode": "palette-classic"
           },
           "custom": {
@@ -69,7 +296,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -81,14 +309,15 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 0
+        "y": 24
       },
       "id": 2,
       "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": [
-            "lastNotNull"
+            "lastNotNull",
+            "max"
           ],
           "displayMode": "table",
           "placement": "right",
@@ -107,14 +336,14 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "node_hwmon_temp_celsius{instance=\"$instance\"} * on(cluster, instance, chip, sensor) group_right node_hwmon_sensor_label * on(cluster, instance, chip) group_left(chip_name) node_hwmon_chip_names",
+          "expr": "max by(chip, chip_name, label) (\r\n  max_over_time(node_hwmon_temp_celsius{instance=\"$instance\"}[$__interval])\r\n* on(cluster, instance, chip, sensor) group_right()\r\nlast_over_time(node_hwmon_sensor_label[$__interval])\r\n* on(cluster, instance, chip) group_left(chip_name)\r\nlast_over_time(node_hwmon_chip_names[$__interval])\r\n)",
           "instant": false,
-          "legendFormat": "{{chip_name}}/{{label}}",
+          "legendFormat": "{{chip}}/{{chip_name}}/{{label}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Panel Title",
+      "title": "temperature (max)",
       "type": "timeseries"
     },
     {
@@ -165,7 +394,108 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 36
+      },
+      "id": 7,
+      "maxDataPoints": 150,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "avg by(chip, chip_name, label) (\r\n  avg_over_time(node_hwmon_temp_celsius{instance=\"$instance\"}[$__interval])\r\n* on(cluster, instance, chip, sensor) group_right()\r\nlast_over_time(node_hwmon_sensor_label[$__interval])\r\n* on(cluster, instance, chip) group_left(chip_name)\r\nlast_over_time(node_hwmon_chip_names[$__interval])\r\n)",
+          "instant": false,
+          "legendFormat": "{{chip}}/{{chip_name}}/{{label}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "temperature (avg)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -177,7 +507,7 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 12
+        "y": 48
       },
       "id": 4,
       "maxDataPoints": 150,
@@ -277,7 +607,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -341,38 +672,6 @@
                 }
               }
             ]
-          },
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "throttling"
-            },
-            "properties": [
-              {
-                "id": "unit"
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "dark-red",
-                  "mode": "fixed"
-                }
-              },
-              {
-                "id": "custom.lineWidth",
-                "value": 2
-              },
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "dash": [
-                    10,
-                    10
-                  ],
-                  "fill": "dash"
-                }
-              }
-            ]
           }
         ]
       },
@@ -380,18 +679,20 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 24
+        "y": 60
       },
       "id": 3,
       "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -463,19 +764,6 @@
           "legendFormat": "min",
           "range": true,
           "refId": "min"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "rate(node_cpu_package_throttles_total{instance=\"$instance\"}[$__rate_interval])",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "Throttling rate",
-          "range": true,
-          "refId": "throttling"
         }
       ],
       "title": "Core frequency",
@@ -489,75 +777,79 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
+            "mode": "palette-classic"
           },
           "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
             },
-            "inspect": false
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
+                "color": "green",
+                "value": 0
               }
             ]
           }
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "instance"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 313
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "chip"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 215
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 12,
-        "w": 15,
+        "w": 24,
         "x": 0,
-        "y": 36
+        "y": 72
       },
-      "id": 1,
+      "id": 5,
+      "maxDataPoints": 150,
       "options": {
-        "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
+        "legend": {
+          "calcs": [
+            "mean"
           ],
-          "show": false
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
         },
-        "showHeader": true,
-        "sortBy": []
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "targets": [
         {
@@ -566,45 +858,16 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "exemplar": false,
-          "expr": "node_hwmon_temp_celsius{instance=\"$instance\"} * on(cluster, instance, chip, sensor) group_right node_hwmon_sensor_label * on(cluster, instance, chip) group_left(chip_name) node_hwmon_chip_names",
-          "format": "table",
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "A"
+          "expr": "rate(node_cpu_package_throttles_total{instance=\"$instance\"}[$__rate_interval])",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "throttling",
+          "range": true,
+          "refId": "throttling"
         }
       ],
-      "title": "Temperature",
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time": true,
-              "cluster": true,
-              "cluster_type": true,
-              "job": true,
-              "sensor": true
-            },
-            "includeByName": {},
-            "indexByName": {
-              "Time": 1,
-              "Value": 9,
-              "chip": 2,
-              "chip_name": 3,
-              "cluster": 4,
-              "cluster_type": 5,
-              "instance": 0,
-              "job": 6,
-              "label": 7,
-              "sensor": 8
-            },
-            "renameByName": {}
-          }
-        }
-      ],
-      "type": "table"
+      "title": "throttling",
+      "type": "timeseries"
     }
   ],
   "preload": false,
@@ -640,14 +903,21 @@
         "type": "query"
       },
       {
+        "allowCustomValue": false,
         "datasource": "$datasource",
+        "definition": "query_result(group by(instance) (last_over_time(node_hwmon_temp_celsius{cluster=~\"$cluster\"}[$__range])))",
         "includeAll": false,
         "label": "Instance",
         "name": "instance",
         "options": [],
-        "query": "label_values(node_uname_info{job=\"node-exporter\", cluster=\"$cluster\", sysname!=\"Darwin\"}, instance)",
+        "query": {
+          "qryType": 3,
+          "query": "query_result(group by(instance) (last_over_time(node_hwmon_temp_celsius{cluster=~\"$cluster\"}[$__range])))",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
         "refresh": 2,
-        "regex": "",
+        "regex": "/instance=\"(?<text>[^\"]+)|instance=\"(?<value>[^\"]+)/g",
+        "sort": 1,
         "type": "query"
       }
     ]
