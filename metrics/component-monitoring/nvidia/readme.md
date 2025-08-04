@@ -8,6 +8,14 @@ References:
 
 See installation instructions in the original repository.
 
+For example:
+
+```powershell
+
+nssm install nvidia_gpu_exporter c:\Users\user\programs\nvidia_gpu_exporter.exe
+
+```
+
 # Manual metric checking
 
 ```bash
