@@ -47,6 +47,7 @@ EOF
 
 kl apply -f ./metrics/node-exporter/windows/env/scrape-windows-exporter.yaml
 kl apply -f ./metrics/node-exporter/windows/record.yaml
+kl apply -f ./metrics/node-exporter/windows/alert.yaml
 
 ```
 

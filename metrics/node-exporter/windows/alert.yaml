@@ -1,0 +1,23 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: alert-windows-exporter-misc
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  groups:
+  - name: alert-windows-exporter-misc
+    rules:
+    - alert: WindowsClockTimestampMismatch
+      annotations:
+        description: >-
+          {{ $labels.instance }}
+        summary: Node reported timestamp differs from scrape timestamp by more than 5 seconds
+      expr: |-
+        abs(windows_time_current_timestamp_seconds - timestamp(windows_time_current_timestamp_seconds)) > 5
+      for: 10m
+      labels:
+        severity: warning
