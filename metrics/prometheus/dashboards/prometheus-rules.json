@@ -64,7 +64,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "text"
+                "color": "text",
+                "value": 0
               }
             ]
           },
@@ -115,6 +116,36 @@
               {
                 "id": "unit",
                 "value": "dtdurations"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "dark-orange",
+                      "value": 0
+                    },
+                    {
+                      "color": "dark-green",
+                      "value": 0
+                    },
+                    {
+                      "color": "dark-red",
+                      "value": 20
+                    },
+                    {
+                      "color": "dark-purple",
+                      "value": 120
+                    }
+                  ]
+                }
               }
             ]
           },
@@ -193,12 +224,44 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "last evaluation"
+              "options": "last eval ago"
             },
             "properties": [
               {
                 "id": "custom.width",
-                "value": 135
+                "value": 120
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "samples"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 85
+              },
+              {
+                "id": "unit",
+                "value": "sishort"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "first eval ago"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 131
+              },
+              {
+                "id": "unit",
+                "value": "s"
               }
             ]
           }
@@ -235,7 +298,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by(instance, rule_group, rule_group_name) (prometheus_rule_group_rules{instance=\"$instance\", rule_group=~\"$rule_group\"})",
+          "expr": "sum by(instance, rule_group, rule_group_name) (last_over_time(prometheus_rule_group_rules{instance=\"$instance\", rule_group=~\"$rule_group\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -250,7 +313,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by(instance, rule_group, rule_group_name) (prometheus_rule_group_interval_seconds{instance=\"$instance\", rule_group=~\"$rule_group\"})",
+          "expr": "sum by(instance, rule_group, rule_group_name) (last_over_time(prometheus_rule_group_interval_seconds{instance=\"$instance\", rule_group=~\"$rule_group\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -310,13 +373,43 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "time() - sum by(instance, rule_group, rule_group_name) (prometheus_rule_group_last_evaluation_timestamp_seconds{instance=\"$instance\", rule_group=~\"$rule_group\"})",
+          "expr": "time() - max by(instance, rule_group, rule_group_name) (last_over_time(prometheus_rule_group_last_evaluation_timestamp_seconds{instance=\"$instance\", rule_group=~\"$rule_group\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
           "refId": "last_timestamp"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "max by(instance, rule_group, rule_group_name) (last_over_time(prometheus_rule_group_last_evaluation_samples{instance=\"$instance\", rule_group=~\"$rule_group\"}[$__range]))",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "last_samples"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "time() - max by(instance, rule_group, rule_group_name) (min_over_time(prometheus_rule_group_last_evaluation_timestamp_seconds{instance=\"$instance\", rule_group=~\"$rule_group\"}[$__range]))",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "first_seen"
         }
       ],
       "title": "rules",
@@ -335,26 +428,31 @@
             "includeByName": {},
             "indexByName": {
               "Time": 0,
-              "Value #eval_failures": 6,
+              "Value #eval_failures": 7,
+              "Value #first_seen": 10,
               "Value #interval": 3,
-              "Value #iterations": 4,
-              "Value #iterations_missed": 5,
-              "Value #last_timestamp": 8,
-              "Value #rules_count": 7,
+              "Value #iterations": 5,
+              "Value #iterations_missed": 6,
+              "Value #last_samples": 4,
+              "Value #last_timestamp": 9,
+              "Value #rules_count": 8,
               "instance": 1,
-              "rule_group": 9,
+              "rule_group": 11,
               "rule_group_name": 2
             },
             "renameByName": {
               "Value #eval_failures": "eval failures",
               "Value #evals": "individual evaluations",
+              "Value #first_seen": "first eval ago",
               "Value #interval": "interval",
               "Value #iterations": "group evals",
               "Value #iterations_missed": "group evals missed",
               "Value #last_duration_abs": "",
-              "Value #last_timestamp": "last evaluation",
+              "Value #last_samples": "samples",
+              "Value #last_timestamp": "last eval ago",
               "Value #rules_count": "rules count",
-              "rule_group": ""
+              "rule_group": "",
+              "rule_group_name": ""
             }
           }
         }
@@ -412,7 +510,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -554,7 +653,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -696,7 +796,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -838,7 +939,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -966,7 +1068,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1094,7 +1197,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           }

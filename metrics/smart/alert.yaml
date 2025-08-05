@@ -31,7 +31,7 @@ spec:
           {{ $labels.instance }}:
           drive {{ $labels.device }}:
           {{ $value | humanize }}°C
-    - alert: SmartDeviceTemperatureOverTripValue
+    - alert: SmartDeviceTempOverTrip
       expr: |-
         max_over_time(smartctl_device_temperature{temperature_type="current"} [1m]) != 0
         >= on(device, instance) group_left()
@@ -44,7 +44,53 @@ spec:
         description: >-
           {{ $labels.instance }}:
           drive {{ $labels.device }}:
-          {{ $value | humanize }}
+          {{ $value | humanize }}°C
+    - alert: SmartDeviceTempeOverOperationalLimit
+      expr: |-
+        (
+          max_over_time(smartctl_device_temperature{temperature_type="current"} [1m]) != 0
+          >= ignoring(temperature_type)
+          smartctl_device_temperature{temperature_type="op_limit_max"}
+        ) or (
+          # hysteresis: don't disable alert unless temperature is 10 degree below limit
+          max_over_time(smartctl_device_temperature{temperature_type="current"} [1m]) != 0
+          >= ignoring(temperature_type)
+          (smartctl_device_temperature{temperature_type="op_limit_max"} - 10)
+          and ignoring(alertname, alertstate, severity, temperature_type)
+          ALERTS{alertname="SmartDeviceTempeOverOperationalLimit", alertstate="firing"}
+        )
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Disk temperature is over operational limit
+        description: >-
+          {{ $labels.instance }}:
+          drive {{ $labels.device }}:
+          {{ $value | humanize }}°C
+    - alert: SmartDeviceTempeOverCriticalLimit
+      expr: |-
+        (
+          max_over_time(smartctl_device_temperature{temperature_type="current"} [1m]) != 0
+          >= ignoring(temperature_type)
+          smartctl_device_temperature{temperature_type="critical_limit_max"}
+        ) or (
+          # hysteresis: don't disable alert unless temperature is 10 degree below limit
+          max_over_time(smartctl_device_temperature{temperature_type="current"} [1m]) != 0
+          >= ignoring(temperature_type)
+          (smartctl_device_temperature{temperature_type="critical_limit_max"} - 10)
+          and ignoring(alertname, alertstate, severity, temperature_type)
+          ALERTS{alertname="SmartDeviceTempeOverCriticalLimit", alertstate="firing"}
+        )
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Disk temperature is over critical limit
+        description: >-
+          {{ $labels.instance }}:
+          drive {{ $labels.device }}:
+          {{ $value | humanize }}°C
     - alert: SmartStatusError
       expr: |-
         (
@@ -82,15 +128,16 @@ spec:
           {{ $labels.instance }}:
           drive {{ $labels.device }}
     - alert: SmartMediaErrors
-      expr: smartctl_device_media_errors > 0
-      for: 5m
+      expr: increase(smartctl_device_media_errors[6h]) > 0
+      for: 0m
       labels:
         severity: critical
       annotations:
-        summary: SMART media errors
+        summary: New SMART media errors
         description: >-
           {{ $labels.instance }}:
-          drive {{ $labels.device }}
+          drive {{ $labels.device }}:
+          {{ $value | humanize }}
     - alert: SmartWearoutIndicator
       expr: smartctl_device_available_spare < smartctl_device_available_spare_threshold
       for: 1m
