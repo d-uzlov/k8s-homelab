@@ -20,8 +20,6 @@ kl apply -k ./metrics/component-monitoring/k8s-misc/monitoring/
 
 # apiserver
 
-Apiserver monitoring is only used for alerting.
-
 Manual metric checking:
 
 ```bash
@@ -32,8 +30,6 @@ kl exec deployments/alpine -- curl -sS --insecure -H "Authorization: Bearer $bea
 ```
 
 # kube-controller-manager
-
-kube-controller-manager monitoring is only used for `kubernetes_build_info` checking.
 
 Make sure that kube controller manager is listening on `0.0.0.0` to allow prometheus to connect to it.
 
@@ -58,8 +54,6 @@ kl exec deployments/alpine -- curl -sS --insecure -H "Authorization: Bearer $bea
 ```
 
 # kube-scheduler
-
-kube-scheduler monitoring is only used for `kubernetes_build_info` checking.
 
 Make sure that kube scheduler is listening on `0.0.0.0` to allow prometheus to connect to it.
 
@@ -90,5 +84,5 @@ Coredns is not monitored at all here.
 But you can check its metrics manually:
 
 ```bash
-kl exec deployments/alpine -- curl -sS http://kube-dns.kube-system:9153/metrics
+kl exec deployments/alpine -- curl -sS http://kube-dns.kube-system:9153/metrics > ./coredns-metrics.log
 ```

@@ -21,25 +21,50 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: kube-apiserver
-  namespace: kube-system
+  namespace: prometheus
   labels:
     prometheus.io/instance: main
     instance.prometheus.io/main: enable
     instance.prometheus.io/prompp: enable
 spec:
   jobLabel: prometheus.io/job
+  namespaceSelector:
+    matchNames:
+    - kube-system
   selector:
     matchLabels:
       app: kube-apiserver
   endpoints:
-  - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
-    port: https
+  - port: https
+    authorization:
+      type: Bearer
+      credentials:
+        name: prometheus-sa-token
+        key: token
     scheme: https
     honorLabels: true
     honorTimestamps: true
     trackTimestampsStaleness: true
+    relabelings:
+    - targetLabel: cluster_type
+      replacement: k8s
+      action: replace
+    - targetLabel: instance
+      sourceLabels: [ cluster, __meta_kubernetes_namespace, __meta_kubernetes_pod_name ]
+      action: replace
+      separator: /
+    - targetLabel: node
+      sourceLabels: [ __meta_kubernetes_pod_node_name ]
+      action: replace
+    - action: labeldrop
+      regex: service|endpoint
+    tlsConfig:
+      caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      serverName: kubernetes
+      insecureSkipVerify: false
     metricRelabelings:
     - action: keep
+      sourceLabels: [ __name__ ]
       regex: "\
         apiserver_client_certificate_expiration_.*|\
         apiserver_request_terminations_total|\
@@ -65,19 +90,3 @@ spec:
         apiserver_flowcontrol_request_execution_seconds_.*|\
         apiserver_flowcontrol_request_wait_duration_seconds_.*|\
         "
-      sourceLabels:
-      - __name__
-    relabelings:
-    - targetLabel: cluster_type
-      replacement: k8s
-      action: replace
-    - targetLabel: instance
-      sourceLabels: [ cluster, __meta_kubernetes_namespace, __meta_kubernetes_pod_name ]
-      action: replace
-      separator: /
-    - action: labeldrop
-      regex: service|endpoint
-    tlsConfig:
-      caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-      serverName: kubernetes
-      insecureSkipVerify: false

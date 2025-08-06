@@ -19,3 +19,16 @@ kl apply -k ./metrics/component-monitoring/etcd/built-in-etcd/
 ```
 
 Alternatively, you can copy etcd certs manually from any master node.
+
+# Manual metrics checking
+
+```bash
+
+etcdIp=k8s1-etcd1.k8s.lan
+curl -sS \
+  --cert ./metrics/component-monitoring/etcd/built-in-etcd/env/client.crt \
+  --key ./metrics/component-monitoring/etcd/built-in-etcd/env/client.key \
+  --cacert ./metrics/component-monitoring/etcd/built-in-etcd/env/ca.crt \
+  https://$etcdIp:2379/metrics
+
+```

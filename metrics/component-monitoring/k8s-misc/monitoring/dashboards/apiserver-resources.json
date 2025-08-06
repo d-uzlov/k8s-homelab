@@ -39,7 +39,7 @@
             "axisPlacement": "auto",
             "barAlignment": 0,
             "barWidthFactor": 0.6,
-            "drawStyle": "line",
+            "drawStyle": "points",
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
@@ -70,7 +70,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -93,7 +94,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -108,15 +111,142 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(group, resource, verb, quantile) (\r\nmax_over_time(apiserver_response_sizes_bucket:quantile_irate{instance=\"$instance\", resource=~\"$resource\"}[$__rate_interval])\r\n)",
+          "expr": "sum by(group, resource, verb, quantile) (\r\nmax_over_time(apiserver_response_sizes_bucket:quantile_irate{instance=\"$instance\", resource=~\"$resource\", group!=\"\", quantile=\"0.5\"}[$__interval])\r\n)",
           "hide": false,
           "instant": false,
-          "legendFormat": "__auto",
+          "legendFormat": "{{group}}/{{resource}} {{verb}}",
           "range": true,
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(group, resource, verb, quantile) (\r\nmax_over_time(apiserver_response_sizes_bucket:quantile_irate{instance=\"$instance\", resource=~\"$resource\", group=\"\", quantile=\"0.5\"}[$__interval])\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{resource}} {{verb}}",
+          "range": true,
+          "refId": "B"
         }
       ],
-      "title": "Response size",
+      "title": "response size (median)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "points",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 10
+      },
+      "id": 10,
+      "maxDataPoints": 200,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(group, resource, verb) (\r\nmax_over_time(apiserver_response_sizes_bucket:quantile_irate{instance=\"$instance\", resource=~\"$resource\", group!=\"\", quantile=\"0.99\"}[$__interval])\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{group}}/{{resource}} {{verb}}",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(group, resource, verb) (\r\nmax_over_time(apiserver_response_sizes_bucket:quantile_irate{instance=\"$instance\", resource=~\"$resource\", group=\"\", quantile=\"0.99\"}[$__interval])\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{resource}} {{verb}}",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "response size q99",
       "type": "timeseries"
     },
     {
@@ -168,7 +298,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -184,7 +315,7 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 10
+        "y": 20
       },
       "id": 6,
       "maxDataPoints": 200,
@@ -195,7 +326,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -210,15 +343,28 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(group, resource, verb) (rate(apiserver_request_total{instance=\"$instance\", resource=~\"$resource\"}[$__rate_interval]))",
+          "expr": "sum by(group, resource, verb) (rate(apiserver_request_total{instance=\"$instance\", resource=~\"$resource\", group!=\"\"}[$__rate_interval])) * $__interval_ms / 1000",
           "hide": false,
           "instant": false,
-          "legendFormat": "__auto",
+          "legendFormat": "{{group}}/{{resource}} {{verb}}",
           "range": true,
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(group, resource, verb) (rate(apiserver_request_total{instance=\"$instance\", resource=~\"$resource\", group=\"\"}[$__rate_interval])) * $__interval_ms / 1000",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{resource}} {{verb}}",
+          "range": true,
+          "refId": "B"
         }
       ],
-      "title": "apiserver_request_total",
+      "title": "requests total",
       "type": "timeseries"
     },
     {
@@ -270,7 +416,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -285,7 +432,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 22
+        "y": 32
       },
       "id": 5,
       "maxDataPoints": 200,
@@ -296,7 +443,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -311,15 +460,28 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(group, resource, verb) (rate(apiserver_request_terminations_total{instance=\"$instance\", resource=~\"$resource\"}[$__rate_interval]))",
+          "expr": "sum by(group, resource, verb) (rate(apiserver_request_terminations_total{instance=\"$instance\", resource=~\"$resource\", group!=\"\"}[$__rate_interval])) * $__interval_ms / 1000",
           "hide": false,
           "instant": false,
-          "legendFormat": "__auto",
+          "legendFormat": "{{group}}/{{resource}} {{verb}}",
           "range": true,
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(group, resource, verb) (rate(apiserver_request_terminations_total{instance=\"$instance\", resource=~\"$resource\", group=\"\"}[$__rate_interval])) * $__interval_ms / 1000",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{resource}} {{verb}}",
+          "range": true,
+          "refId": "B"
         }
       ],
-      "title": "apiserver_request_terminations_total",
+      "title": "terminated requests",
       "type": "timeseries"
     },
     {
@@ -371,7 +533,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -383,7 +546,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 31
+        "y": 41
       },
       "id": 7,
       "maxDataPoints": 200,
@@ -394,7 +557,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -409,15 +574,28 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(group, resource, verb) (\r\n  rate(apiserver_request_total{instance=\"$instance\", resource=~\"$resource\"}[$__rate_interval])\r\n  /\r\n  (rate(apiserver_request_terminations_total[$__rate_interval]) + 1e-6)\r\n)",
+          "expr": "sum by(group, resource, verb) (\r\n  rate(apiserver_request_total{instance=\"$instance\", resource=~\"$resource\", group!=\"\"}[$__rate_interval])\r\n  /\r\n  (rate(apiserver_request_terminations_total[$__rate_interval]) + 1e-6)\r\n)",
           "hide": false,
           "instant": false,
-          "legendFormat": "__auto",
+          "legendFormat": "{{group}}/{{resource}} {{verb}}",
           "range": true,
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(group, resource, verb) (\r\n  rate(apiserver_request_total{instance=\"$instance\", resource=~\"$resource\", group=\"\"}[$__rate_interval])\r\n  /\r\n  (rate(apiserver_request_terminations_total[$__rate_interval]) + 1e-6)\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{resource}} {{verb}}",
+          "range": true,
+          "refId": "B"
         }
       ],
-      "title": "Terminated request %",
+      "title": "terminated request %",
       "type": "timeseries"
     },
     {
@@ -469,7 +647,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           }
@@ -480,7 +659,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 41
+        "y": 51
       },
       "id": 9,
       "maxDataPoints": 200,
@@ -491,7 +670,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -506,15 +687,28 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(group, resource, verb) (\r\n  rate(apiserver_storage_objects{instance=\"$instance\", resource=~\"$resource\"}[$__rate_interval])\r\n)",
+          "expr": "max by(group, resource) (\r\n  max_over_time(apiserver_storage_objects{instance=\"$instance\", resource=~\"$resource\", group!=\"\"}[$__interval])\r\n)",
           "hide": false,
           "instant": false,
-          "legendFormat": "__auto",
+          "legendFormat": "{{group}}/{{resource}}",
           "range": true,
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by(group, resource) (\r\n  max_over_time(apiserver_storage_objects{instance=\"$instance\", resource=~\"$resource\", group=\"\"}[$__interval])\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{resource}}",
+          "range": true,
+          "refId": "B"
         }
       ],
-      "title": "Storage objects",
+      "title": "storage objects",
       "type": "timeseries"
     }
   ],

@@ -21,19 +21,26 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: kube-scheduler
-  namespace: kube-system
+  namespace: prometheus
   labels:
     prometheus.io/instance: main
     instance.prometheus.io/main: enable
     instance.prometheus.io/prompp: enable
 spec:
   jobLabel: prometheus.io/job
+  namespaceSelector:
+    matchNames:
+    - kube-system
   selector:
     matchLabels:
       app: kube-scheduler
   endpoints:
   - port: http-metrics
-    bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+    authorization:
+      type: Bearer
+      credentials:
+        name: prometheus-sa-token
+        key: token
     scheme: https
     honorLabels: true
     honorTimestamps: true
@@ -41,10 +48,6 @@ spec:
     tlsConfig:
       caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
       insecureSkipVerify: true
-    metricRelabelings:
-    - action: keep
-      sourceLabels: [ __name__ ]
-      regex: kubernetes_build_info|kubernetes_feature_enabled
     relabelings:
     - targetLabel: cluster_type
       replacement: k8s
@@ -53,5 +56,12 @@ spec:
       sourceLabels: [ cluster, __meta_kubernetes_namespace, __meta_kubernetes_pod_name ]
       action: replace
       separator: /
+    - targetLabel: node
+      sourceLabels: [ __meta_kubernetes_pod_node_name ]
+      action: replace
     - action: labeldrop
       regex: service|endpoint
+    metricRelabelings:
+    - action: keep
+      sourceLabels: [ __name__ ]
+      regex: kubernetes_build_info|kubernetes_feature_enabled

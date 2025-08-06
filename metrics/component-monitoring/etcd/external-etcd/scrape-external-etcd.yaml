@@ -3,6 +3,7 @@ apiVersion: monitoring.coreos.com/v1alpha1
 kind: ScrapeConfig
 metadata:
   name: external-etcd
+  namespace: prometheus
   labels:
     prometheus.io/instance: main
     instance.prometheus.io/main: enable
@@ -26,7 +27,7 @@ spec:
   - targetLabel: cluster_type
     action: replace
     replacement: etcd
-  - targetLabel: instance # remove port from instance
+  - targetLabel: instance
     sourceLabels: [ __address__ ]
     regex: (.*):\d*
     action: replace
@@ -35,6 +36,7 @@ spec:
   #   sourceLabels: [ __name__ ]
   #   regex: ^etcd_debugging_.*
   - action: keep
+    sourceLabels: [ __name__ ]
     regex: "\
       etcd_disk_backend_commit_duration_seconds_.*|\
       etcd_disk_wal_fsync_duration_seconds_.*|\
@@ -50,4 +52,3 @@ spec:
       etcd_server_version|\
       process_resident_memory_bytes|\
       "
-    sourceLabels: [ __name__ ]

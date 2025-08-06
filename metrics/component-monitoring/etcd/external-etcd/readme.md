@@ -28,6 +28,19 @@ spec:
     - k8s1-etcd3.k8s.lan:2379
 EOF
 
-kl -n prometheus apply -k ./metrics/component-monitoring/etcd/external-etcd/
+kl apply -k ./metrics/component-monitoring/etcd/external-etcd/
+
+```
+
+# Manual metrics checking
+
+```bash
+
+etcdIp=k8s1-etcd1.k8s.lan
+curl -sS \
+  --cert ./metrics/component-monitoring/etcd/external-etcd/env/client.crt \
+  --key ./metrics/component-monitoring/etcd/external-etcd/env/client.key \
+  --cacert ./metrics/component-monitoring/etcd/external-etcd/env/ca.crt \
+  https://$etcdIp:2379/metrics > ./etcd-metrics.log
 
 ```
