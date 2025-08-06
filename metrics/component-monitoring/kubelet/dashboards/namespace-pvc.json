@@ -55,7 +55,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -369,7 +370,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -503,7 +505,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           }
@@ -578,7 +581,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           }
@@ -678,7 +682,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -717,7 +722,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(name) (\r\n  max_over_time(kube_persistentvolume_capacity_bytes{}[$__interval])\r\n  * on(persistentvolume) group_left(name)\r\n  last_over_time(kube_persistentvolume_claim_ref{cluster=\"$cluster\", claim_namespace=\"$namespace\", name=~\"$volume\"}[$__interval])\r\n)",
+          "expr": "max by(name) (\r\n  max_over_time(kube_persistentvolume_capacity_bytes{cluster=\"$cluster\", persistentvolume=~\"$pv_name\"}[$__interval])\r\n  * on(persistentvolume) group_left(name)\r\n  last_over_time(kube_persistentvolume_claim_ref{cluster=\"$cluster\", claim_namespace=\"$namespace\", name=~\"$volume\"}[$__interval])\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{name}}",
@@ -780,7 +785,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -879,7 +885,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -980,7 +987,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1020,7 +1028,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(persistentvolumeclaim) (max_over_time(kubelet_volume_stats_used_bytes{cluster=\"$cluster\", namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"}[$__interval]) / max_over_time(kubelet_volume_stats_capacity_bytes[$__interval]))",
+          "expr": "max by(persistentvolumeclaim) (\r\n  max_over_time(kubelet_volume_stats_used_bytes{cluster=\"$cluster\", namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"}[$__interval])\r\n  /\r\n  max_over_time(kubelet_volume_stats_capacity_bytes{cluster=\"$cluster\", namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"}[$__interval])\r\n)",
           "instant": false,
           "legendFormat": "{{persistentvolumeclaim}}",
           "range": true,
@@ -1081,7 +1089,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1121,7 +1130,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "max by(persistentvolumeclaim) (max_over_time(kubelet_volume_stats_inodes_used{cluster=\"$cluster\", namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"}[$__interval]) / max_over_time(kubelet_volume_stats_inodes[$__interval]))",
+          "expr": "max by(persistentvolumeclaim) (\r\n  max_over_time(kubelet_volume_stats_inodes_used{cluster=\"$cluster\", namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"}[$__interval])\r\n  /\r\n  max_over_time(kubelet_volume_stats_inodes{cluster=\"$cluster\", namespace=\"$namespace\", persistentvolumeclaim=~\"$volume\"}[$__interval])\r\n)",
           "hide": false,
           "legendFormat": "{{persistentvolumeclaim}}",
           "range": true,
@@ -1213,6 +1222,26 @@
         },
         "refresh": 2,
         "regex": "/persistentvolumeclaim=\"(?<text>[^\"]+)|persistentvolumeclaim=\"(?<value>[^\"]+)/g",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allowCustomValue": false,
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "query_result(last_over_time(kube_persistentvolume_claim_ref{cluster=\"$cluster\", claim_namespace=\"$namespace\", name=~\"$volume\"}[$__range]))",
+        "includeAll": true,
+        "name": "pv_name",
+        "options": [],
+        "query": {
+          "qryType": 3,
+          "query": "query_result(last_over_time(kube_persistentvolume_claim_ref{cluster=\"$cluster\", claim_namespace=\"$namespace\", name=~\"$volume\"}[$__range]))",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "/persistentvolume=\"(?<text>[^\"]+)|persistentvolume=\"(?<value>[^\"]+)/g",
         "sort": 1,
         "type": "query"
       }

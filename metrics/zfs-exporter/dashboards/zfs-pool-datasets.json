@@ -105,7 +105,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -690,7 +691,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -731,7 +733,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "delta(zfs_dataset_logical_referenced_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__rate_interval])",
+          "expr": "sum by(name) (delta(zfs_dataset_logical_referenced_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__rate_interval]))",
           "format": "time_series",
           "instant": false,
           "legendFormat": "{{name}}",
@@ -793,7 +795,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -834,7 +837,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "zfs_dataset_used_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"} /\r\n(zfs_dataset_quota_bytes != 0)",
+          "expr": "max_over_time(zfs_dataset_used_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval]) /\r\n(max_over_time(zfs_dataset_quota_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval]) != 0)",
           "format": "time_series",
           "instant": false,
           "legendFormat": "{{name}}",
@@ -896,7 +899,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -937,7 +941,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "zfs_dataset_referenced_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"} /\r\n(zfs_dataset_referenced_quota_bytes != 0)",
+          "expr": "max by(name) (max_over_time(zfs_dataset_referenced_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval]) /\r\n(last_over_time(zfs_dataset_referenced_quota_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval]) != 0))",
           "format": "time_series",
           "instant": false,
           "legendFormat": "{{name}}",
@@ -999,7 +1003,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1040,7 +1045,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "zfs_dataset_logical_used_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"} /\r\nzfs_dataset_volume_size_bytes",
+          "expr": "max by(name) (max_over_time(zfs_dataset_logical_used_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval]) /\r\nmax_over_time(zfs_dataset_volume_size_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval]))",
           "format": "time_series",
           "hide": false,
           "instant": false,
@@ -1109,11 +1114,13 @@
             }
           },
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1132,7 +1139,6 @@
       "options": {
         "legend": {
           "calcs": [
-            "max",
             "mean"
           ],
           "displayMode": "table",
@@ -1206,11 +1212,111 @@
             }
           },
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 68
+      },
+      "id": 334,
+      "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (dataset) (rate(node_zfs_zpool_dataset_nread{instance=\"$instance\", dataset=~\"$dataset\"}[$__rate_interval])) * $__interval_ms / 1000",
+          "hide": false,
+          "legendFormat": "{{dataset}}",
+          "range": true,
+          "refId": "read"
+        }
+      ],
+      "title": "read total",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 5,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": 120000,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1222,14 +1328,13 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 68
+        "y": 77
       },
       "id": 324,
       "maxDataPoints": 100,
       "options": {
         "legend": {
           "calcs": [
-            "max",
             "mean"
           ],
           "displayMode": "table",
@@ -1259,12 +1364,110 @@
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 5,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": 120000,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 86
+      },
+      "id": 335,
+      "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (dataset) (rate(node_zfs_zpool_dataset_nwritten{instance=\"$instance\", dataset=~\"$dataset\"}[$__rate_interval])) * $__interval_ms / 1000",
+          "hide": false,
+          "legendFormat": "{{dataset}}",
+          "range": true,
+          "refId": "read"
+        }
+      ],
+      "title": "written total",
+      "type": "timeseries"
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 77
+        "y": 95
       },
       "id": 330,
       "panels": [],
@@ -1315,11 +1518,13 @@
             }
           },
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1331,14 +1536,13 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 78
+        "y": 96
       },
       "id": 323,
       "maxDataPoints": 100,
       "options": {
         "legend": {
           "calcs": [
-            "max",
             "mean"
           ],
           "displayMode": "table",
@@ -1413,15 +1617,17 @@
             }
           },
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
-          "unit": "sishort"
+          "unit": "bytes"
         },
         "overrides": []
       },
@@ -1429,14 +1635,13 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 88
+        "y": 106
       },
       "id": 328,
       "maxDataPoints": 100,
       "options": {
         "legend": {
           "calcs": [
-            "max",
             "mean"
           ],
           "displayMode": "table",
@@ -1513,11 +1718,13 @@
             }
           },
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1529,14 +1736,13 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 98
+        "y": 116
       },
       "id": 325,
       "maxDataPoints": 100,
       "options": {
         "legend": {
           "calcs": [
-            "max",
             "mean"
           ],
           "displayMode": "table",
@@ -1609,15 +1815,17 @@
             }
           },
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
-          "unit": "sishort"
+          "unit": "bytes"
         },
         "overrides": []
       },
@@ -1625,14 +1833,13 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 108
+        "y": 126
       },
       "id": 329,
       "maxDataPoints": 100,
       "options": {
         "legend": {
           "calcs": [
-            "max",
             "mean"
           ],
           "displayMode": "table",

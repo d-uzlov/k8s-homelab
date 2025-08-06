@@ -105,7 +105,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -641,7 +642,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -682,7 +684,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "delta(zfs_dataset_logical_referenced_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__rate_interval])",
+          "expr": "sum(delta(zfs_dataset_logical_referenced_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval]))",
           "format": "time_series",
           "instant": false,
           "legendFormat": "self",
@@ -696,7 +698,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum (delta(zfs_dataset_logical_referenced_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset/.*\", invalid=~\"$enable_children\"}[$__rate_interval]))",
+          "expr": "sum(delta(zfs_dataset_logical_referenced_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset/.*\", invalid=~\"$enable_children\"}[$__interval]))",
           "format": "time_series",
           "hide": false,
           "instant": false,
@@ -759,7 +761,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -800,7 +803,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "zfs_dataset_referenced_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"} /\r\n(zfs_dataset_quota_bytes != 0)",
+          "expr": "max(\r\nmax_over_time(zfs_dataset_referenced_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval])\r\n/\r\n(max_over_time(zfs_dataset_quota_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval]) != 0)\r\n)",
           "format": "time_series",
           "instant": false,
           "legendFormat": "quota (self)",
@@ -814,7 +817,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "zfs_dataset_referenced_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"} /\r\n(zfs_dataset_referenced_quota_bytes != 0)",
+          "expr": "max(\r\nmax_over_time(zfs_dataset_referenced_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval])\r\n/\r\n(max_over_time(zfs_dataset_referenced_quota_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval]) != 0)\r\n)",
           "format": "time_series",
           "hide": false,
           "instant": false,
@@ -829,7 +832,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "zfs_dataset_used_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"} /\r\n(zfs_dataset_quota_bytes != 0)",
+          "expr": "max(\r\nmax_over_time(zfs_dataset_used_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval])\r\n/\r\n(max_over_time(zfs_dataset_quota_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval]) != 0)\r\n)",
           "format": "time_series",
           "hide": false,
           "instant": false,
@@ -844,7 +847,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "zfs_dataset_used_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"} /\r\non (cluster_type, cluster, instance, pool)\r\nzfs_pool_size_bytes{instance=\"$instance\", pool=~\"$pool\"}",
+          "expr": "max(\r\nmax by(cluster_type, cluster, instance, pool) (max_over_time(zfs_dataset_used_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval]))\r\n/ on(cluster_type, cluster, instance, pool)\r\nmax by(cluster_type, cluster, instance, pool) (max_over_time(zfs_pool_size_bytes{instance=\"$instance\", pool=~\"$pool\"}[$__interval]))\r\n)",
           "format": "time_series",
           "hide": false,
           "instant": false,
@@ -858,7 +861,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "# using zfs_dataset_logical_used_bytes here because volumes run out of space when allocated, regardless of compressed size\r\nzfs_dataset_logical_used_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"} /\r\nzfs_dataset_volume_size_bytes",
+          "expr": "# using zfs_dataset_logical_used_bytes here because volumes run out of space when allocated, regardless of compressed size\r\nmax(\r\nmax_over_time(zfs_dataset_logical_used_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval])\r\n/\r\nmax_over_time(zfs_dataset_volume_size_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval])\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "volume allocated",
@@ -930,7 +933,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -969,7 +973,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (dataset) (rate(node_zfs_zpool_dataset_nread{instance=\"$instance\", zpool=~\"$pool\", dataset=~\"$dataset\"}[$__rate_interval]))",
+          "expr": "sum by(dataset) (rate(node_zfs_zpool_dataset_nread{instance=\"$instance\", zpool=~\"$pool\", dataset=~\"$dataset\"}[$__rate_interval]))",
           "hide": false,
           "legendFormat": "self",
           "range": true,
@@ -981,7 +985,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (rate(node_zfs_zpool_dataset_nread{instance=\"$instance\", zpool=~\"$pool\", dataset=~\"$dataset/.*\", invalid=~\"$enable_children\"}[$__rate_interval]))",
+          "expr": "sum(rate(node_zfs_zpool_dataset_nread{instance=\"$instance\", zpool=~\"$pool\", dataset=~\"$dataset/.*\", invalid=~\"$enable_children\"}[$__rate_interval]))",
           "hide": false,
           "legendFormat": "children",
           "range": true,
@@ -1039,7 +1043,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1078,7 +1083,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (dataset) (rate(node_zfs_zpool_dataset_nwritten{instance=~\"$instance\", zpool=~\"$pool\", dataset=~\"$dataset\"}[$__rate_interval]))",
+          "expr": "sum by(dataset) (rate(node_zfs_zpool_dataset_nwritten{instance=~\"$instance\", zpool=~\"$pool\", dataset=~\"$dataset\"}[$__rate_interval]))",
           "legendFormat": "self",
           "range": true,
           "refId": "write"
@@ -1089,7 +1094,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (rate(node_zfs_zpool_dataset_nwritten{instance=\"$instance\", zpool=~\"$pool\", dataset=~\"$dataset/.*\", invalid=~\"$enable_children\"}[$__rate_interval]))",
+          "expr": "sum(rate(node_zfs_zpool_dataset_nwritten{instance=\"$instance\", zpool=~\"$pool\", dataset=~\"$dataset/.*\", invalid=~\"$enable_children\"}[$__rate_interval]))",
           "hide": false,
           "legendFormat": "children",
           "range": true,
@@ -1160,7 +1165,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1179,7 +1185,6 @@
       "options": {
         "legend": {
           "calcs": [
-            "max",
             "mean"
           ],
           "displayMode": "table",
@@ -1199,7 +1204,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (dataset) (rate(node_zfs_zpool_dataset_reads{instance=\"$instance\", zpool=~\"$pool\", dataset=~\"$dataset\"}[$__rate_interval]))",
+          "expr": "sum by(dataset) (rate(node_zfs_zpool_dataset_reads{instance=\"$instance\", zpool=~\"$pool\", dataset=~\"$dataset\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
           "legendFormat": "self",
@@ -1212,7 +1217,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (rate(node_zfs_zpool_dataset_reads{instance=\"$instance\", zpool=~\"$pool\", dataset=~\"$dataset/.*\", invalid=~\"$enable_children\"}[$__rate_interval]))",
+          "expr": "sum(rate(node_zfs_zpool_dataset_reads{instance=\"$instance\", zpool=~\"$pool\", dataset=~\"$dataset/.*\", invalid=~\"$enable_children\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
           "legendFormat": "children",
@@ -1271,7 +1276,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1290,7 +1296,6 @@
       "options": {
         "legend": {
           "calcs": [
-            "max",
             "mean"
           ],
           "displayMode": "table",
@@ -1310,7 +1315,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (dataset) (rate(node_zfs_zpool_dataset_writes{instance=~\"$instance\", dataset=~\"$dataset\"}[$__rate_interval]))",
+          "expr": "sum by(dataset) (rate(node_zfs_zpool_dataset_writes{instance=~\"$instance\", dataset=~\"$dataset\"}[$__rate_interval]))",
           "legendFormat": "self",
           "range": true,
           "refId": "write"
@@ -1321,7 +1326,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (rate(node_zfs_zpool_dataset_writes{instance=~\"$instance\", dataset=~\"$dataset/.*\", invalid=~\"$enable_children\"}[$__rate_interval]))",
+          "expr": "sum(rate(node_zfs_zpool_dataset_writes{instance=~\"$instance\", dataset=~\"$dataset/.*\", invalid=~\"$enable_children\"}[$__rate_interval]))",
           "hide": false,
           "legendFormat": "children",
           "range": true,
@@ -1379,7 +1384,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1398,7 +1404,6 @@
       "options": {
         "legend": {
           "calcs": [
-            "max",
             "mean"
           ],
           "displayMode": "table",
@@ -1420,7 +1425,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (dataset) (\r\n  rate(node_zfs_zpool_dataset_nread{instance=\"$instance\", zpool=~\"$pool\", dataset=~\"$dataset\"}[$__rate_interval]) /\r\n  (rate(node_zfs_zpool_dataset_reads{instance=\"$instance\", zpool=~\"$pool\", dataset=~\"$dataset\"}[$__rate_interval]) + 1e-6)\r\n)",
+          "expr": "sum by(dataset) (\r\n  rate(node_zfs_zpool_dataset_nread{instance=\"$instance\", zpool=~\"$pool\", dataset=~\"$dataset\"}[$__rate_interval])\r\n  /\r\n  (rate(node_zfs_zpool_dataset_reads{instance=\"$instance\", zpool=~\"$pool\", dataset=~\"$dataset\"}[$__rate_interval]) + 1e-6)\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "self",
@@ -1433,7 +1438,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "avg (\r\n  rate(node_zfs_zpool_dataset_nread{instance=\"$instance\", zpool=~\"$pool\", dataset=~\"$dataset/.*\", invalid=~\"$enable_children\"}[$__rate_interval]) /\r\n  (rate(node_zfs_zpool_dataset_reads{instance=\"$instance\", zpool=~\"$pool\", dataset=~\"$dataset/.*\", invalid=~\"$enable_children\"}[$__rate_interval]) + 1e-6)\r\n)",
+          "expr": "avg(\r\n  rate(node_zfs_zpool_dataset_nread{instance=\"$instance\", zpool=~\"$pool\", dataset=~\"$dataset/.*\", invalid=~\"$enable_children\"}[$__rate_interval])\r\n  /\r\n  (rate(node_zfs_zpool_dataset_reads{instance=\"$instance\", zpool=~\"$pool\", dataset=~\"$dataset/.*\", invalid=~\"$enable_children\"}[$__rate_interval]) + 1e-6)\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "children",
@@ -1492,7 +1497,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1511,7 +1517,6 @@
       "options": {
         "legend": {
           "calcs": [
-            "max",
             "mean"
           ],
           "displayMode": "table",
@@ -1533,7 +1538,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (dataset) (\r\n  rate(node_zfs_zpool_dataset_nwritten{instance=\"$instance\", zpool=~\"$pool\", dataset=~\"$dataset\"}[$__rate_interval]) /\r\n  (rate(node_zfs_zpool_dataset_writes{instance=\"$instance\", zpool=~\"$pool\", dataset=~\"$dataset\"}[$__rate_interval]) + 1e-6)\r\n)",
+          "expr": "sum by(dataset) (\r\n  rate(node_zfs_zpool_dataset_nwritten{instance=\"$instance\", zpool=~\"$pool\", dataset=~\"$dataset\"}[$__rate_interval])\r\n  /\r\n  (rate(node_zfs_zpool_dataset_writes{instance=\"$instance\", zpool=~\"$pool\", dataset=~\"$dataset\"}[$__rate_interval]) + 1e-6)\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "self",
@@ -1546,7 +1551,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (\r\n  rate(node_zfs_zpool_dataset_nwritten{instance=\"$instance\", zpool=~\"$pool\", dataset=~\"$dataset/.*\", invalid=~\"$enable_children\"}[$__rate_interval]) /\r\n  (rate(node_zfs_zpool_dataset_writes{instance=\"$instance\", zpool=~\"$pool\", dataset=~\"$dataset/.*\", invalid=~\"$enable_children\"}[$__rate_interval]) + 1e-6)\r\n)",
+          "expr": "sum(\r\n  rate(node_zfs_zpool_dataset_nwritten{instance=\"$instance\", zpool=~\"$pool\", dataset=~\"$dataset/.*\", invalid=~\"$enable_children\"}[$__rate_interval])\r\n  /\r\n  (rate(node_zfs_zpool_dataset_writes{instance=\"$instance\", zpool=~\"$pool\", dataset=~\"$dataset/.*\", invalid=~\"$enable_children\"}[$__rate_interval]) + 1e-6)\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "children",

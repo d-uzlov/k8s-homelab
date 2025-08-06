@@ -95,7 +95,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           }
@@ -873,7 +874,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           }
@@ -887,6 +889,7 @@
         "y": 26
       },
       "id": 20,
+      "maxDataPoints": 500,
       "options": {
         "alignValue": "left",
         "legend": {
@@ -911,7 +914,7 @@
             "uid": "${data_source}"
           },
           "editorMode": "code",
-          "expr": "max by (human_name) (\r\n  label_join(min_over_time(pve_up{cluster=\"$cluster\", id=~\"$guest\"}[$__interval])\r\n  * on(id) group_right\r\n  last_over_time(pve_guest_info{cluster=\"$cluster\", id=~\"$guest\", name!=\"\"}[$__interval]), \"human_name\", \": \", \"node\", \"name\", \"id\")\r\n)",
+          "expr": "max by (human_name) (\r\n  label_join(\r\n    min_over_time(pve_up{cluster=\"$cluster\", id=~\"$guest\"}[$__interval])\r\n    * on(id) group_right\r\n    last_over_time(pve_guest_info{cluster=\"$cluster\", id=~\"$guest\", name!=\"\"}[$__interval]),\r\n    \"human_name\", \": \", \"node\", \"name\", \"id\"\r\n  )\r\n)",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -950,6 +953,7 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisSoftMax": 1,
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
@@ -977,16 +981,15 @@
               "mode": "area"
             }
           },
-          "decimals": 1,
           "links": [],
           "mappings": [],
-          "max": 1.05,
           "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "transparent"
+                "color": "transparent",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1028,7 +1031,7 @@
             "uid": "${data_source}"
           },
           "editorMode": "code",
-          "expr": "(max_over_time(pve_cpu_usage_ratio{cluster=\"$cluster\", id=~\"$guest\"}[$__rate_interval]) * on(id, cluster) group_left(name, type) pve_guest_info) and on(id, cluster) pve_up == 1",
+          "expr": "(\r\n  max_over_time(pve_cpu_usage_ratio{cluster=\"$cluster\", id=~\"$guest\"}[$__interval])\r\n  * on(id, cluster) group_left(name, type)\r\n  last_over_time(pve_guest_info{cluster=\"$cluster\", id=~\"$guest\", name!=\"\"}[$__interval])\r\n) and on(id, cluster)\r\nmax_over_time(pve_up{cluster=\"$cluster\", id=~\"$guest\"}[$__interval]) == 1",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -1092,7 +1095,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "transparent"
+                "color": "transparent",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1136,7 +1140,7 @@
             "uid": "${data_source}"
           },
           "editorMode": "code",
-          "expr": "(pve_memory_usage_bytes{cluster=\"$cluster\", id=~\"$guest\"} / pve_memory_size_bytes * on(id, cluster) group_left(name, type) pve_guest_info) and on(id, cluster) pve_up == 1",
+          "expr": "(\r\n  max_over_time(pve_memory_usage_bytes{cluster=\"$cluster\", id=~\"$guest\"}[$__interval])\r\n  /\r\n  max_over_time(pve_memory_size_bytes{cluster=\"$cluster\", id=~\"$guest\"}[$__interval])\r\n  * on(id, cluster) group_left(name, type)\r\n  last_over_time(pve_guest_info{cluster=\"$cluster\", id=~\"$guest\", name!=\"\"}[$__interval])\r\n) and on(id, cluster)\r\nmax_over_time(pve_up{cluster=\"$cluster\", id=~\"$guest\"}[$__interval]) == 1",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{name}} ({{type}})",
@@ -1198,7 +1202,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1242,7 +1247,7 @@
             "uid": "${data_source}"
           },
           "editorMode": "code",
-          "expr": "rate(pve_network_receive_bytes{cluster=\"$cluster\", id=~\"$guest\"}[$__rate_interval])\r\n* on(id, cluster) group_left(name, type) pve_guest_info\r\nand on(id, cluster) pve_up == 1",
+          "expr": "rate(pve_network_receive_bytes{cluster=\"$cluster\", id=~\"$guest\"}[$__rate_interval])\r\n* on(id, cluster) group_left(name, type)\r\nlast_over_time(pve_guest_info{cluster=\"$cluster\", id=~\"$guest\", name!=\"\"}[$__interval])\r\nand on(id, cluster)\r\nmax_over_time(pve_up{cluster=\"$cluster\", id=~\"$guest\"}[$__interval]) == 1",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -1305,7 +1310,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1349,7 +1355,7 @@
             "uid": "${data_source}"
           },
           "editorMode": "code",
-          "expr": "rate(pve_network_transmit_bytes{cluster=\"$cluster\", id=~\"$guest\"}[$__rate_interval])\r\n* on(id, cluster) group_left(name, type) pve_guest_info\r\nand on(id, cluster) pve_up == 1",
+          "expr": "rate(pve_network_transmit_bytes{cluster=\"$cluster\", id=~\"$guest\"}[$__rate_interval])\r\n* on(id, cluster) group_left(name, type)\r\nlast_over_time(pve_guest_info{cluster=\"$cluster\", id=~\"$guest\", name!=\"\"}[$__interval])\r\nand on(id, cluster)\r\nmax_over_time(pve_up{cluster=\"$cluster\", id=~\"$guest\"}[$__interval]) == 1",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -1413,7 +1419,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1520,7 +1527,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1564,7 +1572,7 @@
             "uid": "${data_source}"
           },
           "editorMode": "code",
-          "expr": "rate(pve_disk_write_bytes{cluster=\"$cluster\", id=~\"$guest\"}[$__rate_interval])\r\n* on(id, cluster) group_left(name, type) pve_guest_info\r\nand on(id, cluster) pve_up == 1",
+          "expr": "rate(pve_disk_write_bytes{cluster=\"$cluster\", id=~\"$guest\"}[$__rate_interval])\r\n* on(id, cluster) group_left(name, type)\r\nlast_over_time(pve_guest_info{cluster=\"$cluster\", id=~\"$guest\", name!=\"\"}[$__interval])\r\nand on(id, cluster)\r\nmax_over_time(pve_up{cluster=\"$cluster\", id=~\"$guest\"}[$__interval]) == 1",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{name}} ({{type}})",

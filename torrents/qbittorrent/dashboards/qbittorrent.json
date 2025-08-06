@@ -120,7 +120,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "qbittorrent_app_version{instance=\"$instance\"}",
+          "expr": "last_over_time(qbittorrent_app_version{instance=\"$instance\"}[$__range])",
           "format": "table",
           "instant": true,
           "legendFormat": "qBittorrent version",
@@ -197,7 +197,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "qbittorrent_global_torrents{instance=\"$instance\"}",
+          "expr": "last_over_time(qbittorrent_global_torrents{instance=\"$instance\"}[$__range])",
           "instant": true,
           "legendFormat": "Total torrents",
           "refId": "A"
@@ -262,7 +262,7 @@
             "properties": [
               {
                 "id": "custom.width",
-                "value": 80
+                "value": 100
               }
             ]
           }
@@ -287,7 +287,12 @@
           "show": false
         },
         "showHeader": true,
-        "sortBy": []
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "torrents"
+          }
+        ]
       },
       "targets": [
         {
@@ -397,7 +402,7 @@
             "properties": [
               {
                 "id": "custom.width",
-                "value": 80
+                "value": 100
               }
             ]
           }
@@ -422,7 +427,12 @@
           "show": false
         },
         "showHeader": true,
-        "sortBy": []
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "torrents"
+          }
+        ]
       },
       "targets": [
         {
@@ -644,7 +654,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "qbittorrent_global_alltime_uploaded_bytes{instance=\"$instance\"}",
+          "expr": "last_over_time(qbittorrent_global_alltime_uploaded_bytes{instance=\"$instance\"}[$__range])",
           "instant": true,
           "legendFormat": "uploaded since installation",
           "range": false,
@@ -711,7 +721,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum(qbittorrent_torrent_size_bytes{instance=\"$instance\"})",
+          "expr": "sum(last_over_time(qbittorrent_torrent_size_bytes{instance=\"$instance\"}[$__range]))",
           "format": "time_series",
           "instant": true,
           "legendFormat": "All-time downloaded",
@@ -787,7 +797,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "qbittorrent_global_dht_nodes{instance=\"$instance\"}",
+          "expr": "last_over_time(qbittorrent_global_dht_nodes{instance=\"$instance\"}[$__range])",
           "instant": true,
           "legendFormat": "DHT nodes",
           "refId": "A"
@@ -996,7 +1006,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "qbittorrent_global_alltime_downloaded_bytes{instance=\"$instance\"}",
+          "expr": "last_over_time(qbittorrent_global_alltime_downloaded_bytes{instance=\"$instance\"}[$__range])",
           "instant": true,
           "legendFormat": "downloaded since installation",
           "range": false,
@@ -1390,7 +1400,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "qbittorrent_global_alltime_uploaded_bytes{instance=\"$instance\"}\r\n/\r\nqbittorrent_global_alltime_downloaded_bytes{instance=\"$instance\"}",
+          "expr": "last_over_time(qbittorrent_global_alltime_uploaded_bytes{instance=\"$instance\"}[$__range])\r\n/\r\nlast_over_time(qbittorrent_global_alltime_downloaded_bytes{instance=\"$instance\"}[$__range])",
           "instant": true,
           "legendFormat": "ratio since installation",
           "range": false,
@@ -1461,7 +1471,7 @@
             "spanNulls": true,
             "stacking": {
               "group": "A",
-              "mode": "none"
+              "mode": "normal"
             },
             "thresholdsStyle": {
               "mode": "off"
@@ -1513,7 +1523,7 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "qbittorrent_torrent_states{instance=\"$instance\", name=~\"$active_states\"}",
+          "expr": "last_over_time(qbittorrent_torrent_states{instance=\"$instance\", name=~\"$active_states\"}[$__interval])",
           "legendFormat": "{{name}}",
           "range": true,
           "refId": "A"
@@ -1670,7 +1680,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "max(\r\nqbittorrent_global_upload_rate_limit_bytes{instance=\"$instance\"} != 0 and qbittorrent_app_alt_rate_limits_enabled == 0\r\nor\r\nqbittorrent_global_alt_upload_rate_limit_bytes != 0 and qbittorrent_app_alt_rate_limits_enabled == 1\r\n)",
+          "expr": "max(\r\nlast_over_time(qbittorrent_global_upload_rate_limit_bytes{instance=\"$instance\"}[$__interval]) != 0 and last_over_time(qbittorrent_app_alt_rate_limits_enabled[$__interval]) == 0\r\nor\r\nlast_over_time(qbittorrent_global_alt_upload_rate_limit_bytes{instance=\"$instance\"}[$__interval]) != 0 and last_over_time(qbittorrent_app_alt_rate_limits_enabled[$__interval]) == 1\r\n)",
           "hide": false,
           "legendFormat": "limit",
           "range": true,
@@ -1815,7 +1825,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "max(\r\nqbittorrent_global_download_rate_limit_bytes{instance=\"$instance\"} != 0 and qbittorrent_app_alt_rate_limits_enabled == 0\r\nor\r\nqbittorrent_global_alt_download_rate_limit_bytes != 0 and qbittorrent_app_alt_rate_limits_enabled == 1\r\n)",
+          "expr": "max(\r\nlast_over_time(qbittorrent_global_download_rate_limit_bytes{instance=\"$instance\"}[$__interval]) != 0 and last_over_time(qbittorrent_app_alt_rate_limits_enabled[$__interval]) == 0\r\nor\r\nlast_over_time(qbittorrent_global_alt_download_rate_limit_bytes{instance=\"$instance\"}[$__interval]) != 0 and last_over_time(qbittorrent_app_alt_rate_limits_enabled[$__interval]) == 1\r\n)",
           "hide": false,
           "legendFormat": "limit",
           "range": true,
@@ -1927,7 +1937,7 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum(qbittorrent_torrent_leechers{instance=\"$instance\"})",
+          "expr": "sum(max_over_time(qbittorrent_torrent_leechers{instance=\"$instance\"}[$__interval]))",
           "legendFormat": "Leechers",
           "range": true,
           "refId": "A"
@@ -1939,7 +1949,7 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum(qbittorrent_torrent_seeders{instance=\"$instance\"})",
+          "expr": "sum(max_over_time(qbittorrent_torrent_seeders{instance=\"$instance\"}[$__interval]))",
           "hide": false,
           "legendFormat": "Seeders",
           "range": true,
@@ -2038,7 +2048,7 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum(qbittorrent_global_dht_nodes{instance=\"$instance\"})",
+          "expr": "sum(max_over_time(qbittorrent_global_dht_nodes{instance=\"$instance\"}[$__interval]))",
           "legendFormat": "DHT nodes",
           "range": true,
           "refId": "A"

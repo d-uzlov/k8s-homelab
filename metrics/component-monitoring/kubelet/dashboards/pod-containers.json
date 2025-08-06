@@ -508,7 +508,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "round(max by(pod, container, name) (\r\n  container_last_seen_time{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container=~\"$container\", name=~\"$id\", uid!=\"\"} - timestamp(container_last_seen_time)\r\n  or\r\n  time() - last_over_time(container_last_seen_time{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container=~\"$container\", name=~\"$id\", uid!=\"\"}[$__range])\r\n))",
+          "expr": "round(max by(pod, container, name) (\r\n  container_last_seen_time{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container=~\"$container\", name=~\"$id\", uid!=\"\"}\r\n  -\r\n  timestamp(container_last_seen_time{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container=~\"$container\", name=~\"$id\", uid!=\"\"})\r\n  or\r\n  time() - last_over_time(container_last_seen_time{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", container=~\"$container\", name=~\"$id\", uid!=\"\"}[$__range])\r\n))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -1094,7 +1094,8 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "min by(container) (\r\n    (\r\n        kube_pod_container_status_waiting{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n    ) * 3\r\n    or\r\n    (\r\n        min_over_time(kube_pod_container_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n        and\r\n        kube_pod_container_status_running == 1\r\n    ) * 4\r\n    or\r\n    (\r\n        min_over_time(kube_pod_container_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == bool 0\r\n        and\r\n        kube_pod_container_status_running == 1\r\n    ) * 5\r\n    or\r\n    (\r\n        (kube_pod_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1)\r\n        and\r\n        kube_pod_container_status_last_terminated_exitcode == 0\r\n    ) * 6\r\n    or\r\n    (\r\n        (kube_pod_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1)\r\n        and\r\n        kube_pod_container_status_last_terminated_exitcode != 0\r\n    ) * 2\r\n    or\r\n    # for some reason I don't see kube_pod_container_status_last_terminated_exitcode on some job containers\r\n    (\r\n        (kube_pod_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1)\r\n    ) * 8\r\n)",
+          "expr": "min by(container) (\r\n    (\r\n        kube_pod_container_status_waiting{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n    ) * 3\r\n    or\r\n    (\r\n        min_over_time(kube_pod_container_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n        and\r\n        kube_pod_container_status_running{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n    ) * 4\r\n    or\r\n    (\r\n        min_over_time(kube_pod_container_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == bool 0\r\n        and\r\n        kube_pod_container_status_running{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n    ) * 5\r\n    or\r\n    (\r\n        (kube_pod_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1)\r\n        and\r\n        kube_pod_container_status_last_terminated_exitcode{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 0\r\n    ) * 6\r\n    or\r\n    (\r\n        (kube_pod_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1)\r\n        and\r\n        kube_pod_container_status_last_terminated_exitcode{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} != 0\r\n    ) * 2\r\n    or\r\n    # for some reason I don't see kube_pod_container_status_last_terminated_exitcode on some job containers\r\n    (\r\n        (kube_pod_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1)\r\n    ) * 8\r\n)",
+          "hide": false,
           "instant": false,
           "legendFormat": "{{container}}",
           "range": true,
@@ -1106,7 +1107,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Pending\"} == 1) * 0\r\n+ on() group_right\r\nmin by(container) (\r\n    (\r\n        kube_pod_init_container_status_waiting{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n        and on(cluster_type, cluster, namespace, pod, container)\r\n        kube_pod_init_container_status_waiting_reason{}\r\n    ) * 3\r\n    or\r\n    (\r\n        kube_pod_init_container_status_waiting{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n    ) * 3\r\n    or\r\n    (\r\n        kube_pod_init_container_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n        and\r\n        kube_pod_init_container_status_running == 1\r\n    ) * 4\r\n    or\r\n    (\r\n        kube_pod_init_container_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} != 1\r\n        and\r\n        kube_pod_init_container_status_running == 1\r\n    ) * 5\r\n    or\r\n    (\r\n        (kube_pod_init_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1)\r\n        and on(cluster_type, cluster, namespace, pod, container)\r\n        kube_pod_init_container_status_terminated_reason{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\", reason=\"Completed\"} == 1\r\n    ) * 6\r\n    or\r\n    (\r\n        (kube_pod_init_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\"} == 1)\r\n        and on(cluster_type, cluster, namespace, pod, container)\r\n        count by(cluster_type, cluster, namespace, pod, container) (\r\n            kube_pod_init_container_status_terminated_reason{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\", reason!=\"Completed\"} == 1\r\n        ) > 0\r\n    ) * 2\r\n    or\r\n    (\r\n        (kube_pod_init_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1)\r\n    ) * 8\r\n)",
+          "expr": "(kube_pod_status_phase{cluster=\"$cluster\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Pending\"} == 1) * 0\r\n+ on() group_right\r\nmin by(container) (\r\n    (\r\n        kube_pod_init_container_status_waiting{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n        and on(cluster, namespace, pod, container)\r\n        kube_pod_init_container_status_waiting_reason{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}\r\n    ) * 3\r\n    or\r\n    (\r\n        kube_pod_init_container_status_waiting{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n    ) * 3\r\n    or\r\n    (\r\n        kube_pod_init_container_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n        and\r\n        kube_pod_init_container_status_running{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n    ) * 4\r\n    or\r\n    (\r\n        kube_pod_init_container_status_ready{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} != 1\r\n        and\r\n        kube_pod_init_container_status_running{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n    ) * 5\r\n    or\r\n    (\r\n        (kube_pod_init_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1)\r\n        and on(cluster, namespace, pod, container)\r\n        kube_pod_init_container_status_terminated_reason{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\", reason=\"Completed\"} == 1\r\n    ) * 6\r\n    or\r\n    (\r\n        (kube_pod_init_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\"} == 1)\r\n        and on(cluster_type, cluster, namespace, pod, container)\r\n        count by(cluster_type, cluster, namespace, pod, container) (\r\n            kube_pod_init_container_status_terminated_reason{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\", reason!=\"Completed\"} == 1\r\n        ) > 0\r\n    ) * 2\r\n    or\r\n    (\r\n        (kube_pod_init_container_status_terminated{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1)\r\n    ) * 8\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "init/{{container}}",
@@ -1636,7 +1637,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(container, name) (\r\n    container_spec_cpu_quota{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$enableLimits, invalid!=$split_ids} / container_spec_cpu_period\r\n)\r\nor\r\n# when container_spec_cpu_quota is missing\r\nsum by(container, name) (\r\n    container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$enableLimits, invalid!=$split_ids} * 0\r\n    + on(container) group_left()\r\n    kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\", container=~\"$container\", uid=~\"$pod_uid\", invalid=$enableLimits}\r\n)\r\nor\r\n# united\r\nsum by(container) (\r\n    container_spec_cpu_quota{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$enableLimits, invalid=$split_ids} / container_spec_cpu_period\r\n)\r\nor\r\nsum by(container) (\r\n    container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$enableLimits, invalid=$split_ids} * 0\r\n    + on(container) group_left()\r\n    kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\", container=~\"$container\", uid=~\"$pod_uid\", invalid=$enableLimits}\r\n)",
+          "expr": "sum by(container, name) (\r\n    container_spec_cpu_quota{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$enableLimits, invalid!=$split_ids}\r\n    /\r\n    container_spec_cpu_period{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$enableLimits, invalid!=$split_ids}\r\n)\r\nor\r\n# when container_spec_cpu_quota is missing\r\nsum by(container, name) (\r\n    container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$enableLimits, invalid!=$split_ids} * 0\r\n    + on(container) group_left()\r\n    kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\", container=~\"$container\", uid=~\"$pod_uid\", invalid=$enableLimits}\r\n)\r\nor\r\n# united\r\nsum by(container) (\r\n    container_spec_cpu_quota{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$enableLimits, invalid=$split_ids}\r\n    /\r\n    container_spec_cpu_period{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$enableLimits, invalid=$split_ids}\r\n)\r\nor\r\nsum by(container) (\r\n    container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$enableLimits, invalid=$split_ids} * 0\r\n    + on(container) group_left()\r\n    kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\", container=~\"$container\", uid=~\"$pod_uid\", invalid=$enableLimits}\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}} limit, name={{name}}",
@@ -1754,25 +1755,12 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(container, name) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\", invalid!=$split_ids}[$__rate_interval]))\r\n/ on(container) group_left\r\nsum by(container) (\r\n    kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\",container=~\"$container\"}\r\n)\r\nor\r\nsum by(container) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\", invalid=$split_ids}[$__rate_interval]))\r\n/\r\nsum by(container) (\r\n    kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\",container=~\"$container\"}\r\n)",
+          "expr": "sum by(container, name) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\", invalid!=$split_ids}[$__rate_interval]))\r\n/ on(container) group_left\r\nsum by(container) (\r\n    kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\",container=~\"$container\"}\r\n)\r\nor\r\nsum by(container) (rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\", invalid=$split_ids}[$__rate_interval]))\r\n/\r\nsum by(container) (\r\n    kube_pod_container_resource_requests{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\", container=~\"$container\"}\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}}, name={{name}}",
           "range": true,
           "refId": "request_percent"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{container}}",
-          "range": true,
-          "refId": "request_percent_united"
         }
       ],
       "title": "CPU request %",
@@ -1885,7 +1873,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(container, name) (\r\n    sum without(cpu) (\r\n        rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\", invalid!=$split_ids}[$__rate_interval])\r\n    )\r\n    / (container_spec_cpu_quota / container_spec_cpu_period)\r\n)\r\nor\r\n# when container_spec_cpu_quota is missing\r\nsum by(container, name) (\r\n    rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\", invalid!=$split_ids}[$__rate_interval])\r\n)\r\n/ on(container) group_left\r\nsum by(container) (\r\n    kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\",container=~\"$container\"}\r\n)\r\nor\r\n# united\r\nsum by(container) (\r\n    sum without(cpu) (\r\n        rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\", invalid=$split_ids}[$__rate_interval])\r\n    )\r\n    / (container_spec_cpu_quota / container_spec_cpu_period)\r\n)\r\nor\r\nsum by(container) (\r\n    rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\", invalid=$split_ids}[$__rate_interval])\r\n)\r\n/ on(container) group_left\r\nsum by(container) (\r\n    kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\",container=~\"$container\"}\r\n)",
+          "expr": "sum by(container, name) (\r\n    sum without(cpu) (\r\n        rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\", invalid!=$split_ids}[$__rate_interval])\r\n    )\r\n    /\r\n    (\r\n      container_spec_cpu_quota{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\", invalid!=$split_ids}\r\n      /\r\n      container_spec_cpu_period{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\", invalid!=$split_ids}\r\n    )\r\n)\r\nor\r\n# when container_spec_cpu_quota is missing\r\nsum by(container, name) (\r\n    rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\", invalid!=$split_ids}[$__rate_interval])\r\n)\r\n/ on(container) group_left\r\nsum by(container) (\r\n    kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\",container=~\"$container\", invalid!=$split_ids}\r\n)\r\nor\r\n# united\r\nsum by(container) (\r\n    sum without(cpu) (\r\n        rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\", invalid=$split_ids}[$__rate_interval])\r\n    )\r\n    /\r\n    (\r\n      container_spec_cpu_quota{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\", invalid!=$split_ids}\r\n      /\r\n      container_spec_cpu_period{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\", invalid!=$split_ids}\r\n    )\r\n)\r\nor\r\nsum by(container) (\r\n    rate(container_cpu_usage_seconds_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\", invalid=$split_ids}[$__rate_interval])\r\n)\r\n/ on(container) group_left\r\nsum by(container) (\r\n    kube_pod_container_resource_limits{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", resource=\"cpu\",container=~\"$container\", invalid=$split_ids}\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}}, name={{name}}",
@@ -2483,7 +2471,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "# if container didn't run at some interval, you will have division by zero, so we do ` / increase + epsilon`\r\n# sometimes burst reporting is alightly misaligned with cadvisor reporting,\r\n# and you get non-zero burst with (zero+epsilon) cfs_periods, which results in peak at ~1e5\r\n# using clamp_max fixes this, although overall result can be a bit inaccurate\r\nclamp_max(\r\n  max by (container, name) (\r\n    (increase(container_cpu_cgroup_burst_periods_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]) )\r\n  / on(container, name)\r\n    (increase(container_cpu_cfs_periods_total[$__rate_interval]) + 1e-5 )\r\n  ),\r\n1)\r\nor\r\nclamp_max(\r\n  max by(container) (\r\n    max by (container, name) (\r\n      (increase(container_cpu_cgroup_burst_periods_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]) )\r\n    / on(container, name)\r\n      (increase(container_cpu_cfs_periods_total[$__rate_interval]) + 1e-5 )\r\n    )\r\n  ),\r\n  1\r\n)",
+          "expr": "# if container didn't run at some interval, you will have division by zero, so we do ` / increase + epsilon`\r\n# sometimes burst reporting is alightly misaligned with cadvisor reporting,\r\n# and you get non-zero burst with (zero+epsilon) cfs_periods, which results in peak at ~1e5\r\n# using clamp_max fixes this, although overall result can be a bit inaccurate\r\nclamp_max(\r\n  max by (container, name) (\r\n    (increase(container_cpu_cgroup_burst_periods_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]) )\r\n  / on(container, name)\r\n    (increase(container_cpu_cfs_periods_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]) + 1e-5 )\r\n  ),\r\n1)\r\nor\r\nclamp_max(\r\n  max by(container) (\r\n    max by (container, name) (\r\n      (increase(container_cpu_cgroup_burst_periods_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]) )\r\n    / on(container, name)\r\n      (increase(container_cpu_cfs_periods_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]) + 1e-5 )\r\n    )\r\n  ),\r\n  1\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}}, name={{name}}",
@@ -2612,7 +2600,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "# if container didn't run at some interval, you will have division by zero, so we do ` / increase + epsilon`\r\nmax by (container, name) (\r\n  (increase(container_cpu_cfs_throttled_periods_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]) )\r\n/\r\n  (increase(container_cpu_cfs_periods_total[$__rate_interval]) + 1e-5 )\r\n)\r\nor\r\nmax by (container) (\r\n  (increase(container_cpu_cfs_throttled_periods_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]) )\r\n/\r\n  (increase(container_cpu_cfs_periods_total[$__rate_interval]) + 1e-5 )\r\n)",
+          "expr": "# if container didn't run at some interval, you will have division by zero, so we do ` / increase + epsilon`\r\nmax by (container, name) (\r\n  (increase(container_cpu_cfs_throttled_periods_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]) )\r\n/\r\n  (increase(container_cpu_cfs_periods_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid!=$split_ids}[$__rate_interval]) + 1e-5 )\r\n)\r\nor\r\nmax by (container) (\r\n  (increase(container_cpu_cfs_throttled_periods_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]) )\r\n/\r\n  (increase(container_cpu_cfs_periods_total{cluster=\"$cluster\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", invalid=$split_ids}[$__rate_interval]) + 1e-5 )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}}, name={{name}}",
@@ -3692,6 +3680,13 @@
             "regex": "(.*), name=(.{8})(.*)",
             "renamePattern": "$1, $2"
           }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "(.*), name=",
+            "renamePattern": "$1"
+          }
         }
       ],
       "type": "timeseries"
@@ -3870,7 +3865,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 107
+        "y": 188
       },
       "id": 19,
       "panels": [],
@@ -3939,7 +3934,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 108
+        "y": 189
       },
       "id": 28,
       "maxDataPoints": 100,
@@ -4044,7 +4039,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 108
+        "y": 189
       },
       "id": 7,
       "maxDataPoints": 100,
@@ -4089,7 +4084,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 115
+        "y": 196
       },
       "id": 17,
       "panels": [],
@@ -4152,7 +4147,7 @@
         "h": 7,
         "w": 17,
         "x": 1,
-        "y": 116
+        "y": 197
       },
       "id": 16,
       "options": {
@@ -4327,7 +4322,7 @@
         "h": 7,
         "w": 4,
         "x": 18,
-        "y": 116
+        "y": 197
       },
       "id": 24,
       "options": {
@@ -4404,7 +4399,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 123
+        "y": 204
       },
       "id": 13,
       "maxDataPoints": 200,
@@ -4505,7 +4500,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 123
+        "y": 204
       },
       "id": 42,
       "maxDataPoints": 200,
@@ -4607,7 +4602,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 130
+        "y": 211
       },
       "id": 37,
       "maxDataPoints": 200,
@@ -4708,7 +4703,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 130
+        "y": 211
       },
       "id": 52,
       "maxDataPoints": 200,
@@ -4796,7 +4791,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -4808,7 +4804,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 137
+        "y": 218
       },
       "id": 48,
       "maxDataPoints": 200,
@@ -4896,7 +4892,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -4908,7 +4905,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 137
+        "y": 218
       },
       "id": 47,
       "maxDataPoints": 200,
@@ -4998,7 +4995,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -5010,7 +5008,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 144
+        "y": 225
       },
       "id": 51,
       "maxDataPoints": 200,
@@ -5099,7 +5097,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -5111,7 +5110,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 144
+        "y": 225
       },
       "id": 50,
       "maxDataPoints": 200,
