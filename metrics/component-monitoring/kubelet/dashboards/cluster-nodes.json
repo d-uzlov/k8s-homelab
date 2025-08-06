@@ -34,6 +34,19 @@
   ],
   "panels": [
     {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 32,
+      "panels": [],
+      "title": "overview",
+      "type": "row"
+    },
+    {
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -53,7 +66,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -273,7 +287,7 @@
               {
                 "id": "custom.cellOptions",
                 "value": {
-                  "applyToRow": true,
+                  "applyToRow": false,
                   "type": "color-background"
                 }
               },
@@ -283,7 +297,8 @@
                   "mode": "absolute",
                   "steps": [
                     {
-                      "color": "#37872d66"
+                      "color": "#37872d66",
+                      "value": 0
                     },
                     {
                       "color": "#f2495c66",
@@ -363,11 +378,7 @@
             "properties": [
               {
                 "id": "unit",
-                "value": "dtdurations"
-              },
-              {
-                "id": "decimals",
-                "value": 0
+                "value": "s"
               }
             ]
           },
@@ -485,7 +496,7 @@
         "h": 11,
         "w": 22,
         "x": 1,
-        "y": 0
+        "y": 1
       },
       "id": 8,
       "maxDataPoints": 100,
@@ -650,7 +661,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "round(time() - sum by (node) (last_over_time(kube_node_created:last_seen{cluster=\"$cluster\", node=~\"$node\"}[$__range])))",
+          "expr": "round(max by(node) (\r\n  kube_node_created:last_seen{cluster=\"$cluster\", node=~\"$node\"} - timestamp(kube_node_created:last_seen)\r\n  or\r\n  time() - last_over_time(kube_node_created:last_seen{cluster=\"$cluster\", node=~\"$node\"}[$__range])\r\n))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -695,7 +706,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "round(\r\n    sum by (node) (\r\n        last_over_time(kube_node_created:last_seen{cluster=\"$cluster\", node=~\"$node\"}[$__range])\r\n    )\r\n    -\r\n    sum by (node) (\r\n        label_replace(last_over_time(node_boot_time_seconds{cluster=\"$cluster\", instance=~\"$node\"}[$__range]), \"node\", \"$1\", \"instance\", \"(.*)\")\r\n    )\r\n)",
+          "expr": "round(\r\n    max by(node) (\r\n        last_over_time(kube_node_created:last_seen{cluster=\"$cluster\", node=~\"$node\"}[$__range])\r\n    )\r\n    -\r\n    max by(node) (\r\n        label_replace(last_over_time(node_boot_time_seconds{cluster=\"$cluster\", instance=~\"$node\"}[$__range]), \"node\", \"$1\", \"instance\", \"(.*)\")\r\n    )\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -843,7 +854,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "red"
+                "color": "red",
+                "value": 0
               }
             ]
           }
@@ -854,7 +866,7 @@
         "h": 15,
         "w": 24,
         "x": 0,
-        "y": 11
+        "y": 12
       },
       "id": 29,
       "maxDataPoints": 300,
@@ -863,9 +875,10 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": false
         },
         "mergeValues": true,
+        "perPage": 15,
         "rowHeight": 0.9,
         "showValue": "auto",
         "tooltip": {
@@ -940,7 +953,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           }
@@ -951,7 +965,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 26
+        "y": 27
       },
       "id": 28,
       "maxDataPoints": 300,
@@ -964,7 +978,7 @@
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
-          "sortBy": "Mean",
+          "sortBy": "Last *",
           "sortDesc": true
         },
         "tooltip": {
@@ -1039,7 +1053,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1055,7 +1070,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 33
+        "y": 34
       },
       "id": 27,
       "maxDataPoints": 300,
@@ -1101,7 +1116,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 41
+        "y": 42
       },
       "id": 24,
       "panels": [],
@@ -1157,7 +1172,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1173,7 +1189,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 42
+        "y": 43
       },
       "id": 7,
       "maxDataPoints": 300,
@@ -1181,7 +1197,6 @@
         "legend": {
           "asTable": true,
           "calcs": [
-            "lastNotNull",
             "mean"
           ],
           "displayMode": "table",
@@ -1203,7 +1218,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(node) (max_over_time(node_namespace:container_cpu_usage_seconds:irate{cluster=\"$cluster\", node=~\"$node\"}[$__interval]))",
+          "expr": "sum by(node) (avg_over_time(node_namespace:container_cpu_usage_seconds:irate{cluster=\"$cluster\", node=~\"$node\"}[$__interval]))",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -1262,7 +1277,113 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 50
+      },
+      "id": 30,
+      "maxDataPoints": 300,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(node) (max_over_time(node_namespace:container_cpu_usage_seconds:irate{cluster=\"$cluster\", node=~\"$node\"}[$__interval]))\r\n/\r\nmax by(node) (max_over_time(kube_node_status_allocatable{cluster=\"$cluster\", node=~\"$node\", resource=\"cpu\"}[$__interval]))",
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "CPU Usage %",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1278,7 +1399,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 49
+        "y": 57
       },
       "id": 9,
       "maxDataPoints": 300,
@@ -1367,7 +1488,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1383,7 +1505,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 57
+        "y": 65
       },
       "id": 26,
       "maxDataPoints": 300,
@@ -1424,12 +1546,118 @@
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 73
+      },
+      "id": 31,
+      "maxDataPoints": 300,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Last *",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (node) (max_over_time(node_namespace:container_memory_rss{cluster=\"$cluster\", node=~\"$node\"}[$__interval]))\r\n/\r\nmax by(node) (max_over_time(kube_node_status_allocatable{cluster=\"$cluster\", node=~\"$node\", resource=\"memory\"}[$__interval]))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{namespace}}",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Memory RSS %",
+      "type": "timeseries"
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 65
+        "y": 81
       },
       "id": 23,
       "panels": [],
@@ -1484,7 +1712,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1500,7 +1729,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 66
+        "y": 82
       },
       "id": 12,
       "maxDataPoints": 300,
@@ -1527,7 +1756,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (node) (max_over_time(node_namespace:container_network_receive_bytes:irate{cluster=\"$cluster\", node=~\"$node\"}[$__interval]))",
+          "expr": "sum by (node) (avg_over_time(node_namespace:container_network_receive_bytes:irate{cluster=\"$cluster\", node=~\"$node\"}[$__interval]))",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -1585,7 +1814,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1601,7 +1831,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 72
+        "y": 88
       },
       "id": 13,
       "maxDataPoints": 300,
@@ -1628,7 +1858,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (node) (max_over_time(node_namespace:container_network_transmit_bytes:irate{cluster=\"$cluster\", node=~\"$node\"}[$__interval]))",
+          "expr": "sum by (node) (avg_over_time(node_namespace:container_network_transmit_bytes:irate{cluster=\"$cluster\", node=~\"$node\"}[$__interval]))",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
