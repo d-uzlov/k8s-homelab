@@ -53,20 +53,45 @@ EOF
 
 It can be a group chat:
 
+- Send a message to group chat topic
+- copy message link
+- - format is: `https://t.me/c/{group_chat_id}/{group_topic_id}/{message_id}`
+- - example: `https://t.me/c/2101334281/2/2`
+- - Here `2101334281` is group chat ID _suffix_
+- prepend `-100` to get full chat ID
+- - example: `-1002101334281`
+- [!!!] Don't forget to invite your bot to the group chat
+- - You will need to start conversation with your bot to see it in the list of people to invite
+
 ```bash
 
-# Send a message to group chat, or group chat topic
-# copy message link
-# https://t.me/c/{group_chat_id}/{group_topic_id}/{message_id}
-# for example
-# https://t.me/c/2101334281/2/2
-# Here 2101334281 is group chat ID _suffix_
-# prepend -100 to get full chat ID
+chatId=
+# example: chatId=-1002101334281
 
-chatId=-1002101334281
-messageThreadId=2
+# fill messageThreadId from {group_topic_id} in the link
+messageThreadId=
 
- cat << EOF > ./metrics/prometheus/alertmanager/telegram/routes/telegram-route-info.yaml
+# You can create separate topics for different alerts, or show everything in a single thread
+
+ cat << EOF > ./metrics/prometheus/alertmanager/telegram/env/telegram-receiver-info.yaml
+- op: add
+  path: /spec/receivers/0/telegramConfigs/0/chatID
+  value: $chatId
+- op: add
+  path: /spec/receivers/0/telegramConfigs/0/messageThreadID
+  value: $messageThreadId
+EOF
+
+ cat << EOF > ./metrics/prometheus/alertmanager/telegram/env/telegram-receiver-warning.yaml
+- op: add
+  path: /spec/receivers/0/telegramConfigs/0/chatID
+  value: $chatId
+- op: add
+  path: /spec/receivers/0/telegramConfigs/0/messageThreadID
+  value: $messageThreadId
+EOF
+
+ cat << EOF > ./metrics/prometheus/alertmanager/telegram/env/telegram-receiver-critical.yaml
 - op: add
   path: /spec/receivers/0/telegramConfigs/0/chatID
   value: $chatId
@@ -77,17 +102,11 @@ EOF
 
 ```
 
-Repeat this for:
-- `telegram-route-info.yaml`
-- `telegram-route-warning.yaml`
-- `telegram-route-critical.yaml`
-
 # Deploy
 
 ```bash
 
-kl -n prometheus apply -k ./metrics/prometheus/alertmanager/telegram/
-kl kustomize ./metrics/prometheus/alertmanager/telegram/
+kl apply -k ./metrics/prometheus/alertmanager/telegram/
 kl -n prometheus get AlertmanagerConfig
 kl -n prometheus describe AlertmanagerConfig -l alertmanager.prometheus.io/integration=telegram
 

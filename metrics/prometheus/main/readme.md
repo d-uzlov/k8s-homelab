@@ -19,7 +19,7 @@ curl -fsSL https://github.com/prometheus/prometheus/raw/refs/heads/main/document
 mkdir -p ./metrics/prometheus/env/
 externalUrl=
 # example: externalUrl=prometheus.example.com
-# get externalUrl from ingress of httproute
+# get externalUrl from ingress or httproute
  cat << EOF > ./metrics/prometheus/env/patch-prometheus.yaml
 ---
 apiVersion: monitoring.coreos.com/v1
@@ -31,6 +31,7 @@ spec:
   alerting:
     alertmanagers:
     - name: alertmanager-operated
+      # namespace: prometheus
       port: 9093
   storage:
     volumeClaimTemplate:
