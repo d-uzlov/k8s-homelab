@@ -29,9 +29,9 @@ spec:
   scheme: HTTP
   staticConfigs:
   - labels:
-      job: windows-exporter
       cluster_type: site
       cluster: my-cluster
+      ok_to_be_missing: 'true'
     targets:
     - workstation.example.com:9182
   relabelings:
@@ -39,7 +39,13 @@ spec:
     sourceLabels: [ __address__ ]
     regex: (.*):\d*
     action: replace
+  - action: replace
+    targetLabel: job
+    replacement: windows-exporter
   metricRelabelings:
+  - action: labeldrop
+    # this should be in metricRelabelings, so up{} metric dondoesn't lose it
+    regex: ok_to_be_missing
   - action: drop
     sourceLabels: [ __name__ ]
     regex: go_.*|process_.*|promhttp_.*|windows_hyperv_virtual_network_adapter_drop_reasons

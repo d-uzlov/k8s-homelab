@@ -112,17 +112,28 @@ spec:
   scheme: HTTP
   staticConfigs:
   - labels:
-      job: smartctl-exporter
       cluster_type: site
       cluster: my-cluster
     targets:
     - example.com:9633
+  - labels:
+      cluster_type: site
+      cluster: my-cluster
+      ok_to_be_missing: 'true'
+    targets:
+    - volatile-example.com:9633
   relabelings:
   - targetLabel: instance
     sourceLabels: [ __address__ ]
     regex: (.*):\d*
     action: replace
+  - action: replace
+    targetLabel: job
+    replacement: smartctl-exporter
   metricRelabelings:
+  - action: labeldrop
+    # this should be in metricRelabelings, so up{} metric dondoesn't lose it
+    regex: ok_to_be_missing
   - action: drop
     sourceLabels: [ __name__ ]
     regex: go_gc_.*|process_.*
