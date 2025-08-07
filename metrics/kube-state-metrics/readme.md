@@ -12,7 +12,7 @@ You only need to do this if you change `values.yaml` file.
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update prometheus-community
 helm search repo prometheus-community/kube-state-metrics --versions --devel | head
-helm show values prometheus-community/kube-state-metrics --version 5.37.0 > ./metrics/kube-state-metrics/default-values.yaml
+helm show values prometheus-community/kube-state-metrics --version 6.1.0 > ./metrics/kube-state-metrics/default-values.yaml
 ```
 
 ```bash
@@ -20,7 +20,7 @@ helm show values prometheus-community/kube-state-metrics --version 5.37.0 > ./me
 helm template \
   ksm \
   prometheus-community/kube-state-metrics \
-  --version 5.37.0 \
+  --version 6.1.0 \
   --values ./metrics/kube-state-metrics/values.yaml \
   --namespace kube-state-metrics \
   | sed \

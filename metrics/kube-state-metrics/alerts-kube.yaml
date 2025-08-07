@@ -77,7 +77,7 @@ spec:
         summary: Pod has been in a non-ready state for more than 5 minutes.
       expr: |-
         kube_pod_status_phase{phase=~"Pending|Unknown|Failed"} > 0
-        unless on (cluster_type, cluster, namespace, pod)
+        unless ignoring(phase, owner_is_controller, owner_kind, owner_name)
         kube_pod_owner{owner_kind="Job"}
       for: 5m
       labels:
@@ -166,7 +166,7 @@ spec:
         summary: StatefulSet update has not been rolled out
       expr: |-
         (
-          max by (namespace, statefulset, job, cluster) (
+          max without(revision) (
             kube_statefulset_status_current_revision
               unless
             kube_statefulset_status_update_revision
@@ -344,20 +344,20 @@ spec:
         summary: Cluster has overcommitted CPU resource requests and cannot tolerate node failure
       expr: |-
         # check that cluster without the biggest node is overcommitted
-        sum by (cluster_type, cluster) (node_namespace:kube_pod_container_resource_requests{resource="cpu"})
+        sum without(namespace, node, resource) (node_namespace:kube_pod_container_resource_requests{resource="cpu"})
         -
         (
-          sum by (cluster_type, cluster) (kube_node_status_allocatable{resource="cpu"})
+          sum without(namespace, node, resource) (kube_node_status_allocatable{resource="cpu"})
           -
-          max by (cluster_type, cluster) (kube_node_status_allocatable{resource="cpu"})
+          max without(namespace, node, resource) (kube_node_status_allocatable{resource="cpu"})
         )
         > 0
         and
         # check that cluster has more than one node
         (
-          sum by (cluster_type, cluster) (kube_node_status_allocatable{resource="cpu"})
+          sum without(namespace, node, resource) (kube_node_status_allocatable{resource="cpu"})
           -
-          max by (cluster_type, cluster) (kube_node_status_allocatable{resource="cpu"})
+          max without(namespace, node, resource) (kube_node_status_allocatable{resource="cpu"})
         ) > 0
       for: 10m
       labels:
@@ -369,21 +369,21 @@ spec:
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubememoryovercommit
         summary: Cluster has overcommitted memory resource requests and cannot tolerate node failure.
       expr: |-
-        # check that cluster without the biggest noe is overcommitted
-        sum by (cluster_type, cluster) (node_namespace:kube_pod_container_resource_requests{resource="memory"})
+        # check that cluster without the biggest node is overcommitted
+        sum without(namespace, node, resource) (node_namespace:kube_pod_container_resource_requests{resource="memory"})
         -
         (
-          sum by (cluster_type, cluster) (kube_node_status_allocatable{resource="memory"})
+          sum without(namespace, node, resource) (kube_node_status_allocatable{resource="memory"})
           -
-          max by (cluster_type, cluster) (kube_node_status_allocatable{resource="memory"})
+          max without(namespace, node, resource) (kube_node_status_allocatable{resource="memory"})
         )
         > 0
         and
         # check that cluster has more than one node
         (
-          sum by (cluster_type, cluster) (kube_node_status_allocatable{resource="memory"})
+          sum without(namespace, node, resource) (kube_node_status_allocatable{resource="memory"})
           -
-          max by (cluster_type, cluster) (kube_node_status_allocatable{resource="memory"})
+          max without(namespace, node, resource) (kube_node_status_allocatable{resource="memory"})
         ) > 0
       for: 10m
       labels:
@@ -397,7 +397,9 @@ spec:
       expr: |-
         sum by (cluster_type, cluster) (
           min without(resource) (kube_resourcequota{type="hard", resource=~"(cpu|requests.cpu)"})
-        ) / sum by (cluster_type, cluster) (kube_node_status_allocatable{resource="cpu"})
+        )
+        /
+        sum by (cluster_type, cluster) (kube_node_status_allocatable{resource="cpu"})
         > 1.5
       for: 5m
       labels:
@@ -508,14 +510,13 @@ spec:
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubelettoomanypods
         summary: Kubelet is running above 95% of its pod capacity
       expr: |-
-        count by (cluster_type, cluster, node) (
-          (kube_pod_status_phase{phase="Running"} == 1)
-          * on (cluster_type, cluster, pod, namespace)
-          group_left(node)
-          topk by (cluster_type, cluster, pod, namespace) (1, kube_pod_info)
+        count without(namespace, pod, uid) (
+          max without(phase) (kube_pod_status_phase{phase="Running"} == 1)
+          * ignoring(node) group_left(node)
+          max without(created_by_kind, created_by_name, host_ip, host_network, pod_ip) (kube_pod_info)
         )
         /
-        max by (cluster_type, cluster, node) (
+        max without(resource, unit) (
           kube_node_status_capacity{resource="pods"} != 1
         ) > 0.95
       for: 15m
@@ -529,9 +530,7 @@ spec:
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubenodereadinessflapping
         summary: Node readiness changed more than 2 times over the last 15 minutes
       expr: |-
-        sum by (cluster_type, cluster, node) (
-          changes(kube_node_status_condition{status="true", condition="Ready"}[15m])
-        ) > 2
+        changes(kube_node_status_condition{status="true", condition="Ready"}[15m]) > 2
       for: 15m
       labels:
         severity: warning
@@ -555,9 +554,9 @@ spec:
           {{ $value | humanize }} times
         summary: Container real CPU limit does not match k8s spec. Note that CPU limit is capped at minimum 10m
       expr: |-
-        max by(cluster_type, cluster, namespace, pod, container) (container_spec_cpu_quota / container_spec_cpu_period)
+        max without(job, id, image, instance, name, uid) (container_spec_cpu_quota / container_spec_cpu_period)
         /
-        max by(cluster_type, cluster, namespace, pod, container) (kube_pod_container_resource_limits{resource="cpu"})
+        max without(job, resource, uid, unit) (kube_pod_container_resource_limits{resource="cpu"})
         != 1
       for: 5m
       labels:
@@ -569,9 +568,9 @@ spec:
           {{ $value | humanize }} times
         summary: Container real memory limit does not match k8s spec
       expr: |-
-        max by(cluster_type, cluster, namespace, pod, container) (container_spec_memory_limit_bytes)
+        max without(job, id, image, instance, name, uid) (container_spec_memory_limit_bytes)
         /
-        max by(cluster_type, cluster, namespace, pod, container) (kube_pod_container_resource_limits{resource="memory"})
+        max without(job, resource, uid, unit) (kube_pod_container_resource_limits{resource="memory"})
         != 1
       for: 5m
       labels:

@@ -13,25 +13,21 @@ spec:
     rules:
     - record: node_namespace:kube_pod_container_resource_requests
       expr: |-
-        sum by (cluster_type, cluster, node, namespace, resource) (
-          sum by(cluster_type, cluster, node, namespace, pod, resource) (
-            max by (cluster_type, cluster, node, namespace, pod, container, resource) (
-              kube_pod_container_resource_requests{}
-            )
-          ) * on (cluster_type, cluster, namespace, pod) group_left() 
-          max by (cluster_type, cluster, namespace, pod) (
+        sum without(pod, uid) (
+          sum without(container) (
+            kube_pod_container_resource_requests{}
+          ) * ignoring(resource, node, unit) group_left() 
+          max without (phase) (
             kube_pod_status_phase{phase=~"Pending|Running"} == 1
           )
         )
     - record: node_namespace:kube_pod_container_resource_limits
       expr: |-
-        sum by (cluster_type, cluster, node, namespace, resource) (
-          sum by(cluster_type, cluster, node, namespace, pod, resource) (
-            max by (cluster_type, cluster, node, namespace, pod, container, resource) (
-              kube_pod_container_resource_limits{}
-            )
-          ) * on (cluster_type, cluster, namespace, pod) group_left() 
-          max by (cluster_type, cluster, namespace, pod) (
+        sum without(pod, uid) (
+          sum without(container) (
+            kube_pod_container_resource_limits{}
+          ) * ignoring(resource, node, unit) group_left() 
+          max without (phase) (
             kube_pod_status_phase{phase=~"Pending|Running"} == 1
           )
         )
@@ -50,7 +46,7 @@ spec:
     rules:
     - record: namespace_workload_pod:kube_pod_owner:relabel
       expr: |-
-        max by (cluster_type, cluster, namespace, workload, pod, uid) (
+        max without(owner_is_controller, owner_kind, owner_name) (
           label_replace(
             label_replace(
               kube_pod_owner{owner_kind="ReplicaSet"},
@@ -67,7 +63,7 @@ spec:
         workload_type: deployment
     - record: namespace_workload_pod:kube_pod_owner:relabel
       expr: |-
-        max by (cluster_type, cluster, namespace, workload, pod, uid) (
+        max without(owner_is_controller, owner_kind, owner_name) (
           label_replace(
             kube_pod_owner{owner_kind="DaemonSet"},
             "workload", "$1", "owner_name", "(.*)"
@@ -77,7 +73,7 @@ spec:
         workload_type: daemonset
     - record: namespace_workload_pod:kube_pod_owner:relabel
       expr: |-
-        max by (cluster_type, cluster, namespace, workload, pod, uid) (
+        max without(owner_is_controller, owner_kind, owner_name) (
           label_replace(
             kube_pod_owner{owner_kind="StatefulSet"},
             "workload", "$1", "owner_name", "(.*)"
@@ -87,7 +83,7 @@ spec:
         workload_type: statefulset
     - record: namespace_workload_pod:kube_pod_owner:relabel
       expr: |-
-        max by (cluster_type, cluster, namespace, workload, pod, uid) (
+        max without(owner_is_controller, owner_kind, owner_name) (
           label_replace(
             kube_pod_owner{owner_kind="Job"},
             "workload", "$1", "owner_name", "(.*)"
@@ -97,7 +93,7 @@ spec:
         workload_type: job
     - record: namespace_workload_pod:kube_pod_owner:relabel
       expr: |-
-        max by (cluster_type, cluster, namespace, workload, pod, uid) (
+        max without(owner_is_controller, owner_kind, owner_name) (
           label_replace(
             kube_pod_owner{owner_kind="Node"},
             "workload", "$1", "owner_name", "(.*)"
@@ -107,7 +103,7 @@ spec:
         workload_type: static-pod
     - record: namespace_workload_pod:kube_pod_owner:relabel
       expr: |-
-        max by (cluster_type, cluster, namespace, workload, pod, uid) (
+        max without(owner_is_controller, owner_kind, owner_name) (
           label_replace(
             kube_pod_owner{owner_kind="Cluster"},
             "workload", "$1", "owner_name", "(.*)"
@@ -117,7 +113,7 @@ spec:
         workload_type: cnpg
     - record: namespace_workload_pod:kube_pod_owner:relabel
       expr: |-
-        max by (cluster_type, cluster, namespace, workload, pod, uid) (
+        max without(owner_is_controller, owner_kind, owner_name) (
           label_replace(
             kube_pod_owner{owner_kind="BroadcastJob"},
             "workload", "$1", "owner_name", "(.*)"
@@ -127,7 +123,7 @@ spec:
         workload_type: broadcast-job
     - record: namespace_workload_pod:kube_pod_owner:relabel
       expr: |-
-        max by (cluster_type, cluster, node, namespace, workload, pod, uid) (
+        max without(owner_is_controller, owner_kind, owner_name) (
           kube_pod_owner{owner_kind=""}
         )
       labels:
@@ -150,15 +146,15 @@ spec:
     # But these metrics don't have any unique identifier.
     # If you do last_over_time() for any of them, and container has restarted more than one time,
     # you will get a mix of results from different restarts.
-    # By combining them into a single metric with "timestamp" label we ensure that each restart info have a unique set of labels.
+    # By combining them into a single metric with "timestamp" label we ensure that each restart info metric has a unique set of labels.
     - record: reason:kube_pod_container_status_last_terminated_timestamp
       expr: |-
         kube_pod_container_status_last_terminated_timestamp
-        * on(cluster_type, cluster, namespace, pod, container, uid) group_left(exit_code)
+        * ignoring(exit_code) group_left(exit_code)
         count_values without() ("exit_code", kube_pod_container_status_last_terminated_exitcode)
-        * on(cluster_type, cluster, namespace, pod, container, uid) group_left(timestamp)
+        * ignoring(exit_code, timestamp) group_left(timestamp)
         count_values without() ("timestamp", kube_pod_container_status_last_terminated_timestamp)
-        * on(cluster_type, cluster, namespace, pod, container, uid) group_left(reason)
+        * ignoring(exit_code, timestamp, reason) group_left(reason)
         kube_pod_container_status_last_terminated_reason
     # same as reason:kube_pod_container_status_last_terminated_timestamp but value is always 1, for math purposes
     - record: reason:kube_pod_container_status_last_terminated_info
