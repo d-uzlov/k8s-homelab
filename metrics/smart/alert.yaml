@@ -149,3 +149,29 @@ spec:
           {{ $labels.instance }}:
           drive {{ $labels.device }}:
           {{ $value | humanize }}
+    - alert: SmartMissingDeviceBytesWritten
+      expr: |-
+        smartctl_device_attribute{attribute_name="Total_LBAs_Written", attribute_value_type="raw"}
+        unless on(instance, device)
+        (smartctl_device_bytes_written or mined:smartctl_device_bytes_written)
+      for: 1m
+      labels:
+        severity: info
+      annotations:
+        summary: Device has Total_LBAs_Written attribute but smartctl_device_bytes_written metric is missing
+        description: >-
+          {{ $labels.instance }}:
+          drive {{ $labels.device }}
+    - alert: SmartMissingDeviceBytesRead
+      expr: |-
+        smartctl_device_attribute{attribute_name="Total_LBAs_Read", attribute_value_type="raw"}
+        unless on(instance, device)
+        (smartctl_device_bytes_read or mined:smartctl_device_bytes_read)
+      for: 1m
+      labels:
+        severity: info
+      annotations:
+        summary: Device has Total_LBAs_Read attribute but smartctl_device_bytes_read metric is missing
+        description: >-
+          {{ $labels.instance }}:
+          drive {{ $labels.device }}

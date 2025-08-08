@@ -631,12 +631,91 @@
       "type": "table"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-RdYlGr"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      },
+      "id": 336,
+      "maxDataPoints": 500,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "perPage": 15,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "$__to / 1000 - max by(name) (max_over_time(zfs_dataset_creation{instance=~\"$instance\", pool=~\"$pool\", name=~\"$dataset\"}[$__interval]))",
+          "instant": false,
+          "legendFormat": "{{name}}",
+          "range": true,
+          "refId": "created"
+        }
+      ],
+      "title": "created (ago)",
+      "type": "state-timeline"
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 21
+        "y": 33
       },
       "id": 331,
       "panels": [],
@@ -704,7 +783,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 22
+        "y": 34
       },
       "id": 326,
       "maxDataPoints": 100,
@@ -733,7 +812,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by(name) (delta(zfs_dataset_logical_referenced_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__rate_interval]))",
+          "expr": "sum by(name) (delta(zfs_dataset_logical_referenced_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__rate_interval])) * ($__interval_ms / $__rate_interval_ms)",
           "format": "time_series",
           "instant": false,
           "legendFormat": "{{name}}",
@@ -808,7 +887,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 31
+        "y": 43
       },
       "id": 22,
       "maxDataPoints": 200,
@@ -837,7 +916,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max_over_time(zfs_dataset_used_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval]) /\r\n(max_over_time(zfs_dataset_quota_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval]) != 0)",
+          "expr": "max by(name) (\r\nmax_over_time(zfs_dataset_used_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval]) /\r\n(max_over_time(zfs_dataset_quota_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval]) != 0)\r\n)",
           "format": "time_series",
           "instant": false,
           "legendFormat": "{{name}}",
@@ -912,7 +991,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 40
+        "y": 52
       },
       "id": 333,
       "maxDataPoints": 200,
@@ -941,7 +1020,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(name) (max_over_time(zfs_dataset_referenced_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval]) /\r\n(last_over_time(zfs_dataset_referenced_quota_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval]) != 0))",
+          "expr": "max by(name) (\r\nmax_over_time(zfs_dataset_referenced_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval]) /\r\n(last_over_time(zfs_dataset_referenced_quota_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval]) != 0)\r\n)",
           "format": "time_series",
           "instant": false,
           "legendFormat": "{{name}}",
@@ -1016,7 +1095,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 49
+        "y": 61
       },
       "id": 327,
       "maxDataPoints": 200,
@@ -1045,7 +1124,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(name) (max_over_time(zfs_dataset_logical_used_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval]) /\r\nmax_over_time(zfs_dataset_volume_size_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval]))",
+          "expr": "max by(name) (\r\nmax_over_time(zfs_dataset_logical_used_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval]) /\r\nmax_over_time(zfs_dataset_volume_size_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval])\r\n)",
           "format": "time_series",
           "hide": false,
           "instant": false,
@@ -1063,7 +1142,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 58
+        "y": 70
       },
       "id": 332,
       "panels": [],
@@ -1132,7 +1211,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 59
+        "y": 71
       },
       "id": 16,
       "maxDataPoints": 100,
@@ -1143,7 +1222,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -1230,7 +1311,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 68
+        "y": 80
       },
       "id": 334,
       "maxDataPoints": 100,
@@ -1241,7 +1322,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Total",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -1328,7 +1411,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 77
+        "y": 89
       },
       "id": 324,
       "maxDataPoints": 100,
@@ -1339,7 +1422,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -1425,7 +1510,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 86
+        "y": 98
       },
       "id": 335,
       "maxDataPoints": 100,
@@ -1436,7 +1521,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Total",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -1467,7 +1554,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 95
+        "y": 107
       },
       "id": 330,
       "panels": [],
@@ -1536,7 +1623,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 96
+        "y": 108
       },
       "id": 323,
       "maxDataPoints": 100,
@@ -1547,7 +1634,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -1635,7 +1724,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 106
+        "y": 118
       },
       "id": 328,
       "maxDataPoints": 100,
@@ -1736,7 +1825,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 116
+        "y": 128
       },
       "id": 325,
       "maxDataPoints": 100,
@@ -1747,7 +1836,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -1833,7 +1924,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 126
+        "y": 138
       },
       "id": 329,
       "maxDataPoints": 100,
@@ -1874,7 +1965,7 @@
     }
   ],
   "preload": false,
-  "refresh": "1m",
+  "refresh": "auto",
   "schemaVersion": 41,
   "tags": [
     "ZFS",
@@ -1908,8 +1999,9 @@
           "query": "query_result(label_join(last_over_time(zfs_exporter_build_info[$__range]), \"human_name\", \"/\", \"cluster_type\", \"cluster\"))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "/human_name=\"(?<text>[^\"]+)|cluster=\"(?<value>[^\"]+)/g",
+        "sort": 1,
         "type": "query"
       },
       {
@@ -1928,8 +2020,9 @@
           "query": "query_result(last_over_time(zfs_exporter_build_info{cluster=~\"$cluster\"}[$__range]))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "/instance=\"(?<text>[^\"]+)|instance=\"(?<value>[^\"]+)/g",
+        "sort": 1,
         "type": "query"
       },
       {
@@ -1938,16 +2031,16 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(zfs_dataset_used_bytes{instance=\"$instance\"})",
+        "definition": "query_result(zfs_dataset_used_bytes{instance=~\"$instance\"})",
         "includeAll": true,
         "name": "pool",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(zfs_dataset_used_bytes{instance=\"$instance\"})",
+          "query": "query_result(zfs_dataset_used_bytes{instance=~\"$instance\"})",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "/pool=\"(?<text>[^\"]+)|pool=\"(?<value>[^\"]+)/g",
         "sort": 1,
         "type": "query"
@@ -1971,16 +2064,16 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(zfs_dataset_used_bytes{instance=\"$instance\", pool=\"$pool\"})",
+        "definition": "query_result(zfs_dataset_used_bytes{instance=~\"$instance\", pool=\"$pool\"})",
         "includeAll": true,
         "name": "type",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(zfs_dataset_used_bytes{instance=\"$instance\", pool=\"$pool\"})",
+          "query": "query_result(zfs_dataset_used_bytes{instance=~\"$instance\", pool=\"$pool\"})",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "/, *type=\"(?<text>[^\"]+)|, *type=\"(?<value>[^\"]+)/g",
         "sort": 1,
         "type": "query"
@@ -2040,16 +2133,16 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(zfs_dataset_used_bytes{instance=\"$instance\", pool=\"$pool\", name=~\".*(${dataset_filter}).*\", type=~\"$type\", type=\"filesystem\"} or zfs_dataset_volume_size_bytes{instance=\"$instance\", pool=\"$pool\", name=~\".*(${dataset_filter}).*\"} > ($low_limit + 0) * $limit_suffix)",
+        "definition": "query_result(zfs_dataset_used_bytes{instance=~\"$instance\", pool=\"$pool\", name=~\".*(${dataset_filter}).*\", type=~\"$type\", type=\"filesystem\"} or zfs_dataset_volume_size_bytes{instance=~\"$instance\", pool=\"$pool\", name=~\".*(${dataset_filter}).*\"} > ($low_limit + 0) * $limit_suffix)",
         "includeAll": true,
         "name": "dataset",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(zfs_dataset_used_bytes{instance=\"$instance\", pool=\"$pool\", name=~\".*(${dataset_filter}).*\", type=~\"$type\", type=\"filesystem\"} or zfs_dataset_volume_size_bytes{instance=\"$instance\", pool=\"$pool\", name=~\".*(${dataset_filter}).*\"} > ($low_limit + 0) * $limit_suffix)",
+          "query": "query_result(zfs_dataset_used_bytes{instance=~\"$instance\", pool=\"$pool\", name=~\".*(${dataset_filter}).*\", type=~\"$type\", type=\"filesystem\"} or zfs_dataset_volume_size_bytes{instance=~\"$instance\", pool=\"$pool\", name=~\".*(${dataset_filter}).*\"} > ($low_limit + 0) * $limit_suffix)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "/name=\"(?<text>[^\"]+)|name=\"(?<value>[^\"]+)/g",
         "sort": 1,
         "type": "query"

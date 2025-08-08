@@ -80,3 +80,53 @@ spec:
           {{ if eq $value 4.0 }}can't open{{ end }}
           {{ if eq $value 5.0 }}faulted{{ end }}
           {{ if eq $value 6.0 }}degraded{{ end }}
+    - alert: ZfsOldScan
+      expr: |-
+        (time() - (zfs_pool_scan_end_time_seconds != 0)) / (60 * 60 * 24) > 30
+      labels:
+        severity: info
+      annotations:
+        summary: Last ZFS pool scrub was more than 30 days ago
+        description: >-
+          {{ $labels.instance }}:
+          pool {{ $labels.zpool }}:
+          {{ $value | humanize }}
+    - alert: ZfsNoScan
+      expr: |-
+        group without(guid) (zfs_pool_vdevs)
+        unless
+        zfs_pool_scan_state
+      for: 1h
+      labels:
+        severity: info
+      annotations:
+        summary: ZFS pool was never scraped
+        description: >-
+          {{ $labels.instance }}:
+          pool {{ $labels.zpool }}
+    - alert: ZfsOldTrim
+      expr: |-
+        (time() - (zfs_vdev_trim_action_time != 0)) / (60 * 60 * 24) > 30
+      labels:
+        severity: info
+      annotations:
+        summary: Last ZFS pool vdev TRIM was more than 30 days ago
+        description: >-
+          {{ $labels.instance }}:
+          pool {{ $labels.zpool }}:
+          vdev {{ $labels.vdev }}
+          {{ $value | humanize }}
+    - alert: ZfsNoTrim
+      expr: |-
+        zfs_vdev_trim_state == 0
+        unless
+        zfs_vdev_trim_unsupported == 0
+      for: 1h
+      labels:
+        severity: info
+      annotations:
+        summary: ZFS pool vdev was never trimmed
+        description: >-
+          {{ $labels.instance }}:
+          pool {{ $labels.zpool }}:
+          vdev {{ $labels.vdev }}
