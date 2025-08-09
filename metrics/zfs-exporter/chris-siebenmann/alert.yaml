@@ -13,7 +13,6 @@ spec:
     rules:
     - alert: ZfsVdevErrors
       expr: zfs_vdev_errors{path!=""} > 0
-      for: 0m
       labels:
         severity: warning
       annotations:
@@ -28,14 +27,14 @@ spec:
       labels:
         severity: critical
       annotations:
-        summary: ZFS vdev I/O is slower than 30 seconds
+        summary: ZFS vdev had I/O operations that are slower than 30 seconds in last 1 minute
         description: >-
           {{ $labels.instance }}:
           pool {{ $labels.zpool }}:
           device {{ $labels.path }}:
           {{ $value }} operations
     - alert: ZfsTrimErrors
-      expr: increase(zfs_vdev_trim_errors{path!=""}[10m]) > 0
+      expr: zfs_vdev_trim_errors{path!=""} > 0
       labels:
         severity: critical
       annotations:
@@ -45,7 +44,7 @@ spec:
           pool {{ $labels.zpool }}:
           device {{ $labels.path }}:
           {{ $value }} errors
-    - alert: ZfsTrimErrors
+    - alert: ZfsVdevErrorState
       expr: zfs_vdev_state{path=""} != 7
       labels:
         severity: critical
@@ -62,27 +61,8 @@ spec:
           {{ if eq $value 4.0 }}can't open{{ end }}
           {{ if eq $value 5.0 }}faulted{{ end }}
           {{ if eq $value 6.0 }}degraded{{ end }}
-    - alert: ZfsTrimErrors
-      expr: zfs_vdev_state{path!=""} != 7
-      labels:
-        severity: critical
-      annotations:
-        summary: ZFS vdev trim has errors
-        description: >-
-          {{ $labels.instance }}:
-          pool {{ $labels.zpool }}:
-          vdev {{ $labels.vdev }}:
-          path {{ $labels.path }}:
-          {{ if eq $value 0.0 }}unknown{{ end }}
-          {{ if eq $value 1.0 }}closed{{ end }}
-          {{ if eq $value 2.0 }}offline{{ end }}
-          {{ if eq $value 3.0 }}removed{{ end }}
-          {{ if eq $value 4.0 }}can't open{{ end }}
-          {{ if eq $value 5.0 }}faulted{{ end }}
-          {{ if eq $value 6.0 }}degraded{{ end }}
     - alert: ZfsOldScan
-      expr: |-
-        (time() - (zfs_pool_scan_end_time_seconds != 0)) / (60 * 60 * 24) > 30
+      expr: (time() - (zfs_pool_scan_end_time_seconds != 0)) / (60 * 60 * 24) > 30
       labels:
         severity: info
       annotations:
@@ -92,10 +72,7 @@ spec:
           pool {{ $labels.zpool }}:
           {{ $value | humanize }}
     - alert: ZfsNoScan
-      expr: |-
-        group without(guid) (zfs_pool_vdevs)
-        unless
-        zfs_pool_scan_state
+      expr: zfs_pool_config_txg unless zfs_pool_scan_state
       for: 1h
       labels:
         severity: info
@@ -105,8 +82,7 @@ spec:
           {{ $labels.instance }}:
           pool {{ $labels.zpool }}
     - alert: ZfsOldTrim
-      expr: |-
-        (time() - (zfs_vdev_trim_action_time != 0)) / (60 * 60 * 24) > 30
+      expr: (time() - (zfs_vdev_trim_action_time{path!=""} != 0)) / (60 * 60 * 24) > 30
       labels:
         severity: info
       annotations:
@@ -114,11 +90,11 @@ spec:
         description: >-
           {{ $labels.instance }}:
           pool {{ $labels.zpool }}:
-          vdev {{ $labels.vdev }}
+          device {{ $labels.path }}
           {{ $value | humanize }}
     - alert: ZfsNoTrim
       expr: |-
-        zfs_vdev_trim_state == 0
+        zfs_vdev_trim_state{path!=""} == 0
         unless
         zfs_vdev_trim_unsupported == 0
       for: 1h
@@ -129,4 +105,4 @@ spec:
         description: >-
           {{ $labels.instance }}:
           pool {{ $labels.zpool }}:
-          vdev {{ $labels.vdev }}
+          device {{ $labels.path }}

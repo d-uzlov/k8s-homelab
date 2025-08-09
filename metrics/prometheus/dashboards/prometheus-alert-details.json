@@ -71,7 +71,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "transparent",
                 "value": 0
               }
             ]
@@ -83,7 +83,11 @@
               "id": "byRegexp",
               "options": "/.*/"
             },
-            "properties": []
+            "properties": [
+              {
+                "id": "filterable"
+              }
+            ]
           },
           {
             "matcher": {
@@ -100,7 +104,7 @@
                 "value": [
                   {
                     "title": "filter alert",
-                    "url": "/d/cpmesfi4zrumpn9chbrfpal/prometheus-alert-details?var-alertname=${__data.fields.alertname}"
+                    "url": "/d/cpmesfi4zrumpn9chbrfpald/prometheus-alert-details?var-alertname=${__data.fields.alertname}"
                   }
                 ]
               }
@@ -115,6 +119,34 @@
               {
                 "id": "custom.width",
                 "value": 106
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "custom.inspect",
+                "value": false
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "firing": {
+                        "color": "dark-red",
+                        "index": 1
+                      },
+                      "pending": {
+                        "color": "dark-yellow",
+                        "index": 0
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
               }
             ]
           },
@@ -193,47 +225,12 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "max duration"
+              "options": "duration"
             },
             "properties": [
               {
                 "id": "custom.width",
                 "value": 121
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "details"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 98
-              },
-              {
-                "id": "links",
-                "value": [
-                  {
-                    "title": "details",
-                    "url": "/d/cpmesfi4zrumpn9chbrfpald/prometheus-alert-details?var-alertname=${__data.fields.alertname}"
-                  }
-                ]
-              },
-              {
-                "id": "mappings",
-                "value": [
-                  {
-                    "options": {
-                      "2": {
-                        "index": 0,
-                        "text": "details"
-                      }
-                    },
-                    "type": "value"
-                  }
-                ]
               }
             ]
           }
@@ -272,8 +269,9 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "count by(alertname, alertstate, cluster_type, cluster, namespace, instance, pod, severity) (last_over_time(ALERTS{alertname=~\"$alertname\"}[$__range]))",
+          "expr": "group without(alertstate) (last_over_time(ALERTS{alertname=~\"$alertname\"}[$__range]))",
           "format": "table",
+          "hide": false,
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
@@ -286,7 +284,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "# omitting last_over_time here, because we only need this for alerts existing right now\r\ntime() - max by(alertname, cluster_type, cluster, namespace, instance, pod, severity) (ALERTS_FOR_STATE{alertname=~\"$alertname\"})",
+          "expr": "# omitting last_over_time here, because we only need this for alerts existing right now\r\ntime() - (ALERTS_FOR_STATE{alertname=~\"$alertname\"})",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -302,51 +300,45 @@
           "options": {}
         },
         {
-          "id": "calculateField",
-          "options": {
-            "alias": "details",
-            "binary": {
-              "left": {
-                "fixed": "1"
-              },
-              "right": {
-                "fixed": "1"
-              }
-            },
-            "mode": "binary",
-            "reduce": {
-              "include": [
-                "count"
-              ],
-              "reducer": "sum"
-            }
-          }
-        },
-        {
           "id": "organize",
           "options": {
             "excludeByName": {
-              "Time": true
+              "Time": true,
+              "Value #count": true,
+              "__name__": true
             },
             "includeByName": {},
             "indexByName": {
               "Time": 0,
               "Value #count": 4,
               "Value #duration": 5,
-              "alertname": 1,
+              "__name__": 1,
+              "alertname": 2,
               "alertstate": 3,
               "cluster": 8,
               "cluster_type": 7,
-              "details": 2,
+              "container": 19,
+              "device": 14,
+              "id": 22,
+              "image": 23,
               "instance": 9,
+              "job": 12,
+              "master": 13,
+              "name": 24,
               "namespace": 10,
+              "node": 20,
+              "path": 17,
               "pod": 11,
-              "severity": 6
+              "severity": 6,
+              "temperature_type": 15,
+              "uid": 21,
+              "vdev": 18,
+              "zpool": 16
             },
             "renameByName": {
               "Value": "alerts",
               "Value #count": "count",
-              "Value #duration": "max duration",
+              "Value #duration": "duration",
               "pod": ""
             }
           }
@@ -362,104 +354,11 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "fillOpacity": 80,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineWidth": 1,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 23
-      },
-      "id": 4,
-      "maxDataPoints": 150,
-      "options": {
-        "barRadius": 0,
-        "barWidth": 0.97,
-        "fullHighlight": false,
-        "groupWidth": 0.7,
-        "legend": {
-          "calcs": [
-            "last"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
-        },
-        "orientation": "auto",
-        "showValue": "never",
-        "stacking": "normal",
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "none"
-        },
-        "xTickLabelRotation": 0,
-        "xTickLabelSpacing": 100
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "count by(severity, alertstate) (last_over_time(ALERTS{alertname=~\"$alertname\"}[$__interval]))",
-          "instant": false,
-          "legendFormat": "{{alertstate}} {{severity}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "state/severity count",
-      "type": "barchart"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
             "mode": "fixed"
           },
           "custom": {
             "axisPlacement": "auto",
+            "axisWidth": 0,
             "fillOpacity": 70,
             "hideFrom": {
               "legend": false,
@@ -523,7 +422,7 @@
         "h": 20,
         "w": 24,
         "x": 0,
-        "y": 31
+        "y": 23
       },
       "id": 37,
       "maxDataPoints": 250,
@@ -551,10 +450,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "group by(alertname, namespace) (last_over_time(ALERTS{namespace!=\"\", alertname=~\"$alertname\", alertstate=\"firing\"}[$__interval])) * 2\r\nor\r\ngroup by(alertname, namespace) (last_over_time(ALERTS{namespace!=\"\", alertname=~\"$alertname\", alertstate=\"pending\"}[$__interval])) * 3",
+          "expr": "group without(alertstate) (last_over_time(ALERTS{namespace!=\"\", alertname=~\"$alertname\", alertstate=\"firing\"}[$__interval])) * 2\r\nor\r\ngroup without(alertstate) (last_over_time(ALERTS{namespace!=\"\", alertname=~\"$alertname\", alertstate=\"pending\"}[$__interval])) * 3",
           "format": "time_series",
           "instant": false,
-          "legendFormat": "{{alertname}}: {{namespace}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "namespaced"
         },
@@ -564,11 +463,11 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "group by(alertname, instance) (last_over_time(ALERTS{instance!=\"\", namespace=\"\", alertname=~\"$alertname\", alertstate=\"firing\"}[$__interval])) * 4\r\nor\r\ngroup by(alertname, instance) (last_over_time(ALERTS{instance!=\"\", namespace=\"\", alertname=~\"$alertname\", alertstate=\"pending\"}[$__interval])) * 5",
+          "expr": "group without(alertstate) (last_over_time(ALERTS{instance!=\"\", namespace=\"\", alertname=~\"$alertname\", alertstate=\"firing\"}[$__interval])) * 4\r\nor\r\ngroup without(alertstate) (last_over_time(ALERTS{instance!=\"\", namespace=\"\", alertname=~\"$alertname\", alertstate=\"pending\"}[$__interval])) * 5",
           "format": "time_series",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{alertname}}: {{instance}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "instanced"
         },
@@ -578,11 +477,11 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "group by(alertname) (last_over_time(ALERTS{instance=\"\", namespace=\"\", alertname=~\"$alertname\", alertstate=\"firing\"}[$__interval])) * 6\r\nor\r\ngroup by(alertname) (last_over_time(ALERTS{instance=\"\", namespace=\"\", alertname=~\"$alertname\", alertstate=\"pending\"}[$__interval])) * 7",
+          "expr": "group without(alertstate) (last_over_time(ALERTS{instance=\"\", namespace=\"\", alertname=~\"$alertname\", alertstate=\"firing\"}[$__interval])) * 6\r\nor\r\ngroup without(alertstate) (last_over_time(ALERTS{instance=\"\", namespace=\"\", alertname=~\"$alertname\", alertstate=\"pending\"}[$__interval])) * 7",
           "format": "time_series",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{alertname}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "global"
         }
@@ -715,7 +614,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "prometheus alerts",
-  "uid": "cpmesfi4zrumpn9chbrfpal",
+  "title": "prometheus alert details",
+  "uid": "cpmesfi4zrumpn9chbrfpald",
   "version": 0
 }
