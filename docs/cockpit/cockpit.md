@@ -75,32 +75,6 @@ References:
 - https://www.reddit.com/r/HomeServer/comments/1axk02h/guide_to_use_debian_w_cockpit_and_45drives/
 - https://nextcloud.fstech.ltd/s/ixz32b2BWEiADwF
 
-# ZFS
-
-```bash
-
-. /etc/os-release
- sudo tee /etc/apt/sources.list.d/backports.list << EOF
-deb http://deb.debian.org/debian ${VERSION_CODENAME}-backports main contrib
-deb-src http://deb.debian.org/debian ${VERSION_CODENAME}-backports main contrib
-EOF
- sudo tee /etc/apt/preferences.d/90-zfs << EOF
-Package: src:zfs-linux
-Pin: release n=${VERSION_CODENAME}-backports
-Pin-Priority: 990
-EOF
-
-sudo apt update
-apt-cache madison zfs-linux
-
-sudo apt install -y dpkg-dev
-# make sure that you have kernel headers, or ZFS will not be able to compile
-# if you use custom kernel, you will need to get headers elsewhere
-sudo apt install -y linux-headers-generic linux-image-generic
-sudo apt install -y zfs-dkms zfsutils-linux
-
-```
-
 # iSCSI
 
 References:
