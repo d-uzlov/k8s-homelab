@@ -482,7 +482,12 @@
         },
         "frameIndex": 4,
         "showHeader": true,
-        "sortBy": []
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "pool"
+          }
+        ]
       },
       "targets": [
         {
@@ -713,6 +718,385 @@
       "fieldConfig": {
         "defaults": {
           "color": {
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "2": {
+                  "color": "green",
+                  "index": 0,
+                  "text": "online"
+                },
+                "3": {
+                  "color": "blue",
+                  "index": 1,
+                  "text": "offline"
+                },
+                "4": {
+                  "color": "purple",
+                  "index": 2,
+                  "text": "removed"
+                },
+                "5": {
+                  "color": "yellow",
+                  "index": 3,
+                  "text": "suspended"
+                },
+                "6": {
+                  "color": "orange",
+                  "index": 4,
+                  "text": "degraded"
+                },
+                "7": {
+                  "color": "red",
+                  "index": 5,
+                  "text": "faulted"
+                },
+                "8": {
+                  "color": "dark-purple",
+                  "index": 6,
+                  "text": "unavailable"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 365,
+      "maxDataPoints": 150,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "perPage": 10,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by(instance, zpool, state) (\r\nmax without(state) (max_over_time(node_zfs_zpool_state{instance=~\"$instance\", zpool=~\"$pool\", state=\"online\"}[$__interval]) == 1) * 2\r\nor\r\nmax without(state) (max_over_time(node_zfs_zpool_state{instance=~\"$instance\", zpool=~\"$pool\", state=\"offline\"}[$__interval]) == 1) * 3\r\nor\r\nmax without(state) (max_over_time(node_zfs_zpool_state{instance=~\"$instance\", zpool=~\"$pool\", state=\"removed\"}[$__interval]) == 1) * 4\r\nor\r\nmax without(state) (max_over_time(node_zfs_zpool_state{instance=~\"$instance\", zpool=~\"$pool\", state=\"suspended\"}[$__interval]) == 1) * 5\r\nor\r\nmax without(state) (max_over_time(node_zfs_zpool_state{instance=~\"$instance\", zpool=~\"$pool\", state=\"degraded\"}[$__interval]) == 1) * 6\r\nor\r\nmax without(state) (max_over_time(node_zfs_zpool_state{instance=~\"$instance\", zpool=~\"$pool\", state=\"faulted\"}[$__interval]) == 1) * 7\r\nor\r\nmax without(state) (max_over_time(node_zfs_zpool_state{instance=~\"$instance\", zpool=~\"$pool\", state=\"unavail\"}[$__interval]) == 1) * 8\r\n)",
+          "format": "time_series",
+          "instant": false,
+          "legendFormat": "{{instance}}/{{zpool}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "pool state",
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-RdYlGr"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "id": 366,
+      "maxDataPoints": 500,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "perPage": 15,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "$__to / 1000 - max by(instance, zpool) (max_over_time(zfs_pool_load_time_seconds{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)",
+          "instant": false,
+          "legendFormat": "{{instance}}/{{zpool}}",
+          "range": true,
+          "refId": "created"
+        }
+      ],
+      "title": "last loaded (ago)",
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-RdYlGr"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "id": 338,
+      "maxDataPoints": 500,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "perPage": 15,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "# max_over_time to get the newest creation date in case pool with the same name was recreated\r\n# min by(pool) because we want to get the oldest dataset in a pool, which is always root dataset\r\n$__to / 1000 - min by(instance, pool) (max_over_time(zfs_dataset_creation{instance=~\"$instance\", pool=~\"$pool\"}[$__interval]))",
+          "instant": false,
+          "legendFormat": "{{instance}}/{{pool}}",
+          "range": true,
+          "refId": "created"
+        }
+      ],
+      "title": "created (ago)",
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMax": 1,
+            "axisSoftMin": 0,
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": 60000,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "sishort"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 34
+      },
+      "id": 251,
+      "maxDataPoints": 200,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Last *",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "max by(instance, pool) (avg_over_time(zfs_pool_deduplication_ratio{instance=~\"$instance\", pool=~\"$pool\"}[$__interval]))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{instance}}/{{pool}}",
+          "refId": "used"
+        }
+      ],
+      "title": "dedup ratio",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
             "mode": "palette-classic"
           },
           "custom": {
@@ -757,8 +1141,7 @@
                 "value": 0
               }
             ]
-          },
-          "unit": "ops"
+          }
         },
         "overrides": []
       },
@@ -766,7 +1149,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 9
+        "y": 34
       },
       "id": 324,
       "maxDataPoints": 100,
@@ -777,7 +1160,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Last *",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -810,57 +1195,79 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "continuous-RdYlGr"
+            "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
             "axisPlacement": "auto",
-            "fillOpacity": 70,
+            "axisSoftMax": 1,
+            "axisSoftMin": 0,
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
             "insertNulls": false,
-            "lineWidth": 0,
-            "spanNulls": false
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": 60000,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            }
           },
           "mappings": [],
-          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "red",
                 "value": 0
               }
             ]
           },
-          "unit": "s"
+          "unit": "percentunit"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
-        "w": 24,
+        "h": 9,
+        "w": 12,
         "x": 0,
-        "y": 18
+        "y": 43
       },
-      "id": 338,
-      "maxDataPoints": 500,
+      "id": 364,
+      "maxDataPoints": 200,
       "options": {
-        "alignValue": "left",
         "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Last *",
+          "sortDesc": true
         },
-        "mergeValues": true,
-        "perPage": 15,
-        "rowHeight": 0.9,
-        "showValue": "auto",
         "tooltip": {
           "hideZeros": false,
-          "mode": "single",
+          "mode": "multi",
           "sort": "none"
         }
       },
@@ -871,15 +1278,16 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "# max_over_time to get the newest creation date in case pool with the same name was recreated\r\n# min by(pool) because we want to get the oldest dataset in a pool, which is always root dataset\r\n$__to / 1000 - min by(pool) (max_over_time(zfs_dataset_creation{instance=~\"$instance\", pool=~\"$pool\"}[$__interval]))",
+          "exemplar": true,
+          "expr": "max by(instance, pool) (avg_over_time(zfs_pool_fragmentation_ratio{instance=~\"$instance\", pool=~\"$pool\"}[$__interval]))",
+          "hide": false,
           "instant": false,
-          "legendFormat": "{{pool}}",
-          "range": true,
-          "refId": "created"
+          "legendFormat": "{{instance}}/{{pool}}",
+          "refId": "used"
         }
       ],
-      "title": "created (ago)",
-      "type": "state-timeline"
+      "title": "fragmentation ratio",
+      "type": "timeseries"
     },
     {
       "collapsed": false,
@@ -887,7 +1295,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 25
+        "y": 52
       },
       "id": 328,
       "panels": [],
@@ -955,7 +1363,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 26
+        "y": 53
       },
       "id": 22,
       "maxDataPoints": 100,
@@ -966,7 +1374,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Total",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -1032,7 +1442,7 @@
             "spanNulls": 60000,
             "stacking": {
               "group": "A",
-              "mode": "normal"
+              "mode": "none"
             },
             "thresholdsStyle": {
               "mode": "line"
@@ -1056,9 +1466,10 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 35
+        "y": 62
       },
-      "id": 251,
+      "id": 363,
+      "maxDataPoints": 200,
       "options": {
         "legend": {
           "calcs": [
@@ -1066,7 +1477,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Last *",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -1089,7 +1502,7 @@
           "refId": "used"
         }
       ],
-      "title": "Space %",
+      "title": "used %",
       "type": "timeseries"
     },
     {
@@ -1154,7 +1567,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 43
+        "y": 70
       },
       "id": 325,
       "options": {
@@ -1164,7 +1577,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Last *",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -1187,7 +1602,7 @@
           "refId": "used"
         }
       ],
-      "title": "Used",
+      "title": "used bytes",
       "type": "timeseries"
     },
     {
@@ -1252,7 +1667,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 43
+        "y": 70
       },
       "id": 329,
       "options": {
@@ -1262,7 +1677,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Last *",
+          "sortDesc": false
         },
         "tooltip": {
           "hideZeros": false,
@@ -1285,7 +1702,7 @@
           "refId": "free"
         }
       ],
-      "title": "Free",
+      "title": "free bytes",
       "type": "timeseries"
     },
     {
@@ -1294,7 +1711,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 52
+        "y": 79
       },
       "id": 330,
       "panels": [],
@@ -1363,7 +1780,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 53
+        "y": 80
       },
       "id": 16,
       "maxDataPoints": 100,
@@ -1374,7 +1791,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -1461,7 +1880,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 53
+        "y": 80
       },
       "id": 331,
       "maxDataPoints": 100,
@@ -1472,7 +1891,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -1558,7 +1979,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 61
+        "y": 88
       },
       "id": 326,
       "maxDataPoints": 100,
@@ -1569,7 +1990,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -1656,7 +2079,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 61
+        "y": 88
       },
       "id": 333,
       "maxDataPoints": 100,
@@ -1667,7 +2090,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -1753,7 +2178,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 69
+        "y": 96
       },
       "id": 362,
       "maxDataPoints": 100,
@@ -1764,7 +2189,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -1795,7 +2222,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 77
+        "y": 104
       },
       "id": 334,
       "panels": [],
@@ -1864,7 +2291,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 78
+        "y": 105
       },
       "id": 323,
       "maxDataPoints": 100,
@@ -1875,7 +2302,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -1963,7 +2392,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 78
+        "y": 105
       },
       "id": 335,
       "maxDataPoints": 100,
@@ -1974,7 +2403,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -2060,7 +2491,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 86
+        "y": 113
       },
       "id": 327,
       "maxDataPoints": 100,
@@ -2071,7 +2502,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -2159,7 +2592,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 86
+        "y": 113
       },
       "id": 336,
       "maxDataPoints": 100,
@@ -2170,7 +2603,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -2200,7 +2635,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 94
+        "y": 121
       },
       "id": 357,
       "panels": [],
@@ -2235,7 +2670,7 @@
                 "0": {
                   "color": "red",
                   "index": 0,
-                  "text": "never run"
+                  "text": "never started"
                 },
                 "1": {
                   "color": "purple",
@@ -2277,7 +2712,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 95
+        "y": 122
       },
       "id": 356,
       "maxDataPoints": 500,
@@ -2313,165 +2748,6 @@
         }
       ],
       "title": "trim state",
-      "type": "state-timeline"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "description": "size of the relevant data in the pool when scan was started",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "continuous-RdYlGr"
-          },
-          "custom": {
-            "axisPlacement": "auto",
-            "fillOpacity": 70,
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineWidth": 0,
-            "spanNulls": false
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "bytes"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 95
-      },
-      "id": 358,
-      "maxDataPoints": 500,
-      "options": {
-        "alignValue": "left",
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false
-        },
-        "mergeValues": true,
-        "perPage": 10,
-        "rowHeight": 0.9,
-        "showValue": "auto",
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "sum by(instance, zpool) (max_over_time(zfs_vdev_trim_estimated_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)",
-          "instant": false,
-          "legendFormat": "{{instance}}/{{zpool}}",
-          "range": true,
-          "refId": "created"
-        }
-      ],
-      "title": "trim estimated",
-      "type": "state-timeline"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "continuous-GrYlRd"
-          },
-          "custom": {
-            "axisPlacement": "auto",
-            "fillOpacity": 70,
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineWidth": 0,
-            "spanNulls": false
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "s"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 103
-      },
-      "id": 355,
-      "maxDataPoints": 500,
-      "options": {
-        "alignValue": "left",
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false
-        },
-        "mergeValues": true,
-        "perPage": 15,
-        "rowHeight": 0.9,
-        "showValue": "auto",
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "$__to / 1000 - max by(instance, zpool) (max_over_time(zfs_vdev_trim_action_time{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)",
-          "instant": false,
-          "legendFormat": "{{instance}}/{{zpool}}",
-          "range": true,
-          "refId": "created"
-        }
-      ],
-      "title": "trim start time (ago)",
       "type": "state-timeline"
     },
     {
@@ -2535,7 +2811,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 103
+        "y": 122
       },
       "id": 359,
       "maxDataPoints": 100,
@@ -2546,7 +2822,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -2570,6 +2848,85 @@
       ],
       "title": "trim processed bytes rate",
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 130
+      },
+      "id": 355,
+      "maxDataPoints": 500,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "perPage": 15,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "$__to / 1000 - max by(instance, zpool) (max_over_time(zfs_vdev_trim_action_time{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)",
+          "instant": false,
+          "legendFormat": "{{instance}}/{{zpool}}",
+          "range": true,
+          "refId": "created"
+        }
+      ],
+      "title": "trim start time (ago)",
+      "type": "state-timeline"
     },
     {
       "datasource": {
@@ -2631,10 +2988,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 9,
+        "h": 8,
         "w": 12,
-        "x": 0,
-        "y": 111
+        "x": 12,
+        "y": 130
       },
       "id": 353,
       "maxDataPoints": 100,
@@ -2645,7 +3002,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Last *",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -2660,7 +3019,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "min by (instance, zpool) (\r\navg_over_time(zfs_vdev_trim_processed_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])\r\n/\r\nmax_over_time(zfs_vdev_trim_estimated_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])\r\n)",
+          "expr": "min by (instance, zpool) (\r\navg_over_time(zfs_vdev_trim_processed_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])\r\n/\r\n(max_over_time(zfs_vdev_trim_estimated_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)\r\n)",
           "hide": false,
           "legendFormat": "{{instance}}/{{zpool}}",
           "range": true,
@@ -2669,6 +3028,86 @@
       ],
       "title": "trim: completed %",
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "size of the relevant data in the pool when scan was started",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-RdYlGr"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 138
+      },
+      "id": 358,
+      "maxDataPoints": 500,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "perPage": 10,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(instance, zpool) (max_over_time(zfs_vdev_trim_estimated_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)",
+          "instant": false,
+          "legendFormat": "{{instance}}/{{zpool}}",
+          "range": true,
+          "refId": "created"
+        }
+      ],
+      "title": "trim estimated",
+      "type": "state-timeline"
     },
     {
       "datasource": {
@@ -2705,8 +3144,8 @@
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "never",
-            "spanNulls": 120000,
+            "showPoints": "auto",
+            "spanNulls": false,
             "stacking": {
               "group": "A",
               "mode": "none"
@@ -2730,10 +3169,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
+        "h": 8,
         "w": 12,
-        "x": 0,
-        "y": 120
+        "x": 12,
+        "y": 138
       },
       "id": 360,
       "maxDataPoints": 100,
@@ -2744,7 +3183,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Last *",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -2775,7 +3216,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 127
+        "y": 146
       },
       "id": 340,
       "panels": [],
@@ -2861,7 +3302,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 128
+        "y": 147
       },
       "id": 346,
       "maxDataPoints": 500,
@@ -2907,7 +3348,7 @@
         "h": 9,
         "w": 2,
         "x": 12,
-        "y": 128
+        "y": 147
       },
       "id": 349,
       "options": {
@@ -2983,7 +3424,7 @@
         "h": 9,
         "w": 10,
         "x": 14,
-        "y": 128
+        "y": 147
       },
       "id": 341,
       "maxDataPoints": 100,
@@ -2994,7 +3435,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Last *",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -3061,7 +3504,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 137
+        "y": 156
       },
       "id": 342,
       "maxDataPoints": 500,
@@ -3160,7 +3603,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 137
+        "y": 156
       },
       "id": 339,
       "maxDataPoints": 100,
@@ -3171,7 +3614,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -3237,7 +3682,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 146
+        "y": 165
       },
       "id": 344,
       "maxDataPoints": 500,
@@ -3337,7 +3782,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 146
+        "y": 165
       },
       "id": 343,
       "maxDataPoints": 100,
@@ -3348,7 +3793,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -3414,7 +3861,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 155
+        "y": 174
       },
       "id": 345,
       "maxDataPoints": 500,
@@ -3493,7 +3940,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 155
+        "y": 174
       },
       "id": 350,
       "maxDataPoints": 500,
@@ -3592,7 +4039,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 164
+        "y": 183
       },
       "id": 348,
       "maxDataPoints": 100,
@@ -3603,7 +4050,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -3689,7 +4138,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 164
+        "y": 183
       },
       "id": 351,
       "maxDataPoints": 100,
@@ -3700,7 +4149,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -3786,7 +4237,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 173
+        "y": 192
       },
       "id": 332,
       "maxDataPoints": 100,
@@ -3797,7 +4248,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -3883,7 +4336,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 173
+        "y": 192
       },
       "id": 352,
       "maxDataPoints": 100,
@@ -3894,7 +4347,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -3982,7 +4437,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 182
+        "y": 201
       },
       "id": 361,
       "maxDataPoints": 100,
@@ -3993,7 +4448,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Last *",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -4053,8 +4510,8 @@
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "never",
-            "spanNulls": 120000,
+            "showPoints": "auto",
+            "spanNulls": false,
             "stacking": {
               "group": "A",
               "mode": "none"
@@ -4081,7 +4538,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 191
+        "y": 210
       },
       "id": 354,
       "maxDataPoints": 100,
@@ -4092,7 +4549,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Last *",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,

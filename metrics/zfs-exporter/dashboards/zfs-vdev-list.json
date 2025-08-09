@@ -245,7 +245,7 @@
         ]
       },
       "gridPos": {
-        "h": 7,
+        "h": 10,
         "w": 13,
         "x": 1,
         "y": 1
@@ -371,20 +371,21 @@
               "__name__": true,
               "cluster": true,
               "cluster_type": true,
-              "instance": true,
+              "instance": false,
               "job": true
             },
             "includeByName": {},
             "indexByName": {
               "Time": 0,
-              "Value #errors": 7,
-              "Value #load_time": 4,
-              "Value #loaded_ago": 5,
-              "Value #size": 2,
-              "Value #state": 8,
-              "Value #vdevs": 6,
-              "state": 3,
-              "zpool": 1
+              "Value #errors": 8,
+              "Value #load_time": 5,
+              "Value #loaded_ago": 6,
+              "Value #size": 3,
+              "Value #state": 9,
+              "Value #vdevs": 7,
+              "instance": 1,
+              "state": 4,
+              "zpool": 2
             },
             "renameByName": {
               "Value #A": "",
@@ -409,9 +410,9 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
-        "w": 8,
-        "x": 14,
+        "h": 10,
+        "w": 6,
+        "x": 15,
         "y": 1
       },
       "id": 18,
@@ -426,6 +427,125 @@
       },
       "title": "Notes",
       "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "2": {
+                  "color": "green",
+                  "index": 0,
+                  "text": "online"
+                },
+                "3": {
+                  "color": "blue",
+                  "index": 1,
+                  "text": "offline"
+                },
+                "4": {
+                  "color": "purple",
+                  "index": 2,
+                  "text": "removed"
+                },
+                "5": {
+                  "color": "yellow",
+                  "index": 3,
+                  "text": "suspended"
+                },
+                "6": {
+                  "color": "orange",
+                  "index": 4,
+                  "text": "degraded"
+                },
+                "7": {
+                  "color": "red",
+                  "index": 5,
+                  "text": "faulted"
+                },
+                "8": {
+                  "color": "dark-purple",
+                  "index": 6,
+                  "text": "unavailable"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 21,
+        "x": 1,
+        "y": 11
+      },
+      "id": 25,
+      "maxDataPoints": 150,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "perPage": 10,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by(instance, zpool, state) (\r\nmax without(state) (max_over_time(node_zfs_zpool_state{instance=~\"$instance\", zpool=~\"$pool\", state=\"online\"}[$__interval]) == 1) * 2\r\nor\r\nmax without(state) (max_over_time(node_zfs_zpool_state{instance=~\"$instance\", zpool=~\"$pool\", state=\"offline\"}[$__interval]) == 1) * 3\r\nor\r\nmax without(state) (max_over_time(node_zfs_zpool_state{instance=~\"$instance\", zpool=~\"$pool\", state=\"removed\"}[$__interval]) == 1) * 4\r\nor\r\nmax without(state) (max_over_time(node_zfs_zpool_state{instance=~\"$instance\", zpool=~\"$pool\", state=\"suspended\"}[$__interval]) == 1) * 5\r\nor\r\nmax without(state) (max_over_time(node_zfs_zpool_state{instance=~\"$instance\", zpool=~\"$pool\", state=\"degraded\"}[$__interval]) == 1) * 6\r\nor\r\nmax without(state) (max_over_time(node_zfs_zpool_state{instance=~\"$instance\", zpool=~\"$pool\", state=\"faulted\"}[$__interval]) == 1) * 7\r\nor\r\nmax without(state) (max_over_time(node_zfs_zpool_state{instance=~\"$instance\", zpool=~\"$pool\", state=\"unavail\"}[$__interval]) == 1) * 8\r\n)",
+          "format": "time_series",
+          "instant": false,
+          "legendFormat": "{{instance}}/{{zpool}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "pool state",
+      "type": "state-timeline"
     },
     {
       "datasource": {
@@ -747,7 +867,7 @@
         "h": 13,
         "w": 21,
         "x": 1,
-        "y": 8
+        "y": 19
       },
       "id": 1,
       "options": {
@@ -806,7 +926,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(instance, zpool, vdev) (zfs_vdev_space_allocated_bytes{instance=~\"$instance\", zpool=~\"$pool\", path=\"\", vdev=~\"$vdev\"} / zfs_vdev_space_capacity_bytes)",
+          "expr": "max by(instance, zpool, vdev) (\r\nzfs_vdev_space_allocated_bytes{instance=~\"$instance\", zpool=~\"$pool\", path=\"\", vdev=~\"$vdev\"}\r\n/\r\n(zfs_vdev_space_capacity_bytes{instance=~\"$instance\", zpool=~\"$pool\", path=\"\", vdev=~\"$vdev\"} != 0)\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -1092,9 +1212,9 @@
         "h": 11,
         "w": 21,
         "x": 1,
-        "y": 21
+        "y": 32
       },
-      "id": 19,
+      "id": 24,
       "maxDataPoints": 150,
       "options": {
         "alignValue": "left",
@@ -1401,7 +1521,7 @@
         "h": 19,
         "w": 21,
         "x": 1,
-        "y": 32
+        "y": 43
       },
       "id": 2,
       "options": {
@@ -1697,7 +1817,7 @@
         "h": 11,
         "w": 21,
         "x": 1,
-        "y": 51
+        "y": 62
       },
       "id": 20,
       "maxDataPoints": 150,
@@ -1741,7 +1861,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 62
+        "y": 73
       },
       "id": 11,
       "panels": [],
@@ -1810,7 +1930,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 63
+        "y": 74
       },
       "id": 4,
       "maxDataPoints": 100,
@@ -1910,7 +2030,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 63
+        "y": 74
       },
       "id": 5,
       "maxDataPoints": 100,
@@ -2010,7 +2130,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 71
+        "y": 82
       },
       "id": 8,
       "maxDataPoints": 100,
@@ -2110,7 +2230,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 71
+        "y": 82
       },
       "id": 9,
       "maxDataPoints": 100,
@@ -2211,7 +2331,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 79
+        "y": 90
       },
       "id": 16,
       "maxDataPoints": 100,
@@ -2313,7 +2433,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 79
+        "y": 90
       },
       "id": 7,
       "maxDataPoints": 100,
@@ -2415,7 +2535,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 87
+        "y": 98
       },
       "id": 6,
       "maxDataPoints": 100,
@@ -2517,7 +2637,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 87
+        "y": 98
       },
       "id": 17,
       "maxDataPoints": 100,
@@ -2561,91 +2681,12 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 95
+        "y": 106
       },
       "id": 12,
       "panels": [],
       "title": "trim",
       "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "continuous-GrYlRd"
-          },
-          "custom": {
-            "axisPlacement": "auto",
-            "fillOpacity": 70,
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineWidth": 0,
-            "spanNulls": false
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "s"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 2,
-        "y": 96
-      },
-      "id": 23,
-      "maxDataPoints": 500,
-      "options": {
-        "alignValue": "left",
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false
-        },
-        "mergeValues": true,
-        "perPage": 15,
-        "rowHeight": 0.9,
-        "showValue": "auto",
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "$__to / 1000 - max by(instance, zpool, vdev) (max_over_time(zfs_vdev_trim_action_time{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)",
-          "instant": false,
-          "legendFormat": "{{zpool}}/{{vdev}}",
-          "range": true,
-          "refId": "created"
-        }
-      ],
-      "title": "trim start time (ago)",
-      "type": "state-timeline"
     },
     {
       "datasource": {
@@ -2675,7 +2716,7 @@
                 "0": {
                   "color": "red",
                   "index": 0,
-                  "text": "never run"
+                  "text": "never started"
                 },
                 "1": {
                   "color": "purple",
@@ -2714,10 +2755,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 9,
-        "w": 12,
+        "h": 11,
+        "w": 24,
         "x": 0,
-        "y": 104
+        "y": 107
       },
       "id": 21,
       "maxDataPoints": 500,
@@ -2763,103 +2804,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic-by-name"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "binBps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 12,
-        "y": 104
-      },
-      "id": 15,
-      "maxDataPoints": 100,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "max by(instance, zpool, vdev, path) (label_replace(rate(zfs_vdev_scan_processed_bytes{instance=~\"$instance\", zpool=~\"$pool\", path!=\"\", vdev=~\"$vdev\", path=~\"$disk\"}[$__rate_interval]), \"path\", \"$1\", \"path\", \".*/([^/]*)\"))",
-          "instant": false,
-          "legendFormat": "{{zpool}}/{{vdev}}/{{path}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "scan: repaired bytes rate",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "description": "size of the relevant data in the pool when scan was started",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "continuous-RdYlGr"
+            "mode": "continuous-GrYlRd"
           },
           "custom": {
             "axisPlacement": "auto",
@@ -2884,7 +2829,7 @@
               }
             ]
           },
-          "unit": "bytes"
+          "unit": "s"
         },
         "overrides": []
       },
@@ -2892,9 +2837,9 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 113
+        "y": 118
       },
-      "id": 22,
+      "id": 23,
       "maxDataPoints": 500,
       "options": {
         "alignValue": "left",
@@ -2904,7 +2849,7 @@
           "showLegend": false
         },
         "mergeValues": true,
-        "perPage": 10,
+        "perPage": 15,
         "rowHeight": 0.9,
         "showValue": "auto",
         "tooltip": {
@@ -2920,14 +2865,14 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(zpool, vdev, path) (max_over_time(zfs_vdev_trim_estimated_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)",
+          "expr": "$__to / 1000 - max by(instance, zpool, vdev) (max_over_time(zfs_vdev_trim_action_time{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)",
           "instant": false,
-          "legendFormat": "{{zpool}}/{{vdev}}/{{path}}",
+          "legendFormat": "{{zpool}}/{{vdev}}",
           "range": true,
           "refId": "created"
         }
       ],
-      "title": "trim estimated",
+      "title": "trim start time (ago)",
       "type": "state-timeline"
     },
     {
@@ -2991,7 +2936,182 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 113
+        "y": 118
+      },
+      "id": 15,
+      "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by(instance, zpool, vdev, path) (label_replace(rate(zfs_vdev_scan_processed_bytes{instance=~\"$instance\", zpool=~\"$pool\", path!=\"\", vdev=~\"$vdev\", path=~\"$disk\"}[$__rate_interval]), \"path\", \"$1\", \"path\", \".*/([^/]*)\"))",
+          "instant": false,
+          "legendFormat": "{{zpool}}/{{vdev}}/{{path}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "scan: repaired bytes rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-RdYlGr"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 127
+      },
+      "id": 22,
+      "maxDataPoints": 500,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "perPage": 10,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by(zpool, vdev, path) (max_over_time(zfs_vdev_trim_estimated_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)",
+          "instant": false,
+          "legendFormat": "{{zpool}}/{{vdev}}/{{path}}",
+          "range": true,
+          "refId": "created"
+        }
+      ],
+      "title": "trim estimated size",
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic-by-name"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "binBps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 127
       },
       "id": 13,
       "maxDataPoints": 100,
