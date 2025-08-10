@@ -2671,7 +2671,7 @@
                 "0": {
                   "color": "red",
                   "index": 0,
-                  "text": "never started"
+                  "text": "never trimmed"
                 },
                 "1": {
                   "color": "purple",
@@ -2692,6 +2692,11 @@
                   "color": "green",
                   "index": 4,
                   "text": "completed"
+                },
+                "10": {
+                  "color": "text",
+                  "index": 5,
+                  "text": "unsupported"
                 }
               },
               "type": "value"
@@ -2741,7 +2746,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "min by(instance, zpool) (\r\nmin_over_time(zfs_vdev_trim_state{instance=~\"$instance\", zpool=~\"$pool\", path!=\"\"}[$__interval])\r\nand\r\n(min_over_time(zfs_vdev_trim_unsupported{instance=~\"$instance\", zpool=~\"$pool\", path!=\"\"}[$__interval]) == 0)\r\n)",
+          "expr": "min by(instance, zpool) (\r\nmin_over_time(zfs_vdev_trim_state{instance=~\"$instance\", zpool=~\"$pool\", path!=\"\"}[$__interval])\r\nand\r\n(min_over_time(zfs_vdev_trim_unsupported{instance=~\"$instance\", zpool=~\"$pool\", path!=\"\"}[$__interval]) == 0)\r\nor\r\n(min_over_time(zfs_vdev_trim_unsupported{instance=~\"$instance\", zpool=~\"$pool\", path!=\"\"}[$__interval]) == 1) * 10\r\n)",
           "instant": false,
           "legendFormat": "{{instance}}/{{zpool}}",
           "range": true,
@@ -3224,12 +3229,111 @@
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 5,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": 120000,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 146
+      },
+      "id": 371,
+      "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Last *",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(instance, zpool) (max_over_time(zfs_vdev_trim_errors{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]))",
+          "hide": false,
+          "legendFormat": "{{instance}}/{{zpool}}",
+          "range": true,
+          "refId": "scan_errors"
+        }
+      ],
+      "title": "trim errors",
+      "type": "timeseries"
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 146
+        "y": 154
       },
       "id": 340,
       "panels": [],
@@ -3299,6 +3403,11 @@
                   "color": "blue",
                   "index": 7,
                   "text": "paused"
+                },
+                "30": {
+                  "color": "red",
+                  "index": 8,
+                  "text": "never scanned"
                 }
               },
               "type": "value"
@@ -3320,7 +3429,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 147
+        "y": 155
       },
       "id": 346,
       "maxDataPoints": 500,
@@ -3347,7 +3456,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "min by(instance, zpool) (min_over_time(zfs_pool_scan_state{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) > 1)\r\nor\r\n(\r\ngroup by(instance, zpool) (max_over_time(zfs_pool_scan_scrub_pause{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0) + 20\r\n)\r\nor\r\n(\r\nmin by(instance, zpool) (min_over_time(zfs_pool_scan_func{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])) + 10\r\nand\r\nmin by(instance, zpool) (min_over_time(zfs_pool_scan_state{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])) <= 1\r\n)",
+          "expr": "min by(instance, zpool) (min_over_time(zfs_pool_scan_state{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) > 1)\r\nor\r\n(\r\ngroup by(instance, zpool) (max_over_time(zfs_pool_scan_scrub_pause{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0) + 20\r\n)\r\nor\r\n(\r\nmin by(instance, zpool) (min_over_time(zfs_pool_scan_func{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])) + 10\r\nand\r\nmin by(instance, zpool) (min_over_time(zfs_pool_scan_state{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])) <= 1\r\n)\r\nor\r\ngroup by(instance, zpool) (min_over_time(zfs_pool_config_txg{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])) * 30",
           "instant": false,
           "legendFormat": "{{instance}}/{{zpool}}",
           "range": true,
@@ -3366,7 +3475,7 @@
         "h": 9,
         "w": 2,
         "x": 12,
-        "y": 147
+        "y": 155
       },
       "id": 349,
       "options": {
@@ -3442,7 +3551,7 @@
         "h": 9,
         "w": 10,
         "x": 14,
-        "y": 147
+        "y": 155
       },
       "id": 341,
       "maxDataPoints": 100,
@@ -3522,7 +3631,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 156
+        "y": 164
       },
       "id": 342,
       "maxDataPoints": 500,
@@ -3621,7 +3730,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 156
+        "y": 164
       },
       "id": 339,
       "maxDataPoints": 100,
@@ -3700,7 +3809,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 165
+        "y": 173
       },
       "id": 344,
       "maxDataPoints": 500,
@@ -3800,7 +3909,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 165
+        "y": 173
       },
       "id": 343,
       "maxDataPoints": 100,
@@ -3879,7 +3988,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 174
+        "y": 182
       },
       "id": 345,
       "maxDataPoints": 500,
@@ -3958,7 +4067,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 174
+        "y": 182
       },
       "id": 350,
       "maxDataPoints": 500,
@@ -4057,7 +4166,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 183
+        "y": 191
       },
       "id": 332,
       "maxDataPoints": 100,
@@ -4156,7 +4265,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 183
+        "y": 191
       },
       "id": 352,
       "maxDataPoints": 100,
@@ -4257,7 +4366,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 192
+        "y": 200
       },
       "id": 369,
       "maxDataPoints": 100,
@@ -4358,7 +4467,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 192
+        "y": 200
       },
       "id": 361,
       "maxDataPoints": 100,
@@ -4457,7 +4566,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 201
+        "y": 209
       },
       "id": 348,
       "maxDataPoints": 100,
@@ -4556,7 +4665,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 201
+        "y": 209
       },
       "id": 351,
       "maxDataPoints": 100,
@@ -4657,7 +4766,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 210
+        "y": 218
       },
       "id": 368,
       "maxDataPoints": 100,
@@ -4758,7 +4867,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 210
+        "y": 218
       },
       "id": 370,
       "maxDataPoints": 100,
@@ -4859,7 +4968,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 219
+        "y": 227
       },
       "id": 354,
       "maxDataPoints": 100,
@@ -4972,7 +5081,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 219
+        "y": 227
       },
       "id": 367,
       "maxDataPoints": 100,
