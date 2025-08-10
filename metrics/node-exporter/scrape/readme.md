@@ -30,18 +30,19 @@ After=network-online.target
 
 [Service]
 User=node_exporter
-ExecStart=/usr/local/bin/node_exporter \
-  --collector.diskstats.device-exclude='^(loop.*)$' \
-  --collector.netdev.device-exclude='^(fwbr.*|fwln.*|fwpr.*|tap.*|veth.*)$' \
-  --collector.netclass.ignore-invalid-speed \
-  --collector.netdev.address-info \
-  --no-collector.netstat \
-  --no-collector.nfsd \
-  --no-collector.sockstat \
-  --no-collector.softnet \
-  --no-collector.udp_queues \
-  --no-collector.infiniband \
-  --web.listen-address=:9100 \
+ExecStart=/usr/local/bin/node_exporter \\
+  --collector.diskstats.device-exclude='^(loop.*)$' \\
+  --collector.netdev.device-exclude='^(fwbr.*|fwln.*|fwpr.*|tap.*|veth.*)$' \\
+  --collector.netclass.ignore-invalid-speed \\
+  --collector.netdev.address-info \\
+  --collector.textfile.directory=/tmp/node-exporter-textfile/ \\
+  --no-collector.netstat \\
+  --no-collector.nfsd \\
+  --no-collector.sockstat \\
+  --no-collector.softnet \\
+  --no-collector.udp_queues \\
+  --no-collector.infiniband \\
+  --web.listen-address=:9100 \\
   --web.disable-exporter-metrics
 
 [Install]
