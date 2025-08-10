@@ -12,8 +12,134 @@ spec:
   - name: record-node-cpu
     rules:
     - record: node:cpu_cores
-      expr: |-
-        count without(cpu) (count without(mode) (node_cpu_seconds_total))
+      expr: count without(cpu) (count without(mode) (node_cpu_seconds_total))
     - record: instance_mode:node_cpu_seconds:irate
-      expr: |-
-        sum without(cpu) (irate(node_cpu_seconds_total[30s]))
+      expr: sum without(cpu) (irate(node_cpu_seconds_total[20s]))
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: record-node-disk-irate
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  groups:
+  - name: record-node-disk-irate
+    rules:
+    # :irate allows further analysis X_over_time on rate-based metric,
+    # and we also enrich metrics with identifying info
+    - record: node_disk_discard_time_seconds:irate
+      expr: irate(node_disk_discard_time_seconds_total[20s]) * on(instance, device) group_left(model, serial, wwn) node_disk_info{}
+    - record: node_disk_discarded_sectors:irate
+      expr: irate(node_disk_discarded_sectors_total[20s]) * on(instance, device) group_left(model, serial, wwn) node_disk_info{}
+    - record: node_disk_discards_completed:irate
+      expr: irate(node_disk_discards_completed_total[20s]) * on(instance, device) group_left(model, serial, wwn) node_disk_info{}
+    - record: node_disk_discards_merged:irate
+      expr: irate(node_disk_discards_merged_total[20s]) * on(instance, device) group_left(model, serial, wwn) node_disk_info{}
+    - record: node_disk_flush_requests_time_seconds:irate
+      expr: irate(node_disk_flush_requests_time_seconds_total[20s]) * on(instance, device) group_left(model, serial, wwn) node_disk_info{}
+    - record: node_disk_flush_requests:irate
+      expr: irate(node_disk_flush_requests_total[20s]) * on(instance, device) group_left(model, serial, wwn) node_disk_info{}
+    - record: node_disk_io_time_seconds:irate
+      expr: irate(node_disk_io_time_seconds_total[20s]) * on(instance, device) group_left(model, serial, wwn) node_disk_info{}
+    - record: node_disk_io_time_weighted_seconds:irate
+      expr: irate(node_disk_io_time_weighted_seconds_total[20s]) * on(instance, device) group_left(model, serial, wwn) node_disk_info{}
+    - record: node_disk_read_bytes:irate
+      expr: irate(node_disk_read_bytes_total[20s]) * on(instance, device) group_left(model, serial, wwn) node_disk_info{}
+    - record: node_disk_read_time_seconds:irate
+      expr: irate(node_disk_read_time_seconds_total[20s]) * on(instance, device) group_left(model, serial, wwn) node_disk_info{}
+    - record: node_disk_reads_completed:irate
+      expr: irate(node_disk_reads_completed_total[20s]) * on(instance, device) group_left(model, serial, wwn) node_disk_info{}
+    - record: node_disk_reads_merged:irate
+      expr: irate(node_disk_reads_merged_total[20s]) * on(instance, device) group_left(model, serial, wwn) node_disk_info{}
+    - record: node_disk_write_time_seconds:irate
+      expr: irate(node_disk_write_time_seconds_total[20s]) * on(instance, device) group_left(model, serial, wwn) node_disk_info{}
+    - record: node_disk_writes_completed:irate
+      expr: irate(node_disk_writes_completed_total[20s]) * on(instance, device) group_left(model, serial, wwn) node_disk_info{}
+    - record: node_disk_writes_merged:irate
+      expr: irate(node_disk_writes_merged_total[20s]) * on(instance, device) group_left(model, serial, wwn) node_disk_info{}
+    - record: node_disk_written_bytes:irate
+      expr: irate(node_disk_written_bytes_total[20s]) * on(instance, device) group_left(model, serial, wwn) node_disk_info{}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: record-node-disk-irate-quantile
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  groups:
+  - name: record-node-disk-irate-quantile
+    rules:
+    # percentile 50
+    # we add "quantile(x) and x" to remove series that no longer exist
+    # or else this recording rules will exist for additional 1 hour after disk is deleted from metrics
+    - record: node_disk_discard_time_seconds:p50_1h_irate
+      expr: quantile_over_time(0.50, node_disk_discard_time_seconds:irate[1h]) and node_disk_discard_time_seconds:irate
+    - record: node_disk_discarded_sectors:p50_1h_irate
+      expr: quantile_over_time(0.50, node_disk_discarded_sectors:irate[1h]) and node_disk_discarded_sectors:irate
+    - record: node_disk_discards_completed:p50_1h_irate
+      expr: quantile_over_time(0.50, node_disk_discards_completed:irate[1h]) and node_disk_discards_completed:irate
+    - record: node_disk_discards_merged:p50_1h_irate
+      expr: quantile_over_time(0.50, node_disk_discards_merged:irate[1h]) and node_disk_discards_merged:irate
+    - record: node_disk_flush_requests_time_seconds:p50_1h_irate
+      expr: quantile_over_time(0.50, node_disk_flush_requests_time_seconds:irate[1h]) and node_disk_flush_requests_time_seconds:irate
+    - record: node_disk_flush_requests:p50_1h_irate
+      expr: quantile_over_time(0.50, node_disk_flush_requests:irate[1h]) and node_disk_flush_requests:irate
+    - record: node_disk_io_time_seconds:p50_1h_irate
+      expr: quantile_over_time(0.50, node_disk_io_time_seconds:irate[1h]) and node_disk_io_time_seconds:irate
+    - record: node_disk_io_time_weighted_seconds:p50_1h_irate
+      expr: quantile_over_time(0.50, node_disk_io_time_weighted_seconds:irate[1h]) and node_disk_io_time_weighted_seconds:irate
+    - record: node_disk_read_bytes:p50_1h_irate
+      expr: quantile_over_time(0.50, node_disk_read_bytes:irate[1h]) and node_disk_read_bytes:irate
+    - record: node_disk_read_time_seconds:p50_1h_irate
+      expr: quantile_over_time(0.50, node_disk_read_time_seconds:irate[1h]) and node_disk_read_time_seconds:irate
+    - record: node_disk_reads_completed:p50_1h_irate
+      expr: quantile_over_time(0.50, node_disk_reads_completed:irate[1h]) and node_disk_reads_completed:irate
+    - record: node_disk_reads_merged:p50_1h_irate
+      expr: quantile_over_time(0.50, node_disk_reads_merged:irate[1h]) and node_disk_reads_merged:irate
+    - record: node_disk_write_time_seconds:p50_1h_irate
+      expr: quantile_over_time(0.50, node_disk_write_time_seconds:irate[1h]) and node_disk_write_time_seconds:irate
+    - record: node_disk_writes_completed:p50_1h_irate
+      expr: quantile_over_time(0.50, node_disk_writes_completed:irate[1h]) and node_disk_writes_completed:irate
+    - record: node_disk_writes_merged:p50_1h_irate
+      expr: quantile_over_time(0.50, node_disk_writes_merged:irate[1h]) and node_disk_writes_merged:irate
+    - record: node_disk_written_bytes:p50_1h_irate
+      expr: quantile_over_time(0.50, node_disk_written_bytes:irate[1h]) and node_disk_written_bytes:irate
+    # percentile 95
+    - record: node_disk_discard_time_seconds:p95_1h_irate
+      expr: quantile_over_time(0.95, node_disk_discard_time_seconds:irate[1h]) and node_disk_discard_time_seconds:irate
+    - record: node_disk_discarded_sectors:p95_1h_irate
+      expr: quantile_over_time(0.95, node_disk_discarded_sectors:irate[1h]) and node_disk_discarded_sectors:irate
+    - record: node_disk_discards_completed:p95_1h_irate
+      expr: quantile_over_time(0.95, node_disk_discards_completed:irate[1h]) and node_disk_discards_completed:irate
+    - record: node_disk_discards_merged:p95_1h_irate
+      expr: quantile_over_time(0.95, node_disk_discards_merged:irate[1h]) and node_disk_discards_merged:irate
+    - record: node_disk_flush_requests_time_seconds:p95_1h_irate
+      expr: quantile_over_time(0.95, node_disk_flush_requests_time_seconds:irate[1h]) and node_disk_flush_requests_time_seconds:irate
+    - record: node_disk_flush_requests:p95_1h_irate
+      expr: quantile_over_time(0.95, node_disk_flush_requests:irate[1h]) and node_disk_flush_requests:irate
+    - record: node_disk_io_time_seconds:p95_1h_irate
+      expr: quantile_over_time(0.95, node_disk_io_time_seconds:irate[1h]) and node_disk_io_time_seconds:irate
+    - record: node_disk_io_time_weighted_seconds:p95_1h_irate
+      expr: quantile_over_time(0.95, node_disk_io_time_weighted_seconds:irate[1h]) and node_disk_io_time_weighted_seconds:irate
+    - record: node_disk_read_bytes:p95_1h_irate
+      expr: quantile_over_time(0.95, node_disk_read_bytes:irate[1h]) and node_disk_read_bytes:irate
+    - record: node_disk_read_time_seconds:p95_1h_irate
+      expr: quantile_over_time(0.95, node_disk_read_time_seconds:irate[1h]) and node_disk_read_time_seconds:irate
+    - record: node_disk_reads_completed:p95_1h_irate
+      expr: quantile_over_time(0.95, node_disk_reads_completed:irate[1h]) and node_disk_reads_completed:irate
+    - record: node_disk_reads_merged:p95_1h_irate
+      expr: quantile_over_time(0.95, node_disk_reads_merged:irate[1h]) and node_disk_reads_merged:irate
+    - record: node_disk_write_time_seconds:p95_1h_irate
+      expr: quantile_over_time(0.95, node_disk_write_time_seconds:irate[1h]) and node_disk_write_time_seconds:irate
+    - record: node_disk_writes_completed:p95_1h_irate
+      expr: quantile_over_time(0.95, node_disk_writes_completed:irate[1h]) and node_disk_writes_completed:irate
+    - record: node_disk_writes_merged:p95_1h_irate
+      expr: quantile_over_time(0.95, node_disk_writes_merged:irate[1h]) and node_disk_writes_merged:irate
+    - record: node_disk_written_bytes:p95_1h_irate
+      expr: quantile_over_time(0.95, node_disk_written_bytes:irate[1h]) and node_disk_written_bytes:irate

@@ -9,7 +9,7 @@
  sed -i '/\"pluginVersion\":/d' ./metrics/opnsense-exporter/dashboards/*.json
  # avoid id collisions
  sed -i 's/^  \"id\": .*,/  \"id\": null,/' ./metrics/opnsense-exporter/dashboards/*.json
- sed -i 's/^  \"refresh\": \".*s\",/  \"refresh\": \"auto\",/' ./metrics/opnsense-exporter/dashboards/*.json
+ sed -i 's/^  \"refresh\": \".*[sm]\",/  \"refresh\": \"auto\",/' ./metrics/opnsense-exporter/dashboards/*.json
  # remove local variable values
  sed -i '/        \"current\": {\\n/,/        }\,/d' ./metrics/opnsense-exporter/dashboards/*.json
  sed -i 's/^  \"timezone\": \".*\",/  \"timezone\": \"browser\",/' ./metrics/opnsense-exporter/dashboards/*.json
