@@ -101,11 +101,11 @@ spec:
 EOF
 
 clusterName=
- cat << EOF > ./torrents/qbittorrent/main-app/env/patch-cluster-tag.yaml
+ cat << EOF > ./torrents/qbittorrent/main-app/env/patch-location-tag.yaml
 - op: add
   path: /spec/endpoints/0/relabelings/0
   value:
-    targetLabel: cluster
+    targetLabel: location
     replacement: $clusterName
     action: replace
 EOF

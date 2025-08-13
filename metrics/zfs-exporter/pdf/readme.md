@@ -18,7 +18,7 @@ sudo apt-get update
 sudo apt-get install -y git
 
 # https://github.com/pdf/zfs_exporter/releases
-zfs_exporter_version=v2.3.6
+zfs_exporter_version=v2.3.8
 go install github.com/pdf/zfs_exporter/v2@$zfs_exporter_version
 
 sudo groupadd --system zfs_exporter
@@ -32,16 +32,24 @@ After=network-online.target
 
 [Service]
 User=zfs_exporter
-ExecStart=$(which zfs_exporter) \
-  --web.listen-address=:9134 \
-  --properties.dataset-filesystem="available,logicalused,quota,referenced,used,usedbydataset,usedbychildren,usedbysnapshots,written,refquota,refreservation,reservation,snapshot_count,snapshot_limit,logicalreferenced,creation" \
-  --properties.dataset-volume="available,logicalused,referenced,used,usedbydataset,volsize,written,usedbysnapshots,logicalreferenced,creation" \
-  --properties.pool="allocated,dedupratio,capacity,expandsize,fragmentation,free,freeing,health,leaked,readonly,size" \
+ExecStart=$(which zfs_exporter) \\
+  --web.listen-address=:9134 \\
+  --properties.dataset-filesystem="available,logicalused,quota,referenced,used,usedbydataset,usedbychildren,usedbysnapshots,written,refquota,refreservation,reservation,snapshot_count,snapshot_limit,logicalreferenced,creation" \\
+  --properties.dataset-volume="available,logicalused,referenced,used,usedbydataset,volsize,written,usedbysnapshots,logicalreferenced,creation,snapshot_count" \\
+  --properties.pool="allocated,dedupratio,capacity,expandsize,fragmentation,free,freeing,health,leaked,readonly,size" \\
   --web.disable-exporter-metrics
 
 [Install]
 WantedBy=default.target
 EOF
+
+zfs_exporter \
+  --web.listen-address=:9135 \
+  --properties.dataset-filesystem="available,logicalused,quota,referenced,used,usedbydataset,usedbychildren,usedbysnapshots,written,refquota,refreservation,reservation,snapshot_count,snapshot_limit,logicalreferenced,creation" \
+  --properties.dataset-volume="available,logicalused,referenced,used,usedbydataset,volsize,written,usedbysnapshots,logicalreferenced,creation,snapshot_count" \
+  --properties.pool="allocated,dedupratio,capacity,expandsize,fragmentation,free,freeing,health,leaked,readonly,size" \
+  --web.disable-exporter-metrics
+
 
 sudo systemctl daemon-reload
 sudo systemctl restart zfs_exporter
@@ -76,8 +84,7 @@ spec:
   staticConfigs:
   - labels:
       job: zfs-exporter
-      cluster_type: pve
-      cluster: cluster-name
+      location: cluster-name
     targets:
     - node1.example.com:9134
     - node2.example.com:9134

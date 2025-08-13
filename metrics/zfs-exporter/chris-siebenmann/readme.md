@@ -67,8 +67,7 @@ spec:
   staticConfigs:
   - labels:
       job: zfs-exporter
-      cluster_type: pve
-      cluster: cluster-name
+      location: cluster-name
     targets:
     - node1.example.com:9700
     - node2.example.com:9700

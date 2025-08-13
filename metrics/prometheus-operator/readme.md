@@ -59,11 +59,11 @@ References:
 
 mkdir -p ./metrics/prometheus-operator/env/
 clusterName=
- cat << EOF > ./metrics/prometheus-operator/env/patch-cluster-tag.yaml
+ cat << EOF > ./metrics/prometheus-operator/env/patch-location-tag.yaml
 - op: add
   path: /spec/endpoints/0/relabelings/0
   value:
-    targetLabel: cluster
+    targetLabel: location
     replacement: $clusterName
     action: replace
 EOF

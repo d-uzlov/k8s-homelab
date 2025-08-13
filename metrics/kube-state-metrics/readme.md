@@ -46,13 +46,13 @@ clusterName=
 - op: add
   path: /spec/endpoints/0/relabelings/0
   value:
-    targetLabel: cluster
+    targetLabel: location
     replacement: $clusterName
     action: replace
 EOF
  cat << EOF > ./metrics/kube-state-metrics/env/patch-scrape-cluster-tag.yaml
 - op: add
-  path: /spec/staticConfigs/0/labels/cluster
+  path: /spec/staticConfigs/0/labels/location
   value: $clusterName
 EOF
 

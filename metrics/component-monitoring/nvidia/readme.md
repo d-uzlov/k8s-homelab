@@ -42,6 +42,7 @@ metadata:
     instance.prometheus.io/prompp: enable
 spec:
   scheme: HTTP
+  scrapeTimeout: 1s
   staticConfigs:
   - labels:
       cluster_type: site

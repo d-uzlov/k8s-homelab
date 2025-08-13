@@ -24,17 +24,17 @@ See upstream repo for details.
 
 mkdir -p ./metrics/kube-state-metrics/env/
 clusterName=
- cat << EOF > ./k8s-core/cgroup-burst/env/patch-cluster-tag.yaml
+ cat << EOF > ./k8s-core/cgroup-burst/env/patch-location-tag.yaml
 - op: add
   path: /spec/endpoints/0/relabelings/0
   value:
-    targetLabel: cluster
+    targetLabel: location
     replacement: $clusterName
     action: replace
 - op: add
   path: /spec/endpoints/1/relabelings/0
   value:
-    targetLabel: cluster
+    targetLabel: location
     replacement: $clusterName
     action: replace
 EOF

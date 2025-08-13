@@ -80,8 +80,7 @@ spec:
   staticConfigs:
   - labels:
       job: technitium
-      cluster_type: site
-      cluster: my-cluster
+      location: my-cluster
     targets:
     - technitium-exporter.technitium-exporter
   metricRelabelings:

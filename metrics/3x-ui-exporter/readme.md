@@ -10,11 +10,11 @@ References:
 
 mkdir -p ./metrics/3x-ui-exporter/env/
 clusterName=
- cat << EOF > ./metrics/3x-ui-exporter/env/patch-cluster-tag.yaml
+ cat << EOF > ./metrics/3x-ui-exporter/env/patch-location-tag.yaml
 - op: add
   path: /spec/endpoints/0/relabelings/0
   value:
-    targetLabel: cluster
+    targetLabel: location
     replacement: $clusterName
     action: replace
 EOF

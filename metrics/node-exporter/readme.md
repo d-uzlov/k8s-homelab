@@ -42,11 +42,11 @@ helm template \
 
 mkdir -p ./metrics/node-exporter/env/
 clusterName=
- cat << EOF > ./metrics/node-exporter/env/patch-cluster-tag.yaml
+ cat << EOF > ./metrics/node-exporter/env/patch-location-tag.yaml
 - op: add
   path: /spec/endpoints/0/relabelings/-
   value:
-    targetLabel: cluster
+    targetLabel: location
     replacement: $clusterName
     action: replace
 EOF

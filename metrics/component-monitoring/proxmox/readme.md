@@ -36,7 +36,6 @@ metadata:
 spec:
   staticConfigs:
   - labels:
-      job: proxmox
       cluster: proxmox-cluster-name
     targets:
     - pve1.k8s.lan
@@ -53,7 +52,6 @@ metadata:
 spec:
   staticConfigs:
   - labels:
-      job: proxmox
       cluster: proxmox-cluster-name
     targets:
     - pve1.k8s.lan
