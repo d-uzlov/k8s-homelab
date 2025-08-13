@@ -333,7 +333,7 @@
                 "value": [
                   {
                     "title": "Pool datasets",
-                    "url": "/d/AweIwvnk4g1/zfs-dataset-list?${datasource:queryparam}﻿&﻿${cluster:queryparam}﻿&﻿${instance:queryparam}﻿&var-pool=﻿${__data.fields.pool}﻿&﻿${__url_time_range}"
+                    "url": "/d/AweIwvnk4g1/zfs-dataset-list?${datasource:queryparam}﻿&﻿${cluster:queryparam}﻿&var-instance=${__data.fields.instance}﻿&var-pool=﻿${__data.fields.pool}﻿&﻿${__url_time_range}"
                   }
                 ]
               }
@@ -3120,6 +3120,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
+      "description": "this will be empty, unless trim is running",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -3487,7 +3488,7 @@
         "content": "scan info is empty for pools\nthat have never run\nscrub or resilver\nin their lifetime",
         "mode": "markdown"
       },
-      "title": "New panel",
+      "title": "notes",
       "type": "text"
     },
     {
@@ -3594,11 +3595,10 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "size of the relevant data in the pool when scan was started",
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "continuous-RdYlGr"
+            "mode": "continuous-GrYlRd"
           },
           "custom": {
             "axisPlacement": "auto",
@@ -3623,7 +3623,7 @@
               }
             ]
           },
-          "unit": "bytes"
+          "unit": "s"
         },
         "overrides": []
       },
@@ -3633,7 +3633,7 @@
         "x": 0,
         "y": 164
       },
-      "id": 342,
+      "id": 372,
       "maxDataPoints": 500,
       "options": {
         "alignValue": "left",
@@ -3659,14 +3659,14 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(instance, zpool) (max_over_time(zfs_pool_scan_to_examine_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]))",
+          "expr": "max by(instance, zpool) (\r\n(max_over_time(zfs_pool_scan_end_time_seconds{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)\r\n-\r\nmax_over_time(zfs_pool_scan_start_time_seconds{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])\r\n)",
           "instant": false,
           "legendFormat": "{{instance}}/{{zpool}}",
           "range": true,
           "refId": "created"
         }
       ],
-      "title": "scan: to examine",
+      "title": "last scan duration",
       "type": "state-timeline"
     },
     {
@@ -3773,10 +3773,11 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
+      "description": "size of the relevant data in the pool when scan was started",
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "continuous-GrYlRd"
+            "mode": "continuous-RdYlGr"
           },
           "custom": {
             "axisPlacement": "auto",
@@ -3801,7 +3802,7 @@
               }
             ]
           },
-          "unit": "s"
+          "unit": "bytes"
         },
         "overrides": []
       },
@@ -3811,7 +3812,7 @@
         "x": 0,
         "y": 173
       },
-      "id": 344,
+      "id": 342,
       "maxDataPoints": 500,
       "options": {
         "alignValue": "left",
@@ -3837,14 +3838,14 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "$__to / 1000 - max by(instance, zpool) (max_over_time(zfs_pool_scan_end_time_seconds{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)",
+          "expr": "max by(instance, zpool) (max_over_time(zfs_pool_scan_to_examine_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]))",
           "instant": false,
           "legendFormat": "{{instance}}/{{zpool}}",
           "range": true,
           "refId": "created"
         }
       ],
-      "title": "scan end time (ago)",
+      "title": "scan: to examine",
       "type": "state-timeline"
     },
     {
@@ -3990,6 +3991,184 @@
         "x": 0,
         "y": 182
       },
+      "id": 344,
+      "maxDataPoints": 500,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "perPage": 15,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "$__to / 1000 - max by(instance, zpool) (max_over_time(zfs_pool_scan_end_time_seconds{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)",
+          "instant": false,
+          "legendFormat": "{{instance}}/{{zpool}}",
+          "range": true,
+          "refId": "created"
+        }
+      ],
+      "title": "scan end time (ago)",
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 5,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": 120000,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "binBps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 182
+      },
+      "id": 332,
+      "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by (instance, zpool) (rate(zfs_pool_scan_examined_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__rate_interval]))",
+          "hide": false,
+          "legendFormat": "{{instance}}/{{zpool}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "scan: examined byte rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 191
+      },
       "id": 345,
       "maxDataPoints": 500,
       "options": {
@@ -4034,6 +4213,107 @@
       "fieldConfig": {
         "defaults": {
           "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMax": 1,
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 5,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": 120000,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 191
+      },
+      "id": 369,
+      "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Last *",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "min by (instance, zpool) (avg_over_time(zfs_pool_scan_examined_ratio{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]))",
+          "hide": false,
+          "legendFormat": "{{instance}}/{{zpool}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "scan: examine completed %",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
             "mode": "continuous-GrYlRd"
           },
           "custom": {
@@ -4066,8 +4346,8 @@
       "gridPos": {
         "h": 9,
         "w": 12,
-        "x": 12,
-        "y": 182
+        "x": 0,
+        "y": 200
       },
       "id": 350,
       "maxDataPoints": 500,
@@ -4165,408 +4445,8 @@
       "gridPos": {
         "h": 9,
         "w": 12,
-        "x": 0,
-        "y": 191
-      },
-      "id": 332,
-      "maxDataPoints": 100,
-      "options": {
-        "legend": {
-          "calcs": [
-            "mean"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Mean",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "sum by (instance, zpool) (rate(zfs_pool_scan_examined_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__rate_interval]))",
-          "hide": false,
-          "legendFormat": "{{instance}}/{{zpool}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "scan: examined byte rate",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 5,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": 120000,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "binBps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 12,
-        "y": 191
-      },
-      "id": 352,
-      "maxDataPoints": 100,
-      "options": {
-        "legend": {
-          "calcs": [
-            "mean"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Mean",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "sum by (instance, zpool) (rate(zfs_pool_scan_pass_examined_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__rate_interval]))",
-          "hide": false,
-          "legendFormat": "{{instance}}/{{zpool}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "scan pass: examined byte rate",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "axisSoftMax": 1,
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 5,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": 120000,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "percentunit"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 0,
-        "y": 200
-      },
-      "id": 369,
-      "maxDataPoints": 100,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Last *",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "min by (instance, zpool) (avg_over_time(zfs_pool_scan_examined_ratio{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]))",
-          "hide": false,
-          "legendFormat": "{{instance}}/{{zpool}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "scan: examine completed %",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "axisSoftMax": 1,
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 5,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": 120000,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "percentunit"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
         "x": 12,
         "y": 200
-      },
-      "id": 361,
-      "maxDataPoints": 100,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Last *",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "min by (instance, zpool) (avg_over_time(zfs_pool_scan_pass_examined_ratio{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]))",
-          "hide": false,
-          "legendFormat": "{{instance}}/{{zpool}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "scan pass: examine completed %",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 5,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": 120000,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "binBps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 0,
-        "y": 209
       },
       "id": 348,
       "maxDataPoints": 100,
@@ -4609,6 +4489,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
+      "description": "this will be empty, unless scan is running",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -4620,6 +4501,8 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisSoftMax": 1,
+            "axisSoftMin": 0,
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
@@ -4637,8 +4520,8 @@
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "never",
-            "spanNulls": 120000,
+            "showPoints": "auto",
+            "spanNulls": false,
             "stacking": {
               "group": "A",
               "mode": "none"
@@ -4657,27 +4540,27 @@
               }
             ]
           },
-          "unit": "binBps"
+          "unit": "s"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 9,
         "w": 12,
-        "x": 12,
+        "x": 0,
         "y": 209
       },
-      "id": 351,
+      "id": 354,
       "maxDataPoints": 100,
       "options": {
         "legend": {
           "calcs": [
-            "mean"
+            "lastNotNull"
           ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
-          "sortBy": "Mean",
+          "sortBy": "Last *",
           "sortDesc": true
         },
         "tooltip": {
@@ -4693,14 +4576,14 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (instance, zpool) (rate(zfs_pool_scan_pass_issued_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__rate_interval]))",
+          "expr": "max by(instance, zpool) (max_over_time(zfs_pool_scan_issue_estimated_remaining_seconds{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]))",
           "hide": false,
           "legendFormat": "{{instance}}/{{zpool}}",
           "range": true,
-          "refId": "A"
+          "refId": "C"
         }
       ],
-      "title": "scan pass: issued byte rate",
+      "title": "scan: issued: estimated remaining time",
       "type": "timeseries"
     },
     {
@@ -4765,8 +4648,8 @@
       "gridPos": {
         "h": 9,
         "w": 12,
-        "x": 0,
-        "y": 218
+        "x": 12,
+        "y": 209
       },
       "id": 368,
       "maxDataPoints": 100,
@@ -4809,107 +4692,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "axisSoftMax": 1,
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 5,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": 120000,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "percentunit"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 12,
-        "y": 218
-      },
-      "id": 370,
-      "maxDataPoints": 100,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Last *",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "min by (instance, zpool) (avg_over_time(zfs_pool_scan_pass_issued_ratio{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]))",
-          "hide": false,
-          "legendFormat": "{{instance}}/{{zpool}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "scan pass: issued completed %",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
+      "description": "this will be empty, unless scan is running",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -4968,9 +4751,9 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 227
+        "y": 218
       },
-      "id": 354,
+      "id": 373,
       "maxDataPoints": 100,
       "options": {
         "legend": {
@@ -4990,18 +4773,6 @@
         }
       },
       "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "max by(instance, zpool) (max_over_time(zfs_pool_scan_issue_estimated_remaining_seconds{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]))",
-          "hide": false,
-          "legendFormat": "{{instance}}/{{zpool}} issued",
-          "range": true,
-          "refId": "C"
-        },
         {
           "datasource": {
             "type": "prometheus",
@@ -5010,125 +4781,12 @@
           "editorMode": "code",
           "expr": "max by(instance, zpool) (max_over_time(zfs_pool_scan_examine_estimated_remaining_seconds{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]))",
           "hide": false,
-          "legendFormat": "{{instance}}/{{zpool}} examined",
+          "legendFormat": "{{instance}}/{{zpool}}",
           "range": true,
           "refId": "D"
         }
       ],
-      "title": "scan: issued: estimated remaining time",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "axisSoftMax": 1,
-            "axisSoftMin": 0,
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 5,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "s"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 12,
-        "y": 227
-      },
-      "id": 367,
-      "maxDataPoints": 100,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Last *",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "max by(instance, zpool) (max_over_time(zfs_pool_scan_pass_issue_estimated_remaining_seconds{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]))",
-          "hide": false,
-          "legendFormat": "{{instance}}/{{zpool}} issued",
-          "range": true,
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "max by(instance, zpool) (max_over_time(zfs_pool_scan_pass_examine_estimated_remaining_seconds{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]))",
-          "hide": false,
-          "legendFormat": "{{instance}}/{{zpool}} examined",
-          "range": true,
-          "refId": "D"
-        }
-      ],
-      "title": "scan pass: estimated remaining time",
+      "title": "scan: examined: estimated remaining time",
       "type": "timeseries"
     }
   ],

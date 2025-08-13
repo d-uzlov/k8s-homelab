@@ -117,6 +117,42 @@
                 "value": 70
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "total targets"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 106
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "alive targets"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 104
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "samples"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 92
+              }
+            ]
           }
         ]
       },
@@ -151,7 +187,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "count by(job, cluster_type, cluster, instance) (up{job=~\"$job\", cluster=~\"$cluster\", instance=~\"$instance\"})",
+          "expr": "count by(job, location, instance) (up{job=~\"$job\", instance=~\"$instance\"})",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -166,7 +202,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by(job, cluster_type, cluster, instance) (up{job=~\"$job\", cluster=~\"$cluster\", instance=~\"$instance\"})",
+          "expr": "sum by(job, location, instance) (up{job=~\"$job\", instance=~\"$instance\"})",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -181,7 +217,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by(job, cluster_type, cluster, instance) (scrape_samples_post_metric_relabeling{job=~\"$job\", cluster=~\"$cluster\", instance=~\"$instance\"})",
+          "expr": "sum by(job, location, instance) (scrape_samples_post_metric_relabeling{job=~\"$job\", instance=~\"$instance\"})",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -206,10 +242,10 @@
             "includeByName": {},
             "indexByName": {
               "Time": 0,
-              "Value": 5,
-              "cluster": 3,
-              "cluster_type": 2,
-              "instance": 4,
+              "Value #alive_targets": 4,
+              "Value #samples": 5,
+              "Value #total_targets": 3,
+              "instance": 2,
               "job": 1
             },
             "renameByName": {
@@ -441,7 +477,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "label_replace(count by(job, __name__) ({job=~\"$job\", instance=\"\"}), \"name\", \"$1\", \"__name__\", \"(.*)\")",
+          "expr": "label_replace(count by(job, __name__) ({job=~\"$job\", location=~\"$location\", instance=\"\"}), \"name\", \"$1\", \"__name__\", \"(.*)\")",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -449,7 +485,7 @@
           "refId": "A"
         }
       ],
-      "title": "top series without instance label",
+      "title": "top series without instance label (from selected location)",
       "transformations": [
         {
           "id": "organize",
@@ -558,14 +594,14 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "min_over_time(up{job=~\"$job\", cluster=~\"$cluster\", instance=~\"$instance\"}[$__interval])",
+          "expr": "min_over_time(up{job=~\"$job\", instance=~\"$instance\"}[$__interval])",
           "instant": false,
           "legendFormat": "{{job}}: {{instance}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "New panel",
+      "title": "instance status",
       "type": "state-timeline"
     },
     {
@@ -689,7 +725,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "count by(job, instance) (last_over_time(up{job=~\"$job\", cluster=~\"$cluster\", instance=~\"$instance\"}[$__interval]))",
+          "expr": "count by(job, instance) (last_over_time(up{job=~\"$job\", instance=~\"$instance\"}[$__interval]))",
           "legendFormat": "{{job}}: {{instance}}",
           "range": true,
           "refId": "upload"
@@ -819,7 +855,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "avg_over_time(scrape_samples_post_metric_relabeling{job=~\"$job\", cluster=~\"$cluster\", instance=~\"$instance\"}[$__interval])",
+          "expr": "avg_over_time(scrape_samples_post_metric_relabeling{job=~\"$job\", instance=~\"$instance\"}[$__interval])",
           "legendFormat": "{{job}}: {{instance}} / {{endpoint}}",
           "range": true,
           "refId": "upload"
@@ -949,7 +985,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "avg_over_time(scrape_samples_scraped{job=~\"$job\", cluster=~\"$cluster\", instance=~\"$instance\"}[$__interval])",
+          "expr": "avg_over_time(scrape_samples_scraped{job=~\"$job\", instance=~\"$instance\"}[$__interval])",
           "legendFormat": "{{job}}: {{instance}} / {{endpoint}}",
           "range": true,
           "refId": "upload"
@@ -1080,7 +1116,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "avg_over_time(scrape_samples_post_metric_relabeling{job=~\"$job\", cluster=~\"$cluster\", instance=~\"$instance\"}[$__interval])\r\n/\r\navg_over_time(scrape_samples_scraped{}[$__interval])",
+          "expr": "avg_over_time(scrape_samples_post_metric_relabeling{job=~\"$job\", instance=~\"$instance\"}[$__interval])\r\n/\r\navg_over_time(scrape_samples_scraped{job=~\"$job\", instance=~\"$instance\"}[$__interval])",
           "legendFormat": "{{job}}: {{instance}} / {{endpoint}}",
           "range": true,
           "refId": "upload"
@@ -1210,7 +1246,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "sum_over_time(scrape_series_added{job=~\"$job\", cluster=~\"$cluster\", instance=~\"$instance\"}[$__interval])",
+          "expr": "sum_over_time(scrape_series_added{job=~\"$job\", instance=~\"$instance\"}[$__interval])",
           "legendFormat": "{{job}}: {{instance}} / {{endpoint}}",
           "range": true,
           "refId": "upload"
@@ -1341,7 +1377,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "max_over_time(scrape_body_size_bytes{job=~\"$job\", cluster=~\"$cluster\", instance=~\"$instance\"}[$__interval])",
+          "expr": "max_over_time(scrape_body_size_bytes{job=~\"$job\", instance=~\"$instance\"}[$__interval])",
           "legendFormat": "{{job}}: {{instance}} / {{endpoint}}",
           "range": true,
           "refId": "upload"
@@ -1472,7 +1508,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "avg_over_time(scrape_duration_seconds{job=~\"$job\", cluster=~\"$cluster\", instance=~\"$instance\"}[$__interval])",
+          "expr": "avg_over_time(scrape_duration_seconds{job=~\"$job\", instance=~\"$instance\"}[$__interval])",
           "legendFormat": "{{job}}: {{instance}} / {{endpoint}}",
           "range": true,
           "refId": "upload"
@@ -1539,18 +1575,18 @@
           "type": "prometheus",
           "uid": "${DS_PROMETHEUS}"
         },
-        "definition": "query_result(count by(human_name, cluster) (label_join(last_over_time(up{job=~\"$job\"}[$__range]), \"human_name\", \"/\", \"cluster_type\", \"cluster\")))",
+        "definition": "query_result(group by(location) (last_over_time(up{job=~\"$job\"}[$__range])))",
         "description": "",
         "includeAll": true,
-        "name": "cluster",
+        "name": "location",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(count by(human_name, cluster) (label_join(last_over_time(up{job=~\"$job\"}[$__range]), \"human_name\", \"/\", \"cluster_type\", \"cluster\")))",
+          "query": "query_result(group by(location) (last_over_time(up{job=~\"$job\"}[$__range])))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
-        "regex": "/human_name=\"(?<text>[^\"]+)|cluster=\"(?<value>[^\"]+)/g",
+        "regex": "/location=\"(?<text>[^\"]+)|location=\"(?<value>[^\"]+)/g",
         "sort": 1,
         "type": "query"
       },
@@ -1572,13 +1608,13 @@
           "type": "prometheus",
           "uid": "${DS_PROMETHEUS}"
         },
-        "definition": "query_result(count by(instance) (last_over_time(up{job=~\"$job\", cluster=~\"$cluster\", instance=~\".*($instance_filter).*\"}[$__range])))",
+        "definition": "query_result(count by(instance) (last_over_time(up{job=~\"$job\", location=~\"$location\", instance=~\".*($instance_filter).*\"}[$__range])))",
         "includeAll": true,
         "name": "instance",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(count by(instance) (last_over_time(up{job=~\"$job\", cluster=~\"$cluster\", instance=~\".*($instance_filter).*\"}[$__range])))",
+          "query": "query_result(count by(instance) (last_over_time(up{job=~\"$job\", location=~\"$location\", instance=~\".*($instance_filter).*\"}[$__range])))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
