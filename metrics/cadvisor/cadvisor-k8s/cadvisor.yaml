@@ -1,0 +1,83 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: cadvisor
+spec:
+  selector:
+    matchLabels:
+      app: cadvisor
+  template:
+    metadata:
+      labels:
+        app: cadvisor
+    spec:
+      tolerations:
+      - operator: Exists
+      priorityClassName: system-node-critical
+      # serviceAccountName: cadvisor
+      containers:
+      - name: cadvisor
+        image: ghcr.io/google/cadvisor:v0.53.0
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        args:
+        - --allow_dynamic_housekeeping=true
+        - --housekeeping_interval=2s
+        - --max_housekeeping_interval=3s
+        - --event_storage_event_limit=default=0
+        - --event_storage_age_limit=default=0
+        - --enable_metrics=cpu,diskIO,memory,network,pressure,process
+        - --docker_only
+        # we want to see systemd service cgroup info
+        - --raw_cgroup_prefix_whitelist=/system.slice
+        - --store_container_labels=false
+        - --whitelisted_container_labels=io.kubernetes.container.name,io.kubernetes.pod.name,io.kubernetes.pod.namespace
+        resources:
+          requests:
+            memory: 100Mi
+            cpu: 50m
+          limits:
+            memory: 500Mi
+            cpu: 500m
+        volumeMounts:
+        - name: rootfs
+          mountPath: /rootfs
+          readOnly: true
+        - name: var-run
+          mountPath: /var/run
+          readOnly: true
+        - name: sys
+          mountPath: /sys
+          readOnly: true
+        # - name: docker
+        #   mountPath: /var/lib/docker
+        #   readOnly: true
+        - name: disk
+          mountPath: /dev/disk
+          readOnly: true
+      automountServiceAccountToken: false
+      # terminationGracePeriodSeconds: 30
+      volumes:
+      - name: rootfs
+        hostPath:
+          path: /
+          type: Directory
+      - name: var-run
+        hostPath:
+          path: /var/run
+          type: Directory
+      - name: sys
+        hostPath:
+          path: /sys
+          type: Directory
+      # - name: docker
+      #   hostPath:
+      #     path: /var/lib/docker
+      #     type: Directory
+      - name: disk
+        hostPath:
+          path: /dev/disk
+          type: Directory

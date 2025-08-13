@@ -8,11 +8,11 @@ so it can be considered mandatory for deployment.
 
 mkdir -p ./metrics/component-monitoring/kubelet/env/
 clusterName=
- cat << EOF > ./metrics/component-monitoring/kubelet/env/patch-cluster-tag.yaml
+ cat << EOF > ./metrics/component-monitoring/kubelet/env/patch-location-tag.yaml
 - op: add
   path: /spec/relabelings/0
   value:
-    targetLabel: cluster
+    targetLabel: location
     replacement: $clusterName
     action: replace
 EOF
@@ -44,7 +44,7 @@ nodeIp=
 # these metrics are not monitored here
 curl -sS --insecure -H "Authorization: Bearer $bearer" https://$nodeIp:10250/metrics > ./kubelet-metrics.log
 # main container metrics
-curl -sS --insecure -H "Authorization: Bearer $bearer" https://$nodeIp:10250/metrics/cadvisor > ./kubelet-cadvisor2.log
+curl -sS --insecure -H "Authorization: Bearer $bearer" https://$nodeIp:10250/metrics/cadvisor > ./kubelet-cadvisor.log
 # this is metrics used by autoscalers. They partially overlap with cadvisor metrics but there are less labels
 curl -sS --insecure -H "Authorization: Bearer $bearer" https://$nodeIp:10250/metrics/resource > ./kubelet-metrics-resource.log
 # liveness/readiness probe statistics

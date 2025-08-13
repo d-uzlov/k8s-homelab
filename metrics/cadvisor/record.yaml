@@ -1,0 +1,59 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: record-cadvisor-k8s-node-namespace
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  groups:
+  - name: record-k8s-node-namespace
+    # using max by(container) should fix overlapping data on container restarts
+    rules:
+    - record: node_namespace:container_cpu_usage_seconds:irate
+      expr: |-
+        sum without(pod, container, name, image) (
+          max without(cpu, id) (
+            irate(container_cpu_usage_seconds_total{namespace!="", pod!="", container!="", cpu="total"}[30s])
+          )
+        )
+    - record: node_namespace:container_memory_usage_bytes
+      expr: |-
+        sum without(pod, container, name, image) (
+          max without(id) (
+            container_memory_usage_bytes{namespace!="", pod!="", container!=""}
+          )
+        )
+    - record: node_namespace:container_memory_rss
+      expr: |-
+        sum without(pod, container, name, image) (
+          max without(id) (
+            container_memory_rss{namespace!="", pod!="", container!=""}
+          )
+        )
+    - record: node_namespace:container_network_receive_bytes:irate
+      expr: |-
+        sum without(pod) (
+          sum without(interface) (
+            max without(id, name) (
+              irate(container_network_receive_bytes_total{namespace!="", pod!=""}[30s])
+            )
+          )
+          * on(location, node, namespace, pod)
+          # pods with hostNetwork have node network statistics, it's meaningless
+          kube_pod_info{host_network="false"}
+        )
+    - record: node_namespace:container_network_transmit_bytes:irate
+      expr: |-
+        sum without(pod) (
+          sum without(interface) (
+            max without(id, name) (
+              irate(container_network_transmit_bytes_total{namespace!="", pod!=""}[30s])
+            )
+          )
+          * on(location, node, namespace, pod)
+          # pods with hostNetwork have node network statistics, it's meaningless
+          kube_pod_info{host_network="false"}
+        )
