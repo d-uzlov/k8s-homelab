@@ -36,5 +36,6 @@ kl -n metrics-cadvisor get pod
 # Cleanup
 
 ```bash
-
+kl delete -k ./metrics/cadvisor/cadvisor-k8s/
+kl delete ns metrics-cadvisor
 ```

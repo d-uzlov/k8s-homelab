@@ -8,7 +8,7 @@ References:
 
 # Prerequisites
 
-- Docker
+- [Docker](../../../docs/proxmox/proxmox-container.md#docker)
 
 # Linux installation
 
@@ -33,7 +33,7 @@ services:
     - --event_storage_age_limit=default=0
     - --enable_metrics=cpu,diskIO,memory,network,pressure,process
     - --docker_only
-    - --raw_cgroup_prefix_whitelist=/system.slice
+    - --raw_cgroup_prefix_whitelist=/system.slice,/qemu.slice,/lxc,/lxc.monitor
     - --store_container_labels=false
     - --whitelisted_container_labels=com.docker.compose.image,com.docker.compose.service,com.docker.compose.project
     ports:
