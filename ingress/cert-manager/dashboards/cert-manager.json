@@ -322,7 +322,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "min by (name, namespace, issuer_kind, issuer_name) (certmanager_certificate_expiration_timestamp_seconds{cluster=\"$cluster\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", name=~\"$certificate\"} - time())",
+          "expr": "min by (name, namespace, issuer_kind, issuer_name) (certmanager_certificate_expiration_timestamp_seconds{location=\"$location\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", name=~\"$certificate\"} - time())",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -334,7 +334,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "min by (name, namespace) (certmanager_certificate_ready_status{cluster=\"$cluster\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", name=~\"$certificate\", condition=\"True\"})",
+          "expr": "min by (name, namespace) (certmanager_certificate_ready_status{location=\"$location\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", name=~\"$certificate\", condition=\"True\"})",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -347,7 +347,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "min by (name, namespace) (certmanager_certificate_renewal_timestamp_seconds{cluster=\"$cluster\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", name=~\"$certificate\"} - time())",
+          "expr": "min by (name, namespace) (certmanager_certificate_renewal_timestamp_seconds{location=\"$location\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", name=~\"$certificate\"} - time())",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -360,7 +360,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "min by (name, namespace) (\r\n  (certmanager_certificate_expiration_timestamp_seconds{cluster=\"$cluster\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", name=~\"$certificate\"} - time())\r\n  /\r\n  (certmanager_certificate_expiration_timestamp_seconds - certmanager_certificate_renewal_timestamp_seconds)\r\n)",
+          "expr": "min by (name, namespace) (\r\n  (certmanager_certificate_expiration_timestamp_seconds{location=\"$location\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", name=~\"$certificate\"} - time())\r\n  /\r\n  (certmanager_certificate_expiration_timestamp_seconds - certmanager_certificate_renewal_timestamp_seconds)\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -502,7 +502,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (condition) (certmanager_certificate_ready_status{cluster=\"$cluster\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", name=~\"$certificate\"})",
+          "expr": "sum by (condition) (certmanager_certificate_ready_status{location=\"$location\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", name=~\"$certificate\"})",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "__auto",
@@ -600,7 +600,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "min by (namespace, name) (min_over_time(certmanager_certificate_ready_status{cluster=\"$cluster\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", name=~\"$certificate\", condition=\"True\"}[$__interval]))",
+          "expr": "min by (namespace, name) (min_over_time(certmanager_certificate_ready_status{location=\"$location\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", name=~\"$certificate\", condition=\"True\"}[$__interval]))",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{namespace}}/{{name}}",
@@ -711,7 +711,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "max by (name, namespace) (\r\n  (certmanager_certificate_expiration_timestamp_seconds{cluster=\"$cluster\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", name=~\"$certificate\"} - time())\r\n  /\r\n  (certmanager_certificate_expiration_timestamp_seconds - certmanager_certificate_renewal_timestamp_seconds)\r\n)",
+          "expr": "max by (name, namespace) (\r\n  (certmanager_certificate_expiration_timestamp_seconds{location=\"$location\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", name=~\"$certificate\"} - time())\r\n  /\r\n  (certmanager_certificate_expiration_timestamp_seconds - certmanager_certificate_renewal_timestamp_seconds)\r\n)",
           "instant": false,
           "intervalFactor": 1,
           "legendFormat": "{{namespace}} / {{name}}",
@@ -812,7 +812,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "max by(namespace, name) (min_over_time(certmanager_certificate_expiration_timestamp_seconds{cluster=\"$cluster\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", name=~\"$certificate\"}[$__interval]) - time())",
+          "expr": "max by(namespace, name) (min_over_time(certmanager_certificate_expiration_timestamp_seconds{location=\"$location\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", name=~\"$certificate\"}[$__interval]) - time())",
           "instant": false,
           "intervalFactor": 1,
           "legendFormat": "{{namespace}} / {{name}}",
@@ -915,7 +915,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (status, path) (rate(certmanager_http_acme_client_request_count{cluster=\"$cluster\"}[$__rate_interval])) * $__interval_ms / 1000",
+          "expr": "sum by (status, path) (rate(certmanager_http_acme_client_request_count{location=\"$location\"}[$__rate_interval])) * $__interval_ms / 1000",
           "legendFormat": "{{status}} {{path}}",
           "range": true,
           "refId": "A"
@@ -949,16 +949,16 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(label_join(last_over_time(up{job=\"kubelet-main\"}[$__range]), \"human_name\", \"/\", \"cluster_type\", \"cluster\"))",
-        "name": "cluster",
+        "definition": "query_result(group by(location) (last_over_time(certmanager_certificate_expiration_timestamp_seconds[$__range])))",
+        "name": "location",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(label_join(last_over_time(up{job=\"kubelet-main\"}[$__range]), \"human_name\", \"/\", \"cluster_type\", \"cluster\"))",
+          "query": "query_result(group by(location) (last_over_time(certmanager_certificate_expiration_timestamp_seconds[$__range])))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
-        "regex": "/human_name=\"(?<text>[^\"]+)|cluster=\"(?<value>[^\"]+)/g",
+        "regex": "/location=\"(?<text>[^\"]+)|location=\"(?<value>[^\"]+)/g",
         "sort": 1,
         "type": "query"
       },
@@ -968,17 +968,18 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(last_over_time(certmanager_certificate_expiration_timestamp_seconds{cluster=\"$cluster\"}[$__range]))",
+        "definition": "query_result(group by(namespace) (last_over_time(certmanager_certificate_expiration_timestamp_seconds{location=\"$location\"}[$__range])))",
         "includeAll": true,
         "name": "namespace",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(last_over_time(certmanager_certificate_expiration_timestamp_seconds{cluster=\"$cluster\"}[$__range]))",
+          "query": "query_result(group by(namespace) (last_over_time(certmanager_certificate_expiration_timestamp_seconds{location=\"$location\"}[$__range])))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
         "regex": "/namespace=\"(?<text>[^\"]+)|namespace=\"(?<value>[^\"]+)/g",
+        "sort": 1,
         "type": "query"
       },
       {
@@ -987,13 +988,13 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(label_join(last_over_time(certmanager_certificate_ready_status{cluster=\"$cluster\", namespace=~\"$namespace\", condition=\"True\"}[$__range]), \"human_name\", \"/\", \"issuer_kind\", \"issuer_name\"))",
+        "definition": "query_result(label_join(last_over_time(certmanager_certificate_ready_status{location=\"$location\", namespace=~\"$namespace\", condition=\"True\"}[$__range]), \"human_name\", \"/\", \"issuer_kind\", \"issuer_name\"))",
         "includeAll": true,
         "name": "issuer",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(label_join(last_over_time(certmanager_certificate_ready_status{cluster=\"$cluster\", namespace=~\"$namespace\", condition=\"True\"}[$__range]), \"human_name\", \"/\", \"issuer_kind\", \"issuer_name\"))",
+          "query": "query_result(label_join(last_over_time(certmanager_certificate_ready_status{location=\"$location\", namespace=~\"$namespace\", condition=\"True\"}[$__range]), \"human_name\", \"/\", \"issuer_kind\", \"issuer_name\"))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -1007,14 +1008,14 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(last_over_time(certmanager_certificate_ready_status{cluster=\"$cluster\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", condition=\"True\"}[$__range]))",
+        "definition": "query_result(last_over_time(certmanager_certificate_ready_status{location=\"$location\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", condition=\"True\"}[$__range]))",
         "description": "",
         "includeAll": true,
         "name": "certificate",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(last_over_time(certmanager_certificate_ready_status{cluster=\"$cluster\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", condition=\"True\"}[$__range]))",
+          "query": "query_result(last_over_time(certmanager_certificate_ready_status{location=\"$location\", namespace=~\"$namespace\", issuer_name=~\"$issuer\", condition=\"True\"}[$__range]))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,

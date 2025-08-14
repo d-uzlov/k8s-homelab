@@ -789,7 +789,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "last_over_time(reason:kube_pod_container_status_last_terminated_timestamp{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__range])\r\n* 1000",
+          "expr": "max by(uid, container, exit_code) (last_over_time(reason:kube_pod_container_status_last_terminated_timestamp{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__range]))\r\n* 1000",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -847,38 +847,12 @@
           "id": "organize",
           "options": {
             "excludeByName": {
-              "Time": true,
-              "Time 1": true,
-              "Time 2": true,
-              "Time 3": true,
-              "Value #reason": true,
-              "__name__ 1": true,
-              "__name__ 2": true,
-              "container 2": true,
-              "container 3": true,
-              "job": true,
-              "job 1": true,
-              "job 2": true,
-              "job 3": true,
-              "last_exit_from": false,
-              "last_exit_to": false,
-              "namespace": true,
-              "namespace 1": true,
-              "namespace 2": true,
-              "namespace 3": true,
-              "pod": true,
-              "reason": false,
-              "timestamp": true,
-              "uid 1": true,
-              "uid 2": true,
-              "uid 3": true
+              "Time": true
             },
             "includeByName": {},
             "indexByName": {
               "Time": 4,
               "Value": 1,
-              "cluster": 5,
-              "cluster_type": 6,
               "container": 2,
               "exit_code": 7,
               "job": 8,
@@ -893,7 +867,6 @@
               "Value": "Last exit",
               "Value #code": "Exit code",
               "Value #time": "Last exit",
-              "cluster_type": "",
               "container": "Container",
               "container 1": "Container",
               "exit_code": "Exit code",
@@ -1073,7 +1046,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "min by(pod) (\r\n    (kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Failed\"} == 1) * 2\r\n    or\r\n    (kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Pending\"} == 1) * 3\r\n    or\r\n    (\r\n        kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Running\"} == 1\r\n        and on(cluster_type, cluster, namespace, pod)\r\n        min_over_time(kube_pod_status_ready{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", condition=\"true\"}[$__interval]) == 1\r\n    ) * 4\r\n    or\r\n    (\r\n        kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Running\"} == 1\r\n        and on(cluster_type, cluster, namespace, pod)\r\n        min_over_time(kube_pod_status_ready{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", condition=\"true\"}[$__interval]) == 0\r\n    ) * 5\r\n    or\r\n    (kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Succeeded\"} == 1) * 6\r\n    or\r\n    (kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Unknown\"} == 1) * 7\r\n)",
+          "expr": "min by(pod) (\r\n    (kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Failed\"} == 1) * 2\r\n    or\r\n    (kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Pending\"} == 1) * 3\r\n    or\r\n    (\r\n        kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Running\"} == 1\r\n        and on(location, namespace, pod)\r\n        min_over_time(kube_pod_status_ready{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", condition=\"true\"}[$__interval]) == 1\r\n    ) * 4\r\n    or\r\n    (\r\n        kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Running\"} == 1\r\n        and on(location, namespace, pod)\r\n        min_over_time(kube_pod_status_ready{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", condition=\"true\"}[$__interval]) == 0\r\n    ) * 5\r\n    or\r\n    (kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Succeeded\"} == 1) * 6\r\n    or\r\n    (kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Unknown\"} == 1) * 7\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "Pod",
@@ -1099,7 +1072,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "(kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Pending\"} == 1) * 0\r\n+ on() group_right\r\nmin by(container) (\r\n    (\r\n        kube_pod_init_container_status_waiting{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n        and on(cluster, namespace, pod, container)\r\n        kube_pod_init_container_status_waiting_reason{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}\r\n    ) * 3\r\n    or\r\n    (\r\n        kube_pod_init_container_status_waiting{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n    ) * 3\r\n    or\r\n    (\r\n        kube_pod_init_container_status_ready{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n        and\r\n        kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n    ) * 4\r\n    or\r\n    (\r\n        kube_pod_init_container_status_ready{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} != 1\r\n        and\r\n        kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n    ) * 5\r\n    or\r\n    (\r\n        (kube_pod_init_container_status_terminated{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1)\r\n        and on(cluster, namespace, pod, container)\r\n        kube_pod_init_container_status_terminated_reason{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\", reason=\"Completed\"} == 1\r\n    ) * 6\r\n    or\r\n    (\r\n        (kube_pod_init_container_status_terminated{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\"} == 1)\r\n        and on(cluster_type, cluster, namespace, pod, container)\r\n        count by(cluster_type, cluster, namespace, pod, container) (\r\n            kube_pod_init_container_status_terminated_reason{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\", reason!=\"Completed\"} == 1\r\n        ) > 0\r\n    ) * 2\r\n    or\r\n    (\r\n        (kube_pod_init_container_status_terminated{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1)\r\n    ) * 8\r\n)",
+          "expr": "(kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Pending\"} == 1) * 0\r\n+ on() group_right\r\nmin by(container) (\r\n    (\r\n        kube_pod_init_container_status_waiting{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n        and on(location, namespace, pod, container)\r\n        kube_pod_init_container_status_waiting_reason{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}\r\n    ) * 3\r\n    or\r\n    (\r\n        kube_pod_init_container_status_waiting{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n    ) * 3\r\n    or\r\n    (\r\n        kube_pod_init_container_status_ready{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n        and\r\n        kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n    ) * 4\r\n    or\r\n    (\r\n        kube_pod_init_container_status_ready{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} != 1\r\n        and\r\n        kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n    ) * 5\r\n    or\r\n    (\r\n        (kube_pod_init_container_status_terminated{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1)\r\n        and on(location, namespace, pod, container)\r\n        kube_pod_init_container_status_terminated_reason{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\", reason=\"Completed\"} == 1\r\n    ) * 6\r\n    or\r\n    (\r\n        (kube_pod_init_container_status_terminated{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\"} == 1)\r\n        and on(location, namespace, pod, container)\r\n        count by(location, namespace, pod, container) (\r\n            kube_pod_init_container_status_terminated_reason{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\", reason!=\"Completed\"} == 1\r\n        ) > 0\r\n    ) * 2\r\n    or\r\n    (\r\n        (kube_pod_init_container_status_terminated{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1)\r\n    ) * 8\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "init/{{container}}",
@@ -4315,7 +4288,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 196
+        "y": 115
       },
       "id": 19,
       "panels": [],
@@ -4384,7 +4357,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 197
+        "y": 116
       },
       "id": 28,
       "maxDataPoints": 100,
@@ -4489,7 +4462,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 197
+        "y": 116
       },
       "id": 7,
       "maxDataPoints": 100,
@@ -4534,7 +4507,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 204
+        "y": 123
       },
       "id": 17,
       "panels": [],
@@ -4597,7 +4570,7 @@
         "h": 7,
         "w": 17,
         "x": 1,
-        "y": 205
+        "y": 124
       },
       "id": 16,
       "options": {
@@ -4772,7 +4745,7 @@
         "h": 7,
         "w": 4,
         "x": 18,
-        "y": 205
+        "y": 124
       },
       "id": 24,
       "options": {
@@ -4849,7 +4822,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 212
+        "y": 131
       },
       "id": 13,
       "maxDataPoints": 200,
@@ -4950,7 +4923,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 212
+        "y": 131
       },
       "id": 42,
       "maxDataPoints": 200,
@@ -5052,7 +5025,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 219
+        "y": 138
       },
       "id": 37,
       "maxDataPoints": 200,
@@ -5153,7 +5126,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 219
+        "y": 138
       },
       "id": 52,
       "maxDataPoints": 200,
@@ -5254,7 +5227,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 226
+        "y": 145
       },
       "id": 48,
       "maxDataPoints": 200,
@@ -5355,7 +5328,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 226
+        "y": 145
       },
       "id": 47,
       "maxDataPoints": 200,
@@ -5458,7 +5431,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 233
+        "y": 152
       },
       "id": 51,
       "maxDataPoints": 200,
@@ -5560,7 +5533,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 233
+        "y": 152
       },
       "id": 50,
       "maxDataPoints": 200,

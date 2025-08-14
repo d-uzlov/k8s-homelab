@@ -237,7 +237,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "last_over_time(zrepl_replication_last_successful{instance=\"$instance\", zrepl_job=~\"$zrepl_job\"}[$__range]) * 1000",
+          "expr": "max by(zrepl_job) (last_over_time(zrepl_replication_last_successful{instance=\"$instance\", zrepl_job=~\"$zrepl_job\"}[$__range])) * 1000",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -251,7 +251,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "(time() - last_over_time(zrepl_replication_last_successful{instance=\"$instance\", zrepl_job=~\"$zrepl_job\"}[$__range]))",
+          "expr": "max by(zrepl_job) (time() - last_over_time(zrepl_replication_last_successful{instance=\"$instance\", zrepl_job=~\"$zrepl_job\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -266,7 +266,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "last_over_time(zrepl_replication_filesystem_errors{instance=\"$instance\", zrepl_job=~\"$zrepl_job\"}[$__range])",
+          "expr": "max by(zrepl_job) (last_over_time(zrepl_replication_filesystem_errors{instance=\"$instance\", zrepl_job=~\"$zrepl_job\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -284,25 +284,12 @@
         {
           "id": "organize",
           "options": {
-            "excludeByName": {
-              "Time": true,
-              "__name__": true,
-              "cluster": true,
-              "cluster_type": true,
-              "instance": true,
-              "job": true
-            },
             "includeByName": {},
             "indexByName": {
               "Time": 0,
               "Value #errors": 9,
               "Value #last_replication": 7,
               "Value #last_replication_ago": 8,
-              "__name__": 3,
-              "cluster": 1,
-              "cluster_type": 2,
-              "instance": 4,
-              "job": 5,
               "zrepl_job": 6
             },
             "renameByName": {
@@ -705,7 +692,7 @@
             "uid": "${data_source}"
           },
           "editorMode": "code",
-          "expr": "rate(zrepl_replication_bytes_replicated{instance=\"$instance\", filesystem=~\"$filesystem\"}[$__rate_interval])",
+          "expr": "sum by(filesystem) (rate(zrepl_replication_bytes_replicated{instance=\"$instance\", filesystem=~\"$filesystem\"}[$__rate_interval]))",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{filesystem}}",
@@ -742,17 +729,17 @@
           "type": "prometheus",
           "uid": "${data_source}"
         },
-        "definition": "query_result(label_join(last_over_time(up{job=\"zrepl\"}[$__range]), \"human_name\", \"/\", \"cluster_type\", \"cluster\"))",
+        "definition": "query_result(group by(location) (last_over_time(zrepl_pruning_time_count[$__range])))",
         "includeAll": true,
-        "name": "cluster",
+        "name": "location",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(label_join(last_over_time(up{job=\"zrepl\"}[$__range]), \"human_name\", \"/\", \"cluster_type\", \"cluster\"))",
+          "query": "query_result(group by(location) (last_over_time(zrepl_pruning_time_count[$__range])))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
-        "regex": "/human_name=\"(?<text>[^\"]+)|cluster=\"(?<value>[^\"]+)/g",
+        "regex": "/location=\"(?<text>[^\"]+)|location=\"(?<value>[^\"]+)/g",
         "sort": 1,
         "type": "query"
       },
@@ -762,12 +749,12 @@
           "type": "prometheus",
           "uid": "${data_source}"
         },
-        "definition": "query_result(last_over_time(zrepl_pruning_time_count{cluster=~\"$cluster\"}[$__range]))",
+        "definition": "query_result(last_over_time(zrepl_pruning_time_count{location=~\"$location\"}[$__range]))",
         "name": "instance",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(last_over_time(zrepl_pruning_time_count{cluster=~\"$cluster\"}[$__range]))",
+          "query": "query_result(last_over_time(zrepl_pruning_time_count{location=~\"$location\"}[$__range]))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,

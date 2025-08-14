@@ -9,7 +9,7 @@
  sed -i '/\"pluginVersion\":/d' ./ingress/cert-manager/dashboards/*.json
  # avoid id collisions
  sed -i 's/^  \"id\": .*,/  \"id\": null,/' ./ingress/cert-manager/dashboards/*.json
- sed -i 's/^  \"refresh\": \".*s\",/  \"refresh\": \"auto\",/' ./ingress/cert-manager/dashboards/*.json
+ sed -i 's/^  \"refresh\": \".*[sm]\",/  \"refresh\": \"auto\",/' ./ingress/cert-manager/dashboards/*.json
  # remove local variable values
  sed -i '/        \"current\": {/,/        }\,/d' ./ingress/cert-manager/dashboards/*.json
  sed -i 's/^  \"timezone\": \".*\",/  \"timezone\": \"browser\",/' ./ingress/cert-manager/dashboards/*.json

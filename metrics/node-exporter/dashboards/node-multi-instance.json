@@ -290,6 +290,18 @@
                 ]
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "location"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 279
+              }
+            ]
           }
         ]
       },
@@ -314,7 +326,7 @@
         "sortBy": [
           {
             "desc": false,
-            "displayName": "ago"
+            "displayName": "instance"
           }
         ]
       },
@@ -326,7 +338,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "# not using last_over_time here because it's not too useful,\r\n# and there are a lot of metrics (one for each collector) making the query quite slow\r\ncount by(cluster, instance) (node_scrape_collector_success{instance=~\"$instance\"})\r\nor\r\ncount by(cluster, instance) (windows_exporter_collector_success{instance=~\"$instance\"})",
+          "expr": "# not using last_over_time here because it's not too useful,\r\n# and there are a lot of metrics (one for each collector) making the query quite slow\r\ncount by(location, instance) (node_scrape_collector_success{instance=~\"$instance\"})\r\nor\r\ncount by(location, instance) (windows_exporter_collector_success{instance=~\"$instance\"})",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -341,7 +353,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "count by(cluster, instance) (node_scrape_collector_success{instance=~\"$instance\"} == 0)\r\nor\r\ncount by(cluster, instance) (windows_exporter_collector_success{instance=~\"$instance\"} == 0)",
+          "expr": "count by(location, instance) (node_scrape_collector_success{instance=~\"$instance\"} == 0)\r\nor\r\ncount by(location, instance) (windows_exporter_collector_success{instance=~\"$instance\"} == 0)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -356,7 +368,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(cluster, instance) (\r\n  (node_time_seconds{instance=~\"$instance\"} + time() - timestamp(node_time_seconds{instance=~\"$instance\"}))\r\n  or\r\n  last_over_time(node_time_seconds{instance=~\"$instance\"}[$__range])\r\n) * 1000\r\nor\r\nmax by(cluster, instance) (\r\n  (windows_time_current_timestamp_seconds{instance=~\"$instance\"} + time() - timestamp(windows_time_current_timestamp_seconds{instance=~\"$instance\"}))\r\n  or\r\n  last_over_time(windows_time_current_timestamp_seconds{instance=~\"$instance\"}[$__range])\r\n) * 1000",
+          "expr": "max by(location, instance) (\r\n  (node_time_seconds{instance=~\"$instance\"} + time() - timestamp(node_time_seconds{instance=~\"$instance\"}))\r\n  or\r\n  last_over_time(node_time_seconds{instance=~\"$instance\"}[$__range])\r\n) * 1000\r\nor\r\nmax by(location, instance) (\r\n  (windows_time_current_timestamp_seconds{instance=~\"$instance\"} + time() - timestamp(windows_time_current_timestamp_seconds{instance=~\"$instance\"}))\r\n  or\r\n  last_over_time(windows_time_current_timestamp_seconds{instance=~\"$instance\"}[$__range])\r\n) * 1000",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -371,7 +383,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(cluster, instance) (\r\n  (node_time_seconds{instance=~\"$instance\"} - timestamp(node_time_seconds{instance=~\"$instance\"}))\r\n)\r\nor\r\nmax by(cluster, instance) (\r\n  (windows_time_current_timestamp_seconds{instance=~\"$instance\"} - timestamp(windows_time_current_timestamp_seconds{instance=~\"$instance\"}))\r\n)",
+          "expr": "max by(location, instance) (\r\n  (node_time_seconds{instance=~\"$instance\"} - timestamp(node_time_seconds{instance=~\"$instance\"}))\r\n)\r\nor\r\nmax by(location, instance) (\r\n  (windows_time_current_timestamp_seconds{instance=~\"$instance\"} - timestamp(windows_time_current_timestamp_seconds{instance=~\"$instance\"}))\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -386,7 +398,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(cluster, instance) (last_over_time(node_boot_time_seconds{instance=~\"$instance\"}[$__range])) * 1000\r\nor\r\nmax by(cluster, instance) (last_over_time(windows_system_boot_time_timestamp{instance=~\"$instance\"}[$__range])) * 1000",
+          "expr": "max by(location, instance) (last_over_time(node_boot_time_seconds{instance=~\"$instance\"}[$__range])) * 1000\r\nor\r\nmax by(location, instance) (last_over_time(windows_system_boot_time_timestamp{instance=~\"$instance\"}[$__range])) * 1000",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -401,7 +413,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "time() - max by(cluster, instance) (last_over_time(node_boot_time_seconds{instance=~\"$instance\"}[$__range]))\r\nor\r\ntime() - max by(cluster, instance) (last_over_time(windows_system_boot_time_timestamp{instance=~\"$instance\"}[$__range]))",
+          "expr": "time() - max by(location, instance) (last_over_time(node_boot_time_seconds{instance=~\"$instance\"}[$__range]))\r\nor\r\ntime() - max by(location, instance) (last_over_time(windows_system_boot_time_timestamp{instance=~\"$instance\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -431,8 +443,8 @@
               "Value #current_time": 5,
               "Value #failed_collectors": 4,
               "Value #time_offset": 6,
-              "cluster": 1,
-              "instance": 2
+              "instance": 2,
+              "location": 1
             },
             "renameByName": {
               "Value #boot_ago": "ago",
@@ -2485,13 +2497,13 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(group by(location) (last_over_time(node_uname_info[$__range])) or group by(location) (last_over_time(windows_system_boot_time_timestamp[$__range])))",
+        "definition": "query_result(group by(location) (last_over_time(node_uname_info[$__range])) or group by(location) (last_over_time(windows_exporter_build_info[$__range])))",
         "includeAll": true,
         "name": "location",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(group by(location) (last_over_time(node_uname_info[$__range])) or group by(location) (last_over_time(windows_system_boot_time_timestamp[$__range])))",
+          "query": "query_result(group by(location) (last_over_time(node_uname_info[$__range])) or group by(location) (last_over_time(windows_exporter_build_info[$__range])))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -2505,14 +2517,14 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(last_over_time(node_uname_info{location=~\"$location\"}[$__range]) or last_over_time(windows_system_boot_time_timestamp{location=~\"$location\"}[$__range]))",
+        "definition": "query_result(last_over_time(node_uname_info{location=~\"$location\"}[$__range]) or last_over_time(windows_exporter_build_info{location=~\"$location\"}[$__range]))",
         "includeAll": true,
         "label": "Instance",
         "name": "instance",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(last_over_time(node_uname_info{location=~\"$location\"}[$__range]) or last_over_time(windows_system_boot_time_timestamp{location=~\"$location\"}[$__range]))",
+          "query": "query_result(last_over_time(node_uname_info{location=~\"$location\"}[$__range]) or last_over_time(windows_exporter_build_info{location=~\"$location\"}[$__range]))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,

@@ -9,7 +9,7 @@
  sed -i '/\"pluginVersion\":/d' ./docs/backup/dashboards/*.json
  # avoid id collisions
  sed -i 's/^  \"id\": .*,/  \"id\": null,/' ./docs/backup/dashboards/*.json
- sed -i 's/^  \"refresh\": \".*s\",/  \"refresh\": \"auto\",/' ./docs/backup/dashboards/*.json
+ sed -i 's/^  \"refresh\": \".*[sm]\",/  \"refresh\": \"auto\",/' ./docs/backup/dashboards/*.json
  # remove local variable values
  sed -i '/        \"current\": {/,/        }\,/d' ./docs/backup/dashboards/*.json
  sed -i 's/^  \"timezone\": \".*\",/  \"timezone\": \"browser\",/' ./docs/backup/dashboards/*.json
