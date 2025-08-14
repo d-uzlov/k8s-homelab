@@ -36,16 +36,22 @@ sudo apt install -y zfs-dkms zfsutils-linux
 
 zpool list
 
-pool_name=petunia
+pool_name=
 
 # enable scrub once a month
 sudo systemctl enable zfs-scrub-monthly@$pool_name.timer --now
 
+# manual scrub
+sudo zpool scrub $pool_name
+
+# enable trim once a week
+sudo systemctl enable zfs-trim-weekly@$pool_name.timer --now
+
 # enable automatic trim after deletion
 sudo zpool set autotrim=on $pool_name
 
-# manual scrub
-sudo zpool scrub $pool_name
+# manual trim
+sudo zpool trim $pool_name
 
 ```
 

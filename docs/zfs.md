@@ -82,6 +82,10 @@ special mirror \
 /dev/disk/by-id/ata-TEAM_T253480GB_TPBF2209020010803378-part1 \
 /dev/disk/by-id/ata-Apacer_AS340_480GB_E09507281ACE00417122-part1
 
+# You need to set snapshot_limit to be able to use snapshot_count property.
+# You can set an arbitrary very high limit to be effectively unrestricted.
+sudo zfs set snapshot_limit=1000000 $pool
+
 ```
 
 # Change disk path after creating ZFS pool
@@ -338,12 +342,14 @@ echo 1 | sudo tee /sys/module/zfs/parameters/l2arc_exclude_special
 # this sets average write limit to 100 MB/s, peak to 200 MB/s
 echo 104857600 | sudo tee /sys/module/zfs/parameters/l2arc_write_max
 echo 209715200 | sudo tee /sys/module/zfs/parameters/l2arc_write_boost
+echo 50 | sudo tee /sys/module/zfs/parameters/l2arc_trim_ahead
 
 # set L2ARC parameters after boot
  sudo tee /etc/modprobe.d/50-zfs_l2arc.conf << EOF
 options zfs l2arc_exclude_special=1
 options zfs l2arc_write_max=104857600
 options zfs l2arc_write_boost=209715200
+options zfs l2arc_trim_ahead=50
 EOF
 cat /etc/modprobe.d/50-zfs_l2arc.conf
 sudo update-initramfs -u
