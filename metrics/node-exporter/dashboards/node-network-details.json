@@ -1323,18 +1323,17 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(label_join(node_uname_info, \"human_name\", \"/\", \"cluster_type\", \"cluster\"))",
+        "definition": "query_result(group by(location) (last_over_time(node_uname_info[$__range])))",
         "includeAll": true,
-        "label": "Cluster",
-        "name": "cluster",
+        "name": "location",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(label_join(node_uname_info, \"human_name\", \"/\", \"cluster_type\", \"cluster\"))",
+          "query": "query_result(group by(location) (last_over_time(node_uname_info[$__range])))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
-        "refresh": 1,
-        "regex": "/human_name=\"(?<text>[^\"]+)|cluster=\"(?<value>[^\"]+)/g",
+        "refresh": 2,
+        "regex": "/location=\"(?<text>[^\"]+)|location=\"(?<value>[^\"]+)/g",
         "sort": 1,
         "type": "query"
       },
@@ -1344,13 +1343,13 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(node_uname_info{cluster=~\"$cluster\"})",
+        "definition": "query_result(last_over_time(node_uname_info{location=~\"$location\"}[$__range]))",
         "label": "Instance",
         "name": "instance",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(node_uname_info{cluster=~\"$cluster\"})",
+          "query": "query_result(last_over_time(node_uname_info{location=~\"$location\"}[$__range]))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 1,
@@ -1359,23 +1358,25 @@
         "type": "query"
       },
       {
+        "allValue": "",
         "allowCustomValue": false,
         "datasource": {
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(node_network_address_info{instance=\"$instance\"})",
+        "definition": "query_result(last_over_time(node_network_address_info{instance=\"$instance\"}[$__range]))",
         "includeAll": true,
         "label": "Scope",
         "name": "address_scope",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(node_network_address_info{instance=\"$instance\"})",
+          "query": "query_result(last_over_time(node_network_address_info{instance=\"$instance\"}[$__range]))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "/scope=\"(?<text>[^\"]+)|scope=\"(?<value>[^\"]+)/g",
+        "sort": 1,
         "type": "query"
       },
       {
@@ -1428,8 +1429,9 @@
           "query": "query_result(node_network_receive_bytes_total{instance=\"$instance\", device=~\".*($device_filter).*\", invalid=$show_devices_without_address} unless on(device) node_network_address_info{instance=\"$instance\"} or {instance=\"$instance\", scope=~\"$address_scope\", device=~\".*($device_filter).*\"})",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "/device=\"(?<text>[^\"]+)|device=\"(?<value>[^\"]+)/g",
+        "sort": 1,
         "type": "query"
       }
     ]
