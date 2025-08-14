@@ -76,8 +76,7 @@ metadata:
 spec:
   staticConfigs:
   - labels:
-      cluster_type: pve
-      cluster: cluster-name
+      location: cluster-name
     targets:
     - node1.example.com:9100
     - node2.example.com:9100

@@ -53,13 +53,12 @@ mkdir -p ./metrics/component-monitoring/xray/env/
 [ -f ./metrics/component-monitoring/xray/env/targets-patch.yaml ] ||
   cp ./metrics/component-monitoring/xray/scrape-patch.template.yaml ./metrics/component-monitoring/xray/env/scrape-patch.yaml
 
-# adjust cluster_type and cluster to your needs
+# adjust location to your needs
 # repeat if you need to scrape several clusters with different names
  cat << EOF >> ./metrics/component-monitoring/xray/env/scrape-patch.yaml
   - labels:
       job: xray
-      cluster_type: site
-      cluster: cluster-name
+      location: cluster-name
     targets:
     - xray.example.com:9550
 EOF

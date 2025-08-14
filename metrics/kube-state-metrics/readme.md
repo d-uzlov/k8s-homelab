@@ -42,7 +42,7 @@ helm template \
 
 mkdir -p ./metrics/kube-state-metrics/env/
 clusterName=
- cat << EOF > ./metrics/kube-state-metrics/env/patch-cluster-tag.yaml
+ cat << EOF > ./metrics/kube-state-metrics/env/patch-location-tag.yaml
 - op: add
   path: /spec/endpoints/0/relabelings/0
   value:
@@ -50,7 +50,7 @@ clusterName=
     replacement: $clusterName
     action: replace
 EOF
- cat << EOF > ./metrics/kube-state-metrics/env/patch-scrape-cluster-tag.yaml
+ cat << EOF > ./metrics/kube-state-metrics/env/patch-scrape-location-tag.yaml
 - op: add
   path: /spec/staticConfigs/0/labels/location
   value: $clusterName

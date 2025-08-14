@@ -39,9 +39,9 @@ wget https://github.com/cert-manager/cert-manager/releases/download/v1.17.1/cert
 
 mkdir -p ./ingress/cert-manager/env/
 clusterName=
- cat << EOF > ./ingress/cert-manager/env/patch-cluster-tag.yaml
+ cat << EOF > ./ingress/cert-manager/env/patch-location-tag.yaml
 - op: add
-  path: /spec/staticConfigs/0/labels/cluster
+  path: /spec/staticConfigs/0/labels/location
   value: $clusterName
 EOF
 

@@ -51,7 +51,7 @@ sudo journalctl -b -u zfs_exporter_chris
 
 mkdir -p ./metrics/zfs-exporter/chris-siebenmann/env/
 
-# adjust cluster_type and cluster to your needs
+# adjust location to your needs
 # if scrape-patch.yaml already exists, add more items into staticConfigs list
  cat << EOF > ./metrics/zfs-exporter/chris-siebenmann/env/scrape-patch.yaml
  ---

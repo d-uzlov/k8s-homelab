@@ -35,9 +35,9 @@ helm template \
 
 mkdir -p ./metrics/ephemeral-storage/env/
 clusterName=
- cat << EOF > ./metrics/ephemeral-storage/env/patch-cluster-tag.yaml
+ cat << EOF > ./metrics/ephemeral-storage/env/patch-location-tag.yaml
 - op: add
-  path: /spec/staticConfigs/0/labels/cluster
+  path: /spec/staticConfigs/0/labels/location
   value: $clusterName
 EOF
 

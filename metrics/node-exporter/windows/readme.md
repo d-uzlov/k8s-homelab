@@ -27,10 +27,10 @@ metadata:
     instance.prometheus.io/prompp: enable
 spec:
   scheme: HTTP
+  scrapeTimeout: 1s
   staticConfigs:
   - labels:
-      cluster_type: site
-      cluster: my-cluster
+      location: my-cluster
       ok_to_be_missing: 'true'
     targets:
     - workstation.example.com:9182

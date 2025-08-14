@@ -68,7 +68,7 @@ mkdir -p ./metrics/zfs-exporter/pdf/env/
 [ -f ./metrics/zfs-exporter/pdf/env/targets-patch.yaml ] ||
   cp ./metrics/zfs-exporter/pdf/scrape-patch.template.yaml ./metrics/zfs-exporter/pdf/env/scrape-patch.yaml
 
-# adjust cluster_type and cluster to your needs
+# adjust location to your needs
 # if scrape-patch.yaml already exists, add more items into staticConfigs list
  cat << EOF >> ./metrics/zfs-exporter/pdf/env/scrape-patch.yaml
  ---

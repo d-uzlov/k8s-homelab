@@ -95,7 +95,7 @@ Ensure the following argument is present in the edit window: `"--smartctl.path=c
 
 mkdir -p ./metrics/smart/env/
 
-# adjust cluster_type and cluster to your needs
+# adjust location to your needs
 # repeat if you need to scrape several clusters with different names
  cat << EOF > ./metrics/smart/env/scrape-smartctl.yaml
 ---
@@ -110,15 +110,14 @@ metadata:
     instance.prometheus.io/prompp: enable
 spec:
   scheme: HTTP
+  scrapeTimeout: 1s
   staticConfigs:
   - labels:
-      cluster_type: site
-      cluster: my-cluster
+      location: my-cluster
     targets:
     - example.com:9633
   - labels:
-      cluster_type: site
-      cluster: my-cluster
+      location: my-cluster
       ok_to_be_missing: 'true'
     targets:
     - volatile-example.com:9633

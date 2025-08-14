@@ -327,8 +327,7 @@ spec:
   staticConfigs:
   - labels:
       job: zrepl
-      cluster_type: nas
-      cluster: $cluster_name
+      location: $cluster_name
     targets:
     - $zrepl_host:9811
   metricRelabelings:

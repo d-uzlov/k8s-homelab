@@ -36,7 +36,7 @@ metadata:
 spec:
   staticConfigs:
   - labels:
-      cluster: proxmox-cluster-name
+      location: pve/cluster-name
     targets:
     - pve1.k8s.lan
     - pve2.k8s.lan
@@ -52,7 +52,7 @@ metadata:
 spec:
   staticConfigs:
   - labels:
-      cluster: proxmox-cluster-name
+      location: pve/cluster-name
     targets:
     - pve1.k8s.lan
 EOF

@@ -21,7 +21,7 @@ spec:
   staticConfigs:
   - labels:
       job: etcd
-      b2788/k8s/trixie: k8s1-etcd
+      location: k8s1-etcd
     targets:
     - k8s1-etcd1.k8s.lan:2379
     - k8s1-etcd2.k8s.lan:2379
