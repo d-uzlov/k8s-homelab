@@ -48,13 +48,12 @@ spec:
           {{ $labels.integration }}:
           {{ $labels.reason }}:
           {{ $value | humanizePercentage }}
-        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/alertmanager/alertmanagerfailedtosendalerts
         summary: An Alertmanager instance failed to send more than 1% of notifications
       expr: |-
         (
-          rate(alertmanager_notifications_failed_total[5m])
+          sum without(reason) (rate(alertmanager_notifications_failed_total[5m]))
         /
-          ignoring (reason) group_left rate(alertmanager_notifications_total[5m])
+          (rate(alertmanager_notifications_total[5m]) != 0)
         ) > 0.01
       for: 5m
       labels:
@@ -65,13 +64,12 @@ spec:
           {{ $labels.namespace }}:
           {{ $labels.integration }}:
           {{ $value | humanizePercentage }}
-        runbook_url: https://runbooks.prometheus-operator.dev/runbooks/alertmanager/alertmanagerclusterfailedtosendalerts
         summary: All Alertmanager instances in a cluster failed to send notifications to integration.
       expr: |-
-        min by (cluster_type, cluster, namespace, service, integration) (
-          rate(alertmanager_notifications_failed_total[5m])
+        min without(instance, pod) (
+          sum without(reason) (rate(alertmanager_notifications_failed_total[5m]))
         /
-          ignoring (reason) group_left rate(alertmanager_notifications_total[5m])
+          (rate(alertmanager_notifications_total[5m]) != 0)
         )
         > 0.01
       for: 5m
@@ -85,10 +83,10 @@ spec:
           {{ $value }} configurations
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/alertmanager/alertmanagerconfiginconsistent
         summary: Alertmanager instances within the same cluster have different configurations.
+        # TODO figure this out
+        # I don't have an alertmanager cluster right now
       expr: |-
-        count by (cluster_type, cluster, namespace, service, exported_cluster) (
-          count_values by (cluster_type, cluster, namespace, service, exported_cluster) ("config_hash", alertmanager_config_hash)
-        ) != 1
+        count_values without(config_hash, instance, pod) ("config_hash", alertmanager_config_hash) != 1
       for: 20m
       labels:
         severity: critical
@@ -102,11 +100,11 @@ spec:
         summary: Half or more of the Alertmanager instances within the same cluster are down.
       expr: |-
         (
-          count by (cluster_type, cluster, namespace, service, exported_cluster) (
+          count without(instance, pod) (
             avg_over_time(up{job="alertmanager"}[5m]) < 0.5
           )
         /
-          count by (cluster_type, cluster, namespace, service, exported_cluster) (
+          count without(instance, pod) (
             up{job="alertmanager"}
           )
         )

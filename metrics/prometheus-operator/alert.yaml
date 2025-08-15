@@ -21,12 +21,15 @@ spec:
         summary: Error rate for list operations in controller is above 0%
       expr: |-
         (
-          sum by (cluster_type, cluster, controller, namespace) (
+          sum without(instance, pod) (
             rate(prometheus_operator_list_operations_failed_total[10m])
-          ) / sum by (cluster_type, cluster, controller, namespace) (
+          )
+          /
+          sum without(instance, pod) (
             rate(prometheus_operator_list_operations_total{}[10m])
           )
-        ) > 0
+        )
+        > 0
       for: 15m
       labels:
         severity: warning

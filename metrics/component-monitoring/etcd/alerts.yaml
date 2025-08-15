@@ -29,20 +29,23 @@ spec:
           {{ $value | humanize }}
         summary: More than 1 failed requests per seconds to etcd node
       expr: |-
-        max by (cluster_type, cluster, To) (rate(etcd_network_peer_sent_failures_total[2m])) > 1
+        sum without(instance) (rate(etcd_network_peer_sent_failures_total[2m])) > 1
       for: 10m
       labels:
         severity: critical
     - alert: etcdInsufficientMembers
       annotations:
         # printf example: https://github.com/prometheus/alertmanager/issues/549#issuecomment-260585592
+        # {{ printf `count (up{job="etcd", location="%s"})` $labels.location | query | first | value }}
         description: >-
-          {{ $value }} out of {{ printf `count (up{job="etcd", cluster_type="%s", cluster="%s"})` $labels.cluster_type $labels.cluster | query | first | value }}
-        summary: etcd cluster has insufficient number of members
+          {{ $value }} less than required
+        summary: etcd cluster has less members than required for quorum
       expr: |-
-        sum by (cluster_type, cluster) (
-          up{job="etcd"} == bool 1
-        ) < ((count by (cluster_type, cluster) (up{job="etcd"}) + 1) / 2)
+        (
+          ((count without(instance) (up{job="etcd"}) + 1) / 2)
+          -
+          sum without(instance) (up{job="etcd"})
+        ) > 0
       for: 3m
       labels:
         severity: critical
@@ -61,7 +64,7 @@ spec:
           {{ $value | humanize }} leader changes
         summary: More than 3 leader changes within the last 15 minutes
       expr: |-
-        max by (cluster_type, cluster) (increase(etcd_server_leader_changes_seen_total[15m])) >= 3
+        max without(instance) (increase(etcd_server_leader_changes_seen_total[15m])) >= 3
       for: 5m
       labels:
         severity: warning

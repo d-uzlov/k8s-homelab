@@ -20,9 +20,9 @@ spec:
         summary: Error rate in list operations is above 1%
       expr: |-
         (
-          sum by (cluster_type, cluster, instance) (rate(kube_state_metrics_list_total{result="error"}[5m]))
+          sum without(pod, resource, result) (rate(kube_state_metrics_list_total{result="error"}[5m]))
           /
-          sum by (cluster_type, cluster, instance) (rate(kube_state_metrics_list_total{}[5m]))
+          sum without(pod, resource, result) (rate(kube_state_metrics_list_total{}[5m]))
         ) > 0.01
       for: 15m
       labels:
@@ -36,9 +36,9 @@ spec:
         summary: Error rate in watch operations is above 1%
       expr: |-
         (
-          sum by (cluster_type, cluster, instance) (rate(kube_state_metrics_watch_total{result="error"}[5m]))
+          sum without(pod, resource, result) (rate(kube_state_metrics_watch_total{result="error"}[5m]))
           /
-          sum by (cluster_type, cluster, instance) (rate(kube_state_metrics_watch_total{}[5m]))
+          sum without(pod, resource, result) (rate(kube_state_metrics_watch_total{}[5m]))
         ) > 0.01
       for: 15m
       labels:
@@ -50,7 +50,7 @@ spec:
           some Kubernetes objects may be exposed multiple times or not exposed at all.
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/kube-state-metrics/kubestatemetricsshardingmismatch
         summary: kube-state-metrics sharding is misconfigured.
-      expr: stdvar by (cluster_type, cluster) (kube_state_metrics_total_shards{}) != 0
+      expr: stdvar without(instance) (kube_state_metrics_total_shards{}) != 0
       for: 15m
       labels:
         severity: critical
@@ -61,11 +61,11 @@ spec:
         summary: kube-state-metrics shards are missing.
       expr: |-
         (
-          2^max by (cluster_type, cluster) (kube_state_metrics_total_shards{})
+          2^max without(instance, pod) (kube_state_metrics_total_shards{})
           - 1
           -
-          sum by (cluster_type, cluster) (
-            2 ^ max by (cluster_type, cluster, shard_ordinal) (kube_state_metrics_shard_ordinal{})
+          sum without(instance, pod, shard_ordinal) (
+            2 ^ max without(instance, pod) (kube_state_metrics_shard_ordinal{})
           )
         ) != 0
       for: 15m
