@@ -27,7 +27,9 @@ metadata:
     instance.prometheus.io/prompp: enable
 spec:
   scheme: HTTP
-  scrapeTimeout: 1s
+  # when set to 1s, all collectors fail instantly
+  #   https://github.com/prometheus-community/windows_exporter/issues/2177
+  scrapeTimeout: 2s
   staticConfigs:
   - labels:
       location: my-cluster
