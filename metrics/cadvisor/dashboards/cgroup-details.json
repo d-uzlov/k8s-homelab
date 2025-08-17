@@ -114,6 +114,363 @@
       "fieldConfig": {
         "defaults": {
           "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*/"
+            },
+            "properties": [
+              {
+                "id": "filterable"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Last seen"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIsoNoDateIfToday"
+              },
+              {
+                "id": "custom.width",
+                "value": 176
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "name"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 228
+              },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Filter container ID",
+                    "url": "/d/mo6wf2ukdv3l72howqnq/pod-containers?${datasource:queryparam}&${cluster:queryparam}&${namespace:queryparam}&${workload:queryparam}&${pod:queryparam}&${pod_uid:queryparam}&${container:queryparam}&${container_name:queryparam}&var-id=${__data.fields.name}&${__url_time_range}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "image"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 446
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #start_time"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIsoNoDateIfToday"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Start time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 175
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Ago"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 106
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #ago"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "applyToRow": true,
+                  "mode": "gradient",
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "#ad4d0e",
+                      "value": 0
+                    },
+                    {
+                      "color": "#255b1d",
+                      "value": 0
+                    },
+                    {
+                      "color": "#6f0915",
+                      "value": 10
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "project"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 162
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "service"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 148
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 1
+      },
+      "id": 80,
+      "maxDataPoints": 100,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "frameIndex": 1,
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Last seen"
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "max by(id, name, container_label_com_docker_compose_project, container_label_com_docker_compose_service, pod, uid, node, container, image) (\r\n  max_over_time(container_start_time_seconds{instance=\"$instance\", id=~\"$id\"}[$__range])\r\n)",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "info"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "max by(id, name) (\r\n  max without(uid) (max_over_time(container_last_seen{instance=\"$instance\", id=~\"$id\"}[$__range]))\r\n) * 1000",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "last_seen_time"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "max by(id, name) (\r\n  max_over_time(container_start_time_seconds{instance=\"$instance\", id=~\"$id\"}[$__range])\r\n) * 1000",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "start_time"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "(min by(id, name) (\r\n  timestamp(container_last_seen{instance=\"$instance\", id=~\"$id\"})\r\n  -\r\n  container_last_seen{instance=\"$instance\", id=~\"$id\"}\r\n  or\r\n  time() - max_over_time(container_last_seen{instance=\"$instance\", id=~\"$id\"}[$__range])\r\n))",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "ago"
+        }
+      ],
+      "title": "container info",
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Time 1": true,
+              "Time 2": true,
+              "Time 3": true,
+              "Time 4": true,
+              "Time 5": true,
+              "Value #A": false,
+              "Value #info": true,
+              "Value #owner": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "Time": 0,
+              "Value #ago": 3,
+              "Value #info": 10,
+              "Value #last_seen_time": 2,
+              "Value #start_time": 1,
+              "container_label_com_docker_compose_project": 4,
+              "container_label_com_docker_compose_service": 5,
+              "id": 9,
+              "image": 8,
+              "logs_link": 7,
+              "name": 6
+            },
+            "renameByName": {
+              "1 + 1": "",
+              "Time": "",
+              "Value": "Last seen",
+              "Value #A": "CPU Usage",
+              "Value #B": "CPU Requests",
+              "Value #C": "CPU Requests %",
+              "Value #D": "CPU Limits",
+              "Value #E": "CPU Limits %",
+              "Value #ago": "Ago",
+              "Value #cpu": "CPU (avg)",
+              "Value #cpu_limit": "CPU limit",
+              "Value #cpu_request": "CPU request",
+              "Value #first_seen": "First seen",
+              "Value #last_seen_time": "Last seen",
+              "Value #limit_percent": "Limit % (avg)",
+              "Value #limit_percent_max": "Limit % (max)",
+              "Value #memory_limit": "Memory limit",
+              "Value #memory_raw": "Memory Raw",
+              "Value #memory_request": "Memory request",
+              "Value #request": "Request",
+              "Value #request_percent": "Request % (avg)",
+              "Value #request_percent_max": "Request % (max)",
+              "Value #rss": "RSS",
+              "Value #start_time": "Start time",
+              "Value #time": "Last seen",
+              "container": "",
+              "container_label_com_docker_compose_project": "project",
+              "container_label_com_docker_compose_service": "service",
+              "id": "",
+              "logs_link": "",
+              "name": "",
+              "node": "Node",
+              "pod": "Pod",
+              "uid": "Pod uid",
+              "workload": "",
+              "workload_type": "Type"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
             "mode": "continuous-RdYlGr"
           },
           "custom": {
@@ -144,10 +501,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 9,
-        "w": 24,
+        "h": 4,
+        "w": 12,
         "x": 0,
-        "y": 1
+        "y": 9
       },
       "id": 53,
       "maxDataPoints": 500,
@@ -159,7 +516,6 @@
           "showLegend": false
         },
         "mergeValues": true,
-        "perPage": 15,
         "rowHeight": 0.9,
         "showValue": "auto",
         "tooltip": {
@@ -175,7 +531,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\n$__to / 1000 - max by(id) (max_over_time(container_start_time_seconds{instance=\"$instance\", id=~\"$id\"}[$__interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "label_replace(\r\n$__to / 1000 - max(max_over_time(container_start_time_seconds{instance=\"$instance\", id=~\"$id\"}[$__interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
           "instant": false,
           "legendFormat": "{{id}}",
           "range": true,
@@ -184,101 +540,6 @@
       ],
       "title": "start time (ago)",
       "type": "state-timeline"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "inspect": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "s"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": "/.*/"
-            },
-            "properties": [
-              {
-                "id": "filterable"
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 0,
-        "y": 10
-      },
-      "id": 57,
-      "options": {
-        "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
-        "frameIndex": 1,
-        "showHeader": true
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "round(max by(id) (\r\n  timestamp(container_last_seen{instance=\"$instance\", id=~\"$id\"})\r\n  -\r\n  container_last_seen{instance=\"$instance\", id=~\"$id\"}\r\n  or\r\n  time() - last_over_time(container_last_seen{instance=\"$instance\", id=~\"$id\"}[$__range])\r\n))",
-          "format": "table",
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "A"
-        }
-      ],
-      "title": "last seen (ago)",
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time": true
-            },
-            "includeByName": {},
-            "indexByName": {},
-            "renameByName": {}
-          }
-        }
-      ],
-      "type": "table"
     },
     {
       "datasource": {
@@ -339,10 +600,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
+        "h": 4,
         "w": 12,
         "x": 12,
-        "y": 10
+        "y": 9
       },
       "id": 1,
       "maxDataPoints": 300,
@@ -371,7 +632,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\ntime() - max by(id) (last_over_time(container_start_time_seconds{instance=\"$instance\", id=~\"$id\"}[$__interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "label_replace(\r\ntime() - max(last_over_time(container_start_time_seconds{instance=\"$instance\", id=~\"$id\"}[$__interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{id}}",
@@ -388,7 +649,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 17
+        "y": 13
       },
       "id": 18,
       "panels": [],
@@ -454,10 +715,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 4,
         "w": 12,
         "x": 0,
-        "y": 18
+        "y": 14
       },
       "id": 54,
       "maxDataPoints": 100,
@@ -486,7 +747,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum by(id) (rate(container_cpu_usage_seconds_total{instance=\"$instance\", id=~\"$id\", cpu=\"total\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "label_replace(\r\nsum(rate(container_cpu_usage_seconds_total{instance=\"$instance\", id=~\"$id\", cpu=\"total\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{id}}",
@@ -494,7 +755,7 @@
           "refId": "usage"
         }
       ],
-      "title": "CPU usage",
+      "title": "cpu usage",
       "type": "timeseries"
     },
     {
@@ -502,6 +763,316 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic-by-name"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMax": 1,
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 12,
+        "x": 12,
+        "y": 14
+      },
+      "id": 56,
+      "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "label_replace(\r\nmax(\r\n  (rate(container_cpu_system_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]) )\r\n  /\r\n  sum without(cpu) (rate(container_cpu_usage_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]) + 1e-12)\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{id}}",
+          "range": true,
+          "refId": "burst_usage"
+        }
+      ],
+      "title": "cpu kernel mode %",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "sum_over_time of seconds spent running",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic-by-name"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "id": 73,
+      "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Total",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "label_replace(\r\nsum(rate(container_cpu_usage_seconds_total{instance=\"$instance\", id=~\"$id\", cpu=\"total\"}[$__rate_interval]) * $__interval_ms / 1000)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{id}}",
+          "range": true,
+          "refId": "usage"
+        }
+      ],
+      "title": "cpu (total time)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "empty when cgroup doesn't have cpu limit",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic-by-name"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "sishort"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "id": 46,
+      "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "label_replace(\r\nmax(\r\n  (rate(container_cpu_cfs_throttled_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]) )\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{id}}",
+          "range": true,
+          "refId": "throttled"
+        }
+      ],
+      "title": "cpu throttled rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "empty when cgroup doesn't have cpu limit",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -563,10 +1134,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 4,
         "w": 12,
-        "x": 12,
-        "y": 18
+        "x": 0,
+        "y": 22
       },
       "id": 58,
       "maxDataPoints": 100,
@@ -595,7 +1166,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum by(id) (\r\n  container_spec_cpu_quota{instance=\"$instance\", id=~\"$id\"}\r\n  /\r\n  container_spec_cpu_period{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "label_replace(\r\nsum(\r\n  container_spec_cpu_quota{instance=\"$instance\", id=~\"$id\"}\r\n  /\r\n  container_spec_cpu_period{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{id}}",
@@ -611,109 +1182,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic-by-name"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "axisSoftMax": 1,
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 3,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "percentunit"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 26
-      },
-      "id": 56,
-      "maxDataPoints": 100,
-      "options": {
-        "legend": {
-          "asTable": true,
-          "calcs": [
-            "mean"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Mean",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "label_replace(\r\nmax by (id) (\r\n  (rate(container_cpu_system_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]) )\r\n  /\r\n  sum without(cpu) (rate(container_cpu_usage_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]) + 1e-12)\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{id}}",
-          "range": true,
-          "refId": "burst_usage"
-        }
-      ],
-      "title": "cpu kernel mode %",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
+      "description": "sum_over_time of seconds spent throtting. Empty is container doesn't have cpu limit.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -763,23 +1232,23 @@
               }
             ]
           },
-          "unit": "sishort"
+          "unit": "s"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 4,
         "w": 12,
         "x": 12,
-        "y": 26
+        "y": 22
       },
-      "id": 46,
+      "id": 72,
       "maxDataPoints": 100,
       "options": {
         "legend": {
           "asTable": true,
           "calcs": [
-            "mean"
+            "sum"
           ],
           "displayMode": "table",
           "placement": "right",
@@ -800,7 +1269,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax by (id) (\r\n  (rate(container_cpu_cfs_throttled_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]) )\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "label_replace(\r\nmax(\r\n  (rate(container_cpu_cfs_throttled_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]) * $__interval_ms / 1000 )\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{id}}",
@@ -808,7 +1277,7 @@
           "refId": "throttled"
         }
       ],
-      "title": "CPU throttled",
+      "title": "cpu throttled (total time)",
       "type": "timeseries"
     },
     {
@@ -816,6 +1285,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
+      "description": "empty when cgroup doesn't have cpu limit",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -871,10 +1341,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 4,
         "w": 12,
         "x": 0,
-        "y": 34
+        "y": 26
       },
       "id": 43,
       "maxDataPoints": 100,
@@ -903,7 +1373,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum by(id) (\r\n    sum without(cpu) (\r\n        rate(container_cpu_usage_seconds_total{instance=\"$instance\", id=~\"$id\", cpu=\"total\"}[$__rate_interval])\r\n    )\r\n    /\r\n    (\r\n      container_spec_cpu_quota{instance=\"$instance\", id=~\"$id\"}\r\n      /\r\n      container_spec_cpu_period{instance=\"$instance\", id=~\"$id\"}\r\n    )\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "label_replace(\r\nsum(\r\n    sum without(cpu) (\r\n        rate(container_cpu_usage_seconds_total{instance=\"$instance\", id=~\"$id\", cpu=\"total\"}[$__rate_interval])\r\n    )\r\n    /\r\n    (\r\n      container_spec_cpu_quota{instance=\"$instance\", id=~\"$id\"}\r\n      /\r\n      container_spec_cpu_period{instance=\"$instance\", id=~\"$id\"}\r\n    )\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}}",
@@ -919,6 +1389,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
+      "description": "empty when cgroup doesn't have cpu limit",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -986,10 +1457,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 4,
         "w": 12,
         "x": 12,
-        "y": 34
+        "y": 26
       },
       "id": 2,
       "maxDataPoints": 100,
@@ -1016,7 +1487,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "# if container didn't run at some interval, you will have division by zero, so we do ` / increase + epsilon`\r\nlabel_replace(\r\nmax by(id) (\r\n  (increase(container_cpu_cfs_throttled_periods_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]) )\r\n/\r\n  (increase(container_cpu_cfs_periods_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]) + 1e-5 )\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "# if container didn't run at some interval, you will have division by zero, so we do ` / increase + epsilon`\r\nlabel_replace(\r\nmax(\r\n  (increase(container_cpu_cfs_throttled_periods_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]) )\r\n/\r\n  (increase(container_cpu_cfs_periods_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]) + 1e-5 )\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}}",
@@ -1033,7 +1504,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 42
+        "y": 30
       },
       "id": 60,
       "panels": [],
@@ -1099,10 +1570,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
+        "h": 4,
+        "w": 8,
         "x": 0,
-        "y": 43
+        "y": 31
       },
       "id": 61,
       "maxDataPoints": 100,
@@ -1131,7 +1602,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum by(id) (rate(container_pressure_cpu_stalled_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "label_replace(\r\nsum(rate(container_pressure_cpu_stalled_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{id}}",
@@ -1201,316 +1672,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 43
-      },
-      "id": 65,
-      "maxDataPoints": 100,
-      "options": {
-        "legend": {
-          "asTable": true,
-          "calcs": [
-            "mean"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Mean",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "label_replace(\r\nsum by(id) (rate(container_pressure_io_stalled_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{id}}",
-          "range": true,
-          "refId": "usage"
-        }
-      ],
-      "title": "io pressure: stalled",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic-by-name"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 3,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "sishort"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 51
-      },
-      "id": 62,
-      "maxDataPoints": 100,
-      "options": {
-        "legend": {
-          "asTable": true,
-          "calcs": [
-            "mean"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Mean",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "label_replace(\r\nsum by(id) (rate(container_pressure_cpu_waiting_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{id}}",
-          "range": true,
-          "refId": "usage"
-        }
-      ],
-      "title": "cpu pressure: waiting",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic-by-name"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 3,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "sishort"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 51
-      },
-      "id": 66,
-      "maxDataPoints": 100,
-      "options": {
-        "legend": {
-          "asTable": true,
-          "calcs": [
-            "mean"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Mean",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "label_replace(\r\nsum by(id) (rate(container_pressure_io_waiting_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{id}}",
-          "range": true,
-          "refId": "usage"
-        }
-      ],
-      "title": "io pressure: waiting",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic-by-name"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 3,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "sishort"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 59
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 31
       },
       "id": 63,
       "maxDataPoints": 100,
@@ -1539,7 +1704,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum by(id) (rate(container_pressure_memory_stalled_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "label_replace(\r\nsum(rate(container_pressure_memory_stalled_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{id}}",
@@ -1609,10 +1774,214 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 31
+      },
+      "id": 65,
+      "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "label_replace(\r\nsum(rate(container_pressure_io_stalled_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{id}}",
+          "range": true,
+          "refId": "usage"
+        }
+      ],
+      "title": "io pressure: stalled",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic-by-name"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "sishort"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
         "x": 0,
-        "y": 67
+        "y": 35
+      },
+      "id": 62,
+      "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "label_replace(\r\nsum(rate(container_pressure_cpu_waiting_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{id}}",
+          "range": true,
+          "refId": "usage"
+        }
+      ],
+      "title": "cpu pressure: waiting",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic-by-name"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "sishort"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 35
       },
       "id": 64,
       "maxDataPoints": 100,
@@ -1641,7 +2010,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum by(id) (rate(container_pressure_memory_waiting_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "label_replace(\r\nsum(rate(container_pressure_memory_waiting_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{id}}",
@@ -1653,24 +2022,10 @@
       "type": "timeseries"
     },
     {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 75
-      },
-      "id": 67,
-      "panels": [],
-      "title": "memory summary",
-      "type": "row"
-    },
-    {
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1720,28 +2075,28 @@
               }
             ]
           },
-          "unit": "bytes"
+          "unit": "sishort"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 76
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 35
       },
-      "id": 49,
-      "maxDataPoints": 200,
+      "id": 66,
+      "maxDataPoints": 100,
       "options": {
         "legend": {
           "asTable": true,
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
-          "sortBy": "Last *",
+          "sortBy": "Mean",
           "sortDesc": true
         },
         "tooltip": {
@@ -1757,118 +2112,15 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax by(id) (\r\n  max_over_time(container_memory_rss{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_rss{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "label_replace(\r\nsum(rate(container_pressure_io_waiting_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{id}}",
           "range": true,
-          "refId": "rss"
+          "refId": "usage"
         }
       ],
-      "title": "memory summary: rss",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic-by-name"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 3,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "bytes"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 84
-      },
-      "id": 68,
-      "maxDataPoints": 200,
-      "options": {
-        "legend": {
-          "asTable": true,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Last *",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "label_replace(\r\nmax by(id) (\r\n  max_over_time(container_memory_working_set_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_working_set_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{id}}",
-          "range": true,
-          "refId": "wss"
-        }
-      ],
-      "title": "memory summary: wss",
+      "title": "io pressure: waiting",
       "type": "timeseries"
     },
     {
@@ -1877,13 +2129,36 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 92
+        "y": 39
       },
       "id": 20,
       "panels": [],
-      "repeat": "id",
-      "title": "Memory $id",
+      "title": "memory",
       "type": "row"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 9,
+        "y": 40
+      },
+      "id": 27,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "- `rss` is anon memory\n- `wss` = rss + active cache\n- `raw` = `rss` + full cache + kernel\n- Cache is active if it used _often_ (more than once?)\n\nWhat to look for:\n- WSS reaching limit causes file garbage collection\n- RSS reaching limit causes OOM kill\n",
+        "mode": "markdown"
+      },
+      "title": "Memory notes",
+      "type": "text"
     },
     {
       "datasource": {
@@ -1968,10 +2243,10 @@
         ]
       },
       "gridPos": {
-        "h": 10,
-        "w": 19,
+        "h": 6,
+        "w": 12,
         "x": 0,
-        "y": 93
+        "y": 48
       },
       "id": 31,
       "maxDataPoints": 200,
@@ -2000,7 +2275,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax by(id) (\r\n  max_over_time(container_memory_max_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_max_usage_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "label_replace(\r\nmax(\r\n  max_over_time(container_memory_max_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_max_usage_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "max",
@@ -2013,7 +2288,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax by(id) (\r\n  max_over_time(container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "label_replace(\r\nmax(\r\n  max_over_time(container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
           "instant": false,
           "legendFormat": "raw",
           "range": true,
@@ -2025,7 +2300,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax by(id) (\r\n  max_over_time(container_memory_working_set_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_working_set_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "label_replace(\r\nmax(\r\n  max_over_time(container_memory_working_set_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_working_set_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "wss",
@@ -2038,7 +2313,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax by(id) (\r\n  max_over_time(container_memory_rss{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_rss{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "label_replace(\r\nmax(\r\n  max_over_time(container_memory_rss{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_rss{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "rss",
@@ -2051,7 +2326,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax by(id) (\r\n  max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_spec_memory_limit_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "label_replace(\r\nmax(\r\n  max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_spec_memory_limit_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n) != 0",
           "hide": false,
           "instant": false,
           "legendFormat": "limit",
@@ -2059,174 +2334,7 @@
           "refId": "memory_limit"
         }
       ],
-      "title": "memory levels: $id",
-      "type": "timeseries"
-    },
-    {
-      "fieldConfig": {
-        "defaults": {},
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 10,
-        "w": 5,
-        "x": 19,
-        "y": 93
-      },
-      "id": 27,
-      "options": {
-        "code": {
-          "language": "plaintext",
-          "showLineNumbers": false,
-          "showMiniMap": false
-        },
-        "content": "- `RSS` is memory allocated explicitly\n- `RSS` + Active   cache -> `WSS`\n- `WSS` + Inactive cache -> `Raw` memory usage\n- Formula: Cache = Active + Inactive\n- Cache is active if it used _often_ (more than once?)\n- RSS and cache are exact values\n- `Raw` is kernel approximation used for cache flushing and OOM killer\n- `WSS` is roughly `Raw` - Inactive cache\n\nWhat to look for:\n- WSS reaching limit causes file garbage collection\n- RSS reaching limit causes OOM kill\n",
-        "mode": "markdown"
-      },
-      "title": "Memory notes",
-      "type": "text"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "axisSoftMax": 1,
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 3,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "percentunit"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 12,
-        "x": 0,
-        "y": 103
-      },
-      "id": 34,
-      "maxDataPoints": 100,
-      "options": {
-        "legend": {
-          "asTable": true,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Name",
-          "sortDesc": false
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "max by(id) (\r\n    (\r\n        max_over_time(container_memory_max_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n        or\r\n        container_memory_max_usage_bytes{instance=\"$instance\", id=~\"$id\"}\r\n    )\r\n/\r\n    (max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval]) != 0)\r\n)",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "max",
-          "range": true,
-          "refId": "memory_max_percent"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "max by(id) (\r\n    (\r\n        max_over_time(container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n        or\r\n        container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}\r\n    )\r\n/\r\n    (max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval]) != 0)\r\n)",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "raw",
-          "range": true,
-          "refId": "memory_raw_percent"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "max by(id) (\r\n    (\r\n        max_over_time(container_memory_working_set_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n        or\r\n        container_memory_working_set_bytes{instance=\"$instance\", id=~\"$id\"}\r\n    )\r\n/\r\n    (max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval]) != 0)\r\n)",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "wss",
-          "range": true,
-          "refId": "memory_wss_percent"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "max by(id) (\r\n    (\r\n        max_over_time(container_memory_rss{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n        or\r\n        container_memory_rss{instance=\"$instance\", id=~\"$id\"}\r\n    )\r\n/\r\n    (max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval]) != 0)\r\n)",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "rss",
-          "range": true,
-          "refId": "memory_rss_percent"
-        }
-      ],
-      "title": "memory / limit %: $id",
+      "title": "memory levels",
       "type": "timeseries"
     },
     {
@@ -2327,7 +2435,7 @@
         "h": 6,
         "w": 12,
         "x": 12,
-        "y": 103
+        "y": 48
       },
       "id": 29,
       "maxDataPoints": 100,
@@ -2356,7 +2464,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax by(id) (\r\n  avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_cache{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "label_replace(\r\nmax(\r\n  avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_cache{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "cache",
@@ -2369,7 +2477,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax by(id) (\r\n  avg_over_time(container_memory_rss{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_rss{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "label_replace(\r\nmax(\r\n  avg_over_time(container_memory_rss{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_rss{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "rss",
@@ -2382,7 +2490,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "# container_memory_usage_bytes = rss + cache + kernel\r\n# but container_memory_kernel_usage is broken in current version of cadvisor, it's always zero\r\nlabel_replace(\r\nmax by(id) (\r\n  (\r\n    avg_over_time(container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n    -\r\n    avg_over_time(container_memory_rss{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n    -\r\n    avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  )\r\n  or\r\n  (\r\n  container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}\r\n  -\r\n  container_memory_rss{instance=\"$instance\", id=~\"$id\"}\r\n  -\r\n  container_memory_cache{instance=\"$instance\", id=~\"$id\"}\r\n  )\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "# container_memory_usage_bytes = rss + cache + kernel\r\n# but container_memory_kernel_usage is broken in current version of cadvisor, it's always zero\r\nlabel_replace(\r\nmax(\r\n  (\r\n    avg_over_time(container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n    -\r\n    avg_over_time(container_memory_rss{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n    -\r\n    avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  )\r\n  or\r\n  (\r\n  container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}\r\n  -\r\n  container_memory_rss{instance=\"$instance\", id=~\"$id\"}\r\n  -\r\n  container_memory_cache{instance=\"$instance\", id=~\"$id\"}\r\n  )\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "kernel",
@@ -2395,7 +2503,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax by(id) (\r\n  avg_over_time(container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "label_replace(\r\nmax(\r\n  avg_over_time(container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "raw",
@@ -2403,7 +2511,314 @@
           "refId": "raw"
         }
       ],
-      "title": "memory types: $id",
+      "title": "memory types",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "empty when cgroup doesn't have memory limit",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMax": 1,
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 54
+      },
+      "id": 34,
+      "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Name",
+          "sortDesc": false
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max(\r\n    (\r\n        max_over_time(container_memory_max_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n        or\r\n        container_memory_max_usage_bytes{instance=\"$instance\", id=~\"$id\"}\r\n    )\r\n/\r\n    (max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval]) != 0)\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "max",
+          "range": true,
+          "refId": "memory_max_percent"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max(\r\n    (\r\n        max_over_time(container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n        or\r\n        container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}\r\n    )\r\n/\r\n    (max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval]) != 0)\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "raw",
+          "range": true,
+          "refId": "memory_raw_percent"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max(\r\n    (\r\n        max_over_time(container_memory_working_set_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n        or\r\n        container_memory_working_set_bytes{instance=\"$instance\", id=~\"$id\"}\r\n    )\r\n/\r\n    (max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval]) != 0)\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "wss",
+          "range": true,
+          "refId": "memory_wss_percent"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max(\r\n    (\r\n        max_over_time(container_memory_rss{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n        or\r\n        container_memory_rss{instance=\"$instance\", id=~\"$id\"}\r\n    )\r\n/\r\n    (max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval]) != 0)\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "rss",
+          "range": true,
+          "refId": "memory_rss_percent"
+        }
+      ],
+      "title": "memory / limit %",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "total_cache"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.stacking",
+                "value": {
+                  "group": "A",
+                  "mode": "none"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 54
+      },
+      "id": 69,
+      "maxDataPoints": 100,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Last *",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "label_replace(\r\nmax(\r\n  avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_cache{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "total",
+          "range": true,
+          "refId": "total_cache"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "label_replace(\r\nmax(\r\n  avg_over_time(container_memory_mapped_file{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_mapped_file{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "mapped",
+          "range": true,
+          "refId": "mapped"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "label_replace(\r\nmax(\r\n  (\r\n  avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  -\r\n  avg_over_time(container_memory_mapped_file{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  )\r\n  or\r\n  (\r\n  container_memory_cache{instance=\"$instance\", id=~\"$id\"}\r\n  -\r\n  container_memory_mapped_file{instance=\"$instance\", id=~\"$id\"}\r\n  )\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "unmapped",
+          "range": true,
+          "refId": "unmapped"
+        }
+      ],
+      "title": "cache [un]mapped",
       "type": "timeseries"
     },
     {
@@ -2468,7 +2883,7 @@
         "h": 6,
         "w": 12,
         "x": 0,
-        "y": 109
+        "y": 60
       },
       "id": 39,
       "maxDataPoints": 100,
@@ -2504,7 +2919,7 @@
           "refId": "pagefault_rate"
         }
       ],
-      "title": "Page fault rate",
+      "title": "page fault rate",
       "type": "timeseries"
     },
     {
@@ -2605,171 +3020,7 @@
         "h": 6,
         "w": 12,
         "x": 12,
-        "y": 109
-      },
-      "id": 69,
-      "maxDataPoints": 100,
-      "options": {
-        "legend": {
-          "asTable": true,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Last *",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "label_replace(\r\nmax by(id) (\r\n  avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_cache{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "total",
-          "range": true,
-          "refId": "total_cache"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "label_replace(\r\nmax by(id) (\r\n  avg_over_time(container_memory_mapped_file{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_mapped_file{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "mapped",
-          "range": true,
-          "refId": "mapped"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "label_replace(\r\nmax by(id) (\r\n  (\r\n  avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  -\r\n  avg_over_time(container_memory_mapped_file{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  )\r\n  or\r\n  (\r\n  container_memory_cache{instance=\"$instance\", id=~\"$id\"}\r\n  -\r\n  container_memory_mapped_file{instance=\"$instance\", id=~\"$id\"}\r\n  )\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "unmapped",
-          "range": true,
-          "refId": "unmapped"
-        }
-      ],
-      "title": "cache [un]mapped: $id",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 3,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "normal"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "bytes"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "total_cache"
-            },
-            "properties": [
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "dash": [
-                    10,
-                    10
-                  ],
-                  "fill": "dash"
-                }
-              },
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed"
-                }
-              },
-              {
-                "id": "custom.fillOpacity",
-                "value": 0
-              },
-              {
-                "id": "custom.stacking",
-                "value": {
-                  "group": "A",
-                  "mode": "none"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 12,
-        "x": 12,
-        "y": 115
+        "y": 60
       },
       "id": 70,
       "maxDataPoints": 100,
@@ -2798,7 +3049,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax by(id) (\r\n  avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_cache{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "label_replace(\r\nmax(\r\n  avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_cache{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "total",
@@ -2811,7 +3062,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax by(id) (\r\n  avg_over_time(container_memory_total_inactive_file_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_total_inactive_file_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "label_replace(\r\nmax(\r\n  avg_over_time(container_memory_total_inactive_file_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_total_inactive_file_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "inactive",
@@ -2824,7 +3075,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax by(id) (\r\n  avg_over_time(container_memory_total_active_file_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_total_active_file_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "label_replace(\r\nmax(\r\n  avg_over_time(container_memory_total_active_file_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_total_active_file_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "active",
@@ -2832,7 +3083,7 @@
           "refId": "raw"
         }
       ],
-      "title": "cache [un]mapped: $id",
+      "title": "cache [un]mapped",
       "type": "timeseries"
     },
     {
@@ -2841,11 +3092,11 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 121
+        "y": 66
       },
       "id": 19,
       "panels": [],
-      "title": "Network (shared between containers)",
+      "title": "network",
       "type": "row"
     },
     {
@@ -2907,10 +3158,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
+        "h": 10,
         "w": 12,
         "x": 0,
-        "y": 122
+        "y": 67
       },
       "id": 28,
       "maxDataPoints": 100,
@@ -2939,14 +3190,14 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum by(id, interface) (rate(container_network_receive_bytes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "label_replace(\r\nsum by(interface) (rate(container_network_receive_bytes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
           "instant": false,
-          "legendFormat": "{{id}} {{interface}}",
+          "legendFormat": "{{interface}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Receive Bandwidth by interface",
+      "title": "receive rate",
       "type": "timeseries"
     },
     {
@@ -3012,10 +3263,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
+        "h": 10,
         "w": 12,
         "x": 12,
-        "y": 122
+        "y": 67
       },
       "id": 7,
       "maxDataPoints": 100,
@@ -3044,28 +3295,15 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum by(id, interface) (rate(container_network_transmit_bytes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "label_replace(\r\nsum by(interface) (rate(container_network_transmit_bytes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
           "instant": false,
-          "legendFormat": "{{id}} {{interface}}",
+          "legendFormat": "{{interface}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Transmit Bandwidth by interface",
+      "title": "transmit rate",
       "type": "timeseries"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 129
-      },
-      "id": 17,
-      "panels": [],
-      "title": "Storage",
-      "type": "row"
     },
     {
       "datasource": {
@@ -3074,14 +3312,44 @@
       },
       "fieldConfig": {
         "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
             },
-            "inspect": false
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -3091,58 +3359,35 @@
               }
             ]
           },
-          "unit": "binBps"
+          "unit": "bytes"
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": "/iops/"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "iops"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": "/.*/"
-            },
-            "properties": [
-              {
-                "id": "filterable"
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
-        "h": 7,
-        "w": 17,
-        "x": 1,
-        "y": 130
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 77
       },
-      "id": 16,
+      "id": 78,
+      "maxDataPoints": 100,
       "options": {
-        "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
+        "legend": {
+          "asTable": true,
+          "calcs": [
             "sum"
           ],
-          "show": false
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Total",
+          "sortDesc": true
         },
-        "showHeader": true,
-        "sortBy": [
-          {
-            "desc": true,
-            "displayName": "Read + Write"
-          }
-        ]
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
       "targets": [
         {
@@ -3151,167 +3396,129 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "exemplar": false,
-          "expr": "sum by(container, device) (rate(container_fs_reads_total{container!=\"\", container=~\"$container\", location=\"$location\", namespace=\"$namespace\", pod=\"$pod\"}[$__range]))",
-          "format": "table",
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
+          "expr": "label_replace(\r\nsum by(interface) (rate(container_network_receive_bytes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])) * $__interval_ms / 1000\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "instant": false,
+          "legendFormat": "{{interface}}",
+          "range": true,
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "sum by(container, device) (rate(container_fs_writes_total{container!=\"\", container=~\"$container\", location=\"$location\", namespace=\"$namespace\", pod=\"$pod\"}[$__range]))",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "sum by(container, device) (rate(container_fs_reads_total{container!=\"\", container=~\"$container\", location=\"$location\", namespace=\"$namespace\", pod=\"$pod\"}[$__range]) + rate(container_fs_writes_total{container!=\"\", container=~\"$container\", location=\"$location\", namespace=\"$namespace\", pod=\"$pod\"}[$__range]))",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "sum by(container, device) (rate(container_fs_reads_bytes_total{container!=\"\", container=~\"$container\", location=\"$location\", namespace=\"$namespace\", pod=\"$pod\"}[$__range]))",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "D"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "sum by(container, device) (rate(container_fs_writes_bytes_total{container!=\"\", container=~\"$container\", location=\"$location\", namespace=\"$namespace\", pod=\"$pod\"}[$__range]))",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "E"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "sum by(container, device) (rate(container_fs_reads_bytes_total{container!=\"\", container=~\"$container\", location=\"$location\", namespace=\"$namespace\", pod=\"$pod\"}[$__range]) + rate(container_fs_writes_bytes_total{container!=\"\", container=~\"$container\", location=\"$location\", namespace=\"$namespace\", pod=\"$pod\"}[$__range]))",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "F"
         }
       ],
-      "title": "Storage IO (average over time range)",
-      "transformations": [
-        {
-          "id": "merge",
-          "options": {}
-        },
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time": true,
-              "Time 1": true,
-              "Time 2": true,
-              "Time 3": true,
-              "Time 4": true,
-              "Time 5": true,
-              "Time 6": true,
-              "device 2": true,
-              "device 3": true,
-              "device 4": true,
-              "device 5": true,
-              "device 6": true
-            },
-            "includeByName": {},
-            "indexByName": {
-              "Time 1": 0,
-              "Time 2": 1,
-              "Time 3": 2,
-              "Time 4": 3,
-              "Time 5": 4,
-              "Time 6": 5,
-              "Value #A": 7,
-              "Value #B": 8,
-              "Value #C": 9,
-              "Value #D": 10,
-              "Value #E": 11,
-              "Value #F": 12,
-              "container": 6
-            },
-            "renameByName": {
-              "Value #A": "Read iops",
-              "Value #B": "Write iops",
-              "Value #C": "iops",
-              "Value #D": "Read",
-              "Value #E": "Write",
-              "Value #F": "Read + Write",
-              "container": "Container"
-            }
-          }
-        }
-      ],
-      "type": "table"
+      "title": "receive total",
+      "type": "timeseries"
     },
     {
-      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
       "fieldConfig": {
-        "defaults": {},
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
-        "w": 4,
-        "x": 18,
-        "y": 130
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 77
       },
-      "id": 24,
+      "id": 79,
+      "maxDataPoints": 100,
       "options": {
-        "code": {
-          "language": "plaintext",
-          "showLineNumbers": false,
-          "showMiniMap": false
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Total",
+          "sortDesc": true
         },
-        "content": "\nRead/write from NFS and SMB shares\nwill not be shown in the storage throughput.\n\nCadvisor exports data from cgroup io.stats,\nwhich are only calculated for block devices.\n",
-        "mode": "markdown"
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
-      "title": "Storage notes",
-      "type": "text"
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "label_replace(\r\nsum by(interface) (rate(container_network_transmit_bytes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])) * $__interval_ms / 1000\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "instant": false,
+          "legendFormat": "{{interface}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "transmit total",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 87
+      },
+      "id": 17,
+      "panels": [],
+      "title": "disk",
+      "type": "row"
     },
     {
       "datasource": {
@@ -3372,10 +3579,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
+        "h": 8,
         "w": 12,
         "x": 0,
-        "y": 137
+        "y": 88
       },
       "id": 13,
       "maxDataPoints": 200,
@@ -3404,14 +3611,14 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum by(id) (rate(container_fs_reads_bytes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "label_replace(\r\nsum by(device) (rate(container_fs_reads_bytes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
           "instant": false,
-          "legendFormat": "{{id}}",
+          "legendFormat": "{{device}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Disk read",
+      "title": "disk read rate",
       "type": "timeseries"
     },
     {
@@ -3473,10 +3680,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
+        "h": 8,
         "w": 12,
         "x": 12,
-        "y": 137
+        "y": 88
       },
       "id": 42,
       "maxDataPoints": 200,
@@ -3505,15 +3712,419 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum by(id) (rate(container_fs_writes_bytes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "label_replace(\r\nsum by(device) (rate(container_fs_writes_bytes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{id}}",
+          "legendFormat": "{{device}}",
           "range": true,
           "refId": "B"
         }
       ],
-      "title": "Disk write",
+      "title": "disk write rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 96
+      },
+      "id": 74,
+      "maxDataPoints": 200,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Total",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "label_replace(\r\nsum by(device) (rate(container_fs_reads_bytes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])) * $__interval_ms / 1000\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "instant": false,
+          "legendFormat": "{{device}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "disk read total",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 96
+      },
+      "id": 75,
+      "maxDataPoints": 200,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Total",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "label_replace(\r\nsum by(device) (rate(container_fs_writes_bytes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])) * $__interval_ms / 1000\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "instant": false,
+          "legendFormat": "{{device}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "disk written total",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "iops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 104
+      },
+      "id": 76,
+      "maxDataPoints": 200,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "label_replace(\r\nsum by(device) (rate(container_fs_reads_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "instant": false,
+          "legendFormat": "{{device}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "disk read iops",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "iops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 104
+      },
+      "id": 77,
+      "maxDataPoints": 200,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "label_replace(\r\nsum by(device) (rate(container_fs_writes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "instant": false,
+          "legendFormat": "{{device}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "disk write iops",
       "type": "timeseries"
     }
   ],
@@ -3543,13 +4154,13 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(group by(location) (last_over_time(container_cpu_usage_seconds_total{namespace=\"\", cpu=\"total\"}[$__range])))",
+        "definition": "query_result(group by(location) (last_over_time(container_cpu_usage_seconds_total{cpu=\"total\"}[$__range])))",
         "includeAll": true,
         "name": "location",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(group by(location) (last_over_time(container_cpu_usage_seconds_total{namespace=\"\", cpu=\"total\"}[$__range])))",
+          "query": "query_result(group by(location) (last_over_time(container_cpu_usage_seconds_total{cpu=\"total\"}[$__range])))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -3563,12 +4174,12 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(group by(instance) (last_over_time(container_cpu_usage_seconds_total{location=~\"$location\", namespace=\"\", cpu=\"total\"}[$__range])))",
+        "definition": "query_result(group by(instance) (last_over_time(container_cpu_usage_seconds_total{location=~\"$location\", cpu=\"total\"}[$__range])))",
         "name": "instance",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(group by(instance) (last_over_time(container_cpu_usage_seconds_total{location=~\"$location\", namespace=\"\", cpu=\"total\"}[$__range])))",
+          "query": "query_result(group by(instance) (last_over_time(container_cpu_usage_seconds_total{location=~\"$location\", cpu=\"total\"}[$__range])))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -3577,68 +4188,24 @@
         "type": "query"
       },
       {
-        "name": "prefix_filter",
-        "options": [
-          {
-            "selected": true,
-            "text": "/s",
-            "value": "/s"
-          }
-        ],
-        "query": "",
-        "type": "textbox"
-      },
-      {
-        "allValue": "/",
         "allowCustomValue": false,
         "datasource": {
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(max by(id_prefix) (label_replace(label_replace(last_over_time(container_cpu_usage_seconds_total{instance=\"$instance\", namespace=\"\", cpu=\"total\", id=~\"($prefix_filter).*\"}[1h]), \"id_prefix\", \"$1\", \"id\", \"(.*)\\\\/.*\"), \"id_prefix\", \"/\", \"id\", \"/\")))",
+        "definition": "query_result(group by(id) (last_over_time(container_cpu_usage_seconds_total{instance=\"$instance\", cpu=\"total\"}[$__range])))",
         "includeAll": false,
         "name": "id_prefix",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(max by(id_prefix) (label_replace(label_replace(last_over_time(container_cpu_usage_seconds_total{instance=\"$instance\", namespace=\"\", cpu=\"total\", id=~\"($prefix_filter).*\"}[1h]), \"id_prefix\", \"$1\", \"id\", \"(.*)\\\\/.*\"), \"id_prefix\", \"/\", \"id\", \"/\")))",
+          "query": "query_result(group by(id) (last_over_time(container_cpu_usage_seconds_total{instance=\"$instance\", cpu=\"total\"}[$__range])))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
-        "regex": "/id_prefix=\"(?<text>[^\"]*)|id_prefix=\"(?<value>[^\"]+)/g",
+        "regex": "/human_name=\"(?<text>[^\"]*)|id=\"(?<value>[^\"]+)/g",
         "sort": 1,
         "type": "query"
-      },
-      {
-        "allowCustomValue": false,
-        "description": "",
-        "name": "show_children",
-        "options": [
-          {
-            "selected": false,
-            "text": "Show",
-            "value": ".*"
-          },
-          {
-            "selected": true,
-            "text": "Hide",
-            "value": "[^/]*"
-          }
-        ],
-        "query": "hide : $, 1 level : /?[^/]*, all : .*",
-        "type": "custom"
-      },
-      {
-        "name": "suffix_filter",
-        "options": [
-          {
-            "selected": true,
-            "text": "",
-            "value": ""
-          }
-        ],
-        "query": "docker",
-        "type": "textbox"
       },
       {
         "allowCustomValue": false,
@@ -3646,14 +4213,13 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(max by(human_name, id) (label_replace(last_over_time(container_cpu_usage_seconds_total{instance=\"$instance\", namespace=\"\", cpu=\"total\", id=~\"($id_prefix)$show_children\", id=~\"($id_prefix).*($suffix_filter).*\"}[$__range]), \"human_name\", \"$1\", \"id\", \"$id_prefix(.+)|($id_prefix)\")))",
-        "includeAll": true,
-        "multi": true,
+        "definition": "query_result(max by(human_name, id) (label_replace(label_replace(  last_over_time(container_cpu_usage_seconds_total{instance=\"$instance\", cpu=\"total\", id=~\"($id_prefix)|($id_prefix)(/.*)?\"}[$__range])  or  (last_over_time(container_cpu_usage_seconds_total{instance=\"$instance\", cpu=\"total\", id=~\"($id_prefix)|($id_prefix).*\"}[$__range]) + on() group_left() last_over_time(container_cpu_usage_seconds_total{instance=\"$instance\", cpu=\"total\", id=\"/\", id=\"$id_prefix\"}[$__range])), \"human_name\", \"$1\", \"id\", \"$id_prefix/?(.+)\"), \"human_name\", \"<exact-prefix>\", \"id\", \"$id_prefix\")) # the first part selects $prefix/suffix for general use-case, the second part selects ${prefix}suffix but only for the special case of prefix=/)",
+        "includeAll": false,
         "name": "id",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(max by(human_name, id) (label_replace(last_over_time(container_cpu_usage_seconds_total{instance=\"$instance\", namespace=\"\", cpu=\"total\", id=~\"($id_prefix)$show_children\", id=~\"($id_prefix).*($suffix_filter).*\"}[$__range]), \"human_name\", \"$1\", \"id\", \"$id_prefix(.+)|($id_prefix)\")))",
+          "query": "query_result(max by(human_name, id) (label_replace(label_replace(  last_over_time(container_cpu_usage_seconds_total{instance=\"$instance\", cpu=\"total\", id=~\"($id_prefix)|($id_prefix)(/.*)?\"}[$__range])  or  (last_over_time(container_cpu_usage_seconds_total{instance=\"$instance\", cpu=\"total\", id=~\"($id_prefix)|($id_prefix).*\"}[$__range]) + on() group_left() last_over_time(container_cpu_usage_seconds_total{instance=\"$instance\", cpu=\"total\", id=\"/\", id=\"$id_prefix\"}[$__range])), \"human_name\", \"$1\", \"id\", \"$id_prefix/?(.+)\"), \"human_name\", \"<exact-prefix>\", \"id\", \"$id_prefix\")) # the first part selects $prefix/suffix for general use-case, the second part selects ${prefix}suffix but only for the special case of prefix=/)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -3669,7 +4235,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "cadvisor cgroup",
-  "uid": "mo6wf2ukdv3l72howqnqcg",
+  "title": "cadvisor cgroup details",
+  "uid": "mo6wf2ukdv3l72howqnqcgd",
   "version": 0
 }

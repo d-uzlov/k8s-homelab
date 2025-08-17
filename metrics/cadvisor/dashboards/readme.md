@@ -17,7 +17,7 @@
  # this forces them all to lose "value": null, so that there are less changes in commits
  sed -i -z -r 's/,\n *\"value\": null(\n *})/\1/g' ./metrics/cadvisor/dashboards/*.json
 
-kl apply -k ./metrics/cadvisor/dashboards/ --server-side
+kl apply -k ./metrics/cadvisor/dashboards/
 
 ```
 
