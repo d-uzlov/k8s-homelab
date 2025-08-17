@@ -25,7 +25,7 @@
           "uid": "${datasource}"
         },
         "enable": true,
-        "expr": "changes(node_boot_time_seconds{location=\"$location\", instance=\"$node_name\"}[$__interval]) > 0",
+        "expr": "changes(node_boot_time_seconds{location=\"$location\", instance=~\"$node_name\"}[$__interval]) > 0",
         "hide": false,
         "iconColor": "red",
         "name": "Node reboot",
@@ -43,7 +43,7 @@
         "iconColor": "light-red",
         "name": "Node info missing",
         "target": {
-          "expr": "(node_boot_time_seconds{location=\"$location\", instance=\"$node_name\"} offset $__interval unless node_boot_time_seconds{instance=\"$node_name\"}) unless changes(node_boot_time_seconds{instance=\"$node_name\"}[$__interval]) > 0",
+          "expr": "(node_boot_time_seconds{location=\"$location\", instance=~\"$node_name\"} offset $__interval unless node_boot_time_seconds{instance=~\"$node_name\"}) unless changes(node_boot_time_seconds{instance=~\"$node_name\"}[$__interval]) > 0",
           "refId": "Anno"
         },
         "textFormat": "{{instance}}",
@@ -301,7 +301,7 @@
                   {
                     "targetBlank": false,
                     "title": "Logs",
-                    "url": "/d/mo6wf2ukdv3l72howqnqcgd/cadvisor-cgroup-details?${location:queryparam}&${instance:queryparam}&var-id_prefix=/&var-id=${__data.fields.id}"
+                    "url": "/d/mo6wf2ukdv3l72howqnqdc/cadvisor-docker-compose?${datasource:queryparam}&${location:queryparam}&var-instance=${__data.fields.instance}&var-project=${__data.fields.project}&var-service=$__all&var-name=$__all"
                   }
                 ]
               }
@@ -328,6 +328,30 @@
               {
                 "id": "custom.width",
                 "value": 148
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "instance"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 349
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "containers"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 97
               }
             ]
           }
@@ -368,7 +392,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(id, name, container_label_com_docker_compose_project, container_label_com_docker_compose_service, image) (\r\n  max_over_time(container_start_time_seconds{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__range])\r\n)",
+          "expr": "max by(instance, container_label_com_docker_compose_project) (\r\n  max_over_time(container_start_time_seconds{instance=~\"$instance\", name=~\"$name\"}[$__range])\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -383,7 +407,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(id, name) (\r\n  max without(uid) (max_over_time(container_last_seen{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__range]))\r\n) * 1000",
+          "expr": "max by(instance, container_label_com_docker_compose_project) (\r\n  max without(uid) (max_over_time(container_last_seen{instance=~\"$instance\", name=~\"$name\"}[$__range]))\r\n) * 1000",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -398,7 +422,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(id, name) (\r\n  max_over_time(container_start_time_seconds{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__range])\r\n) * 1000",
+          "expr": "max by(instance, container_label_com_docker_compose_project) (\r\n  max_over_time(container_start_time_seconds{instance=~\"$instance\", name=~\"$name\"}[$__range])\r\n) * 1000",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -413,13 +437,28 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "(min by(id, name) (\r\n  timestamp(container_last_seen{instance=\"$instance\", name=~\"$name\", id=~\"$id\"})\r\n  -\r\n  container_last_seen{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}\r\n  or\r\n  time() - max_over_time(container_last_seen{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__range])\r\n))",
+          "expr": "(min by(instance, container_label_com_docker_compose_project) (\r\n  timestamp(container_last_seen{instance=~\"$instance\", name=~\"$name\"})\r\n  -\r\n  container_last_seen{instance=~\"$instance\", name=~\"$name\"}\r\n  or\r\n  time() - max_over_time(container_last_seen{instance=~\"$instance\", name=~\"$name\"}[$__range])\r\n))",
           "format": "table",
           "hide": false,
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
           "refId": "ago"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "count by(instance, container_label_com_docker_compose_project) (\r\n  max by(instance, container_label_com_docker_compose_project, name) (max_over_time(container_start_time_seconds{instance=~\"$instance\", name=~\"$name\"}[$__range]))\r\n)",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "containers"
         }
       ],
       "title": "container info",
@@ -470,15 +509,13 @@
             "indexByName": {
               "Time": 0,
               "Value #ago": 3,
-              "Value #info": 10,
+              "Value #containers": 6,
+              "Value #info": 8,
               "Value #last_seen_time": 2,
               "Value #start_time": 1,
-              "container_label_com_docker_compose_project": 4,
-              "container_label_com_docker_compose_service": 5,
+              "container_label_com_docker_compose_project": 5,
               "details_link": 7,
-              "id": 9,
-              "image": 8,
-              "name": 6
+              "instance": 4
             },
             "renameByName": {
               "1 + 1": "",
@@ -490,6 +527,7 @@
               "Value #D": "CPU Limits",
               "Value #E": "CPU Limits %",
               "Value #ago": "Ago",
+              "Value #containers": "containers",
               "Value #cpu": "CPU (avg)",
               "Value #cpu_limit": "CPU limit",
               "Value #cpu_request": "CPU request",
@@ -563,7 +601,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 24,
         "x": 0,
         "y": 11
       },
@@ -593,133 +631,15 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "$__to / 1000 - max by(name) (max_over_time(container_start_time_seconds{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__interval]))",
+          "expr": "$__to / 1000 - max by(instance, container_label_com_docker_compose_project) (max_over_time(container_start_time_seconds{instance=~\"$instance\", name=~\"$name\"}[$__interval]))",
           "instant": false,
-          "legendFormat": "{{name}}",
+          "legendFormat": "{{container_label_com_docker_compose_project}} @ {{instance}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "start time (ago)",
+      "title": "last restart (ago)",
       "type": "state-timeline"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 3,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "s"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 11
-      },
-      "id": 1,
-      "maxDataPoints": 100,
-      "options": {
-        "legend": {
-          "asTable": true,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Mean",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "time() - max by(name, id) (last_over_time(container_start_time_seconds{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__interval]))\r\nor\r\ntime() - max by(name) (last_over_time(container_start_time_seconds{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__interval]))",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{name}}, name={{id}}",
-          "range": true,
-          "refId": "uptime"
-        }
-      ],
-      "title": "uptime",
-      "transformations": [
-        {
-          "id": "renameByRegex",
-          "options": {
-            "regex": "(.*), name=/.*/docker-(.{8})(.*)",
-            "renamePattern": "$1, $2"
-          }
-        },
-        {
-          "id": "renameByRegex",
-          "options": {
-            "regex": "(.*), name=",
-            "renamePattern": "$1"
-          }
-        }
-      ],
-      "type": "timeseries"
     },
     {
       "collapsed": false,
@@ -907,10 +827,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(name, id) (rate(container_cpu_usage_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", cpu=\"total\", invalid!=$split_ids}[$__rate_interval]))\r\nor\r\nsum by(name) (rate(container_cpu_usage_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", cpu=\"total\", invalid=$split_ids}[$__rate_interval]))",
+          "expr": "sum by(instance, container_label_com_docker_compose_project) (rate(container_cpu_usage_seconds_total{instance=~\"$instance\", name=~\"$name\", cpu=\"total\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{name}}, name={{id}}",
+          "legendFormat": "{{container_label_com_docker_compose_project}} @ {{instance}}",
           "range": true,
           "refId": "usage"
         },
@@ -920,7 +840,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (rate(container_cpu_usage_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__rate_interval]))",
+          "expr": "sum(rate(container_cpu_usage_seconds_total{instance=~\"$instance\", name=~\"$name\", invalid=$show_total}[$__rate_interval]))",
           "hide": false,
           "instant": false,
           "legendFormat": "total",
@@ -1039,10 +959,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(name, id) (\r\n  (rate(container_cpu_cfs_throttled_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__rate_interval]) )\r\n)\r\nor\r\nmax by(name) (\r\n  (rate(container_cpu_cfs_throttled_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__rate_interval]) )\r\n)",
+          "expr": "max by(instance, container_label_com_docker_compose_project) (\r\n  (rate(container_cpu_cfs_throttled_seconds_total{instance=~\"$instance\", name=~\"$name\"}[$__rate_interval]) )\r\n)",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{name}}, name={{id}}",
+          "legendFormat": "{{container_label_com_docker_compose_project}} @ {{instance}}",
           "range": true,
           "refId": "throttled"
         }
@@ -1239,10 +1159,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(name, id) (rate(container_cpu_usage_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", cpu=\"total\", invalid!=$split_ids}[$__rate_interval]) * $__interval_ms / 1000)\r\nor\r\nsum by(name) (rate(container_cpu_usage_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", cpu=\"total\", invalid=$split_ids}[$__rate_interval]) * $__interval_ms / 1000)",
+          "expr": "sum by(instance, container_label_com_docker_compose_project) (rate(container_cpu_usage_seconds_total{instance=~\"$instance\", name=~\"$name\", cpu=\"total\"}[$__rate_interval]) * $__interval_ms / 1000)",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{name}}, name={{id}}",
+          "legendFormat": "{{container_label_com_docker_compose_project}} @ {{instance}}",
           "range": true,
           "refId": "usage"
         },
@@ -1252,7 +1172,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (rate(container_cpu_usage_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__rate_interval]) * $__interval_ms / 1000)",
+          "expr": "sum (rate(container_cpu_usage_seconds_total{instance=~\"$instance\", name=~\"$name\", invalid=$show_total}[$__rate_interval]) * $__interval_ms / 1000)",
           "hide": false,
           "instant": false,
           "legendFormat": "total",
@@ -1371,10 +1291,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(name, id) (\r\n  (rate(container_cpu_cfs_throttled_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__rate_interval]) * $__interval_ms / 1000 )\r\n)\r\nor\r\nmax by(name) (\r\n  (rate(container_cpu_cfs_throttled_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__rate_interval]) * $__interval_ms / 1000 )\r\n)",
+          "expr": "max by(instance, container_label_com_docker_compose_project) (\r\n  (rate(container_cpu_cfs_throttled_seconds_total{instance=~\"$instance\", name=~\"$name\"}[$__rate_interval]) * $__interval_ms / 1000 )\r\n)",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{name}}, name={{id}}",
+          "legendFormat": "{{container_label_com_docker_compose_project}} @ {{instance}}",
           "range": true,
           "refId": "throttled"
         }
@@ -1490,25 +1410,12 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(name, id) (\r\n  (rate(container_cpu_system_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__rate_interval]))\r\n  /\r\n  sum without(cpu) (rate(container_cpu_usage_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", cpu=\"total\", invalid!=$split_ids}[$__rate_interval]) + 1e-12)\r\n)\r\nor\r\nmax by(name) (\r\n  (rate(container_cpu_system_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__rate_interval]))\r\n  /\r\n  sum without(cpu) (rate(container_cpu_usage_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", cpu=\"total\", invalid=$split_ids}[$__rate_interval]) + 1e-12)\r\n)",
+          "expr": "max by(instance, container_label_com_docker_compose_project) (\r\n  (rate(container_cpu_system_seconds_total{instance=~\"$instance\", name=~\"$name\"}[$__rate_interval]))\r\n  /\r\n  sum without(cpu) (rate(container_cpu_usage_seconds_total{instance=~\"$instance\", name=~\"$name\", cpu=\"total\"}[$__rate_interval]) + 1e-12)\r\n)",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{name}}, name={{id}}",
+          "legendFormat": "{{container_label_com_docker_compose_project}} @ {{instance}}",
           "range": true,
           "refId": "kernel_percent"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "max by(name, id) (\r\n  (rate(container_cpu_system_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__rate_interval]) )\r\n)\r\nor\r\nmax by(name) (\r\n  (rate(container_cpu_system_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__rate_interval]) )\r\n)",
-          "hide": true,
-          "instant": false,
-          "legendFormat": "{{name}}, name={{id}}",
-          "range": true,
-          "refId": "A"
         }
       ],
       "title": "cpu kernel mode %",
@@ -1632,10 +1539,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "# if container didn't run at some interval, you will have division by zero, so we do ` / increase + epsilon`\r\nmax by(name, id) (\r\n  (increase(container_cpu_cfs_throttled_periods_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__rate_interval]) )\r\n/\r\n  (increase(container_cpu_cfs_periods_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__rate_interval]) + 1e-5 )\r\n)\r\nor\r\nmax by(name) (\r\n  (increase(container_cpu_cfs_throttled_periods_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__rate_interval]) )\r\n/\r\n  (increase(container_cpu_cfs_periods_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__rate_interval]) + 1e-5 )\r\n)",
+          "expr": "# if container didn't run at some interval, you will have division by zero, so we do ` / increase + epsilon`\r\nmax by(instance, container_label_com_docker_compose_project) (\r\n  (increase(container_cpu_cfs_throttled_periods_total{instance=~\"$instance\", name=~\"$name\"}[$__rate_interval]) )\r\n/\r\n  (increase(container_cpu_cfs_periods_total{instance=~\"$instance\", name=~\"$name\"}[$__rate_interval]) + 1e-5 )\r\n)",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{name}}, name={{id}}",
+          "legendFormat": "{{container_label_com_docker_compose_project}} @ {{instance}}",
           "range": true,
           "refId": "throttle_percent"
         }
@@ -1757,10 +1664,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(name, id) (\r\n  container_spec_cpu_quota{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}\r\n  /\r\n  container_spec_cpu_period{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}\r\n)\r\nor\r\n# united\r\nsum by(name) (\r\n  container_spec_cpu_quota{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}\r\n  /\r\n  container_spec_cpu_period{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}\r\n)",
+          "expr": "sum by(instance, container_label_com_docker_compose_project) (\r\n  container_spec_cpu_quota{instance=~\"$instance\", name=~\"$name\"}\r\n  /\r\n  container_spec_cpu_period{instance=~\"$instance\", name=~\"$name\"}\r\n)",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{name}}, name={{id}}",
+          "legendFormat": "{{container_label_com_docker_compose_project}} @ {{instance}}",
           "range": true,
           "refId": "spec_limit"
         }
@@ -1880,10 +1787,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(name, id) (\r\n    sum without(cpu) (\r\n        rate(container_cpu_usage_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", cpu=\"total\", invalid!=$split_ids}[$__rate_interval])\r\n    )\r\n    /\r\n    (\r\n      container_spec_cpu_quota{instance=\"$instance\", name=~\"$name\", id=~\"$id\", cpu=\"total\", invalid!=$split_ids}\r\n      /\r\n      container_spec_cpu_period{instance=\"$instance\", name=~\"$name\", id=~\"$id\", cpu=\"total\", invalid!=$split_ids}\r\n    )\r\n)\r\nor\r\n# united\r\nsum by(name) (\r\n    sum without(cpu) (\r\n        rate(container_cpu_usage_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", cpu=\"total\", invalid=$split_ids}[$__rate_interval])\r\n    )\r\n    /\r\n    (\r\n      container_spec_cpu_quota{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}\r\n      /\r\n      container_spec_cpu_period{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}\r\n    )\r\n)",
+          "expr": "sum by(instance, container_label_com_docker_compose_project) (\r\n    sum without(cpu) (\r\n        rate(container_cpu_usage_seconds_total{instance=~\"$instance\", name=~\"$name\", cpu=\"total\"}[$__rate_interval])\r\n    )\r\n    /\r\n    (\r\n      container_spec_cpu_quota{instance=~\"$instance\", name=~\"$name\"}\r\n      /\r\n      container_spec_cpu_period{instance=~\"$instance\", name=~\"$name\"}\r\n    )\r\n)",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{name}}, name={{id}}",
+          "legendFormat": "{{container_label_com_docker_compose_project}} @ {{instance}}",
           "range": true,
           "refId": "limit_percent"
         }
@@ -2025,7 +1932,30 @@
           },
           "unit": "bytes"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "total"
+            },
+            "properties": [
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -2060,12 +1990,25 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(name, id) (\r\n  max_over_time(container_memory_rss{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__interval])\r\n  or\r\n  container_memory_rss{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}\r\n)\r\nor\r\nmax by(name) (\r\n  max_over_time(container_memory_rss{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__interval])\r\n  or\r\n  container_memory_rss{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}\r\n)",
+          "expr": "sum by(instance, container_label_com_docker_compose_project) (\r\n  max by(instance, container_label_com_docker_compose_project, name) (\r\n    max_over_time(container_memory_rss{instance=~\"$instance\", name=~\"$name\"}[$__interval])\r\n    or\r\n    container_memory_rss{instance=~\"$instance\", name=~\"$name\"}\r\n  )\r\n)",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{name}}, name={{id}}",
+          "legendFormat": "{{container_label_com_docker_compose_project}} @ {{instance}}",
           "range": true,
           "refId": "rss"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(\r\n  max by(instance, container_label_com_docker_compose_project, name) (\r\n    max_over_time(container_memory_rss{instance=~\"$instance\", name=~\"$name\", invalid=$show_total}[$__interval])\r\n    or\r\n    container_memory_rss{instance=~\"$instance\", name=~\"$name\", invalid=$show_total}\r\n  )\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "total",
+          "range": true,
+          "refId": "total"
         }
       ],
       "title": "memory rss",
@@ -2144,7 +2087,30 @@
           },
           "unit": "bytes"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "total"
+            },
+            "properties": [
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -2179,12 +2145,25 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(name, id) (\r\n  max_over_time(container_memory_working_set_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__interval])\r\n  or\r\n  container_memory_working_set_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}\r\n)\r\nor\r\nmax by(name) (\r\n  max_over_time(container_memory_working_set_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__interval])\r\n  or\r\n  container_memory_working_set_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}\r\n)",
+          "expr": "sum by(instance, container_label_com_docker_compose_project) (\r\n  max by(instance, container_label_com_docker_compose_project, name) (\r\n    max_over_time(container_memory_working_set_bytes{instance=~\"$instance\", name=~\"$name\"}[$__interval])\r\n    or\r\n    container_memory_working_set_bytes{instance=~\"$instance\", name=~\"$name\"}\r\n  )\r\n)",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{name}}, name={{id}}",
+          "legendFormat": "{{container_label_com_docker_compose_project}} @ {{instance}}",
           "range": true,
           "refId": "wss"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum(\r\n  max by(instance, container_label_com_docker_compose_project, name) (\r\n    max_over_time(container_memory_working_set_bytes{instance=~\"$instance\", name=~\"$name\", invalid=$show_total}[$__interval])\r\n    or\r\n    container_memory_working_set_bytes{instance=~\"$instance\", name=~\"$name\", invalid=$show_total}\r\n  )\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "total",
+          "range": true,
+          "refId": "total"
         }
       ],
       "title": "memory wss",
@@ -2299,10 +2278,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(name, id) (\r\n    (\r\n        max_over_time(container_memory_rss{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__interval])\r\n        or\r\n        container_memory_rss{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}\r\n    )\r\n/\r\n    (max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__interval]) != 0)\r\n)\r\nor\r\nmax by(name) (\r\n    (\r\n        max_over_time(container_memory_rss{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__interval])\r\n        or\r\n        container_memory_rss{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}\r\n    )\r\n/\r\n    (max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__interval]) != 0)\r\n)",
+          "expr": "max by(instance, container_label_com_docker_compose_project) (\r\n    (\r\n        max_over_time(container_memory_rss{instance=~\"$instance\", name=~\"$name\"}[$__interval])\r\n        or\r\n        container_memory_rss{instance=~\"$instance\", name=~\"$name\"}\r\n    )\r\n/\r\n    (max_over_time(container_spec_memory_limit_bytes{instance=~\"$instance\", name=~\"$name\"}[$__interval]) != 0)\r\n)",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{name}}, name={{id}}",
+          "legendFormat": "{{container_label_com_docker_compose_project}} @ {{instance}}",
           "range": true,
           "refId": "memory_rss_percent"
         }
@@ -2419,10 +2398,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(name, id) (\r\n    (\r\n        max_over_time(container_memory_working_set_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__interval])\r\n        or\r\n        container_memory_working_set_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}\r\n    )\r\n/\r\n    (max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__interval]) != 0)\r\n)\r\nor\r\nmax by(name) (\r\n    (\r\n        max_over_time(container_memory_working_set_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__interval])\r\n        or\r\n        container_memory_working_set_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}\r\n    )\r\n/\r\n    (max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__interval]) != 0)\r\n)",
+          "expr": "max by(instance, container_label_com_docker_compose_project) (\r\n    (\r\n        max_over_time(container_memory_working_set_bytes{instance=~\"$instance\", name=~\"$name\"}[$__interval])\r\n        or\r\n        container_memory_working_set_bytes{instance=~\"$instance\", name=~\"$name\"}\r\n    )\r\n/\r\n    (max_over_time(container_spec_memory_limit_bytes{instance=~\"$instance\", name=~\"$name\"}[$__interval]) != 0)\r\n)",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{name}}, name={{id}}",
+          "legendFormat": "{{container_label_com_docker_compose_project}} @ {{instance}}",
           "range": true,
           "refId": "memory_wss_percent"
         }
@@ -2550,9 +2529,9 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (name, id)(rate(container_network_receive_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__rate_interval]))\r\nor\r\nsum by (name) (rate(container_network_receive_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__rate_interval]))",
+          "expr": "sum by(instance, container_label_com_docker_compose_project) (rate(container_network_receive_bytes_total{instance=~\"$instance\", name=~\"$name\"}[$__rate_interval]))",
           "instant": false,
-          "legendFormat": "{{name}}, name={{id}}",
+          "legendFormat": "{{container_label_com_docker_compose_project}} @ {{instance}}",
           "range": true,
           "refId": "A"
         }
@@ -2671,9 +2650,9 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (name, id) (rate(container_network_transmit_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__rate_interval]))\r\nor\r\nsum by (name) (rate(container_network_transmit_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__rate_interval]))",
+          "expr": "sum by(instance, container_label_com_docker_compose_project) (rate(container_network_transmit_bytes_total{instance=~\"$instance\", name=~\"$name\"}[$__rate_interval]))",
           "instant": false,
-          "legendFormat": "{{name}}, name={{id}}",
+          "legendFormat": "{{container_label_com_docker_compose_project}} @ {{instance}}",
           "range": true,
           "refId": "A"
         }
@@ -2788,9 +2767,9 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (name, id)(rate(container_network_receive_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__rate_interval])) * $__interval_ms / 1000\r\nor\r\nsum by (name) (rate(container_network_receive_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__rate_interval])) * $__interval_ms / 1000",
+          "expr": "sum by(instance, container_label_com_docker_compose_project) (rate(container_network_receive_bytes_total{instance=~\"$instance\", name=~\"$name\"}[$__rate_interval])) * $__interval_ms / 1000",
           "instant": false,
-          "legendFormat": "{{name}}, name={{id}}",
+          "legendFormat": "{{container_label_com_docker_compose_project}} @ {{instance}}",
           "range": true,
           "refId": "A"
         }
@@ -2905,9 +2884,9 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (name, id)(rate(container_network_transmit_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__rate_interval])) * $__interval_ms / 1000\r\nor\r\nsum by (name) (rate(container_network_transmit_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__rate_interval])) * $__interval_ms / 1000",
+          "expr": "sum by(instance, container_label_com_docker_compose_project) (rate(container_network_transmit_bytes_total{instance=~\"$instance\", name=~\"$name\"}[$__rate_interval])) * $__interval_ms / 1000",
           "instant": false,
-          "legendFormat": "{{name}}, name={{id}}",
+          "legendFormat": "{{container_label_com_docker_compose_project}} @ {{instance}}",
           "range": true,
           "refId": "A"
         }
@@ -3060,9 +3039,9 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (name, id)(rate(container_fs_reads_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__rate_interval]))\r\nor\r\nsum by (name)(rate(container_fs_reads_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__rate_interval]))",
+          "expr": "sum by(instance, container_label_com_docker_compose_project)(rate(container_fs_reads_bytes_total{instance=~\"$instance\", name=~\"$name\"}[$__rate_interval]))",
           "instant": false,
-          "legendFormat": "{{name}}, name={{id}}",
+          "legendFormat": "{{container_label_com_docker_compose_project}} @ {{instance}}",
           "range": true,
           "refId": "A"
         }
@@ -3177,10 +3156,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (name, id)(rate(container_fs_writes_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__rate_interval]))\r\nor\r\nsum by (name)(rate(container_fs_writes_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__rate_interval]))",
+          "expr": "sum by(instance, container_label_com_docker_compose_project)(rate(container_fs_writes_bytes_total{instance=~\"$instance\", name=~\"$name\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{name}}, name={{id}}",
+          "legendFormat": "{{container_label_com_docker_compose_project}} @ {{instance}}",
           "range": true,
           "refId": "B"
         }
@@ -3295,9 +3274,9 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (name, id)(rate(container_fs_reads_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__rate_interval])) * $__interval_ms / 1000\r\nor\r\nsum by (name)(rate(container_fs_reads_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__rate_interval])) * $__interval_ms / 1000",
+          "expr": "sum by(instance, container_label_com_docker_compose_project)(rate(container_fs_reads_bytes_total{instance=~\"$instance\", name=~\"$name\"}[$__rate_interval])) * $__interval_ms / 1000",
           "instant": false,
-          "legendFormat": "{{name}}, name={{id}}",
+          "legendFormat": "{{container_label_com_docker_compose_project}} @ {{instance}}",
           "range": true,
           "refId": "A"
         }
@@ -3412,9 +3391,9 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (name, id)(rate(container_fs_writes_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__rate_interval])) * $__interval_ms / 1000\r\nor\r\nsum by (name)(rate(container_fs_writes_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__rate_interval])) * $__interval_ms / 1000",
+          "expr": "sum by(instance, container_label_com_docker_compose_project)(rate(container_fs_writes_bytes_total{instance=~\"$instance\", name=~\"$name\"}[$__rate_interval])) * $__interval_ms / 1000",
           "instant": false,
-          "legendFormat": "{{name}}, name={{id}}",
+          "legendFormat": "{{container_label_com_docker_compose_project}} @ {{instance}}",
           "range": true,
           "refId": "A"
         }
@@ -3485,33 +3464,13 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(group by(instance) (last_over_time(container_cpu_usage_seconds_total{location=~\"$location\", container_label_com_docker_compose_project!=\"\", cpu=\"total\"}[$__range])))",
-        "name": "instance",
-        "options": [],
-        "query": {
-          "qryType": 3,
-          "query": "query_result(group by(instance) (last_over_time(container_cpu_usage_seconds_total{location=~\"$location\", container_label_com_docker_compose_project!=\"\", cpu=\"total\"}[$__range])))",
-          "refId": "PrometheusVariableQueryEditor-VariableQuery"
-        },
-        "refresh": 2,
-        "regex": "/instance=\"(?<text>[^\"]+)|instance=\"(?<value>[^\"]+)/g",
-        "sort": 1,
-        "type": "query"
-      },
-      {
-        "allValue": ".*",
-        "allowCustomValue": false,
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${datasource}"
-        },
-        "definition": "query_result(group by(container_label_com_docker_compose_project) (last_over_time(container_cpu_usage_seconds_total{instance=\"$instance\", container_label_com_docker_compose_project!=\"\", cpu=\"total\"}[$__range])))",
+        "definition": "query_result(group by(instance, container_label_com_docker_compose_project) (last_over_time(container_cpu_usage_seconds_total{container_label_com_docker_compose_project!=\"\", cpu=\"total\"}[$__range])))",
         "includeAll": true,
         "name": "project",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(group by(container_label_com_docker_compose_project) (last_over_time(container_cpu_usage_seconds_total{instance=\"$instance\", container_label_com_docker_compose_project!=\"\", cpu=\"total\"}[$__range])))",
+          "query": "query_result(group by(instance, container_label_com_docker_compose_project) (last_over_time(container_cpu_usage_seconds_total{container_label_com_docker_compose_project!=\"\", cpu=\"total\"}[$__range])))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -3520,23 +3479,22 @@
         "type": "query"
       },
       {
-        "allValue": ".*",
         "allowCustomValue": false,
         "datasource": {
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(group by(container_label_com_docker_compose_service) (last_over_time(container_cpu_usage_seconds_total{instance=\"$instance\", container_label_com_docker_compose_project=~\"$project\", cpu=\"total\"}[$__range])))",
+        "definition": "query_result(group by(instance) (last_over_time(container_cpu_usage_seconds_total{location=~\"$location\", container_label_com_docker_compose_project=~\"$project\", cpu=\"total\"}[$__range])))",
         "includeAll": true,
-        "name": "service",
+        "name": "instance",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(group by(container_label_com_docker_compose_service) (last_over_time(container_cpu_usage_seconds_total{instance=\"$instance\", container_label_com_docker_compose_project=~\"$project\", cpu=\"total\"}[$__range])))",
+          "query": "query_result(group by(instance) (last_over_time(container_cpu_usage_seconds_total{location=~\"$location\", container_label_com_docker_compose_project=~\"$project\", cpu=\"total\"}[$__range])))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
-        "regex": "/container_label_com_docker_compose_service=\"(?<text>[^\"]+)|container_label_com_docker_compose_service=\"(?<value>[^\"]+)/g",
+        "regex": "/instance=\"(?<text>[^\"]+)|instance=\"(?<value>[^\"]+)/g",
         "sort": 1,
         "type": "query"
       },
@@ -3546,13 +3504,13 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(group by(name) (last_over_time(container_cpu_usage_seconds_total{instance=\"$instance\", container_label_com_docker_compose_project=~\"$project\", container_label_com_docker_compose_service=~\"$service\", cpu=\"total\"}[$__range])))",
+        "definition": "query_result(group by(name) (last_over_time(container_cpu_usage_seconds_total{instance=~\"$instance\", container_label_com_docker_compose_project=~\"$project\", cpu=\"total\"}[$__range])))",
         "includeAll": true,
         "name": "name",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(group by(name) (last_over_time(container_cpu_usage_seconds_total{instance=\"$instance\", container_label_com_docker_compose_project=~\"$project\", container_label_com_docker_compose_service=~\"$service\", cpu=\"total\"}[$__range])))",
+          "query": "query_result(group by(name) (last_over_time(container_cpu_usage_seconds_total{instance=~\"$instance\", container_label_com_docker_compose_project=~\"$project\", cpu=\"total\"}[$__range])))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -3562,42 +3520,20 @@
       },
       {
         "allowCustomValue": false,
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${datasource}"
-        },
-        "definition": "query_result(group by(id) (last_over_time(container_cpu_usage_seconds_total{instance=\"$instance\", name=~\"$name\", cpu=\"total\"}[$__range])))",
-        "includeAll": true,
-        "multi": true,
-        "name": "id",
-        "options": [],
-        "query": {
-          "qryType": 3,
-          "query": "query_result(group by(id) (last_over_time(container_cpu_usage_seconds_total{instance=\"$instance\", name=~\"$name\", cpu=\"total\"}[$__range])))",
-          "refId": "PrometheusVariableQueryEditor-VariableQuery"
-        },
-        "refresh": 2,
-        "regex": "/human_name=\"(?<text>[^\"]*)|id=\"(?<value>[^\"]+)/g",
-        "sort": 1,
-        "type": "query"
-      },
-      {
-        "allowCustomValue": false,
-        "label": "Split IDs",
-        "name": "split_ids",
+        "name": "show_total",
         "options": [
           {
             "selected": true,
-            "text": "Unite",
+            "text": "show",
             "value": "\"\""
           },
           {
             "selected": false,
-            "text": "Split",
+            "text": "hide",
             "value": "\"invalid123\""
           }
         ],
-        "query": "Unite : \"\", Split : \"invalid123\"",
+        "query": "show : \"\", hide : \"invalid123\"",
         "type": "custom"
       }
     ]
@@ -3608,7 +3544,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "cadvisor / docker [compose]",
-  "uid": "mo6wf2ukdv3l72howqnqdc",
+  "title": "cadvisor / docker compose multi-instance",
+  "uid": "mo6wf2ukdv3l72howqnqdcmi",
   "version": 0
 }
