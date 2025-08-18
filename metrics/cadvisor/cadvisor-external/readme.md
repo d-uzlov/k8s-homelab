@@ -22,8 +22,9 @@ cd ~/cadvisor/
  cat << EOF > ~/cadvisor/docker-compose.yaml
 services:
   cadvisor:
-    privileged: true
     image: ghcr.io/google/cadvisor:v0.53.0
+    privileged: true
+    restart: always
     command:
     - --port=8999
     - --allow_dynamic_housekeeping=true
@@ -44,10 +45,19 @@ services:
     - /var/run:/var/run:ro
     - /var/lib/docker/:/var/lib/docker:ro
     - /dev/disk/:/dev/disk:ro
+    deploy:
+      resources:
+        reservations:
+          memory: 50M
+          cpus: 0.05
+        limits:
+          # cadvisor memory usage heavily depends on the amount of cgroup on the system
+          memory: 200M
+          cpus: 0.3
 EOF
 
-docker compose up -d
-docker compose logs
+docker compose --project-directory ~/cadvisor/ up -d
+docker compose --project-directory ~/cadvisor/ logs cadvisor
 
 ```
 

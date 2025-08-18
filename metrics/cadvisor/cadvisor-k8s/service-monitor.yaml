@@ -28,7 +28,7 @@ spec:
     matchLabels:
       app: cadvisor
   attachMetadata:
-    node: false
+    node: true
   endpoints:
   - port: metrics
     scheme: http
@@ -37,16 +37,37 @@ spec:
     relabelings:
     - targetLabel: instance
       action: replace
-      sourceLabels: [ location, __meta_kubernetes_namespace, __meta_kubernetes_pod_name ]
+      sourceLabels: [ __meta_kubernetes_node_annotation_metric_identifier ]
+    - targetLabel: instance
+      action: replace
+      sourceLabels: [ __meta_kubernetes_node_annotation_metric_identifier, location, __meta_kubernetes_namespace, __meta_kubernetes_pod_name ]
+      # instance should be set above, but if node doesn't have metric_identifier annotation, fall back to location/ns/pod
+      regex: /(.*/.*/.*)
       separator: /
+      replacement: $1
+    - targetLabel: instance_for_metrics
+      action: replace
+      # When metric_identifier annotation is missing,
+      # for scrape meta-info we will set instance=ns/pod
+      # but for metrics we set instance=node_name because it's more stable
+      #     If metric_identifier is not empty, this label will not exist.
+      sourceLabels: [ __meta_kubernetes_node_annotation_metric_identifier, __meta_kubernetes_node_name ]
+      regex: ;(.*)
+      separator: ;
+      replacement: $1
     - targetLabel: node
       sourceLabels: [ __meta_kubernetes_endpoint_node_name ]
       action: replace
     - action: labeldrop
       regex: container|endpoint|namespace|pod|service
     metricRelabelings:
+    - targetLabel: instance
+      sourceLabels: [ instance_for_metrics ]
+      # skip replacement if instance_for_metrics is empty
+      regex: (.+)
+      action: replace
     - action: labeldrop
-      regex: instance
+      regex: instance_for_metrics
     - targetLabel: container
       sourceLabels: [ container_label_io_kubernetes_container_name ]
       action: replace

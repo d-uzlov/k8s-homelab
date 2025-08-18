@@ -31,6 +31,9 @@ kl label ns metrics-cadvisor pod-security.kubernetes.io/enforce=privileged
 kl apply -k ./metrics/cadvisor/cadvisor-k8s/
 kl -n metrics-cadvisor get pod
 
+# add optional annotations to nodes
+kl annotate node $node_name metric-identifier=$global_unique_node_address
+
 ```
 
 # Cleanup
@@ -38,4 +41,13 @@ kl -n metrics-cadvisor get pod
 ```bash
 kl delete -k ./metrics/cadvisor/cadvisor-k8s/
 kl delete ns metrics-cadvisor
+```
+
+# Manual metric checking
+
+```bash
+
+node=10.3.129.138
+kl exec deployments/alpine -- curl -sS http://$node:8080/metrics > ./cadvisor.prom
+
 ```
