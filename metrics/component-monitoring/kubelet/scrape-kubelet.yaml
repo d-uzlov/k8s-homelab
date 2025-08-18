@@ -29,6 +29,20 @@ spec:
   - targetLabel: job
     replacement: kubelet-main
     action: replace
+  - targetLabel: instance
+    action: replace
+    # use instance=location/node_name as a fallback
+    sourceLabels: [ location, __meta_kubernetes_node_name ]
+    separator: /
+  - targetLabel: instance
+    action: replace
+    # but use instance=metric-identifier-annotation when it's present
+    sourceLabels: [ __meta_kubernetes_node_annotation_metric_identifier ]
+    regex: (.+)
+  - targetLabel: node
+    # node label can be used to directly join with kube-state-metrics
+    sourceLabels: [ __meta_kubernetes_node_name ]
+    action: replace
   metricRelabelings:
   - action: keep
     sourceLabels: [ __name__ ]

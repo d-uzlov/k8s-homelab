@@ -13,19 +13,30 @@ spec:
     matchLabels:
       app.kubernetes.io/name: node-exporter
   attachMetadata:
-    node: false
+    node: true
   endpoints:
   - port: metrics
     scheme: http
     scrapeTimeout: 10s
     relabelings:
     - targetLabel: instance
-      sourceLabels: [ __meta_kubernetes_endpoint_node_name ]
       action: replace
+      # use instance=location/node_name as a fallback
+      sourceLabels: [ location, __meta_kubernetes_node_name ]
       separator: /
-    - action: labeldrop
-      regex: container|endpoint|namespace|pod|service
+    - targetLabel: instance
+      action: replace
+      # but use instance=metric-identifier-annotation when it's present
+      sourceLabels: [ __meta_kubernetes_node_annotation_metric_identifier ]
+      regex: (.+)
+    - targetLabel: node
+      # node label can be used to directly join with kube-state-metrics
+      sourceLabels: [ __meta_kubernetes_node_name ]
+      action: replace
     metricRelabelings:
+    - action: labeldrop
+      # keep meta-labels on scrape metrics, only drop them on actual exported metrics
+      regex: container|endpoint|namespace|pod|service
     - action: drop
       sourceLabels: [ __name__, device ]
       # for some unknown reason, node-exporter doesn't want to skip loop devices
@@ -44,14 +55,13 @@ spec:
     - action: drop
       sourceLabels: [ __name__ ]
       # rx_errors already include rx_length_errors, rx_crc_errors, rx_frame_errors
+      #   https://docs.kernel.org/networking/statistics.html
       # compressed packets don't exist on modern networks
       regex: node_network_receive_compressed_total|node_network_receive_fifo_total|node_network_receive_frame_total|node_network_receive_nohandler_total
     - action: drop
       sourceLabels: [ __name__ ]
       # tx_errors already includes tx_aborted_errors, tx_carrier_errors, tx_fifo_errors, tx_heartbeat_errors, tx_window_errors
-      #   https://docs.kernel.org/networking/statistics.html
-      # collisions don't exist on modern networks
-      # compressed packets don't exist on modern networks
+      # see comment to RX drop above
       regex: node_network_transmit_carrier_total|node_network_transmit_fifo_total|node_network_transmit_colls_total|node_network_transmit_compressed_total
     - action: drop
       sourceLabels: [ __name__, device ]

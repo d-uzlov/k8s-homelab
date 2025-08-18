@@ -37,37 +37,22 @@ spec:
     relabelings:
     - targetLabel: instance
       action: replace
-      sourceLabels: [ __meta_kubernetes_node_annotation_metric_identifier ]
-    - targetLabel: instance
-      action: replace
-      sourceLabels: [ __meta_kubernetes_node_annotation_metric_identifier, location, __meta_kubernetes_namespace, __meta_kubernetes_pod_name ]
-      # instance should be set above, but if node doesn't have metric_identifier annotation, fall back to location/ns/pod
-      regex: /(.*/.*/.*)
+      # use instance=location/node_name as a fallback
+      sourceLabels: [ location, __meta_kubernetes_node_name ]
       separator: /
-      replacement: $1
-    - targetLabel: instance_for_metrics
-      action: replace
-      # When metric_identifier annotation is missing,
-      # for scrape meta-info we will set instance=ns/pod
-      # but for metrics we set instance=node_name because it's more stable
-      #     If metric_identifier is not empty, this label will not exist.
-      sourceLabels: [ __meta_kubernetes_node_annotation_metric_identifier, __meta_kubernetes_node_name ]
-      regex: ;(.*)
-      separator: ;
-      replacement: $1
-    - targetLabel: node
-      sourceLabels: [ __meta_kubernetes_endpoint_node_name ]
-      action: replace
-    - action: labeldrop
-      regex: container|endpoint|namespace|pod|service
-    metricRelabelings:
     - targetLabel: instance
-      sourceLabels: [ instance_for_metrics ]
-      # skip replacement if instance_for_metrics is empty
-      regex: (.+)
       action: replace
+      # but use instance=metric-identifier-annotation when it's present
+      sourceLabels: [ __meta_kubernetes_node_annotation_metric_identifier ]
+      regex: (.+)
+    - targetLabel: node
+      # node label can be used to directly join with kube-state-metrics
+      sourceLabels: [ __meta_kubernetes_node_name ]
+      action: replace
+    metricRelabelings:
     - action: labeldrop
-      regex: instance_for_metrics
+      # keep meta-labels on scrape metrics, only drop them on actual exported metrics
+      regex: container|endpoint|namespace|pod|service
     - targetLabel: container
       sourceLabels: [ container_label_io_kubernetes_container_name ]
       action: replace
