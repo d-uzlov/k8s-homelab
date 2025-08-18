@@ -267,8 +267,8 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 5,
-        "w": 10,
+        "h": 8,
+        "w": 7,
         "x": 5,
         "y": 1
       },
@@ -299,7 +299,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (mode) (avg_over_time(windows_exporter_scrape_duration_seconds{instance=~\"$instance\"}[$__rate_interval]))",
+          "expr": "sum by(mode) (avg_over_time(windows_exporter_scrape_duration_seconds{instance=~\"$instance\"}[$__interval]))",
           "format": "time_series",
           "functions": [],
           "group": {
@@ -326,6 +326,85 @@
       ],
       "title": "scrape duration",
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "green",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "axisWidth": 0,
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "dateTimeAsIso"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 1
+      },
+      "id": 70,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "perPage": 10,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "editorMode": "code",
+          "expr": "max by(category, title) (last_over_time(windows_update_pending_info{instance=~\"$instance\"}[$__interval]) * on(id) group_left() last_over_time(windows_update_pending_published_timestamp{instance=~\"$instance\"}[$__interval]) * 1000)",
+          "instant": false,
+          "legendFormat": "{{category}}/{{title}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "pending updates (with update publish date)",
+      "type": "state-timeline"
     },
     {
       "datasource": {
@@ -390,7 +469,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 6
+        "y": 9
       },
       "id": 69,
       "maxDataPoints": 250,
@@ -419,7 +498,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (mode) (rate(windows_cpu_time_total{instance=~\"$instance\", mode=~\"interrupt|dpc\"}[$__rate_interval]))",
+          "expr": "sum by(mode) (rate(windows_cpu_time_total{instance=~\"$instance\", mode=~\"interrupt|dpc\"}[$__rate_interval]))",
           "format": "time_series",
           "functions": [],
           "group": {
@@ -452,7 +531,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "# interrupts seem to be included into privileged mode counter\r\nsum by (mode) (rate(windows_cpu_time_total{instance=~\"$instance\", mode=\"privileged\"}[$__rate_interval])) - on() group_left() sum(rate(windows_cpu_time_total{instance=~\"$instance\", mode=~\"interrupt|dpc\"}[$__rate_interval]))",
+          "expr": "# interrupts seem to be included into privileged mode counter\r\nsum by(mode) (rate(windows_cpu_time_total{instance=~\"$instance\", mode=\"privileged\"}[$__rate_interval])) - on() group_left() sum(rate(windows_cpu_time_total{instance=~\"$instance\", mode=~\"interrupt|dpc\"}[$__rate_interval]))",
           "format": "time_series",
           "functions": [],
           "group": {
@@ -485,7 +564,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (mode) (rate(windows_cpu_time_total{instance=~\"$instance\", mode=\"user\"}[$__rate_interval]))",
+          "expr": "sum by(mode) (rate(windows_cpu_time_total{instance=~\"$instance\", mode=\"user\"}[$__rate_interval]))",
           "format": "time_series",
           "functions": [],
           "group": {
@@ -518,7 +597,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (mode) (rate(windows_cpu_time_total{instance=~\"$instance\", mode=\"idle\"}[$__rate_interval]))",
+          "expr": "sum by(mode) (rate(windows_cpu_time_total{instance=~\"$instance\", mode=\"idle\"}[$__rate_interval]))",
           "format": "time_series",
           "functions": [],
           "group": {
@@ -551,7 +630,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (mode) (rate(windows_cpu_time_total{instance=~\"$instance\", mode!~\"idle|user|privileged|interrupt|dpc\"}[$__rate_interval]))",
+          "expr": "sum by(mode) (rate(windows_cpu_time_total{instance=~\"$instance\", mode!~\"idle|user|privileged|interrupt|dpc\"}[$__rate_interval]))",
           "format": "time_series",
           "functions": [],
           "group": {
@@ -641,7 +720,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 14
+        "y": 17
       },
       "id": 57,
       "maxDataPoints": 250,
@@ -670,7 +749,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "time() - windows_system_boot_time_timestamp{instance=~\"$instance\"}",
+          "expr": "min(time() - windows_system_boot_time_timestamp{instance=~\"$instance\"})",
           "format": "time_series",
           "functions": [],
           "group": {
@@ -761,7 +840,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 22
+        "y": 25
       },
       "id": 14,
       "maxDataPoints": 250,
@@ -770,7 +849,6 @@
         "legend": {
           "calcs": [
             "mean",
-            "lastNotNull",
             "max"
           ],
           "displayMode": "table",
@@ -793,7 +871,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "windows_memory_physical_total_bytes{instance=~\"$instance\"}",
+          "expr": "max(max_over_time(windows_memory_physical_total_bytes{instance=~\"$instance\"}[$__interval]))",
           "format": "time_series",
           "functions": [],
           "group": {
@@ -826,7 +904,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "windows_memory_physical_free_bytes{instance=~\"$instance\"}",
+          "expr": "max(max_over_time(windows_memory_physical_free_bytes{instance=~\"$instance\"}[$__interval]))",
           "format": "time_series",
           "functions": [],
           "group": {
@@ -859,7 +937,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "windows_memory_committed_bytes{instance=~\"$instance\"}",
+          "expr": "max(max_over_time(windows_memory_committed_bytes{instance=~\"$instance\"}[$__interval]))",
           "format": "time_series",
           "functions": [],
           "group": {
@@ -889,7 +967,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "windows_memory_available_bytes{instance=~\"$instance\"}",
+          "expr": "max(max_over_time(windows_memory_available_bytes{instance=~\"$instance\"}[$__interval]))",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -903,7 +981,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "windows_pagefile_limit_bytes{instance=~\"$instance\"}",
+          "expr": "max(max_over_time(windows_pagefile_limit_bytes{instance=~\"$instance\"}[$__interval]))",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -917,7 +995,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "windows_pagefile_limit_bytes{instance=~\"$instance\"} - windows_pagefile_free_bytes",
+          "expr": "max(max_over_time(windows_pagefile_limit_bytes{instance=~\"$instance\"}[$__interval]) - max_over_time(windows_pagefile_free_bytes{instance=~\"$instance\"}[$__interval]))",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -996,7 +1074,7 @@
         "h": 6,
         "w": 12,
         "x": 0,
-        "y": 31
+        "y": 34
       },
       "id": 12,
       "maxDataPoints": 250,
@@ -1004,7 +1082,7 @@
         "alertThreshold": true,
         "legend": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "displayMode": "table",
           "placement": "right",
@@ -1012,8 +1090,8 @@
         },
         "tooltip": {
           "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
+          "mode": "multi",
+          "sort": "desc"
         }
       },
       "targets": [
@@ -1026,7 +1104,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "windows_system_threads{instance=~\"$instance\"}",
+          "expr": "max(avg_over_time(windows_system_threads{instance=~\"$instance\"}[$__interval]))",
           "format": "time_series",
           "functions": [],
           "group": {
@@ -1059,7 +1137,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "windows_system_processes{instance=~\"$instance\"}",
+          "expr": "max(avg_over_time(windows_system_processes{instance=~\"$instance\"}[$__interval]))",
           "format": "time_series",
           "functions": [],
           "group": {
@@ -1092,7 +1170,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "rate(windows_system_exception_dispatches_total{instance=~\"$instance\"}[$__rate_interval])",
+          "expr": "sum(rate(windows_system_exception_dispatches_total{instance=~\"$instance\"}[$__rate_interval]))",
           "format": "time_series",
           "functions": [],
           "group": {
@@ -1126,7 +1204,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 37
+        "y": 40
       },
       "id": 64,
       "panels": [],
@@ -1206,7 +1284,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 38
+        "y": 41
       },
       "id": 23,
       "options": {
@@ -1356,7 +1434,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 38
+        "y": 41
       },
       "id": 9,
       "maxDataPoints": 250,
@@ -1388,7 +1466,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "rate(windows_logical_disk_reads_total{instance=~\"$instance\"}[$__rate_interval])",
+          "expr": "sum by(volume) (rate(windows_logical_disk_reads_total{instance=~\"$instance\"}[$__rate_interval]))",
           "format": "time_series",
           "functions": [],
           "group": {
@@ -1479,7 +1557,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 46
+        "y": 49
       },
       "id": 15,
       "maxDataPoints": 150,
@@ -1601,7 +1679,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 46
+        "y": 49
       },
       "id": 60,
       "maxDataPoints": 250,
@@ -1633,7 +1711,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "rate(windows_logical_disk_writes_total{instance=~\"$instance\"}[$__rate_interval])",
+          "expr": "sum by(volume) (rate(windows_logical_disk_writes_total{instance=~\"$instance\"}[$__rate_interval]))",
           "format": "time_series",
           "functions": [],
           "group": {
@@ -1710,7 +1788,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1726,7 +1805,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 54
+        "y": 57
       },
       "id": 8,
       "maxDataPoints": 250,
@@ -1758,7 +1837,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "rate(windows_logical_disk_read_bytes_total{instance=~\"$instance\"}[$__rate_interval])",
+          "expr": "sum by(volume) (rate(windows_logical_disk_read_bytes_total{instance=~\"$instance\"}[$__rate_interval]))",
           "format": "time_series",
           "functions": [],
           "group": {
@@ -1835,7 +1914,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1851,7 +1931,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 62
+        "y": 65
       },
       "id": 59,
       "maxDataPoints": 250,
@@ -1883,7 +1963,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "rate(windows_logical_disk_write_bytes_total{instance=~\"$instance\"}[$__rate_interval])",
+          "expr": "sum by(volume) (rate(windows_logical_disk_write_bytes_total{instance=~\"$instance\"}[$__rate_interval]))",
           "format": "time_series",
           "functions": [],
           "group": {
@@ -1917,7 +1997,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 70
+        "y": 73
       },
       "id": 63,
       "panels": [],
@@ -1973,23 +2053,41 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
+                "color": "green",
+                "value": 0
               }
             ]
           },
           "unit": "bps"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byValue",
+              "options": {
+                "op": "gte",
+                "reducer": "allIsZero",
+                "value": 0
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 71
+        "y": 74
       },
       "id": 11,
       "maxDataPoints": 250,
@@ -2021,7 +2119,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "rate(windows_net_bytes_sent_total{instance=~\"$instance\",nic!~'isatap.*|VPN.*'}[$__rate_interval])>0\r\n",
+          "expr": "sum by(nic) (rate(windows_net_bytes_sent_total{instance=~\"$instance\",nic!~'isatap.*|VPN.*'}[$__rate_interval]))",
           "format": "time_series",
           "functions": [],
           "group": {
@@ -2098,23 +2196,41 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
+                "color": "green",
+                "value": 0
               }
             ]
           },
-          "unit": "bps"
+          "unit": "binBps"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byValue",
+              "options": {
+                "op": "gte",
+                "reducer": "allIsZero",
+                "value": 0
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 81
+        "y": 84
       },
       "id": 61,
       "maxDataPoints": 250,
@@ -2146,7 +2262,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "rate(windows_hyperv_virtual_network_adapter_sent_bytes_total{instance=~\"$instance\",nic!~'isatap.*|VPN.*'}[$__rate_interval]) != 0",
+          "expr": "sum by(adapter) (rate(windows_hyperv_virtual_network_adapter_sent_bytes_total{instance=~\"$instance\",nic!~'isatap.*|VPN.*'}[$__rate_interval]))",
           "format": "time_series",
           "functions": [],
           "group": {
@@ -2223,23 +2339,41 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
+                "color": "green",
+                "value": 0
               }
             ]
           },
-          "unit": "bps"
+          "unit": "binBps"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byValue",
+              "options": {
+                "op": "gte",
+                "reducer": "allIsZero",
+                "value": 0
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 91
+        "y": 94
       },
       "id": 58,
       "maxDataPoints": 250,
@@ -2271,7 +2405,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "rate(windows_net_bytes_received_total{instance=~\"$instance\",nic!~'isatap.*|VPN.*'}[$__rate_interval]) != 0\n",
+          "expr": "sum by(nic) (rate(windows_net_bytes_received_total{instance=~\"$instance\",nic!~'isatap.*|VPN.*'}[$__rate_interval]))",
           "format": "time_series",
           "functions": [],
           "group": {
@@ -2348,23 +2482,41 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
+                "color": "green",
+                "value": 0
               }
             ]
           },
-          "unit": "bps"
+          "unit": "binBps"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byValue",
+              "options": {
+                "op": "gte",
+                "reducer": "allIsZero",
+                "value": 0
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 101
+        "y": 104
       },
       "id": 62,
       "maxDataPoints": 250,
@@ -2396,7 +2548,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "rate(windows_hyperv_virtual_network_adapter_received_bytes_total{instance=~\"$instance\",nic!~'isatap.*|VPN.*'}[$__rate_interval]) != 0",
+          "expr": "sum by(adapter) (rate(windows_hyperv_virtual_network_adapter_received_bytes_total{instance=~\"$instance\",nic!~'isatap.*|VPN.*'}[$__rate_interval]))",
           "format": "time_series",
           "functions": [],
           "group": {
@@ -2473,7 +2625,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -2487,9 +2640,9 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 12,
+        "w": 24,
         "x": 0,
-        "y": 111
+        "y": 114
       },
       "id": 10,
       "maxDataPoints": 250,
@@ -2586,7 +2739,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 117
+        "y": 120
       },
       "id": 65,
       "panels": [],
@@ -2615,7 +2768,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           }
@@ -2746,7 +2900,7 @@
         "h": 8,
         "w": 12,
         "x": 1,
-        "y": 118
+        "y": 121
       },
       "id": 67,
       "options": {
@@ -2770,7 +2924,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(luid, bus_number, name, phys) (windows_gpu_info{instance=~\"$instance\"})",
+          "expr": "max by(luid, bus_number, name, phys) (last_over_time(windows_gpu_info{instance=~\"$instance\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -2785,7 +2939,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(luid) (windows_gpu_dedicated_system_memory_size_bytes{instance=~\"$instance\"})",
+          "expr": "max by(luid) (max_over_time(windows_gpu_dedicated_system_memory_size_bytes{instance=~\"$instance\"}[$__range]))",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -2799,7 +2953,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(luid) (windows_gpu_dedicated_video_memory_size_bytes{instance=~\"$instance\"})",
+          "expr": "max by(luid) (max_over_time(windows_gpu_dedicated_video_memory_size_bytes{instance=~\"$instance\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -2814,7 +2968,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(luid) (windows_gpu_shared_system_memory_size_bytes{instance=~\"$instance\"})",
+          "expr": "max by(luid) (max_over_time(windows_gpu_shared_system_memory_size_bytes{instance=~\"$instance\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -2823,7 +2977,7 @@
           "refId": "shared_system_memory"
         }
       ],
-      "title": "New panel",
+      "title": "gpu info",
       "transformations": [
         {
           "id": "merge",
@@ -2909,7 +3063,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -2921,7 +3076,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 126
+        "y": 129
       },
       "id": 66,
       "maxDataPoints": 250,
@@ -3044,7 +3199,7 @@
           "step": 10
         }
       ],
-      "title": "gpu memory",
+      "title": "gpu memory usage",
       "type": "timeseries"
     },
     {
@@ -3096,7 +3251,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -3108,7 +3264,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 136
+        "y": 139
       },
       "id": 68,
       "maxDataPoints": 250,
@@ -3165,7 +3321,7 @@
           "step": 10
         }
       ],
-      "title": "gpu memory",
+      "title": "gpu engine usage",
       "type": "timeseries"
     }
   ],

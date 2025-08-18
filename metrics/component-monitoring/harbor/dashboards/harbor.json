@@ -29,6 +29,101 @@
       "fieldConfig": {
         "defaults": {
           "color": {
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 9,
+      "maxDataPoints": 200,
+      "options": {
+        "alignValue": "center",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "max by(harbor_version) (last_over_time(harbor_system_info{instance=\"$instance\"}[$__interval]))",
+          "format": "table",
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "",
+      "transformations": [
+        {
+          "id": "groupingToMatrix",
+          "options": {
+            "columnField": "harbor_version",
+            "rowField": "Time",
+            "valueField": "harbor_version"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "(.*)",
+            "renamePattern": "version"
+          }
+        }
+      ],
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
             "mode": "thresholds"
           },
           "mappings": [],
@@ -52,7 +147,7 @@
         "h": 7,
         "w": 6,
         "x": 0,
-        "y": 0
+        "y": 3
       },
       "id": 7,
       "options": {
@@ -88,7 +183,7 @@
           "refId": "A"
         }
       ],
-      "title": "version",
+      "title": "current version",
       "type": "stat"
     },
     {
@@ -140,6 +235,10 @@
               {
                 "id": "unit",
                 "value": "bytes"
+              },
+              {
+                "id": "custom.width",
+                "value": 112
               }
             ]
           },
@@ -168,6 +267,83 @@
                 ]
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "project_name"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "filter project",
+                    "url": "/d/cefi4zrumpn9chbrf/harbor?var-project=${__data.fields.name}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "quota"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 104
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "public"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 121
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "repositories"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 115
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "artifacts"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 119
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "members"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 100
+              }
+            ]
           }
         ]
       },
@@ -175,7 +351,7 @@
         "h": 10,
         "w": 12,
         "x": 6,
-        "y": 0
+        "y": 3
       },
       "id": 8,
       "options": {
@@ -188,7 +364,8 @@
           ],
           "show": false
         },
-        "showHeader": true
+        "showHeader": true,
+        "sortBy": []
       },
       "targets": [
         {
@@ -279,7 +456,16 @@
               "Time": true
             },
             "includeByName": {},
-            "indexByName": {},
+            "indexByName": {
+              "Time": 0,
+              "Value #artifacts": 6,
+              "Value #members": 7,
+              "Value #quota": 3,
+              "Value #repositoris": 5,
+              "Value #usage": 2,
+              "project_name": 1,
+              "public": 4
+            },
             "renameByName": {
               "Value #artifacts": "artifacts",
               "Value #members": "members",
@@ -356,18 +542,20 @@
         "h": 10,
         "w": 12,
         "x": 0,
-        "y": 10
+        "y": 13
       },
       "id": 4,
       "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -453,18 +641,20 @@
         "h": 10,
         "w": 12,
         "x": 12,
-        "y": 10
+        "y": 13
       },
       "id": 5,
       "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -551,14 +741,14 @@
         "h": 10,
         "w": 12,
         "x": 0,
-        "y": 20
+        "y": 23
       },
       "id": 3,
       "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "displayMode": "table",
           "placement": "right",
@@ -648,18 +838,20 @@
         "h": 10,
         "w": 12,
         "x": 12,
-        "y": 20
+        "y": 23
       },
       "id": 2,
       "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -745,7 +937,7 @@
         "h": 10,
         "w": 12,
         "x": 12,
-        "y": 30
+        "y": 33
       },
       "id": 6,
       "maxDataPoints": 150,
@@ -756,7 +948,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Total",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,

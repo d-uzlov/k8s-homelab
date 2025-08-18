@@ -227,7 +227,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(node, name) (label_replace(kubernetes_feature_enabled{name=~\"$feature\", job=\"kubelet-main\", instance=~\"$instance\"}, \"node\", \"$1\", \"instance\", \"(.*)\"))",
+          "expr": "max by(node, name) (kubernetes_feature_enabled{name=~\"$feature\", job=\"kubelet-main\", node=~\"$node\"})",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -242,7 +242,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(node, name) (kubernetes_feature_enabled{name=~\"$feature\", job=\"kube-apiserver\", node=~\"$instance\"})",
+          "expr": "max by(node, name) (kubernetes_feature_enabled{name=~\"$feature\", job=\"kube-apiserver\", node=~\"$node\"})",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -256,7 +256,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(node, name) (kubernetes_feature_enabled{name=~\"$feature\", job=\"kube-controller-manager\", node=~\"$instance\"})",
+          "expr": "max by(node, name) (kubernetes_feature_enabled{name=~\"$feature\", job=\"kube-controller-manager\", node=~\"$node\"})",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -271,7 +271,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(node, name) (kubernetes_feature_enabled{name=~\"$feature\", job=\"kube-scheduler\", node=~\"$instance\"})",
+          "expr": "max by(node, name) (kubernetes_feature_enabled{name=~\"$feature\", job=\"kube-scheduler\", node=~\"$node\"})",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -319,7 +319,7 @@
     }
   ],
   "preload": false,
-  "refresh": "auto",
+  "refresh": "",
   "schemaVersion": 41,
   "tags": [],
   "templating": {
@@ -356,6 +356,27 @@
         "type": "query"
       },
       {
+        "allowCustomValue": false,
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "query_result(group by(node) (last_over_time(up{job=\"kubelet-main\", location=\"$location\"}[$__range])))",
+        "includeAll": true,
+        "multi": true,
+        "name": "node",
+        "options": [],
+        "query": {
+          "qryType": 3,
+          "query": "query_result(group by(node) (last_over_time(up{job=\"kubelet-main\", location=\"$location\"}[$__range])))",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "/node=\"(?<text>[^\"]+)|node=\"(?<value>[^\"]+)/g",
+        "sort": 1,
+        "type": "query"
+      },
+      {
         "name": "feature_filter",
         "options": [
           {
@@ -373,34 +394,13 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "query_result(last_over_time(up{job=\"kubelet-main\", location=\"$location\"}[$__range]))",
-        "includeAll": true,
-        "multi": true,
-        "name": "instance",
-        "options": [],
-        "query": {
-          "qryType": 3,
-          "query": "query_result(last_over_time(up{job=\"kubelet-main\", location=\"$location\"}[$__range]))",
-          "refId": "PrometheusVariableQueryEditor-VariableQuery"
-        },
-        "refresh": 2,
-        "regex": "/instance=\"(?<text>[^\"]+)|instance=\"(?<value>[^\"]+)/g",
-        "sort": 1,
-        "type": "query"
-      },
-      {
-        "allowCustomValue": false,
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${datasource}"
-        },
-        "definition": "query_result(group by(name) (last_over_time(kubernetes_feature_enabled{instance=~\"$instance\", name=~\".*(?i:($feature_filter)).*\"}[$__range])))",
+        "definition": "query_result(group by(name) (last_over_time(kubernetes_feature_enabled{node=~\"$node\", name=~\".*(?i:($feature_filter)).*\"}[$__range])))",
         "includeAll": true,
         "name": "feature",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(group by(name) (last_over_time(kubernetes_feature_enabled{instance=~\"$instance\", name=~\".*(?i:($feature_filter)).*\"}[$__range])))",
+          "query": "query_result(group by(name) (last_over_time(kubernetes_feature_enabled{node=~\"$node\", name=~\".*(?i:($feature_filter)).*\"}[$__range])))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
