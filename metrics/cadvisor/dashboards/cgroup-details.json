@@ -25,11 +25,14 @@
           "uid": "${datasource}"
         },
         "enable": true,
-        "expr": "changes(node_boot_time_seconds{location=\"$location\", instance=\"$node_name\"}[$__interval]) > 0",
         "hide": false,
         "iconColor": "red",
         "name": "Node reboot",
         "tagKeys": "node_reboot",
+        "target": {
+          "expr": "changes(node_boot_time_seconds{instance=\"$instance\"}[$__interval]) > 0",
+          "refId": "Anno"
+        },
         "textFormat": "{{instance}}",
         "titleFormat": "Node reboot"
       },
@@ -43,7 +46,7 @@
         "iconColor": "light-red",
         "name": "Node info missing",
         "target": {
-          "expr": "(node_boot_time_seconds{location=\"$location\", instance=\"$node_name\"} offset $__interval unless node_boot_time_seconds{instance=\"$node_name\"}) unless changes(node_boot_time_seconds{instance=\"$node_name\"}[$__interval]) > 0",
+          "expr": "(node_boot_time_seconds{instance=\"$instance\"} offset $__interval unless node_boot_time_seconds{instance=\"$instance\"}) unless changes(node_boot_time_seconds{instance=\"$instance\"}[$__interval]) > 0",
           "refId": "Anno"
         },
         "textFormat": "{{instance}}",
@@ -55,43 +58,7 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
   "id": null,
-  "links": [
-    {
-      "asDropdown": true,
-      "includeVars": true,
-      "keepTime": true,
-      "tags": [
-        "k8s-cluster"
-      ],
-      "targetBlank": false,
-      "title": "Kubernetes",
-      "type": "dashboards"
-    },
-    {
-      "asDropdown": false,
-      "icon": "dashboard",
-      "includeVars": false,
-      "keepTime": false,
-      "tags": [],
-      "targetBlank": false,
-      "title": "Namespace",
-      "tooltip": "",
-      "type": "link",
-      "url": "/d/vsl6ot4yad5hedtly8ey/kubernetes-namespace-pods?${datasource:queryparam}&${cluster:queryparam}&${namespace:queryparam}&&${pod:queryparam}&${pod_uid:queryparam}&${__url_time_range}"
-    },
-    {
-      "asDropdown": false,
-      "icon": "dashboard",
-      "includeVars": false,
-      "keepTime": false,
-      "tags": [],
-      "targetBlank": false,
-      "title": "Node",
-      "tooltip": "",
-      "type": "link",
-      "url": "/d/9ays84j4ksi5cwo0n786/kubernetes3a-node-pods?${datasource:queryparam}&${cluster:queryparam}&${namespace:queryparam}&${node:queryparam}&${__url_time_range}"
-    }
-  ],
+  "links": [],
   "panels": [
     {
       "collapsed": false,
@@ -410,15 +377,15 @@
             "indexByName": {
               "Time": 0,
               "Value #ago": 3,
-              "Value #info": 10,
+              "Value #info": 6,
               "Value #last_seen_time": 2,
               "Value #start_time": 1,
-              "container_label_com_docker_compose_project": 4,
-              "container_label_com_docker_compose_service": 5,
-              "id": 9,
-              "image": 8,
-              "logs_link": 7,
-              "name": 6
+              "container": 7,
+              "id": 10,
+              "image": 5,
+              "name": 4,
+              "node": 8,
+              "pod": 9
             },
             "renameByName": {
               "1 + 1": "",
@@ -531,9 +498,9 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\n$__to / 1000 - max(max_over_time(container_start_time_seconds{instance=\"$instance\", id=~\"$id\"}[$__interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "$__to / 1000 - max(max_over_time(container_start_time_seconds{instance=\"$instance\", id=~\"$id\"}[$__interval]))",
           "instant": false,
-          "legendFormat": "{{id}}",
+          "legendFormat": "value",
           "range": true,
           "refId": "A"
         }
@@ -549,7 +516,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic-by-name"
+            "mode": "palette-classic"
           },
           "custom": {
             "axisBorderShow": false,
@@ -632,10 +599,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\ntime() - max(last_over_time(container_start_time_seconds{instance=\"$instance\", id=~\"$id\"}[$__interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "time() - max(last_over_time(container_start_time_seconds{instance=\"$instance\", id=~\"$id\"}[$__interval]))",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{id}}",
+          "legendFormat": "value",
           "range": true,
           "refId": "uptime"
         }
@@ -664,7 +631,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic-by-name"
+            "mode": "palette-classic"
           },
           "custom": {
             "axisBorderShow": false,
@@ -747,10 +714,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum(rate(container_cpu_usage_seconds_total{instance=\"$instance\", id=~\"$id\", cpu=\"total\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "sum(rate(container_cpu_usage_seconds_total{instance=\"$instance\", id=~\"$id\", cpu=\"total\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{id}}",
+          "legendFormat": "value",
           "range": true,
           "refId": "usage"
         }
@@ -766,7 +733,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic-by-name"
+            "mode": "palette-classic"
           },
           "custom": {
             "axisBorderShow": false,
@@ -850,10 +817,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax(\r\n  (rate(container_cpu_system_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]) )\r\n  /\r\n  sum without(cpu) (rate(container_cpu_usage_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]) + 1e-12)\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "max(\r\n  (rate(container_cpu_system_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]) )\r\n  /\r\n  sum without(cpu) (rate(container_cpu_usage_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]) + 1e-12)\r\n)",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{id}}",
+          "legendFormat": "value",
           "range": true,
           "refId": "burst_usage"
         }
@@ -870,7 +837,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic-by-name"
+            "mode": "palette-classic"
           },
           "custom": {
             "axisBorderShow": false,
@@ -953,10 +920,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum(rate(container_cpu_usage_seconds_total{instance=\"$instance\", id=~\"$id\", cpu=\"total\"}[$__rate_interval]) * $__interval_ms / 1000)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "sum(rate(container_cpu_usage_seconds_total{instance=\"$instance\", id=~\"$id\", cpu=\"total\"}[$__rate_interval])) * $__interval_ms / 1000",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{id}}",
+          "legendFormat": "value",
           "range": true,
           "refId": "usage"
         }
@@ -973,7 +940,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic-by-name"
+            "mode": "palette-classic"
           },
           "custom": {
             "axisBorderShow": false,
@@ -1056,10 +1023,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax(\r\n  (rate(container_cpu_cfs_throttled_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]) )\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "max(rate(container_cpu_cfs_throttled_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{id}}",
+          "legendFormat": "value",
           "range": true,
           "refId": "throttled"
         }
@@ -1076,7 +1043,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic-by-name"
+            "mode": "palette-classic"
           },
           "custom": {
             "axisBorderShow": false,
@@ -1166,10 +1133,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum(\r\n  container_spec_cpu_quota{instance=\"$instance\", id=~\"$id\"}\r\n  /\r\n  container_spec_cpu_period{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "sum(\r\n  container_spec_cpu_quota{instance=\"$instance\", id=~\"$id\"}\r\n  /\r\n  container_spec_cpu_period{instance=\"$instance\", id=~\"$id\"}\r\n)",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{id}}",
+          "legendFormat": "value",
           "range": true,
           "refId": "limit_split"
         }
@@ -1186,7 +1153,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic-by-name"
+            "mode": "palette-classic"
           },
           "custom": {
             "axisBorderShow": false,
@@ -1269,10 +1236,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax(\r\n  (rate(container_cpu_cfs_throttled_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]) * $__interval_ms / 1000 )\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "max(rate(container_cpu_cfs_throttled_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])) * $__interval_ms / 1000",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{id}}",
+          "legendFormat": "value",
           "range": true,
           "refId": "throttled"
         }
@@ -1289,7 +1256,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic-by-name"
+            "mode": "palette-classic"
           },
           "custom": {
             "axisBorderShow": false,
@@ -1373,7 +1340,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum(\r\n    sum without(cpu) (\r\n        rate(container_cpu_usage_seconds_total{instance=\"$instance\", id=~\"$id\", cpu=\"total\"}[$__rate_interval])\r\n    )\r\n    /\r\n    (\r\n      container_spec_cpu_quota{instance=\"$instance\", id=~\"$id\"}\r\n      /\r\n      container_spec_cpu_period{instance=\"$instance\", id=~\"$id\"}\r\n    )\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "sum(\r\n  sum without(cpu) (\r\n    rate(container_cpu_usage_seconds_total{instance=\"$instance\", id=~\"$id\", cpu=\"total\"}[$__rate_interval])\r\n  )\r\n  /\r\n  (\r\n    container_spec_cpu_quota{instance=\"$instance\", id=~\"$id\"}\r\n    /\r\n    container_spec_cpu_period{instance=\"$instance\", id=~\"$id\"}\r\n  )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}}",
@@ -1393,7 +1360,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic-by-name",
+            "mode": "palette-classic",
             "seriesBy": "max"
           },
           "custom": {
@@ -1487,7 +1454,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "# if container didn't run at some interval, you will have division by zero, so we do ` / increase + epsilon`\r\nlabel_replace(\r\nmax(\r\n  (increase(container_cpu_cfs_throttled_periods_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]) )\r\n/\r\n  (increase(container_cpu_cfs_periods_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]) + 1e-5 )\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "max(\r\n  (increase(container_cpu_cfs_throttled_periods_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]) )\r\n  /\r\n  (increase(container_cpu_cfs_periods_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]) + 1e-12 )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}}",
@@ -1519,7 +1486,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic-by-name"
+            "mode": "palette-classic"
           },
           "custom": {
             "axisBorderShow": false,
@@ -1602,10 +1569,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum(rate(container_pressure_cpu_stalled_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "sum(rate(container_pressure_cpu_stalled_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{id}}",
+          "legendFormat": "value",
           "range": true,
           "refId": "usage"
         }
@@ -1621,7 +1588,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic-by-name"
+            "mode": "palette-classic"
           },
           "custom": {
             "axisBorderShow": false,
@@ -1704,10 +1671,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum(rate(container_pressure_memory_stalled_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "sum(rate(container_pressure_memory_stalled_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{id}}",
+          "legendFormat": "value",
           "range": true,
           "refId": "usage"
         }
@@ -1723,7 +1690,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic-by-name"
+            "mode": "palette-classic"
           },
           "custom": {
             "axisBorderShow": false,
@@ -1806,10 +1773,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum(rate(container_pressure_io_stalled_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "sum(rate(container_pressure_io_stalled_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{id}}",
+          "legendFormat": "value",
           "range": true,
           "refId": "usage"
         }
@@ -1825,7 +1792,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic-by-name"
+            "mode": "palette-classic"
           },
           "custom": {
             "axisBorderShow": false,
@@ -1908,10 +1875,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum(rate(container_pressure_cpu_waiting_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "sum(rate(container_pressure_cpu_waiting_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{id}}",
+          "legendFormat": "value",
           "range": true,
           "refId": "usage"
         }
@@ -1927,7 +1894,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic-by-name"
+            "mode": "palette-classic"
           },
           "custom": {
             "axisBorderShow": false,
@@ -2010,10 +1977,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum(rate(container_pressure_memory_waiting_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "sum(rate(container_pressure_memory_waiting_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{id}}",
+          "legendFormat": "value",
           "range": true,
           "refId": "usage"
         }
@@ -2029,7 +1996,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic-by-name"
+            "mode": "palette-classic"
           },
           "custom": {
             "axisBorderShow": false,
@@ -2112,10 +2079,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum(rate(container_pressure_io_waiting_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "sum(rate(container_pressure_io_waiting_seconds_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{id}}",
+          "legendFormat": "value",
           "range": true,
           "refId": "usage"
         }
@@ -2275,7 +2242,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax(\r\n  max_over_time(container_memory_max_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_max_usage_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "max(\r\n  max_over_time(container_memory_max_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_max_usage_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "max",
@@ -2288,7 +2255,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax(\r\n  max_over_time(container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "max(\r\n  max_over_time(container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)",
           "instant": false,
           "legendFormat": "raw",
           "range": true,
@@ -2300,7 +2267,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax(\r\n  max_over_time(container_memory_working_set_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_working_set_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "max(\r\n  max_over_time(container_memory_working_set_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_working_set_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "wss",
@@ -2313,7 +2280,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax(\r\n  max_over_time(container_memory_rss{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_rss{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "max(\r\n  max_over_time(container_memory_rss{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_rss{instance=\"$instance\", id=~\"$id\"}\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "rss",
@@ -2326,7 +2293,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax(\r\n  max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_spec_memory_limit_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n) != 0",
+          "expr": "max(\r\n  max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_spec_memory_limit_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "limit",
@@ -2464,7 +2431,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax(\r\n  avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_cache{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "max(\r\n  avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_cache{instance=\"$instance\", id=~\"$id\"}\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "cache",
@@ -2477,7 +2444,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax(\r\n  avg_over_time(container_memory_rss{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_rss{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "max(\r\n  avg_over_time(container_memory_rss{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_rss{instance=\"$instance\", id=~\"$id\"}\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "rss",
@@ -2490,7 +2457,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "# container_memory_usage_bytes = rss + cache + kernel\r\n# but container_memory_kernel_usage is broken in current version of cadvisor, it's always zero\r\nlabel_replace(\r\nmax(\r\n  (\r\n    avg_over_time(container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n    -\r\n    avg_over_time(container_memory_rss{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n    -\r\n    avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  )\r\n  or\r\n  (\r\n  container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}\r\n  -\r\n  container_memory_rss{instance=\"$instance\", id=~\"$id\"}\r\n  -\r\n  container_memory_cache{instance=\"$instance\", id=~\"$id\"}\r\n  )\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "# container_memory_usage_bytes = rss + cache + kernel\r\n# but container_memory_kernel_usage is broken in current version of cadvisor, it's always zero\r\nmax(\r\n  (\r\n    avg_over_time(container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n    -\r\n    avg_over_time(container_memory_rss{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n    -\r\n    avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  )\r\n  or\r\n  (\r\n  container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}\r\n  -\r\n  container_memory_rss{instance=\"$instance\", id=~\"$id\"}\r\n  -\r\n  container_memory_cache{instance=\"$instance\", id=~\"$id\"}\r\n  )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "kernel",
@@ -2503,7 +2470,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax(\r\n  avg_over_time(container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "max(\r\n  avg_over_time(container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "raw",
@@ -2784,7 +2751,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax(\r\n  avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_cache{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "max(\r\n  avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_cache{instance=\"$instance\", id=~\"$id\"}\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "total",
@@ -2797,7 +2764,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax(\r\n  avg_over_time(container_memory_mapped_file{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_mapped_file{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "max(\r\n  avg_over_time(container_memory_mapped_file{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_mapped_file{instance=\"$instance\", id=~\"$id\"}\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "mapped",
@@ -2810,7 +2777,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax(\r\n  (\r\n  avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  -\r\n  avg_over_time(container_memory_mapped_file{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  )\r\n  or\r\n  (\r\n  container_memory_cache{instance=\"$instance\", id=~\"$id\"}\r\n  -\r\n  container_memory_mapped_file{instance=\"$instance\", id=~\"$id\"}\r\n  )\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "max(\r\n  (\r\n  avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  -\r\n  avg_over_time(container_memory_mapped_file{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  )\r\n  or\r\n  (\r\n  container_memory_cache{instance=\"$instance\", id=~\"$id\"}\r\n  -\r\n  container_memory_mapped_file{instance=\"$instance\", id=~\"$id\"}\r\n  )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "unmapped",
@@ -2912,7 +2879,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax by (id, failure_type)(rate(container_memory_failures_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "max by (id, failure_type)(rate(container_memory_failures_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))",
           "instant": false,
           "legendFormat": "{{failure_type}}",
           "range": true,
@@ -3049,7 +3016,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax(\r\n  avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_cache{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "max(\r\n  avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_cache{instance=\"$instance\", id=~\"$id\"}\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "total",
@@ -3062,7 +3029,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax(\r\n  avg_over_time(container_memory_total_inactive_file_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_total_inactive_file_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "max(\r\n  avg_over_time(container_memory_total_inactive_file_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_total_inactive_file_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "inactive",
@@ -3075,7 +3042,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nmax(\r\n  avg_over_time(container_memory_total_active_file_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_total_active_file_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "max(\r\n  avg_over_time(container_memory_total_active_file_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_total_active_file_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "active",
@@ -3190,7 +3157,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum by(interface) (rate(container_network_receive_bytes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "sum by(interface) (rate(container_network_receive_bytes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))",
           "instant": false,
           "legendFormat": "{{interface}}",
           "range": true,
@@ -3295,7 +3262,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum by(interface) (rate(container_network_transmit_bytes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "sum by(interface) (rate(container_network_transmit_bytes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))",
           "instant": false,
           "legendFormat": "{{interface}}",
           "range": true,
@@ -3396,7 +3363,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum by(interface) (rate(container_network_receive_bytes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])) * $__interval_ms / 1000\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "sum by(interface) (rate(container_network_receive_bytes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])) * $__interval_ms / 1000",
           "instant": false,
           "legendFormat": "{{interface}}",
           "range": true,
@@ -3497,7 +3464,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum by(interface) (rate(container_network_transmit_bytes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])) * $__interval_ms / 1000\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "sum by(interface) (rate(container_network_transmit_bytes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])) * $__interval_ms / 1000",
           "instant": false,
           "legendFormat": "{{interface}}",
           "range": true,
@@ -3611,7 +3578,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum by(device) (rate(container_fs_reads_bytes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "sum by(device) (rate(container_fs_reads_bytes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))",
           "instant": false,
           "legendFormat": "{{device}}",
           "range": true,
@@ -3712,7 +3679,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum by(device) (rate(container_fs_writes_bytes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "sum by(device) (rate(container_fs_writes_bytes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
           "legendFormat": "{{device}}",
@@ -3814,7 +3781,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum by(device) (rate(container_fs_reads_bytes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])) * $__interval_ms / 1000\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "sum by(device) (rate(container_fs_reads_bytes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])) * $__interval_ms / 1000",
           "instant": false,
           "legendFormat": "{{device}}",
           "range": true,
@@ -3915,7 +3882,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum by(device) (rate(container_fs_writes_bytes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])) * $__interval_ms / 1000\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "sum by(device) (rate(container_fs_writes_bytes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])) * $__interval_ms / 1000",
           "instant": false,
           "legendFormat": "{{device}}",
           "range": true,
@@ -4016,7 +3983,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum by(device) (rate(container_fs_reads_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "sum by(device) (rate(container_fs_reads_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))",
           "instant": false,
           "legendFormat": "{{device}}",
           "range": true,
@@ -4117,7 +4084,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "label_replace(\r\nsum by(device) (rate(container_fs_writes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))\r\n, \"id\", \"$1\", \"id\", \"$id_prefix/?(.*)\"\r\n)",
+          "expr": "sum by(device) (rate(container_fs_writes_total{instance=\"$instance\", id=~\"$id\"}[$__rate_interval]))",
           "instant": false,
           "legendFormat": "{{device}}",
           "range": true,
@@ -4132,8 +4099,7 @@
   "refresh": "auto",
   "schemaVersion": 41,
   "tags": [
-    "maintainer:danil",
-    "k8s-cluster"
+    "cgroup"
   ],
   "templating": {
     "list": [
@@ -4237,5 +4203,5 @@
   "timezone": "browser",
   "title": "cadvisor / cgroup details",
   "uid": "mo6wf2ukdv3l72howqnqcgd",
-  "version": 0
+  "version": 21
 }
