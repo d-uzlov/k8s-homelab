@@ -1,0 +1,31 @@
+---
+- name: setup monitoring in docker
+  hosts: cadvisor
+  # serial: 1
+  roles:
+  - role: geerlingguy.docker
+    become: true
+  tasks:
+  - name: Create monitoring dir
+    become: true
+    ansible.builtin.file:
+      path: /opt/docker-compose-files
+      state: directory
+      owner: root
+      mode: "0755"
+  - name: Copy docker-compose.yml to host
+    become: true
+    ansible.builtin.copy:
+      src: ./docker-compose.yaml
+      dest: /opt/docker-compose-files/docker-compose-cadvisor.yml
+      owner: root
+      mode: "0644"
+  - name: Start cadvisor
+    become: true
+    community.docker.docker_compose_v2:
+      project_src: /opt/docker-compose-files
+      files:
+      - docker-compose-cadvisor.yml
+      state: present
+      wait: true
+      wait_timeout: 300

@@ -8,56 +8,19 @@ References:
 
 # Prerequisites
 
-- [Docker](../../../docs/proxmox/proxmox-container.md#docker)
+- [Ansible](../../../docs/ansible.md)
 
-# Linux installation
-
-Run on the target system:
+# install via ansible
 
 ```bash
 
-mkdir ~/cadvisor/
-cd ~/cadvisor/
+ansible-galaxy role install geerlingguy.docker
+ansible-galaxy collection install community.docker
 
- cat << EOF > ~/cadvisor/docker-compose.yaml
-services:
-  cadvisor:
-    image: ghcr.io/google/cadvisor:v0.53.0
-    privileged: true
-    restart: always
-    command:
-    - --port=8999
-    - --allow_dynamic_housekeeping=true
-    - --housekeeping_interval=2s
-    - --max_housekeeping_interval=3s
-    - --event_storage_event_limit=default=0
-    - --event_storage_age_limit=default=0
-    - --enable_metrics=cpu,diskIO,memory,network,pressure,process
-    - --docker_only
-    - --raw_cgroup_prefix_whitelist=/system.slice,/qemu.slice,/lxc,/lxc.monitor
-    - --store_container_labels=false
-    - --whitelisted_container_labels=com.docker.compose.image,com.docker.compose.service,com.docker.compose.project
-    ports:
-    - 8999:8999
-    volumes:
-    - /:/rootfs:ro
-    - /sys:/sys:ro
-    - /var/run:/var/run:ro
-    - /var/lib/docker/:/var/lib/docker:ro
-    - /dev/disk/:/dev/disk:ro
-    deploy:
-      resources:
-        reservations:
-          memory: 50M
-          cpus: 0.05
-        limits:
-          # cadvisor memory usage heavily depends on the amount of cgroup on the system
-          memory: 200M
-          cpus: 0.3
-EOF
+# make sure that you have "cadvisor" group is present in ansible inventory
+ansible-inventory --graph cadvisor
 
-docker compose --project-directory ~/cadvisor/ up -d
-docker compose --project-directory ~/cadvisor/ logs cadvisor
+ansible-playbook ./metrics/cadvisor/cadvisor-external/playbook.yaml
 
 ```
 
