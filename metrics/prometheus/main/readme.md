@@ -27,6 +27,8 @@ kind: Prometheus
 metadata:
   name: main
 spec:
+  retention: 90d
+  retentionSize: 145GiB
   externalUrl: https://$externalUrl/
   alerting:
     alertmanagers:
