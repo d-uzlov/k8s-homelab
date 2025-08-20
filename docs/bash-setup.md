@@ -474,4 +474,12 @@ which yamlfmt > /dev/null || {
   )
 }
 
+ cat << "EOF" > $HOME/.bashrc.d/10-local-bin-path.sh
+PATH=${PATH}:/home/danil/.local/bin
+EOF
+
+which lstopo > /dev/null || { sudo apt-get update; sudo apt-get install -y hwloc; }
+which lshw > /dev/null || { sudo apt-get update; sudo apt-get install -y lshw; }
+which numactl > /dev/null || { sudo apt-get update; sudo apt-get install -y numactl; }
+
 ```
