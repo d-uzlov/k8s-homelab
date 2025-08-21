@@ -1,0 +1,62 @@
+---
+- name: Install and enable monitoring systemd timer
+  hosts: zfs
+  become: true
+
+  vars:
+    local_binary_path: ./env/zfs_exporter/zfs-exporter-chris
+    install_path: /opt/chris_zfs_exporter
+
+  tasks:
+  - name: Ensure /opt exists
+    file:
+      path: /opt
+      state: directory
+      mode: "0755"
+      owner: root
+      group: root
+
+  - name: Copy exporter binary
+    copy:
+      src: "{{ local_binary_path }}"
+      dest: "{{ install_path }}"
+      owner: root
+      group: root
+      mode: "0755"
+
+  - name: Deploy service unit
+    template:
+      src: ./chris_zfs_exporter.service
+      dest: /etc/systemd/system/chris_zfs_exporter.service
+      owner: root
+      group: root
+      mode: "0644"
+    notify: systemd-daemon-reload
+
+  - name: Create service group
+    group:
+      name: chris_zfs_exporter
+      state: present
+      system: true
+
+  - name: Create service user
+    user:
+      name: chris_zfs_exporter
+      group: chris_zfs_exporter
+      shell: /usr/sbin/nologin
+      create_home: false
+      system: true
+      state: present
+
+  - name: Start service
+    systemd:
+      name: chris_zfs_exporter.service
+      enabled: yes
+      state: started
+      daemon_reload: no
+
+  handlers:
+  - name: systemd-daemon-reload
+    systemd:
+      daemon_reload: yes
+    listen: systemd-daemon-reload

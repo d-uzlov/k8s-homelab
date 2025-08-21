@@ -1,61 +1,48 @@
 
 # ZFS exporter outside of k8s cluster
 
-# Prerequisites
-
-- [Golang](../../../docs/golang.md#install)
-
-# Linux installation
-
 References:
 - https://github.com/pdf/zfs_exporter
 
-Run on the target system:
+# Prerequisites
+
+- [Ansible](../../../docs/ansible.md)
+
+Also download exporter binary:
 
 ```bash
 
-sudo apt-get update
-sudo apt-get install -y git
-
 # https://github.com/pdf/zfs_exporter/releases
-zfs_exporter_version=v2.3.8
-go install github.com/pdf/zfs_exporter/v2@$zfs_exporter_version
+zfs_exporter_version=2.3.8
 
-sudo groupadd --system zfs_exporter
-sudo useradd -s /sbin/nologin --system -g zfs_exporter zfs_exporter
+wget --directory-prefix ./metrics/zfs-exporter/pdf/env/ https://github.com/pdf/zfs_exporter/releases/download/v${zfs_exporter_version}/zfs_exporter-${zfs_exporter_version}.linux-amd64.tar.gz
+tar zxv -f ./metrics/zfs-exporter/pdf/env/zfs_exporter-${zfs_exporter_version}.linux-amd64.tar.gz -C ./metrics/zfs-exporter/pdf/env/
 
- sudo tee /etc/systemd/system/zfs_exporter.service << EOF
-[Unit]
-Description=ZFS Exporter
-Wants=network-online.target
-After=network-online.target
+```
 
-[Service]
-User=zfs_exporter
-ExecStart=$(which zfs_exporter) \\
-  --web.listen-address=:9134 \\
-  --properties.dataset-filesystem="available,logicalused,quota,referenced,used,usedbydataset,usedbychildren,usedbysnapshots,written,refquota,refreservation,reservation,snapshot_count,snapshot_limit,logicalreferenced,creation" \\
-  --properties.dataset-volume="available,logicalused,referenced,used,usedbydataset,volsize,written,usedbysnapshots,logicalreferenced,creation,snapshot_count" \\
-  --properties.pool="allocated,dedupratio,capacity,expandsize,fragmentation,free,freeing,health,leaked,readonly,size" \\
-  --web.disable-exporter-metrics
+# install via ansible
 
-[Install]
-WantedBy=default.target
-EOF
+```bash
 
-zfs_exporter \
-  --web.listen-address=:9135 \
-  --properties.dataset-filesystem="available,logicalused,quota,referenced,used,usedbydataset,usedbychildren,usedbysnapshots,written,refquota,refreservation,reservation,snapshot_count,snapshot_limit,logicalreferenced,creation" \
-  --properties.dataset-volume="available,logicalused,referenced,used,usedbydataset,volsize,written,usedbysnapshots,logicalreferenced,creation,snapshot_count" \
-  --properties.pool="allocated,dedupratio,capacity,expandsize,fragmentation,free,freeing,health,leaked,readonly,size" \
-  --web.disable-exporter-metrics
+ansible-galaxy role install geerlingguy.docker
+ansible-galaxy collection install community.docker
 
+# make sure that you have "zfs" group is present in ansible inventory
+ansible-inventory --graph zfs
+
+ansible-playbook ./metrics/zfs-exporter/pdf/playbook.yaml
+
+```
+
+# Post-install checks
+
+```bash
 
 sudo systemctl daemon-reload
-sudo systemctl restart zfs_exporter
-sudo systemctl enable zfs_exporter
-systemctl status --no-pager zfs_exporter.service
-sudo journalctl -b -u zfs_exporter
+sudo systemctl restart pdf_zfs_exporter
+
+systemctl status --no-pager pdf_zfs_exporter.service
+sudo journalctl -b -u pdf_zfs_exporter
 
 ```
 
@@ -105,7 +92,6 @@ kl delete -k ./metrics/zfs-exporter/pdf/
 
 ```bash
 
-# ip or domain name
 node=
 curl -sS --insecure http://$node:9134/metrics > ./zfs-exporter-pdf.log
 

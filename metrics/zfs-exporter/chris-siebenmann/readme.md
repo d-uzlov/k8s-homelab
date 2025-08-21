@@ -1,47 +1,47 @@
 
 # ZFS exporter outside of k8s cluster
 
-# Prerequisites
-
-- [Golang](../../../docs/golang.md#install)
-
-# Linux installation
-
 References:
 - https://github.com/siebenmann/zfs_exporter
 
-Run on the target system:
+# Prerequisites
+
+- [Ansible](../../../docs/ansible.md)
+- [Golang](../../../docs/golang.md#install)
+
+Also compile exporter binary locally:
 
 ```bash
 
-git clone --depth 1 -b cks-upstream https://github.com/siebenmann/zfs_exporter.git
-( cd zfs_exporter/; CGO_ENABLED=0 go build -ldflags="-w -s" -o zfs-exporter-chris main.go )
+# download repository
+( cd ./metrics/zfs-exporter/chris-siebenmann/env/; git clone --depth 1 -b cks-upstream https://github.com/siebenmann/zfs_exporter.git; )
+# build exporter binary
+( cd ./metrics/zfs-exporter/chris-siebenmann/env/zfs_exporter/; CGO_ENABLED=0 go build -ldflags="-w -s" -o zfs-exporter-chris main.go; )
 
-sudo groupadd --system zfs_exporter_chris
-sudo useradd -s /sbin/nologin --system -g zfs_exporter_chris zfs_exporter_chris
+```
 
- sudo tee /etc/systemd/system/zfs_exporter_chris.service << EOF
-[Unit]
-Description=ZFS Exporter by Chris Siebenmann
-Wants=network-online.target
-After=network-online.target
+# install via ansible
 
-[Service]
-User=zfs_exporter_chris
-ExecStart=$(which ~/zfs_exporter/zfs-exporter-chris) \
-  -depth=2 \
-  -fullpath \
-  -listen-addr=:9700
+```bash
 
-[Install]
-WantedBy=default.target
-EOF
+ansible-galaxy role install geerlingguy.docker
+ansible-galaxy collection install community.docker
+
+# make sure that you have "zfs" group is present in ansible inventory
+ansible-inventory --graph zfs
+
+ansible-playbook ./metrics/zfs-exporter/chris-siebenmann/playbook.yaml
+
+```
+
+# Post-install checks
+
+```bash
 
 sudo systemctl daemon-reload
-sudo systemctl restart zfs_exporter_chris
-sudo systemctl enable zfs_exporter_chris
-systemctl status --no-pager zfs_exporter_chris.service
-sudo journalctl -b -u zfs_exporter_chris
+sudo systemctl restart chris_zfs_exporter
+systemctl status --no-pager chris_zfs_exporter.service
+sudo journalctl -b -u chris_zfs_exporter
 
 ```
 
@@ -88,7 +88,6 @@ kl delete -k ./metrics/zfs-exporter/chris-siebenmann/
 
 ```bash
 
-# ip or domain name
 node=nas-tulip.storage.lan
 curl -sS --insecure http://$node:9700/metrics > ./zfs-exporter-chris.log
 
