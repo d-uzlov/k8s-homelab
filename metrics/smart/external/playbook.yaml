@@ -1,0 +1,43 @@
+---
+- name: setup monitoring in docker
+  hosts: smartctl_exporter
+  pre_tasks:
+  - name: Check if docker compose works
+    ansible.builtin.command: docker compose version
+    register: docker_ver_check
+    changed_when: false
+    failed_when: false
+    become: true
+  - name: Set docker_installed fact
+    ansible.builtin.set_fact:
+      docker_installed: "{{ docker_ver_check.rc == 0 }}"
+  tasks:
+  - name: Install docker if missing
+    import_role:
+      name: geerlingguy.docker
+    when: not docker_installed
+    become: true
+  - name: Create monitoring dir
+    become: true
+    ansible.builtin.file:
+      path: /opt/docker-compose-files
+      state: directory
+      owner: root
+      mode: "0755"
+  - name: Copy smartctl-exporter docker-compose.yml to host
+    become: true
+    ansible.builtin.copy:
+      src: ./docker-compose.yaml
+      dest: /opt/docker-compose-files/docker-compose-smartctl-exporter.yml
+      owner: root
+      mode: "0644"
+  - name: Start smartctl-exporter
+    become: true
+    community.docker.docker_compose_v2:
+      project_src: /opt/docker-compose-files
+      files:
+      - docker-compose-smartctl-exporter.yml
+      state: present
+      wait: true
+      wait_timeout: 300
+      remove_orphans: true

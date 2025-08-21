@@ -1,0 +1,40 @@
+---
+name: metrics-smart-exporter
+services:
+  smart-exporter:
+    container_name: '${COMPOSE_PROJECT_NAME}'
+    # using a custom image here because the standard one doesn't provide unique identifiers on metrics
+    image: ghcr.io/d-uzlov/smart-exporter:0.14.0-device-id
+    # privileged is required to get access to all devices,
+    # without mapping every device individually
+    privileged: true
+    user: root
+    restart: always
+    command:
+    # - --smartctl.path=/usr/local/sbin/smartctl
+    - --smartctl.interval=60s
+    - --smartctl.rescan=10m
+    - --smartctl.device-include=.*
+    - --smartctl.powermode-check=standby
+    - --web.listen-address=:9633
+    - --log.level=info
+    - --log.format=logfmt
+    ports:
+    - 9633:9633
+    volumes:
+    - /dev:/dev:ro
+    deploy:
+      resources:
+        reservations:
+          memory: 15M
+          cpus: 0.01
+        limits:
+          memory: 50M
+          # smartctl-exporter uses low cpu on average
+          # but runs heavy operations once every 2 minutes
+          #   I don't know why it's every 2 minutes, even though we set --smartctl.interval=60s
+          # Without cpu limits max scrape time is 150ms (on a system with many disks)
+          # cpus=1: above 1s
+          # cpus=2: ~700ms
+          # cpus=4: ~400ms
+          cpus: 4
