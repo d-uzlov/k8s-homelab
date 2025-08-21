@@ -1,0 +1,43 @@
+---
+name: metrics-node-exporter
+services:
+  node-exporter:
+    container_name: '${COMPOSE_PROJECT_NAME}'
+    image: quay.io/prometheus/node-exporter:v1.9.1
+    # privileged: true
+    network_mode: host
+    restart: always
+    command:
+    - --path.procfs=/host/proc
+    - --path.sysfs=/host/sys
+    - --path.rootfs=/host/root
+    - --path.udev.data=/host/root/run/udev/data
+    - --collector.diskstats.device-exclude='^(loop.*)$'
+    - --collector.netdev.device-exclude='^(fwbr.*|fwln.*|fwpr.*|tap.*|veth.*)$'
+    - --collector.filesystem.fs-types-exclude=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs)$
+    - --collector.netclass.ignore-invalid-speed
+    - --collector.netdev.address-info
+    - --collector.textfile.directory=/tmp/node-exporter-textfile/
+    - --no-collector.netstat
+    - --no-collector.nfsd
+    - --no-collector.sockstat
+    - --no-collector.softnet
+    - --no-collector.udp_queues
+    - --no-collector.infiniband
+    - --web.listen-address=:9100
+    - --web.disable-exporter-metrics
+    # ports:
+    # - 9100:9100
+    volumes:
+    - /proc:/host/proc:ro
+    - /sys:/host/sys:ro
+    - /:/host/root:ro
+    - /tmp/node-exporter-textfile:/tmp/node-exporter-textfile:ro
+    deploy:
+      resources:
+        reservations:
+          memory: 15M
+          cpus: 0.1
+        limits:
+          memory: 100M
+          cpus: 0.3

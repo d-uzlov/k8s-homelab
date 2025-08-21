@@ -1,6 +1,6 @@
 ---
 - name: setup monitoring in docker
-  hosts: cadvisor
+  hosts: node_exporter
   pre_tasks:
   - name: Check if docker compose works
     ansible.builtin.command: docker compose version
@@ -24,19 +24,20 @@
       state: directory
       owner: root
       mode: "0755"
-  - name: Copy docker-compose.yml to host
+  - name: Copy node-exporter docker-compose.yml to host
     become: true
     ansible.builtin.copy:
       src: ./docker-compose.yaml
-      dest: /opt/docker-compose-files/docker-compose-cadvisor.yml
+      dest: /opt/docker-compose-files/docker-compose-node-exporter.yml
       owner: root
       mode: "0644"
-  - name: Start cadvisor
+  - name: Start node-exporter
     become: true
     community.docker.docker_compose_v2:
       project_src: /opt/docker-compose-files
       files:
-      - docker-compose-cadvisor.yml
+      - docker-compose-node-exporter.yml
       state: present
       wait: true
       wait_timeout: 300
+      remove_orphans: true

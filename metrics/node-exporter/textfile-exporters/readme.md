@@ -4,52 +4,29 @@
 References:
 - https://github.com/prometheus-community/node-exporter-textfile-collector-scripts
 
+# Prerequisites
 
-# Install
+- [Ansible](../../../docs/ansible.md)
+
+# install via ansible
 
 ```bash
 
-sudo apt install -y moreutils
-sudo apt install -y python3-apt python3-prometheus-client
+ansible-galaxy role install geerlingguy.docker
+ansible-galaxy collection install community.docker
 
-wget -q https://github.com/prometheus-community/node-exporter-textfile-collector-scripts/raw/refs/heads/master/apt_info.py
+# make sure that you have "node_textfile" group is present in ansible inventory
+ansible-inventory --graph node_textfile
 
-# test
-chmod +x ./apt_info.py
-./apt_info.py
-sudo mv ./apt_info.py /opt/apt_info.py
+ansible-playbook ./metrics/node-exporter/textfile-exporters/playbook.yaml
 
-# enable automatic apt-update once per day
-# on proxmox you don't need this
-echo 'APT::Periodic::Update-Package-Lists "1";' | sudo tee /etc/apt/apt.conf.d/99_auto_apt_update.conf
+```
 
- sudo tee /etc/systemd/system/node-textfile-apt_info.service << EOF
-[Unit]
-Description="apt_info from node-exporter-textfile-collector-scripts repo"
+# Update scripts
 
-[Service]
-ExecStartPre=mkdir -p /tmp/node-exporter-textfile/
-ExecStart=bash -c "/opt/apt_info.py | sponge /tmp/node-exporter-textfile/apt.prom"
-EOF
+```bash
 
- sudo tee /etc/systemd/system/node-textfile-apt_info.timer << EOF
-[Unit]
-Description="Run node-textfile-apt_info.service every 10 minutes"
-
-[Timer]
-OnActiveSec=20sec
-OnUnitActiveSec=10min
-Unit=node-textfile-apt_info.service
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-sudo systemctl daemon-reload
-sudo systemctl restart node-textfile-apt_info.timer
-sudo systemctl enable node-textfile-apt_info.timer
-systemctl status --no-pager node-textfile-apt_info.timer
-systemctl status --no-pager node-textfile-apt_info.service
-journalctl -u node-textfile-apt_info
+wget -O ./metrics/node-exporter/textfile-exporters/apt_info.py https://github.com/prometheus-community/node-exporter-textfile-collector-scripts/raw/refs/heads/master/apt_info.py
+chmod +x ./metrics/node-exporter/textfile-exporters/apt_info.py
 
 ```

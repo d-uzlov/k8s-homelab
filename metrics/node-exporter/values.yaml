@@ -5,9 +5,17 @@ fullnameOverride: node-exporter
 #   jobLabel: node-exporter
 extraArgs:
 - --collector.diskstats.device-exclude='^(loop.*)$'
+- --collector.netdev.device-exclude='^(fwbr.*|fwln.*|fwpr.*|tap.*|veth.*|lxc.*)$'
 - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|var/lib/docker/.+|var/lib/kubelet/.+)($|/)
 - --collector.filesystem.fs-types-exclude=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs)$
 - --collector.netdev.address-info
+- --collector.textfile.directory=/tmp/node-exporter-textfile/
+- --no-collector.netstat
+- --no-collector.nfsd
+- --no-collector.sockstat
+- --no-collector.softnet
+- --no-collector.udp_queues
+- --no-collector.infiniband
 - --web.disable-exporter-metrics
 # service:
 #   portName: http-metrics
@@ -39,3 +47,11 @@ resources:
     # smaller nodes get low loads, busy nodes get high load
     cpu: 10m
     memory: 10Mi
+
+extraHostVolumeMounts:
+- name: textfile-exporter
+  hostPath: /tmp/node-exporter-textfile/
+  type: DirectoryOrCreate
+  mountPath: /tmp/node-exporter-textfile/
+  readOnly: true
+  mountPropagation: None
