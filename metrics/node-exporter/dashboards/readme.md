@@ -15,7 +15,7 @@
  sed -i 's/^  \"timezone\": \".*\",/  \"timezone\": \"browser\",/' ./metrics/node-exporter/dashboards/*.json
  # grafana likes to flip some values between {"color":"green","value": null} and {"color":"green"}
  # this forces them all to lose "value": null, so that there are less changes in commits
- sed -i -z -r 's/,\n *\"value\": null(\n *})/\1/g' ./metrics/node-exporter/dashboards/*.json
+#  sed -i -z -r 's/,\n *\"value\": null(\n *})/\1/g' ./metrics/node-exporter/dashboards/*.json
 
 kl apply -k ./metrics/node-exporter/dashboards/
 

@@ -25,7 +25,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${prometheus_datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -49,7 +49,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 3,
+        "h": 4,
         "w": 6,
         "x": 1,
         "y": 0
@@ -77,10 +77,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
+          "editorMode": "code",
           "exemplar": true,
-          "expr": "nvidia_smi_gpu_info{uuid=\"$gpu\"}",
+          "expr": "topk(1, last_over_time(nvidia_smi_gpu_info{uuid=\"$uuid\"}[$__range]))",
           "instant": true,
           "legendFormat": "{{name}}",
           "refId": "A"
@@ -92,16 +93,58 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${prometheus_datasource}"
       },
-      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
+            "fixedColor": "green",
+            "mode": "fixed"
           },
-          "decimals": 2,
-          "mappings": [],
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 3,
+            "spanNulls": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "pattern": ".*rc.*",
+                "result": {
+                  "color": "yellow",
+                  "index": 0
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": ".*alpha.*",
+                "result": {
+                  "color": "red",
+                  "index": 1
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": ".*beta.*",
+                "result": {
+                  "color": "orange",
+                  "index": 2
+                }
+              },
+              "type": "regex"
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -110,124 +153,120 @@
                 "value": 0
               }
             ]
-          },
-          "unit": "none"
+          }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byValue",
+              "options": {
+                "op": "gte",
+                "reducer": "allIsZero",
+                "value": 0
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
-        "h": 3,
-        "w": 3,
-        "x": 7,
+        "h": 4,
+        "w": 12,
+        "x": 8,
         "y": 0
       },
-      "id": 14,
+      "id": 37,
+      "maxDataPoints": 200,
       "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "last"
-          ],
-          "fields": "",
-          "values": false
+        "alignValue": "center",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
         },
-        "showPercentChange": false,
-        "text": {},
-        "textMode": "name",
-        "wideLayout": true
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "exemplar": true,
-          "expr": "nvidia_smi_gpu_info{uuid=\"$gpu\"}",
-          "instant": true,
-          "legendFormat": "{{driver_version}}",
-          "refId": "A"
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
         }
-      ],
-      "title": "Driver Version",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "decimals": 2,
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "none"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 3,
-        "w": 5,
-        "x": 10,
-        "y": 0
-      },
-      "id": 34,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "last"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "text": {},
-        "textMode": "name",
-        "wideLayout": true
       },
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "exemplar": true,
-          "expr": "nvidia_smi_gpu_info{uuid=\"$gpu\"}",
-          "instant": true,
-          "legendFormat": "{{vbios_version}}",
+          "expr": "max by(name, version) (label_replace(label_replace(last_over_time(nvidia_smi_gpu_info{uuid=\"$uuid\"}[$__interval]), \"version\", \"$1\", \"driver_version\", \"(.*)\"), \"name\", \"driver\", \"driver_version\", \"(.*)\"))\r\nor on()\r\n(\r\n  vector(0) unless on() last_over_time(nvidia_smi_gpu_info{uuid=\"$uuid\"}[$__interval])\r\n)",
+          "format": "table",
+          "instant": false,
+          "legendFormat": "driver",
+          "range": true,
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by(name, version) (label_replace(label_replace(last_over_time(nvidia_smi_gpu_info{uuid=\"$uuid\"}[$__interval]), \"version\", \"$1\", \"vbios_version\", \"(.*)\"), \"name\", \"bios\", \"vbios_version\", \"(.*)\"))\r\nor on()\r\n(\r\n  vector(0) unless on() last_over_time(nvidia_smi_gpu_info{uuid=\"$uuid\"}[$__interval])\r\n)",
+          "format": "table",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "B"
         }
       ],
-      "title": "Vbios Version",
-      "type": "stat"
+      "title": "version history",
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "groupingToMatrix",
+          "options": {
+            "columnField": "name",
+            "emptyValue": "null",
+            "rowField": "Time",
+            "valueField": "version"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Value": true
+            },
+            "includeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "Value": "",
+              "version": ""
+            }
+          }
+        }
+      ],
+      "type": "state-timeline"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${prometheus_datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -311,7 +350,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 3
+        "y": 4
       },
       "id": 32,
       "maxDataPoints": 150,
@@ -335,11 +374,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "min(\r\nmin_over_time(nvidia_smi_clocks_event_reasons_gpu_idle{uuid=\"$gpu\"}[$__interval])\r\nor\r\nmin_over_time(nvidia_smi_clocks_throttle_reasons_gpu_idle{uuid=\"$gpu\"}[$__interval])\r\n)",
+          "expr": "min(\r\nmin_over_time(nvidia_smi_clocks_event_reasons_gpu_idle{uuid=\"$uuid\"}[$__interval])\r\nor\r\nmin_over_time(nvidia_smi_clocks_throttle_reasons_gpu_idle{uuid=\"$uuid\"}[$__interval])\r\n)",
           "instant": false,
           "legendFormat": "Idle",
           "refId": "A"
@@ -347,11 +386,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "max(\r\nmax_over_time(nvidia_smi_clocks_event_reasons_hw_thermal_slowdown{uuid=\"$gpu\"}[$__interval])\r\nor\r\nmax_over_time(nvidia_smi_clocks_throttle_reasons_hw_thermal_slowdown{uuid=\"$gpu\"}[$__interval])\r\n)",
+          "expr": "max(\r\nmax_over_time(nvidia_smi_clocks_event_reasons_hw_thermal_slowdown{uuid=\"$uuid\"}[$__interval])\r\nor\r\nmax_over_time(nvidia_smi_clocks_throttle_reasons_hw_thermal_slowdown{uuid=\"$uuid\"}[$__interval])\r\n)",
           "hide": false,
           "legendFormat": "HW Thermal Slowdown",
           "range": true,
@@ -360,11 +399,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "max(\r\nmax_over_time(nvidia_smi_clocks_event_reasons_sw_power_cap{uuid=\"$gpu\"}[$__interval])\r\nor\r\nmax_over_time(nvidia_smi_clocks_throttle_reasons_sw_power_cap{uuid=\"$gpu\"}[$__interval])\r\n)",
+          "expr": "max(\r\nmax_over_time(nvidia_smi_clocks_event_reasons_sw_power_cap{uuid=\"$uuid\"}[$__interval])\r\nor\r\nmax_over_time(nvidia_smi_clocks_throttle_reasons_sw_power_cap{uuid=\"$uuid\"}[$__interval])\r\n)",
           "hide": false,
           "legendFormat": "SW Power Cap",
           "range": true,
@@ -373,11 +412,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "max(\r\nmax_over_time(nvidia_smi_clocks_event_reasons_applications_clocks_setting{uuid=\"$gpu\"}[$__interval])\r\nor\r\nmax_over_time(nvidia_smi_clocks_throttle_reasons_applications_clocks_setting{uuid=\"$gpu\"}[$__interval])\r\n)",
+          "expr": "max(\r\nmax_over_time(nvidia_smi_clocks_event_reasons_applications_clocks_setting{uuid=\"$uuid\"}[$__interval])\r\nor\r\nmax_over_time(nvidia_smi_clocks_throttle_reasons_applications_clocks_setting{uuid=\"$uuid\"}[$__interval])\r\n)",
           "hide": false,
           "legendFormat": "App Clocks Setting",
           "range": true,
@@ -386,11 +425,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "max(\r\nmax_over_time(nvidia_smi_clocks_event_reasons_hw_power_brake_slowdown{uuid=\"$gpu\"}[$__interval])\r\nor\r\nmax_over_time(nvidia_smi_clocks_throttle_reasons_hw_power_brake_slowdown{uuid=\"$gpu\"}[$__interval])\r\n)",
+          "expr": "max(\r\nmax_over_time(nvidia_smi_clocks_event_reasons_hw_power_brake_slowdown{uuid=\"$uuid\"}[$__interval])\r\nor\r\nmax_over_time(nvidia_smi_clocks_throttle_reasons_hw_power_brake_slowdown{uuid=\"$uuid\"}[$__interval])\r\n)",
           "hide": false,
           "legendFormat": "HW Power Brake",
           "range": true,
@@ -399,11 +438,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "max(\r\nmax_over_time(nvidia_smi_clocks_event_reasons_sw_thermal_slowdown{uuid=\"$gpu\"}[$__interval])\r\nor\r\nmax_over_time(nvidia_smi_clocks_throttle_reasons_sw_thermal_slowdown{uuid=\"$gpu\"}[$__interval])\r\n)",
+          "expr": "max(\r\nmax_over_time(nvidia_smi_clocks_event_reasons_sw_thermal_slowdown{uuid=\"$uuid\"}[$__interval])\r\nor\r\nmax_over_time(nvidia_smi_clocks_throttle_reasons_sw_thermal_slowdown{uuid=\"$uuid\"}[$__interval])\r\n)",
           "hide": false,
           "legendFormat": "SW Thermal Slowdown",
           "range": true,
@@ -412,11 +451,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "max(\r\nmax_over_time(nvidia_smi_clocks_event_reasons_sync_boost{uuid=\"$gpu\"}[$__interval])\r\nor\r\nmax_over_time(nvidia_smi_clocks_throttle_reasons_sync_boost{uuid=\"$gpu\"}[$__interval])\r\n)",
+          "expr": "max(\r\nmax_over_time(nvidia_smi_clocks_event_reasons_sync_boost{uuid=\"$uuid\"}[$__interval])\r\nor\r\nmax_over_time(nvidia_smi_clocks_throttle_reasons_sync_boost{uuid=\"$uuid\"}[$__interval])\r\n)",
           "hide": false,
           "legendFormat": "Sync Boost",
           "range": true,
@@ -429,7 +468,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${prometheus_datasource}"
       },
       "description": "Total memory allocated by active contexts.",
       "fieldConfig": {
@@ -519,18 +558,20 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 3
+        "y": 4
       },
       "id": 17,
       "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -542,11 +583,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "max(avg_over_time(nvidia_smi_memory_reserved_bytes{uuid=\"$gpu\"}[$__interval]))",
+          "expr": "max(avg_over_time(nvidia_smi_memory_reserved_bytes{uuid=\"$uuid\"}[$__interval]))",
           "hide": false,
           "legendFormat": "reserved",
           "range": true,
@@ -555,11 +596,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "max(avg_over_time(nvidia_smi_memory_used_bytes{uuid=\"$gpu\"}[$__interval]))",
+          "expr": "max(avg_over_time(nvidia_smi_memory_used_bytes{uuid=\"$uuid\"}[$__interval]))",
           "legendFormat": "used",
           "range": true,
           "refId": "used"
@@ -567,11 +608,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "max(avg_over_time(nvidia_smi_memory_free_bytes{uuid=\"$gpu\"}[$__interval]))",
+          "expr": "max(avg_over_time(nvidia_smi_memory_free_bytes{uuid=\"$uuid\"}[$__interval]))",
           "hide": false,
           "legendFormat": "free",
           "range": true,
@@ -580,11 +621,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "max(max_over_time(nvidia_smi_memory_total_bytes{uuid=\"$gpu\"}[$__interval]))",
+          "expr": "max(max_over_time(nvidia_smi_memory_total_bytes{uuid=\"$uuid\"}[$__interval]))",
           "hide": false,
           "legendFormat": "total",
           "range": true,
@@ -597,7 +638,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${prometheus_datasource}"
       },
       "description": "States range from P0 (maximum performance) to P12 (minimum performance).",
       "fieldConfig": {
@@ -657,7 +698,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 10
+        "y": 11
       },
       "id": 36,
       "maxDataPoints": 150,
@@ -668,7 +709,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -680,11 +723,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "min(min_over_time(nvidia_smi_pstate{uuid=\"$gpu\"}[$__interval]))",
+          "expr": "min(min_over_time(nvidia_smi_pstate{uuid=\"$uuid\"}[$__interval]))",
           "legendFormat": "min p-state",
           "range": true,
           "refId": "A"
@@ -692,11 +735,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "avg(avg_over_time(nvidia_smi_pstate{uuid=\"$gpu\"}[$__interval]))",
+          "expr": "avg(avg_over_time(nvidia_smi_pstate{uuid=\"$uuid\"}[$__interval]))",
           "hide": false,
           "legendFormat": "avg p-state",
           "range": true,
@@ -705,11 +748,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "max(avg_over_time(nvidia_smi_pcie_link_gen_current{uuid=\"$gpu\"}[$__interval]))",
+          "expr": "max(avg_over_time(nvidia_smi_pcie_link_gen_current{uuid=\"$uuid\"}[$__interval]))",
           "hide": false,
           "legendFormat": "pcie gen",
           "range": true,
@@ -722,7 +765,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${prometheus_datasource}"
       },
       "description": "The last measured power draw for the entire board, in watts. Only available if power management is supported. This reading is accurate to within +/- 5 watts",
       "fieldConfig": {
@@ -805,7 +848,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 10
+        "y": 11
       },
       "id": 8,
       "maxDataPoints": 150,
@@ -816,7 +859,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -828,11 +873,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "max(avg_over_time(nvidia_smi_power_draw_watts{uuid=\"$gpu\"}[$__interval]))",
+          "expr": "avg(avg_over_time(nvidia_smi_power_draw_watts{uuid=\"$uuid\"}[$__interval]))",
           "legendFormat": "usage",
           "range": true,
           "refId": "A"
@@ -840,11 +885,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "max(nvidia_smi_power_limit_watts{uuid=\"$gpu\"})",
+          "expr": "max(max_over_time(nvidia_smi_power_limit_watts{uuid=\"$uuid\"}[$__interval]))",
           "hide": false,
           "legendFormat": "limit",
           "range": true,
@@ -857,7 +902,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${prometheus_datasource}"
       },
       "description": "Percent of time over the past sample period during which one or more kernels was executing on the GPU.\nThe sample period may be between 1 second and 1/6 second depending on the product.",
       "fieldConfig": {
@@ -918,7 +963,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 17
+        "y": 18
       },
       "id": 35,
       "maxDataPoints": 150,
@@ -929,7 +974,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -941,11 +988,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "avg_over_time(nvidia_smi_utilization_gpu_ratio{uuid=\"$gpu\"}[$__interval])",
+          "expr": "avg(avg_over_time(nvidia_smi_utilization_gpu_ratio{uuid=\"$uuid\"}[$__interval]))",
           "legendFormat": "gpu",
           "range": true,
           "refId": "A"
@@ -953,11 +1000,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "avg_over_time(nvidia_smi_utilization_decoder_ratio{uuid=\"$gpu\"}[$__interval])",
+          "expr": "avg(avg_over_time(nvidia_smi_utilization_decoder_ratio{uuid=\"$uuid\"}[$__interval]))",
           "hide": false,
           "legendFormat": "decoder",
           "range": true,
@@ -966,11 +1013,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "avg_over_time(nvidia_smi_utilization_encoder_ratio{uuid=\"$gpu\"}[$__interval])",
+          "expr": "avg(avg_over_time(nvidia_smi_utilization_encoder_ratio{uuid=\"$uuid\"}[$__interval]))",
           "hide": false,
           "legendFormat": "encoder",
           "range": true,
@@ -979,11 +1026,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "avg_over_time(nvidia_smi_utilization_jpeg_ratio{uuid=\"$gpu\"}[$__interval])",
+          "expr": "avg(avg_over_time(nvidia_smi_utilization_jpeg_ratio{uuid=\"$uuid\"}[$__interval]))",
           "hide": false,
           "legendFormat": "jpeg",
           "range": true,
@@ -992,11 +1039,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "avg_over_time(nvidia_smi_utilization_memory_ratio{uuid=\"$gpu\"}[$__interval])",
+          "expr": "avg(avg_over_time(nvidia_smi_utilization_memory_ratio{uuid=\"$uuid\"}[$__interval]))",
           "hide": false,
           "legendFormat": "memory",
           "range": true,
@@ -1009,7 +1056,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${prometheus_datasource}"
       },
       "description": "The fan speed value is the percent of the product's maximum noise tolerance fan speed that the device's fan is currently intended to run at. This value may exceed 100% in certain cases. Note: The reported speed is the intended fan speed. If the fan is physically blocked and unable to spin, this output will not match the actual fan speed. Many parts do not report fan speeds because they rely on cooling via fans in the surrounding enclosure.\n",
       "fieldConfig": {
@@ -1047,7 +1094,7 @@
               "mode": "none"
             },
             "thresholdsStyle": {
-              "mode": "dashed"
+              "mode": "off"
             }
           },
           "mappings": [],
@@ -1078,7 +1125,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 17
+        "y": 18
       },
       "id": 9,
       "maxDataPoints": 150,
@@ -1089,7 +1136,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -1101,11 +1150,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "max(avg_over_time(nvidia_smi_fan_speed_ratio{uuid=\"$gpu\"}[$__interval]))",
+          "expr": "avg(avg_over_time(nvidia_smi_fan_speed_ratio{uuid=\"$uuid\"}[$__interval]))",
           "legendFormat": "speed",
           "range": true,
           "refId": "A"
@@ -1117,7 +1166,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${prometheus_datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -1200,7 +1249,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 24
+        "y": 25
       },
       "id": 12,
       "maxDataPoints": 150,
@@ -1211,7 +1260,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -1223,11 +1274,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "avg_over_time(nvidia_smi_clocks_current_graphics_clock_hz{uuid=\"$gpu\"}[$__interval])",
+          "expr": "avg(avg_over_time(nvidia_smi_clocks_current_graphics_clock_hz{uuid=\"$uuid\"}[$__interval]))",
           "format": "time_series",
           "legendFormat": "graphics",
           "range": true,
@@ -1236,25 +1287,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "avg_over_time(nvidia_smi_clocks_current_memory_clock_hz{uuid=\"$gpu\"}[$__interval])",
-          "format": "time_series",
-          "hide": false,
-          "legendFormat": "memory",
-          "range": true,
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "exemplar": true,
-          "expr": "avg_over_time(nvidia_smi_clocks_current_sm_clock_hz{uuid=\"$gpu\"}[$__interval])",
+          "expr": "avg(avg_over_time(nvidia_smi_clocks_current_sm_clock_hz{uuid=\"$uuid\"}[$__interval]))",
           "format": "time_series",
           "hide": false,
           "legendFormat": "sm",
@@ -1264,11 +1301,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "avg_over_time(nvidia_smi_clocks_current_video_clock_hz{uuid=\"$gpu\"}[$__interval])",
+          "expr": "avg(avg_over_time(nvidia_smi_clocks_current_video_clock_hz{uuid=\"$uuid\"}[$__interval]))",
           "format": "time_series",
           "hide": false,
           "legendFormat": "video",
@@ -1278,11 +1315,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "nvidia_smi_clocks_max_graphics_clock_hz{uuid=\"$gpu\"}",
+          "expr": "avg(avg_over_time(nvidia_smi_clocks_max_graphics_clock_hz{uuid=\"$uuid\"}[$__interval]))",
           "format": "time_series",
           "hide": false,
           "legendFormat": "max graphics",
@@ -1292,39 +1329,25 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "nvidia_smi_clocks_max_sm_clock_hz{uuid=\"$gpu\"}",
+          "expr": "avg(avg_over_time(nvidia_smi_clocks_max_sm_clock_hz{uuid=\"$uuid\"}[$__interval]))",
           "format": "time_series",
           "hide": false,
           "legendFormat": "max sm",
           "range": true,
           "refId": "F"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "nvidia_smi_clocks_max_memory_clock_hz{uuid=\"$gpu\"}",
-          "format": "time_series",
-          "hide": false,
-          "legendFormat": "max memory",
-          "range": true,
-          "refId": "G"
         }
       ],
-      "title": "Clock",
+      "title": "gpu clock",
       "type": "timeseries"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "${prometheus_datasource}"
       },
       "description": "",
       "fieldConfig": {
@@ -1367,7 +1390,6 @@
           },
           "mappings": [],
           "max": 100,
-          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1389,7 +1411,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 24
+        "y": 25
       },
       "id": 15,
       "maxDataPoints": 150,
@@ -1400,7 +1422,9 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Last *",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -1412,17 +1436,170 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "max(max_over_time(nvidia_smi_temperature_gpu{uuid=\"$gpu\"}[$__interval]))",
-          "legendFormat": "temp",
+          "expr": "max(max_over_time(nvidia_smi_temperature_gpu{uuid=\"$uuid\"}[$__interval]))",
+          "legendFormat": "temp (max)",
           "range": true,
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "avg(avg_over_time(nvidia_smi_temperature_gpu{uuid=\"$uuid\"}[$__interval]))",
+          "hide": false,
+          "legendFormat": "temp (avg)",
+          "range": true,
+          "refId": "B"
         }
       ],
       "title": "Temperature",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "hertz"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/max/"
+            },
+            "properties": [
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "id": 38,
+      "maxDataPoints": 150,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "avg(avg_over_time(nvidia_smi_clocks_current_memory_clock_hz{uuid=\"$uuid\"}[$__interval]))",
+          "format": "time_series",
+          "hide": false,
+          "legendFormat": "memory",
+          "range": true,
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "avg(avg_over_time(nvidia_smi_clocks_max_memory_clock_hz{uuid=\"$uuid\"}[$__interval]))",
+          "format": "time_series",
+          "hide": false,
+          "legendFormat": "max memory",
+          "range": true,
+          "refId": "G"
+        }
+      ],
+      "title": "Clock",
       "type": "timeseries"
     }
   ],
@@ -1438,57 +1615,52 @@
   "templating": {
     "list": [
       {
-        "datasource": {
-          "type": "prometheus",
-          "uid": "prometheus"
-        },
-        "definition": "label_values(nvidia_smi_index, job)",
-        "includeAll": false,
-        "label": "Job",
-        "name": "job",
+        "allowCustomValue": false,
+        "label": "Datasource",
+        "name": "prometheus_datasource",
         "options": [],
-        "query": {
-          "query": "label_values(nvidia_smi_index,job)",
-          "refId": "Prometheus-job-Variable-Query"
-        },
+        "query": "prometheus",
         "refresh": 1,
         "regex": "",
+        "type": "datasource"
+      },
+      {
+        "allowCustomValue": false,
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prometheus_datasource}"
+        },
+        "definition": "query_result(group by(instance) (last_over_time(nvidia_smi_compute_cap{}[$__range])))",
+        "includeAll": true,
+        "name": "instance",
+        "options": [],
+        "query": {
+          "qryType": 3,
+          "query": "query_result(group by(instance) (last_over_time(nvidia_smi_compute_cap{}[$__range])))",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "/instance=\"(?<text>[^\"]+)|instance=\"(?<value>[^\"]+)/g",
+        "sort": 1,
         "type": "query"
       },
       {
+        "allowCustomValue": false,
         "datasource": {
           "type": "prometheus",
-          "uid": "prometheus"
+          "uid": "${prometheus_datasource}"
         },
-        "definition": "label_values(nvidia_smi_index{job=\"$job\"},instance)",
+        "definition": "query_result(group by(show_name, uuid) (label_join(last_over_time(nvidia_smi_gpu_info{instance=~\"$instance\"}[$__range]), \"show_name\", \": \", \"uuid\", \"name\")))",
         "includeAll": false,
-        "label": "Host",
-        "name": "node",
+        "name": "uuid",
         "options": [],
         "query": {
-          "query": "label_values(nvidia_smi_index{job=\"$job\"},instance)",
-          "refId": "Prometheus-node-Variable-Query"
+          "qryType": 3,
+          "query": "query_result(group by(show_name, uuid) (label_join(last_over_time(nvidia_smi_gpu_info{instance=~\"$instance\"}[$__range]), \"show_name\", \": \", \"uuid\", \"name\")))",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
-        "refresh": 1,
-        "regex": "",
-        "type": "query"
-      },
-      {
-        "datasource": {
-          "type": "prometheus",
-          "uid": "prometheus"
-        },
-        "definition": "label_values(nvidia_smi_index{instance=\"$node\"},uuid)",
-        "includeAll": false,
-        "label": "GPU",
-        "name": "gpu",
-        "options": [],
-        "query": {
-          "query": "label_values(nvidia_smi_index{instance=\"$node\"},uuid)",
-          "refId": "StandardVariableQuery"
-        },
-        "refresh": 1,
-        "regex": "",
+        "refresh": 2,
+        "regex": "/show_name=\"(?<text>[^\"]+)|uuid=\"(?<value>[^\"]+)/g",
         "sort": 1,
         "type": "query"
       }
@@ -1500,7 +1672,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Nvidia GPU",
+  "title": "Nvidia GPU details",
   "uid": "vlvPlrgnk",
-  "version": 0
+  "version": 5
 }

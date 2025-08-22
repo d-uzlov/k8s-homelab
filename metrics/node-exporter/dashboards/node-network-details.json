@@ -61,98 +61,54 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
+            "mode": "fixed"
           },
           "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
             },
-            "inspect": false
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
           },
-          "mappings": [],
+          "links": [],
+          "mappings": [
+            {
+              "options": {
+                "2": {
+                  "color": "green",
+                  "index": 0,
+                  "text": "global"
+                },
+                "3": {
+                  "color": "blue",
+                  "index": 1,
+                  "text": "link local"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "#878787",
+                "color": "green",
                 "value": 0
               }
             ]
           }
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": "/.*/"
-            },
-            "properties": [
-              {
-                "id": "filterable"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "address"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 239
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "scope"
-            },
-            "properties": [
-              {
-                "id": "custom.cellOptions",
-                "value": {
-                  "type": "color-background"
-                }
-              },
-              {
-                "id": "mappings",
-                "value": [
-                  {
-                    "options": {
-                      "global": {
-                        "color": "dark-green",
-                        "index": 1
-                      },
-                      "link-local": {
-                        "color": "dark-blue",
-                        "index": 0
-                      }
-                    },
-                    "type": "value"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "netmask"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 94
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 20,
@@ -160,24 +116,24 @@
         "x": 0,
         "y": 1
       },
-      "id": 325,
+      "id": 332,
+      "maxDataPoints": 250,
       "options": {
-        "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
         },
-        "showHeader": true,
-        "sortBy": [
-          {
-            "desc": false,
-            "displayName": "device"
-          }
-        ]
+        "mergeValues": true,
+        "perPage": 30,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
       },
       "targets": [
         {
@@ -186,45 +142,18 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "exemplar": false,
-          "expr": "group by(device, address, netmask, scope) (node_network_address_info{instance=\"$instance\", device=~\"$device\", scope=~\"$address_scope\"})",
-          "format": "table",
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "A"
+          "expr": "max by(device, address, netmask) (\r\n  last_over_time(node_network_address_info{instance=\"$instance\", device=~\"$device\", scope=~\"$address_scope\", scope=\"global\"}[$__interval]) * 2\r\n  or\r\n  last_over_time(node_network_address_info{instance=\"$instance\", device=~\"$device\", scope=~\"$address_scope\", scope=\"link-local\"}[$__interval]) * 3\r\n  or\r\n  last_over_time(node_network_address_info{instance=\"$instance\", device=~\"$device\", scope=~\"$address_scope\", scope!=\"global\", scope!=\"link-local\"}[$__interval]) * 4\r\n)",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 1,
+          "legendFormat": "{{device}}: {{address}}/{{netmask}}",
+          "range": true,
+          "refId": "idle",
+          "step": 240
         }
       ],
-      "title": "IP addresses",
-      "transformations": [
-        {
-          "id": "seriesToRows",
-          "options": {}
-        },
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time": true,
-              "Value": true
-            },
-            "includeByName": {},
-            "indexByName": {
-              "Time": 0,
-              "Value": 10,
-              "__name__": 1,
-              "address": 3,
-              "device": 2,
-              "instance": 6,
-              "job": 7,
-              "netmask": 8,
-              "scope": 9
-            },
-            "renameByName": {}
-          }
-        }
-      ],
-      "type": "table"
+      "title": "IP addresses with scope",
+      "type": "state-timeline"
     },
     {
       "datasource": {
@@ -311,11 +240,11 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "node_network_carrier{instance=\"$instance\", device=~\"$device\"}",
+          "expr": "min by(device) (min_over_time(node_network_carrier{instance=\"$instance\", device=~\"$device\"}[$__interval]))",
           "format": "time_series",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{device}}",
+          "legendFormat": "__auto",
           "refId": "B"
         }
       ],
@@ -407,16 +336,179 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "node_network_up{instance=\"$instance\", device=~\"$device\"}",
+          "expr": "min by(device) (min_over_time(node_network_up{instance=\"$instance\", device=~\"$device\"}[$__interval]))",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "{{device}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "A",
           "step": 240
         }
       ],
       "title": "Status UP",
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "links": [],
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 21
+      },
+      "id": 335,
+      "maxDataPoints": 250,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "perPage": 15,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by(device, address) (\r\n  last_over_time(node_network_info{instance=\"$instance\", device=~\"$device\"}[$__interval])\r\n)",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 1,
+          "legendFormat": "{{device}}: {{address}}",
+          "range": true,
+          "refId": "idle",
+          "step": 240
+        }
+      ],
+      "title": "device MAC address",
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-BlPu"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 21
+      },
+      "id": 331,
+      "maxDataPoints": 200,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "perPage": 15,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by(device) (max_over_time(node_network_mtu_bytes{instance=\"$instance\", device=~\"$device\", device!=\"lo\"}[$__interval]))",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A",
+          "step": 240
+        }
+      ],
+      "title": "mtu",
       "type": "state-timeline"
     },
     {
@@ -482,7 +574,7 @@
         "h": 10,
         "w": 12,
         "x": 0,
-        "y": 21
+        "y": 31
       },
       "id": 230,
       "maxDataPoints": 200,
@@ -510,10 +602,10 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "node_arp_entries{instance=\"$instance\", device=~\"$device\"}",
+          "expr": "max by(device) (avg_over_time(node_arp_entries{instance=\"$instance\", device=~\"$device\"}[$__interval]))",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "{{ device }}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "A",
           "step": 240
@@ -527,22 +619,44 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "continuous-GrYlRd"
+            "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
             "axisPlacement": "auto",
-            "fillOpacity": 70,
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
             "insertNulls": false,
-            "lineWidth": 0,
-            "spanNulls": false
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "links": [],
           "mappings": [],
@@ -554,7 +668,8 @@
                 "value": 0
               }
             ]
-          }
+          },
+          "unit": "sishort"
         },
         "overrides": []
       },
@@ -562,25 +677,25 @@
         "h": 10,
         "w": 12,
         "x": 12,
-        "y": 21
+        "y": 31
       },
-      "id": 331,
+      "id": 336,
       "maxDataPoints": 200,
       "options": {
-        "alignValue": "left",
         "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
-        "mergeValues": true,
-        "perPage": 15,
-        "rowHeight": 0.9,
-        "showValue": "auto",
         "tooltip": {
           "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
+          "mode": "multi",
+          "sort": "desc"
         }
       },
       "targets": [
@@ -590,17 +705,17 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max_over_time(node_network_mtu_bytes{instance=\"$instance\", device=~\"$device\", device!=\"lo\"}[$__interval])",
+          "expr": "sum by(device) (rate(node_network_carrier_changes_total{instance=\"$instance\", device=~\"$device\"}[$__rate_interval])) * $__interval_ms / 1000",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "{{device}}",
+          "legendFormat": "__auto",
           "range": true,
-          "refId": "A",
+          "refId": "B",
           "step": 240
         }
       ],
-      "title": "mtu",
-      "type": "state-timeline"
+      "title": "carrier changes (sum over time)",
+      "type": "timeseries"
     },
     {
       "collapsed": false,
@@ -608,11 +723,11 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 31
+        "y": 41
       },
       "id": 330,
       "panels": [],
-      "title": "rx/tx",
+      "title": "rx / tx",
       "type": "row"
     },
     {
@@ -678,14 +793,13 @@
         "h": 10,
         "w": 12,
         "x": 0,
-        "y": 32
+        "y": 42
       },
       "id": 74,
       "maxDataPoints": 200,
       "options": {
         "legend": {
           "calcs": [
-            "lastNotNull",
             "mean"
           ],
           "displayMode": "table",
@@ -707,16 +821,16 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "rate(node_network_receive_bytes_total{instance=\"$instance\", device=~\"$device\"}[$__rate_interval])",
+          "expr": "sum by(device) (rate(node_network_receive_bytes_total{instance=\"$instance\", device=~\"$device\"}[$__rate_interval]))",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "{{device}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "A",
           "step": 240
         }
       ],
-      "title": "Receive Speed",
+      "title": "receive: rate",
       "type": "timeseries"
     },
     {
@@ -724,7 +838,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "Basic network info per interface",
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -782,14 +896,13 @@
         "h": 10,
         "w": 12,
         "x": 12,
-        "y": 32
+        "y": 42
       },
       "id": 324,
       "maxDataPoints": 200,
       "options": {
         "legend": {
           "calcs": [
-            "lastNotNull",
             "mean"
           ],
           "displayMode": "table",
@@ -811,16 +924,222 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "rate(node_network_transmit_bytes_total{instance=\"$instance\", device=~\"$device\"}[$__rate_interval])",
+          "expr": "sum by(device) (rate(node_network_transmit_bytes_total{instance=\"$instance\", device=~\"$device\"}[$__rate_interval]))",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "{{device}} ",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "B",
           "step": 240
         }
       ],
-      "title": "Transmit Speed",
+      "title": "transmit: rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 52
+      },
+      "id": 333,
+      "maxDataPoints": 200,
+      "options": {
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(device) (rate(node_network_receive_bytes_total{instance=\"$instance\", device=~\"$device\"}[$__rate_interval])) * $__interval_ms / 1000",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A",
+          "step": 240
+        }
+      ],
+      "title": "receive: total",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 52
+      },
+      "id": 334,
+      "maxDataPoints": 200,
+      "options": {
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(device) (rate(node_network_transmit_bytes_total{instance=\"$instance\", device=~\"$device\"}[$__rate_interval])) * $__interval_ms / 1000",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "B",
+          "step": 240
+        }
+      ],
+      "title": "transmit: total",
       "type": "timeseries"
     },
     {
@@ -877,7 +1196,7 @@
               }
             ]
           },
-          "unit": "pps"
+          "unit": "sishort"
         },
         "overrides": [
           {
@@ -898,26 +1217,25 @@
         "h": 10,
         "w": 12,
         "x": 0,
-        "y": 42
+        "y": 62
       },
       "id": 143,
       "maxDataPoints": 200,
       "options": {
         "legend": {
           "calcs": [
-            "mean"
+            "sum"
           ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
           "sortBy": "Mean",
-          "sortDesc": true,
-          "width": 300
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
           "mode": "multi",
-          "sort": "none"
+          "sort": "desc"
         }
       },
       "targets": [
@@ -927,17 +1245,17 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "rate(node_network_receive_drop_total{instance=\"$instance\", device=~\"$device\"}[$__rate_interval])",
+          "expr": "sum by(device) (rate(node_network_receive_drop_total{instance=\"$instance\", device=~\"$device\"}[$__rate_interval])) * $__interval_ms / 1000",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
-          "legendFormat": "{{device}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "A",
           "step": 240
         }
       ],
-      "title": "Receive Traffic Drop",
+      "title": "receive: dropped packets (sum over time)",
       "type": "timeseries"
     },
     {
@@ -994,7 +1312,7 @@
               }
             ]
           },
-          "unit": "pps"
+          "unit": "sishort"
         },
         "overrides": [
           {
@@ -1015,26 +1333,25 @@
         "h": 10,
         "w": 12,
         "x": 12,
-        "y": 42
+        "y": 62
       },
       "id": 326,
       "maxDataPoints": 200,
       "options": {
         "legend": {
           "calcs": [
-            "mean"
+            "sum"
           ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
           "sortBy": "Mean",
-          "sortDesc": true,
-          "width": 300
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
           "mode": "multi",
-          "sort": "none"
+          "sort": "desc"
         }
       },
       "targets": [
@@ -1044,17 +1361,17 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "rate(node_network_transmit_drop_total{instance=\"$instance\", device=~\"$device\"}[$__rate_interval])",
+          "expr": "sum by(device) (rate(node_network_transmit_drop_total{instance=\"$instance\", device=~\"$device\"}[$__rate_interval])) * $__interval_ms / 1000",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
-          "legendFormat": "{{device}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "B",
           "step": 240
         }
       ],
-      "title": "Transmit Traffic Drop",
+      "title": "transmit: dropped packets (sum over time)",
       "type": "timeseries"
     },
     {
@@ -1111,7 +1428,7 @@
               }
             ]
           },
-          "unit": "pps"
+          "unit": "sishort"
         },
         "overrides": [
           {
@@ -1132,26 +1449,25 @@
         "h": 10,
         "w": 12,
         "x": 0,
-        "y": 52
+        "y": 72
       },
       "id": 142,
       "maxDataPoints": 200,
       "options": {
         "legend": {
           "calcs": [
-            "mean"
+            "sum"
           ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
           "sortBy": "Mean",
-          "sortDesc": true,
-          "width": 300
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
           "mode": "multi",
-          "sort": "none"
+          "sort": "desc"
         }
       },
       "targets": [
@@ -1161,16 +1477,16 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "rate(node_network_receive_errs_total{instance=\"$instance\", device=~\"$device\"}[$__rate_interval])",
+          "expr": "sum by(device) (rate(node_network_receive_errs_total{instance=\"$instance\", device=~\"$device\"}[$__rate_interval])) * $__interval_ms / 1000",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "{{device}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "A",
           "step": 240
         }
       ],
-      "title": "Receive Traffic Errors",
+      "title": "receive: errors (sum over time)",
       "type": "timeseries"
     },
     {
@@ -1227,7 +1543,7 @@
               }
             ]
           },
-          "unit": "pps"
+          "unit": "sishort"
         },
         "overrides": [
           {
@@ -1248,26 +1564,25 @@
         "h": 10,
         "w": 12,
         "x": 12,
-        "y": 52
+        "y": 72
       },
       "id": 327,
       "maxDataPoints": 200,
       "options": {
         "legend": {
           "calcs": [
-            "mean"
+            "sum"
           ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
           "sortBy": "Mean",
-          "sortDesc": true,
-          "width": 300
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
           "mode": "multi",
-          "sort": "none"
+          "sort": "desc"
         }
       },
       "targets": [
@@ -1277,16 +1592,16 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "rate(node_network_transmit_errs_total{instance=\"$instance\", device=~\"$device\"}[$__rate_interval])",
+          "expr": "sum by(device) (rate(node_network_transmit_errs_total{instance=\"$instance\", device=~\"$device\"}[$__rate_interval])) * $__interval_ms / 1000",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "{{device}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "B",
           "step": 240
         }
       ],
-      "title": "Transmit Traffic Errors",
+      "title": "transmit: errors (sum over time)",
       "type": "timeseries"
     }
   ],
