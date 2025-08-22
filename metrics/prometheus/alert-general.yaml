@@ -86,3 +86,26 @@ spec:
         count by(instance) (group by(instance, location) (up)) > 1
       labels:
         severity: info
+    - alert: ScrapeCloseToTimeout
+      annotations:
+        description: >-
+          job {{ $labels.job }}, instance {{ $labels.instance }}:
+          {{ $value | humanizePercentage }}
+        summary: Scrape duration is too close to timeout
+      expr: |
+        # when scrape times out (duration/timeout == 1), we should instead receive "target down" alert
+        (
+          # trigger on peak above 90%
+          (scrape_duration_seconds / scrape_timeout_seconds) > 0.9 < 1
+        ) or (
+          # trigger on average above 80%
+          avg_over_time(scrape_duration_seconds[5m]) / scrape_timeout_seconds > 0.8 < 1
+        ) or (
+          # hysteresis: don't disable alert unless average falls below 0.6
+          avg_over_time(scrape_duration_seconds[5m]) / scrape_timeout_seconds > 0.6 < 1
+          and ignoring(alertname, alertstate, severity)
+          ALERTS{alertname="ScrapeCloseToTimeout", alertstate="firing"}
+        )
+      for: 1m
+      labels:
+        severity: info

@@ -12,18 +12,54 @@ spec:
   groups:
   - name: alert-cadvisor-cpu-throttling
     rules:
-    - alert: ContainerCPUThrottlingHigh
+    - alert: K8sCpuThrottling
       annotations:
         description: >-
           {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }}:
           {{ $value | humanizePercentage }}
-        summary: Container throttling rate is above 30%
+        summary: K8s container is throttling on > 30% of scheduling periods
       expr: |-
         (
-          increase(container_cpu_cfs_throttled_periods_total[5m])
+          increase(container_cpu_cfs_throttled_periods_total{namespace!=""}[5m])
           /
-          increase(container_cpu_cfs_periods_total[5m])
+          increase(container_cpu_cfs_periods_total{namespace!=""}[5m])
         ) > 0.3
+        # cut removed containers instantly
+        and container_cpu_cfs_throttled_periods_total{namespace!=""}
+      for: 15m
+      labels:
+        severity: info
+    - alert: DockerCpuThrottling
+      annotations:
+        description: >-
+          instance {{ $labels.instance }}: {{ $labels.name }}:
+          {{ $value | humanizePercentage }}
+        summary: Docker container is throttling on > 30% of scheduling periods
+      expr: |-
+        (
+          increase(container_cpu_cfs_throttled_periods_total{namespace="", name!=""}[5m])
+          /
+          increase(container_cpu_cfs_periods_total{namespace="", name!=""}[5m])
+        ) > 0.3
+        # cut removed containers instantly
+        and container_cpu_cfs_throttled_periods_total{namespace="", name!=""}
+      for: 15m
+      labels:
+        severity: info
+    - alert: CgroupCpuThrottling
+      annotations:
+        description: >-
+          instance {{ $labels.instance }}: {{ $labels.id }}:
+          {{ $value | humanizePercentage }}
+        summary: Cgroup is throttling on > 30% of scheduling periods
+      expr: |-
+        (
+          increase(container_cpu_cfs_throttled_periods_total{namespace="", name=""}[5m])
+          /
+          increase(container_cpu_cfs_periods_total{namespace="", name=""}[5m])
+        ) > 0.3
+        # cut removed containers instantly
+        and container_cpu_cfs_throttled_periods_total{namespace="", name=""}
       for: 15m
       labels:
         severity: info
