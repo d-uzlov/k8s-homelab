@@ -731,80 +731,6 @@
       },
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [
-            {
-              "options": {
-                "match": "null",
-                "result": {
-                  "text": "N/A"
-                }
-              },
-              "type": "special"
-            }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "none"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 3,
-        "x": 3,
-        "y": 6
-      },
-      "id": 42,
-      "maxDataPoints": 100,
-      "options": {
-        "colorMode": "none",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "text": {},
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "editorMode": "code",
-          "expr": "max(last_over_time(qbittorrent_global_dht_nodes{instance=\"$instance\"}[$__range]))",
-          "instant": true,
-          "legendFormat": "DHT nodes",
-          "refId": "A"
-        }
-      ],
-      "title": "DHT nodes",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "fieldConfig": {
-        "defaults": {
           "mappings": [
             {
               "id": 0,
@@ -1039,66 +965,6 @@
         "overrides": [
           {
             "matcher": {
-              "id": "byName",
-              "options": "Value #rate_limit"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "binBps"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Value #alt_rate_limit"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "binBps"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "max active"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 106
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "rate limit"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 107
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "alt rate limit"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 115
-              }
-            ]
-          },
-          {
-            "matcher": {
               "id": "byRegexp",
               "options": "/.*/"
             },
@@ -1144,44 +1010,10 @@
           "legendFormat": "__auto",
           "range": false,
           "refId": "max_active"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "max by(type) (label_replace(qbittorrent_global_upload_rate_limit_bytes{instance=\"$instance\"}, \"type\", \"upload\", \"invalid\", \"\"))\r\nor\r\nmax by(type) (label_replace(qbittorrent_global_download_rate_limit_bytes{instance=\"$instance\"}, \"type\", \"download\", \"invalid\", \"\"))",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "rate_limit"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "max by(type) (label_replace(qbittorrent_global_alt_upload_rate_limit_bytes{instance=\"$instance\"}, \"type\", \"upload\", \"invalid\", \"\"))\r\nor\r\nmax by(type) (label_replace(qbittorrent_global_alt_download_rate_limit_bytes{instance=\"$instance\"}, \"type\", \"download\", \"invalid\", \"\"))",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "alt_rate_limit"
         }
       ],
-      "title": "",
+      "title": "max active torrents",
       "transformations": [
-        {
-          "id": "merge",
-          "options": {}
-        },
         {
           "id": "organize",
           "options": {
@@ -1197,12 +1029,13 @@
               "type": 1
             },
             "renameByName": {
+              "Value": "",
               "Value #alt_rate_limit": "alt rate limit",
               "Value #max_active": "max active",
               "Value #max_downloads": "max downloads",
               "Value #max_uploads": "max uploads",
               "Value #rate_limit": "rate limit",
-              "type": "limit type"
+              "type": "type"
             }
           }
         }
@@ -1403,6 +1236,162 @@
       "type": "stat"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "green",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "axisWidth": 0,
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 3,
+            "spanNulls": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "pattern": ".*rc.*",
+                "result": {
+                  "color": "yellow",
+                  "index": 0
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": ".*alpha.*",
+                "result": {
+                  "color": "red",
+                  "index": 1
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": ".*beta.*",
+                "result": {
+                  "color": "orange",
+                  "index": 2
+                }
+              },
+              "type": "regex"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byValue",
+              "options": {
+                "op": "gte",
+                "reducer": "allIsZero",
+                "value": 0
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 11,
+        "x": 0,
+        "y": 16
+      },
+      "id": 64,
+      "maxDataPoints": 200,
+      "options": {
+        "alignValue": "center",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "max by(instance, version) (last_over_time(qbittorrent_app_version{instance=\"$instance\"}[$__interval]))\r\nor on()\r\n(\r\n  vector(0) unless on() last_over_time(qbittorrent_app_version{instance=\"$instance\"}[$__interval])\r\n)",
+          "format": "table",
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "version history",
+      "transformations": [
+        {
+          "id": "groupingToMatrix",
+          "options": {
+            "columnField": "instance",
+            "emptyValue": "null",
+            "rowField": "Time",
+            "valueField": "version"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Value": true
+            },
+            "includeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "Value": "",
+              "version": ""
+            }
+          }
+        }
+      ],
+      "type": "state-timeline"
+    },
+    {
       "fieldConfig": {
         "defaults": {},
         "overrides": []
@@ -1482,7 +1471,37 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "total"
+            },
+            "properties": [
+              {
+                "id": "custom.stacking",
+                "value": {
+                  "group": "A",
+                  "mode": "none"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 7,
@@ -1495,11 +1514,13 @@
       "options": {
         "legend": {
           "calcs": [
-            "last"
+            "mean"
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -1518,10 +1539,23 @@
           "expr": "last_over_time(qbittorrent_torrent_states{instance=\"$instance\", name=~\"$active_states\"}[$__interval])",
           "legendFormat": "{{name}}",
           "range": true,
-          "refId": "A"
+          "refId": "states"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "max(last_over_time(qbittorrent_global_torrents{instance=\"$instance\"}[$__range]))",
+          "hide": false,
+          "legendFormat": "total",
+          "range": true,
+          "refId": "total"
         }
       ],
-      "title": "States",
+      "title": "torrents by state",
       "type": "timeseries"
     },
     {
@@ -2136,5 +2170,5 @@
   "timezone": "browser",
   "title": "qBittorrent",
   "uid": "OEyH9tQZk",
-  "version": 0
+  "version": 11
 }

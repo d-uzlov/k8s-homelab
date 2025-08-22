@@ -601,7 +601,9 @@
             "lineWidth": 1,
             "pointSize": 5,
             "scaleDistribution": {
-              "type": "linear"
+              "linearThreshold": 10,
+              "log": 2,
+              "type": "log"
             },
             "showPoints": "never",
             "spanNulls": false,
@@ -661,7 +663,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "time() - max by(name, id) (last_over_time(container_start_time_seconds{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__interval]))\r\nor\r\ntime() - max by(name) (last_over_time(container_start_time_seconds{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__interval]))",
+          "expr": "time() - max by($split_ids) (last_over_time(container_start_time_seconds{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__interval]))",
           "hide": false,
           "instant": false,
           "legendFormat": "{{name}}, name={{id}}",
@@ -669,7 +671,7 @@
           "refId": "uptime"
         }
       ],
-      "title": "uptime",
+      "title": "uptime (logarithmic)",
       "transformations": [
         {
           "id": "renameByRegex",
@@ -762,35 +764,6 @@
           {
             "matcher": {
               "id": "byFrameRefID",
-              "options": "request"
-            },
-            "properties": [
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "fill": "dash"
-                }
-              },
-              {
-                "id": "custom.lineWidth",
-                "value": 2
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "orange",
-                  "mode": "fixed"
-                }
-              },
-              {
-                "id": "custom.fillOpacity",
-                "value": 0
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byFrameRefID",
               "options": "usage_total"
             },
             "properties": [
@@ -809,35 +782,6 @@
                 "value": 0
               }
             ]
-          },
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": "/limit/"
-            },
-            "properties": [
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "dash": [
-                    10,
-                    10
-                  ],
-                  "fill": "dash"
-                }
-              },
-              {
-                "id": "custom.fillOpacity",
-                "value": 0
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
           }
         ]
       },
@@ -848,7 +792,7 @@
         "y": 20
       },
       "id": 54,
-      "maxDataPoints": 300,
+      "maxDataPoints": 100,
       "options": {
         "legend": {
           "asTable": true,
@@ -874,7 +818,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(name, id) (rate(container_cpu_usage_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", cpu=\"total\", invalid!=$split_ids}[$__rate_interval]))\r\nor\r\nsum by(name) (rate(container_cpu_usage_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", cpu=\"total\", invalid=$split_ids}[$__rate_interval]))",
+          "expr": "sum by($split_ids) (rate(container_cpu_usage_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", cpu=\"total\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
           "legendFormat": "{{name}}, name={{id}}",
@@ -887,7 +831,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (rate(container_cpu_usage_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__rate_interval]))",
+          "expr": "sum(rate(container_cpu_usage_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
           "legendFormat": "total",
@@ -1006,7 +950,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(name, id) (\r\n  (rate(container_cpu_cfs_throttled_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__rate_interval]) )\r\n)\r\nor\r\nmax by(name) (\r\n  (rate(container_cpu_cfs_throttled_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__rate_interval]) )\r\n)",
+          "expr": "max by($split_ids) (\r\n  (rate(container_cpu_cfs_throttled_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__rate_interval]) )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{name}}, name={{id}}",
@@ -1094,35 +1038,6 @@
           {
             "matcher": {
               "id": "byFrameRefID",
-              "options": "request"
-            },
-            "properties": [
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "fill": "dash"
-                }
-              },
-              {
-                "id": "custom.lineWidth",
-                "value": 2
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "orange",
-                  "mode": "fixed"
-                }
-              },
-              {
-                "id": "custom.fillOpacity",
-                "value": 0
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byFrameRefID",
               "options": "usage_total"
             },
             "properties": [
@@ -1141,35 +1056,6 @@
                 "value": 0
               }
             ]
-          },
-          {
-            "matcher": {
-              "id": "byRegexp",
-              "options": "/limit/"
-            },
-            "properties": [
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "dash": [
-                    10,
-                    10
-                  ],
-                  "fill": "dash"
-                }
-              },
-              {
-                "id": "custom.fillOpacity",
-                "value": 0
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "red",
-                  "mode": "fixed"
-                }
-              }
-            ]
           }
         ]
       },
@@ -1180,7 +1066,7 @@
         "y": 26
       },
       "id": 72,
-      "maxDataPoints": 300,
+      "maxDataPoints": 100,
       "options": {
         "legend": {
           "asTable": true,
@@ -1206,7 +1092,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(name, id) (rate(container_cpu_usage_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", cpu=\"total\", invalid!=$split_ids}[$__rate_interval]) * $__interval_ms / 1000)\r\nor\r\nsum by(name) (rate(container_cpu_usage_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", cpu=\"total\", invalid=$split_ids}[$__rate_interval]) * $__interval_ms / 1000)",
+          "expr": "sum by($split_ids) (rate(container_cpu_usage_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", cpu=\"total\"}[$__rate_interval]) * $__interval_ms / 1000)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{name}}, name={{id}}",
@@ -1219,7 +1105,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (rate(container_cpu_usage_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__rate_interval]) * $__interval_ms / 1000)",
+          "expr": "sum(rate(container_cpu_usage_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__rate_interval]) * $__interval_ms / 1000)",
           "hide": false,
           "instant": false,
           "legendFormat": "total",
@@ -1338,7 +1224,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(name, id) (\r\n  (rate(container_cpu_cfs_throttled_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__rate_interval]) * $__interval_ms / 1000 )\r\n)\r\nor\r\nmax by(name) (\r\n  (rate(container_cpu_cfs_throttled_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__rate_interval]) * $__interval_ms / 1000 )\r\n)",
+          "expr": "max by($split_ids) (\r\n  (rate(container_cpu_cfs_throttled_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__rate_interval]) * $__interval_ms / 1000 )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{name}}, name={{id}}",
@@ -1457,7 +1343,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(name, id) (\r\n  (rate(container_cpu_system_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__rate_interval]))\r\n  /\r\n  sum without(cpu) (rate(container_cpu_usage_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", cpu=\"total\", invalid!=$split_ids}[$__rate_interval]) + 1e-12)\r\n)\r\nor\r\nmax by(name) (\r\n  (rate(container_cpu_system_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__rate_interval]))\r\n  /\r\n  sum without(cpu) (rate(container_cpu_usage_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", cpu=\"total\", invalid=$split_ids}[$__rate_interval]) + 1e-12)\r\n)",
+          "expr": "max by($split_ids) (\r\n  (rate(container_cpu_system_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__rate_interval]))\r\n  /\r\n  sum without(cpu) (rate(container_cpu_usage_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", cpu=\"total\"}[$__rate_interval]) + 1e-12)\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{name}}, name={{id}}",
@@ -1470,7 +1356,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(name, id) (\r\n  (rate(container_cpu_system_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__rate_interval]) )\r\n)\r\nor\r\nmax by(name) (\r\n  (rate(container_cpu_system_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__rate_interval]) )\r\n)",
+          "expr": "max by($split_ids) (\r\n  (rate(container_cpu_system_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__rate_interval]) )\r\n)",
           "hide": true,
           "instant": false,
           "legendFormat": "{{name}}, name={{id}}",
@@ -1599,7 +1485,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "# if container didn't run at some interval, you will have division by zero, so we do ` / increase + epsilon`\r\nmax by(name, id) (\r\n  (increase(container_cpu_cfs_throttled_periods_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__rate_interval]) )\r\n/\r\n  (increase(container_cpu_cfs_periods_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__rate_interval]) + 1e-5 )\r\n)\r\nor\r\nmax by(name) (\r\n  (increase(container_cpu_cfs_throttled_periods_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__rate_interval]) )\r\n/\r\n  (increase(container_cpu_cfs_periods_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__rate_interval]) + 1e-5 )\r\n)",
+          "expr": "# if container didn't run at some interval, you will have division by zero, so we do ` / increase + epsilon`\r\nmax by($split_ids) (\r\n  (increase(container_cpu_cfs_throttled_periods_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__rate_interval]) )\r\n/\r\n  (increase(container_cpu_cfs_periods_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__rate_interval]) + 1e-5 )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{name}}, name={{id}}",
@@ -1612,7 +1498,7 @@
         {
           "id": "renameByRegex",
           "options": {
-            "regex": "(.*), name=(.{8}).*",
+            "regex": "(.*), name=/.*/docker-(.{8})(.*)",
             "renamePattern": "$1, $2"
           }
         },
@@ -1724,7 +1610,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(name, id) (\r\n  container_spec_cpu_quota{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}\r\n  /\r\n  container_spec_cpu_period{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}\r\n)\r\nor\r\n# united\r\nsum by(name) (\r\n  container_spec_cpu_quota{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}\r\n  /\r\n  container_spec_cpu_period{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}\r\n)",
+          "expr": "sum by($split_ids) (\r\n  container_spec_cpu_quota{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}\r\n  /\r\n  container_spec_cpu_period{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{name}}, name={{id}}",
@@ -1847,7 +1733,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(name, id) (\r\n    sum without(cpu) (\r\n        rate(container_cpu_usage_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", cpu=\"total\", invalid!=$split_ids}[$__rate_interval])\r\n    )\r\n    /\r\n    (\r\n      container_spec_cpu_quota{instance=\"$instance\", name=~\"$name\", id=~\"$id\", cpu=\"total\", invalid!=$split_ids}\r\n      /\r\n      container_spec_cpu_period{instance=\"$instance\", name=~\"$name\", id=~\"$id\", cpu=\"total\", invalid!=$split_ids}\r\n    )\r\n)\r\nor\r\n# united\r\nsum by(name) (\r\n    sum without(cpu) (\r\n        rate(container_cpu_usage_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", cpu=\"total\", invalid=$split_ids}[$__rate_interval])\r\n    )\r\n    /\r\n    (\r\n      container_spec_cpu_quota{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}\r\n      /\r\n      container_spec_cpu_period{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}\r\n    )\r\n)",
+          "expr": "sum by($split_ids) (\r\n    sum without(cpu) (\r\n        rate(container_cpu_usage_seconds_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", cpu=\"total\"}[$__rate_interval])\r\n    )\r\n    /\r\n    (\r\n      container_spec_cpu_quota{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}\r\n      /\r\n      container_spec_cpu_period{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}\r\n    )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{name}}, name={{id}}",
@@ -2027,7 +1913,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(name, id) (\r\n  max_over_time(container_memory_rss{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__interval])\r\n  or\r\n  container_memory_rss{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}\r\n)\r\nor\r\nmax by(name) (\r\n  max_over_time(container_memory_rss{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__interval])\r\n  or\r\n  container_memory_rss{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}\r\n)",
+          "expr": "max by($split_ids) (\r\n  max_over_time(container_memory_rss{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__interval])\r\n  or\r\n  max_over_time(container_memory_rss{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__rate_interval])\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{name}}, name={{id}}",
@@ -2146,7 +2032,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(name, id) (\r\n  max_over_time(container_memory_working_set_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__interval])\r\n  or\r\n  container_memory_working_set_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}\r\n)\r\nor\r\nmax by(name) (\r\n  max_over_time(container_memory_working_set_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__interval])\r\n  or\r\n  container_memory_working_set_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}\r\n)",
+          "expr": "max by($split_ids) (\r\n  max_over_time(container_memory_working_set_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__interval])\r\n  or\r\n  max_over_time(container_memory_working_set_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__rate_interval])\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{name}}, name={{id}}",
@@ -2266,7 +2152,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(name, id) (\r\n    (\r\n        max_over_time(container_memory_rss{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__interval])\r\n        or\r\n        container_memory_rss{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}\r\n    )\r\n/\r\n    (max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__interval]) != 0)\r\n)\r\nor\r\nmax by(name) (\r\n    (\r\n        max_over_time(container_memory_rss{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__interval])\r\n        or\r\n        container_memory_rss{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}\r\n    )\r\n/\r\n    (max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__interval]) != 0)\r\n)",
+          "expr": "max by($split_ids) (\r\n    (\r\n        max_over_time(container_memory_rss{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__interval])\r\n        or\r\n        max_over_time(container_memory_rss{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__rate_interval])\r\n    )\r\n/\r\n    (max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__interval]) != 0)\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{name}}, name={{id}}",
@@ -2386,7 +2272,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(name, id) (\r\n    (\r\n        max_over_time(container_memory_working_set_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__interval])\r\n        or\r\n        container_memory_working_set_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}\r\n    )\r\n/\r\n    (max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__interval]) != 0)\r\n)\r\nor\r\nmax by(name) (\r\n    (\r\n        max_over_time(container_memory_working_set_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__interval])\r\n        or\r\n        container_memory_working_set_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}\r\n    )\r\n/\r\n    (max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__interval]) != 0)\r\n)",
+          "expr": "max by($split_ids) (\r\n    (\r\n        max_over_time(container_memory_working_set_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__interval])\r\n        or\r\n        max_over_time(container_memory_working_set_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__rate_interval])\r\n    )\r\n/\r\n    (max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__interval]) != 0)\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{name}}, name={{id}}",
@@ -2517,7 +2403,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (name, id)(rate(container_network_receive_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__rate_interval]))\r\nor\r\nsum by (name) (rate(container_network_receive_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__rate_interval]))",
+          "expr": "sum by($split_ids) (rate(container_network_receive_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__rate_interval]))",
           "instant": false,
           "legendFormat": "{{name}}, name={{id}}",
           "range": true,
@@ -2638,7 +2524,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (name, id) (rate(container_network_transmit_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__rate_interval]))\r\nor\r\nsum by (name) (rate(container_network_transmit_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__rate_interval]))",
+          "expr": "sum by($split_ids) (rate(container_network_transmit_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__rate_interval]))",
           "instant": false,
           "legendFormat": "{{name}}, name={{id}}",
           "range": true,
@@ -2755,7 +2641,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (name, id)(rate(container_network_receive_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__rate_interval])) * $__interval_ms / 1000\r\nor\r\nsum by (name) (rate(container_network_receive_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__rate_interval])) * $__interval_ms / 1000",
+          "expr": "sum by($split_ids) (rate(container_network_receive_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__rate_interval])) * $__interval_ms / 1000",
           "instant": false,
           "legendFormat": "{{name}}, name={{id}}",
           "range": true,
@@ -2872,7 +2758,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (name, id)(rate(container_network_transmit_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__rate_interval])) * $__interval_ms / 1000\r\nor\r\nsum by (name) (rate(container_network_transmit_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__rate_interval])) * $__interval_ms / 1000",
+          "expr": "sum by($split_ids) (rate(container_network_transmit_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__rate_interval])) * $__interval_ms / 1000",
           "instant": false,
           "legendFormat": "{{name}}, name={{id}}",
           "range": true,
@@ -3001,7 +2887,7 @@
         "y": 85
       },
       "id": 13,
-      "maxDataPoints": 200,
+      "maxDataPoints": 100,
       "options": {
         "legend": {
           "asTable": true,
@@ -3027,7 +2913,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (name, id)(rate(container_fs_reads_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__rate_interval]))\r\nor\r\nsum by (name)(rate(container_fs_reads_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__rate_interval]))",
+          "expr": "sum by($split_ids) (rate(container_fs_reads_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__rate_interval]))",
           "instant": false,
           "legendFormat": "{{name}}, name={{id}}",
           "range": true,
@@ -3118,7 +3004,7 @@
         "y": 85
       },
       "id": 42,
-      "maxDataPoints": 200,
+      "maxDataPoints": 100,
       "options": {
         "legend": {
           "asTable": true,
@@ -3144,7 +3030,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (name, id)(rate(container_fs_writes_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__rate_interval]))\r\nor\r\nsum by (name)(rate(container_fs_writes_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__rate_interval]))",
+          "expr": "sum by($split_ids) (rate(container_fs_writes_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
           "legendFormat": "{{name}}, name={{id}}",
@@ -3236,7 +3122,7 @@
         "y": 92
       },
       "id": 77,
-      "maxDataPoints": 200,
+      "maxDataPoints": 100,
       "options": {
         "legend": {
           "asTable": true,
@@ -3262,7 +3148,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (name, id)(rate(container_fs_reads_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__rate_interval])) * $__interval_ms / 1000\r\nor\r\nsum by (name)(rate(container_fs_reads_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__rate_interval])) * $__interval_ms / 1000",
+          "expr": "sum by($split_ids) (rate(container_fs_reads_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__rate_interval])) * $__interval_ms / 1000",
           "instant": false,
           "legendFormat": "{{name}}, name={{id}}",
           "range": true,
@@ -3353,7 +3239,7 @@
         "y": 92
       },
       "id": 78,
-      "maxDataPoints": 200,
+      "maxDataPoints": 100,
       "options": {
         "legend": {
           "asTable": true,
@@ -3379,7 +3265,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (name, id)(rate(container_fs_writes_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid!=$split_ids}[$__rate_interval])) * $__interval_ms / 1000\r\nor\r\nsum by (name)(rate(container_fs_writes_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\", invalid=$split_ids}[$__rate_interval])) * $__interval_ms / 1000",
+          "expr": "sum by($split_ids) (rate(container_fs_writes_bytes_total{instance=\"$instance\", name=~\"$name\", id=~\"$id\"}[$__rate_interval])) * $__interval_ms / 1000",
           "instant": false,
           "legendFormat": "{{name}}, name={{id}}",
           "range": true,
@@ -3564,7 +3450,7 @@
             "value": "\"invalid123\""
           }
         ],
-        "query": "Unite : \"\", Split : \"invalid123\"",
+        "query": "United : name, Split : name\\, id",
         "type": "custom"
       }
     ]
@@ -3577,5 +3463,5 @@
   "timezone": "browser",
   "title": "cadvisor / docker [compose]",
   "uid": "mo6wf2ukdv3l72howqnqdc",
-  "version": 37
+  "version": 45
 }
