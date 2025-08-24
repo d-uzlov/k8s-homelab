@@ -46,15 +46,13 @@
           "mappings": [
             {
               "options": {
-                "2": {
-                  "color": "blue",
-                  "index": 0,
-                  "text": "powersave"
-                },
-                "3": {
+                "performance": {
                   "color": "orange",
-                  "index": 1,
-                  "text": "performance"
+                  "index": 1
+                },
+                "powersave": {
+                  "color": "blue",
+                  "index": 0
                 }
               },
               "type": "value"
@@ -78,7 +76,7 @@
         "x": 0,
         "y": 0
       },
-      "id": 6,
+      "id": 8,
       "maxDataPoints": 500,
       "options": {
         "alignValue": "left",
@@ -104,14 +102,25 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(cpu) (\r\n  (max_over_time(node_cpu_scaling_governor{instance=\"$instance\", governor=\"powersave\"}[$__interval]) == 1) * 2\r\n  or\r\n  (max_over_time(node_cpu_scaling_governor{instance=\"$instance\", governor=\"performance\"}[$__interval]) == 1) * 3\r\n)",
+          "expr": "max by(cpu, governor) (\r\n  (max_over_time(node_cpu_scaling_governor{instance=\"$instance\"}[$__interval]) == 1)\r\n)",
+          "format": "table",
           "instant": false,
-          "legendFormat": "core {{cpu}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "core frequency scaling mode",
+      "title": "cpu governor",
+      "transformations": [
+        {
+          "id": "groupingToMatrix",
+          "options": {
+            "columnField": "cpu",
+            "rowField": "Time",
+            "valueField": "governor"
+          }
+        }
+      ],
       "type": "state-timeline"
     },
     {
@@ -881,7 +890,7 @@
       {
         "allValue": ".*",
         "allowCustomValue": false,
-        "datasource": "$datasource",
+        "datasource": "${prometheus_datasource}",
         "definition": "query_result(group by(location) (last_over_time(node_hwmon_temp_celsius[$__range])))",
         "includeAll": true,
         "name": "location",
@@ -897,7 +906,7 @@
       },
       {
         "allowCustomValue": false,
-        "datasource": "$datasource",
+        "datasource": "${prometheus_datasource}",
         "definition": "query_result(group by(instance) (last_over_time(node_hwmon_temp_celsius{location=~\"$location\"}[$__range])))",
         "includeAll": false,
         "name": "instance",
@@ -915,7 +924,7 @@
     ]
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-24h",
     "to": "now"
   },
   "timepicker": {},

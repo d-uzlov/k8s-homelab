@@ -58,7 +58,7 @@
     },
     {
       "datasource": {
-        "uid": "$datasource"
+        "uid": "${prometheus_datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -245,7 +245,7 @@
       "targets": [
         {
           "datasource": {
-            "uid": "$datasource"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "expr": "max by (mountpoint) (node_filesystem_size_bytes{instance=\"$instance\", fstype!=\"\", mountpoint=~\"$filesystem\"})",
@@ -257,7 +257,7 @@
         },
         {
           "datasource": {
-            "uid": "$datasource"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "expr": "max by (mountpoint) (node_filesystem_avail_bytes{instance=\"$instance\", fstype!=\"\", mountpoint=~\"$filesystem\"})",
@@ -270,7 +270,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "$datasource"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": false,
@@ -285,7 +285,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "$datasource"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": false,
@@ -300,11 +300,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "$datasource"
+            "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by (mountpoint) (1 - node_filesystem_files_free{instance=\"$instance\",device!~'rootfs', mountpoint=~\"$filesystem\"} / node_filesystem_files)",
+          "expr": "max by (mountpoint) (1 - node_filesystem_files_free{instance=\"$instance\",device!~'rootfs', mountpoint=~\"$filesystem\"} / node_filesystem_files{instance=\"$instance\",device!~'rootfs', mountpoint=~\"$filesystem\"})",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -482,21 +482,11 @@
                 "0": {
                   "color": "green",
                   "index": 0,
-                  "text": "RW"
-                },
-                "1": {
-                  "color": "yellow",
-                  "index": 1,
-                  "text": "Read only"
-                },
-                "2": {
-                  "color": "green",
-                  "index": 2,
                   "text": "OK"
                 },
-                "3": {
+                "1": {
                   "color": "red",
-                  "index": 3,
+                  "index": 1,
                   "text": "Error"
                 }
               },
@@ -516,7 +506,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 21,
+        "h": 10,
         "w": 12,
         "x": 12,
         "y": 1
@@ -528,9 +518,10 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": false
         },
         "mergeValues": true,
+        "perPage": 15,
         "rowHeight": 0.9,
         "showValue": "auto",
         "tooltip": {
@@ -546,30 +537,113 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "node_filesystem_readonly{instance=\"$instance\",device!~'rootfs', mountpoint=~\"$filesystem\"}",
+          "expr": "min by(mountpoint) (min_over_time(node_filesystem_device_error{instance=\"$instance\",device!~'rootfs',fstype!~'tmpfs', mountpoint=~\"$filesystem\"}[$__interval]))",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "{{mountpoint}} - ReadOnly",
+          "legendFormat": "__auto",
           "range": true,
-          "refId": "A",
+          "refId": "B",
           "step": 240
+        }
+      ],
+      "title": "filesystem status",
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "links": [],
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "green",
+                  "index": 0,
+                  "text": "RW"
+                },
+                "1": {
+                  "color": "yellow",
+                  "index": 1,
+                  "text": "Read only"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
         },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 12,
+        "y": 11
+      },
+      "id": 337,
+      "maxDataPoints": 200,
+      "options": {
+        "alignValue": "center",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "perPage": 15,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "node_filesystem_device_error{instance=\"$instance\",device!~'rootfs',fstype!~'tmpfs', mountpoint=~\"$filesystem\"} + 2",
+          "expr": "max by(mountpoint) (max_over_time(node_filesystem_readonly{instance=\"$instance\",device!~'rootfs', mountpoint=~\"$filesystem\"}[$__interval]))",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "{{mountpoint}} - Device error",
+          "legendFormat": "__auto",
           "range": true,
-          "refId": "B",
+          "refId": "A",
           "step": 240
         }
       ],
-      "title": "Filesystem Status",
+      "title": "filesystem read-only",
       "type": "state-timeline"
     },
     {
@@ -592,7 +666,7 @@
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
-            "fillOpacity": 10,
+            "fillOpacity": 3,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -640,14 +714,11 @@
         "y": 22
       },
       "id": 322,
-      "maxDataPoints": 200,
+      "maxDataPoints": 100,
       "options": {
         "legend": {
           "calcs": [
-            "mean",
-            "lastNotNull",
-            "max",
-            "min"
+            "mean"
           ],
           "displayMode": "table",
           "placement": "right",
@@ -809,7 +880,7 @@
         "y": 22
       },
       "id": 41,
-      "maxDataPoints": 200,
+      "maxDataPoints": 100,
       "options": {
         "legend": {
           "calcs": [
@@ -833,7 +904,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "1 - node_filesystem_files_free{instance=\"$instance\",device!~'rootfs', mountpoint=~\"$filesystem\"} / node_filesystem_files",
+          "expr": "1 - node_filesystem_files_free{instance=\"$instance\",device!~'rootfs', mountpoint=~\"$filesystem\"} / node_filesystem_files{instance=\"$instance\",device!~'rootfs', mountpoint=~\"$filesystem\"}",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -951,7 +1022,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "1 - ((node_filesystem_avail_bytes{instance=\"$instance\",device!~'rootfs', mountpoint=~\"$filesystem\"}) / node_filesystem_size_bytes)",
+          "expr": "1 - ((node_filesystem_avail_bytes{instance=\"$instance\",device!~'rootfs', mountpoint=~\"$filesystem\"}) / node_filesystem_size_bytes{instance=\"$instance\",device!~'rootfs', mountpoint=~\"$filesystem\"})",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{mountpoint}}",
@@ -1241,6 +1312,7 @@
         "y": 39
       },
       "id": 156,
+      "maxDataPoints": 100,
       "options": {
         "legend": {
           "calcs": [
@@ -1264,7 +1336,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "node_filesystem_size_bytes{instance=\"$instance\",device!~'rootfs', mountpoint=~\"$filesystem\"} - node_filesystem_avail_bytes",
+          "expr": "node_filesystem_size_bytes{instance=\"$instance\",device!~'rootfs', mountpoint=~\"$filesystem\"} - node_filesystem_avail_bytes{instance=\"$instance\",device!~'rootfs', mountpoint=~\"$filesystem\"}",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{mountpoint}}",
@@ -1364,7 +1436,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1379,7 +1452,7 @@
         "y": 48
       },
       "id": 127,
-      "maxDataPoints": 200,
+      "maxDataPoints": 100,
       "options": {
         "legend": {
           "calcs": [
@@ -1466,7 +1539,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1481,7 +1555,7 @@
         "y": 60
       },
       "id": 42,
-      "maxDataPoints": 200,
+      "maxDataPoints": 100,
       "options": {
         "legend": {
           "calcs": [
@@ -1567,7 +1641,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1582,7 +1657,7 @@
         "y": 60
       },
       "id": 331,
-      "maxDataPoints": 200,
+      "maxDataPoints": 100,
       "options": {
         "legend": {
           "calcs": [
@@ -1668,7 +1743,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1683,7 +1759,7 @@
         "y": 72
       },
       "id": 329,
-      "maxDataPoints": 200,
+      "maxDataPoints": 100,
       "options": {
         "legend": {
           "calcs": [
@@ -1767,7 +1843,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1782,7 +1859,7 @@
         "y": 72
       },
       "id": 325,
-      "maxDataPoints": 200,
+      "maxDataPoints": 100,
       "options": {
         "legend": {
           "calcs": [
@@ -1836,7 +1913,7 @@
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
-            "fillOpacity": 20,
+            "fillOpacity": 3,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -1866,7 +1943,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1881,7 +1959,7 @@
         "y": 84
       },
       "id": 133,
-      "maxDataPoints": 200,
+      "maxDataPoints": 100,
       "options": {
         "legend": {
           "calcs": [
@@ -1965,7 +2043,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1980,7 +2059,7 @@
         "y": 84
       },
       "id": 326,
-      "maxDataPoints": 200,
+      "maxDataPoints": 100,
       "options": {
         "legend": {
           "calcs": [
@@ -2064,7 +2143,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -2079,7 +2159,7 @@
         "y": 96
       },
       "id": 37,
-      "maxDataPoints": 200,
+      "maxDataPoints": 100,
       "options": {
         "legend": {
           "calcs": [
@@ -2164,7 +2244,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -2179,7 +2260,7 @@
         "y": 96
       },
       "id": 334,
-      "maxDataPoints": 200,
+      "maxDataPoints": 100,
       "options": {
         "legend": {
           "calcs": [
@@ -2234,7 +2315,7 @@
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
-            "fillOpacity": 20,
+            "fillOpacity": 3,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -2264,7 +2345,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -2279,7 +2361,7 @@
         "y": 106
       },
       "id": 301,
-      "maxDataPoints": 200,
+      "maxDataPoints": 100,
       "options": {
         "legend": {
           "calcs": [
@@ -2363,7 +2445,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -2378,7 +2461,7 @@
         "y": 106
       },
       "id": 327,
-      "maxDataPoints": 200,
+      "maxDataPoints": 100,
       "options": {
         "legend": {
           "calcs": [
@@ -2464,7 +2547,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -2479,7 +2563,7 @@
         "y": 116
       },
       "id": 35,
-      "maxDataPoints": 200,
+      "maxDataPoints": 100,
       "options": {
         "legend": {
           "calcs": [
@@ -2565,7 +2649,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -2580,7 +2665,7 @@
         "y": 116
       },
       "id": 36,
-      "maxDataPoints": 200,
+      "maxDataPoints": 100,
       "options": {
         "legend": {
           "calcs": [
@@ -2666,7 +2751,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -2681,7 +2767,7 @@
         "y": 126
       },
       "id": 335,
-      "maxDataPoints": 200,
+      "maxDataPoints": 100,
       "options": {
         "legend": {
           "calcs": [
@@ -2848,7 +2934,7 @@
     ]
   },
   "time": {
-    "from": "now-7d",
+    "from": "now-24h",
     "to": "now"
   },
   "timepicker": {},
