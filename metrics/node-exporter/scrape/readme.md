@@ -36,6 +36,8 @@ metadata:
     instance.prometheus.io/main: enable
     instance.prometheus.io/prompp: enable
 spec:
+  # you may want to increase the timeout for large or slow targets
+  scrapeTimeout: 1s
   staticConfigs:
   - labels:
       location: cluster-name

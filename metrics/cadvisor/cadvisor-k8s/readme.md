@@ -47,7 +47,6 @@ kl delete ns metrics-cadvisor
 
 ```bash
 
-node=10.3.129.138
-kl exec deployments/alpine -- curl -sS http://$node:8080/metrics > ./cadvisor.prom
+kl exec deployments/alpine -- curl -sS http://cadvisor.metrics-cadvisor:8999/metrics > ./cadvisor.prom
 
 ```

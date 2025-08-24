@@ -8,6 +8,7 @@ metadata:
     instance.prometheus.io/main: enable
     instance.prometheus.io/prompp: enable
 spec:
+  scrapeTimeout: 1s
   scheme: HTTP
   relabelings:
   - targetLabel: instance
@@ -18,6 +19,11 @@ spec:
     targetLabel: job
     replacement: node-exporter
   metricRelabelings:
+  - action: drop
+    sourceLabels: [ __name__, device ]
+    # for some unknown reason, node-exporter doesn't want to skip loop devices
+    # so we drop loop device metrics on ingestion instead
+    regex: node_disk_.*;loop.*
   - action: drop
     sourceLabels: [ __name__ ]
     #   https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-class-net
@@ -47,3 +53,9 @@ spec:
     sourceLabels: [ __name__ ]
     # there are too many metrics, which have too big cardinality, but too little use
     regex: node_zfs_zpool_dataset_zil_.*
+  - targetLabel: operstate
+    sourceLabels: [ __name__ ]
+    regex: node_network_info
+    # operstate is literally duplicated as node_network_up
+    # separate label for it a just increasing cardinality
+    replacement: ''
