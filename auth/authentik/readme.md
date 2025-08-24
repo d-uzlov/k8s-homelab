@@ -7,6 +7,7 @@ It can also be used as a proxy, adding auth to simple applications that don't ha
 
 References:
 - https://goauthentik.io/#comparison
+- https://github.com/goauthentik/authentik
 - https://xpufx.com/posts/protecting-your-first-app-with-authentik/
 - https://medium.com/@wessel__/istio-with-authentik-securing-your-cluster-and-providing-authentication-and-authorization-b5e48b331920
 
@@ -18,7 +19,7 @@ You only need to do this when updating the app.
 helm repo add authentik https://charts.goauthentik.io
 helm repo update authentik
 helm search repo authentik/authentik --versions --devel | head
-helm show values authentik/authentik --version 2025.6.2 > ./auth/authentik/default-values.yaml
+helm show values authentik/authentik --version 2025.8.1 > ./auth/authentik/default-values.yaml
 ```
 
 ```bash
@@ -29,7 +30,7 @@ helm show values oci://registry-1.docker.io/bitnamicharts/redis --version 20.6.2
 helm template \
   authentik \
   authentik/authentik \
-  --version 2025.6.2 \
+  --version 2025.8.1 \
   --namespace authentik \
   --values ./auth/authentik/values.yaml \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/part-of|d' -e '\|app.kubernetes.io/version|d' \

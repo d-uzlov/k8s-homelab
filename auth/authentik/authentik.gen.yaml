@@ -221,12 +221,12 @@ spec:
         app.kubernetes.io/instance: "authentik"
         app.kubernetes.io/component: "server"
       annotations:
-        checksum/secret: 5797c611eaaa77dd6629e38be6b6920d84f43bd825fc6a4326382ce8f2454978
+        checksum/secret: 1edf981c2cce17872ee8052074ae153c57f4b5539ec70acb33ea5d0056ad5f91
     spec:
       terminationGracePeriodSeconds: 30
       containers:
         - name: server
-          image: ghcr.io/goauthentik/server:2025.6.2
+          image: ghcr.io/goauthentik/server:2025.8.1
           imagePullPolicy: IfNotPresent
           args:
             - server
@@ -259,7 +259,7 @@ spec:
             initialDelaySeconds: 0
             periodSeconds: 1
             successThreshold: 1
-            timeoutSeconds: 1
+            timeoutSeconds: 3
           readinessProbe:
             
             failureThreshold: 3
@@ -269,7 +269,7 @@ spec:
             initialDelaySeconds: 0
             periodSeconds: 1
             successThreshold: 1
-            timeoutSeconds: 1
+            timeoutSeconds: 3
           startupProbe:
             
             failureThreshold: 60
@@ -279,7 +279,7 @@ spec:
             initialDelaySeconds: 1
             periodSeconds: 1
             successThreshold: 1
-            timeoutSeconds: 1
+            timeoutSeconds: 3
           resources:
             {}
       affinity:
@@ -319,20 +319,31 @@ spec:
         app.kubernetes.io/instance: "authentik"
         app.kubernetes.io/component: "worker"
       annotations:
-        checksum/secret: 5797c611eaaa77dd6629e38be6b6920d84f43bd825fc6a4326382ce8f2454978
+        checksum/secret: 1edf981c2cce17872ee8052074ae153c57f4b5539ec70acb33ea5d0056ad5f91
     spec:
       serviceAccountName: authentik
       terminationGracePeriodSeconds: 30
       containers:
         - name: worker
-          image: ghcr.io/goauthentik/server:2025.6.2
+          image: ghcr.io/goauthentik/server:2025.8.1
           imagePullPolicy: IfNotPresent
           args:
             - worker
           env:
+            - name: AUTHENTIK_LISTEN__HTTP
+              value: "0.0.0.0:9000"
+            - name: AUTHENTIK_LISTEN__METRICS
+              value: "0.0.0.0:9300"
           envFrom:
             - secretRef:
                 name: authentik
+          ports:
+            - name: http
+              containerPort: 9000
+              protocol: TCP
+            - name: metrics
+              containerPort: 9300
+              protocol: TCP
           livenessProbe:
             
             exec:
@@ -343,7 +354,7 @@ spec:
             initialDelaySeconds: 0
             periodSeconds: 1
             successThreshold: 1
-            timeoutSeconds: 1
+            timeoutSeconds: 3
           readinessProbe:
             
             exec:
@@ -354,7 +365,7 @@ spec:
             initialDelaySeconds: 0
             periodSeconds: 1
             successThreshold: 1
-            timeoutSeconds: 1
+            timeoutSeconds: 3
           startupProbe:
             
             exec:
@@ -365,7 +376,7 @@ spec:
             initialDelaySeconds: 1
             periodSeconds: 1
             successThreshold: 1
-            timeoutSeconds: 1
+            timeoutSeconds: 3
           resources:
             {}
       affinity:
