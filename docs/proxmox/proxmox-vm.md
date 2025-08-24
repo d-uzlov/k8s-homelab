@@ -51,6 +51,31 @@ and then instead use `vCPUs` for real number of available cores.
 References:
 - [Proxmox documentation about Hot-Plug](https://pve.proxmox.com/wiki/Hotplug_(qemu_disk,nic,cpu,memory)#CPU_and_Memory_Hotplug)
 
+# Memory hot (un)plug
+
+Hot plug works without any special config.
+
+Widely discussed possible performance issues likely don't exist,
+unless you use several sockets.
+
+Hot-unplug is broken, and proxmox wiki about it is severely outdated.
+
+- `CONFIG_MOVABLE_NODE` parameter was removed in linux 4.13.
+- `movable_node` kernel command line parameter will break VMs with a lot of memory,
+because kernel internal structure can only live in unmovable memory,
+and you can quickly run out of it, if almost all memory is movable.
+- New way of dealing with it is `memory_hotplug.online_policy=auto-movable` kernel command line parameter.
+It will work fine but proxmox will not handle it well. Kernel will mark low memory regions as movable,
+but proxmox always tries to unplug high regions first.
+
+Hot unplug can still work randomly without any additional configuration,
+but only if you are lucky and required VM memory is empty.
+You can't rely on it.
+
+References:
+- https://lore.proxmox.com/pve-user/4567346d-2a49-4989-9080-21a632113df3%40mattcorallo.com/T/
+- https://docs.kernel.org/admin-guide/mm/memory-hotplug.html
+
 # Cloud-init DHCP hostname
 
 Cloud-init expects to get the hostname via the network,
