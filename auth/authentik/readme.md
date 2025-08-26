@@ -66,6 +66,7 @@ postgres_storage_class=nvmeof
 EOF
 
 mkdir -p ./auth/authentik/env/
+
  cat << EOF > ./auth/authentik/env/authentik-seed.env
 # Secret key used for cookie signing. Changing this will invalidate active sessions.
 # Prior to 2023.6.0 the secret key was also used for unique user IDs.
@@ -78,15 +79,22 @@ EOF
 # for example:
 # - yandex: https://yandex.ru/support/yandex-360/customers/mail/ru/mail-clients/others.html#smtpsetting
 # - google: https://support.google.com/a/answer/176600?hl=en
- cat << EOF > ./auth/authentik/env/authentik-smtp.env
-auth_smtp_host=AUTOREPLACE_SMTP_HOST
-auth_smtp_port=AUTOREPLACE_SMTP_PORT
-auth_smtp_username=AUTOREPLACE_SMTP_USERNAME
-auth_smtp_password=AUTOREPLACE_SMTP_PASSWORD
-auth_smtp_use_tls=false
-auth_smtp_use_ssl=true
-# example: "Authentik <user@example.com>"
-auth_smtp_from="AUTOREPLACE_SMTP_FROM"
+
+ cat << EOF > ./auth/authentik/env/authentik-smtp-patch.yaml
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: authentik
+  namespace: authentik
+stringData:
+  AUTHENTIK_EMAIL__FROM: User from example <user@example.com>
+  AUTHENTIK_EMAIL__HOST: smtp.yandex.ru
+  AUTHENTIK_EMAIL__PASSWORD: $auth_smtp_password
+  AUTHENTIK_EMAIL__PORT: '465'
+  AUTHENTIK_EMAIL__USE_SSL: 'true'
+  AUTHENTIK_EMAIL__USE_TLS: 'false'
+  AUTHENTIK_EMAIL__USERNAME: user@example.com
 EOF
 
 ```
@@ -116,24 +124,6 @@ stringData:
   AUTHENTIK_REDIS__PASSWORD: $redis_password
   AUTHENTIK_SECRET_KEY: $authentik_seed
 EOF
- ( . ./auth/authentik/env/authentik-smtp.env;
- cat << EOF > ./auth/authentik/env/authentik-smtp-patch.yaml
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: authentik
-  namespace: authentik
-stringData:
-  AUTHENTIK_EMAIL__FROM: $auth_smtp_from
-  AUTHENTIK_EMAIL__HOST: $auth_smtp_host
-  AUTHENTIK_EMAIL__PASSWORD: $auth_smtp_password
-  AUTHENTIK_EMAIL__PORT: '$auth_smtp_port'
-  AUTHENTIK_EMAIL__USE_SSL: '$auth_smtp_use_ssl'
-  AUTHENTIK_EMAIL__USE_TLS: '$auth_smtp_use_tls'
-  AUTHENTIK_EMAIL__USERNAME: $auth_smtp_username
-EOF
-)
 
 kl apply -k ./auth/authentik/
 kl -n authentik get pod -o wide -L spilo-role
