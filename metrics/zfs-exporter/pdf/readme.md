@@ -13,7 +13,7 @@ Also download exporter binary:
 ```bash
 
 # https://github.com/pdf/zfs_exporter/releases
-zfs_exporter_version=2.3.8
+zfs_exporter_version=2.3.10
 
 wget --directory-prefix ./metrics/zfs-exporter/pdf/env/ https://github.com/pdf/zfs_exporter/releases/download/v${zfs_exporter_version}/zfs_exporter-${zfs_exporter_version}.linux-amd64.tar.gz
 tar zxv -f ./metrics/zfs-exporter/pdf/env/zfs_exporter-${zfs_exporter_version}.linux-amd64.tar.gz -C ./metrics/zfs-exporter/pdf/env/

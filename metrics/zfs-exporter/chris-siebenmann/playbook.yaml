@@ -1,5 +1,5 @@
 ---
-- name: Install and enable monitoring systemd timer
+- name: Install zfs_exporter from Chris Siebenmann
   hosts: zfs
   become: true
 
@@ -8,7 +8,7 @@
     install_path: /opt/chris_zfs_exporter
 
   tasks:
-  - name: Ensure /opt exists
+  - name: create /opt
     file:
       path: /opt
       state: directory
@@ -16,30 +16,22 @@
       owner: root
       group: root
 
-  - name: Copy exporter binary
+  - name: copy exporter binary
     copy:
       src: "{{ local_binary_path }}"
       dest: "{{ install_path }}"
       owner: root
       group: root
       mode: "0755"
+    notify:
+    - service_restart
 
-  - name: Deploy service unit
-    template:
-      src: ./chris_zfs_exporter.service
-      dest: /etc/systemd/system/chris_zfs_exporter.service
-      owner: root
-      group: root
-      mode: "0644"
-    notify: systemd-daemon-reload
-
-  - name: Create service group
+  - name: create service group
     group:
       name: chris_zfs_exporter
       state: present
       system: true
-
-  - name: Create service user
+  - name: create service user
     user:
       name: chris_zfs_exporter
       group: chris_zfs_exporter
@@ -48,15 +40,26 @@
       system: true
       state: present
 
-  - name: Start service
-    systemd:
-      name: chris_zfs_exporter.service
-      enabled: yes
-      state: started
-      daemon_reload: no
+  - name: copy service
+    copy:
+      src: ./chris_zfs_exporter.service
+      dest: /etc/systemd/system/chris_zfs_exporter.service
+      owner: root
+      group: root
+      mode: "0644"
+    notify:
+    - service_restart
+    - systemd_daemon-reload
 
   handlers:
-  - name: systemd-daemon-reload
-    systemd:
-      daemon_reload: yes
-    listen: systemd-daemon-reload
+  - name: systemd_daemon-reload
+    ansible.builtin.systemd_service:
+      daemon_reload: true
+  - name: Start chris_zfs_exporter.service
+    listen:
+    - service_restart
+    ansible.builtin.systemd_service:
+      name: chris_zfs_exporter.service
+      enabled: yes
+      state: restarted
+      daemon_reload: no

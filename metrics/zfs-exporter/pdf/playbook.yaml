@@ -1,18 +1,15 @@
 ---
-- name: Install and enable monitoring systemd timer
+- name: Install zfs_exporter from PDF
   hosts: zfs
   become: true
 
   vars:
-    desired_version: 2.3.8
-
-    local_binary_path: "./env/zfs_exporter-{{ desired_version }}.linux-amd64/zfs_exporter"
+    zfs_exporter_version: 2.3.10
+    local_binary_path: "./env/zfs_exporter-{{ zfs_exporter_version }}.linux-amd64/zfs_exporter"
     install_path: /opt/pdf_zfs_exporter
 
-    app_version_pattern: '(?m)^zfs_exporter,\s+version\s+([0-9]+\.[0-9]+\.[0-9]+)?\s\(branch'
-
   tasks:
-  - name: Ensure /opt exists
+  - name: create /opt
     file:
       path: /opt
       state: directory
@@ -20,76 +17,22 @@
       owner: root
       group: root
 
-  - name: Default installed_version to empty string
-    set_fact:
-      installed_version: ""
-
-  - name: Check whether my_app already installed on remote
-    stat:
-      path: "{{ install_path }}"
-    register: bin_stat
-
-  - name: If installed, check --version
-    command: "{{ install_path }} --version"
-    register: installed_version_raw
-    changed_when: false
-    failed_when: false
-    when: bin_stat.stat.exists
-
-  - name: Extract application version matches (strict pattern) into a list
-    set_fact:
-      installed_version_list: >-
-        {{
-          (installed_version_raw.stderr | default(''))
-          | regex_findall(app_version_pattern)
-        }}
-    when: bin_stat.stat.exists
-
-  - name: Set installed_version from match (if any)
-    set_fact:
-      installed_version: "{{ installed_version_list[0] }}"
-    when:
-    - bin_stat.stat.exists
-    - installed_version_list | length > 0
-
-  - name: Set installed_version from match (if any)
-    set_fact:
-      installed_version: ""
-    when:
-    - bin_stat.stat.exists
-    - installed_version_list | length == 0
-
-  - name: Show desired vs installed (debug)
-    debug:
-      msg:
-      - "desired_version='{{ desired_version }}'"
-      - "installed_version='{{ installed_version | default('') }}'"
-
-  - name: Copy exporter binary
+  - name: copy exporter binary
     copy:
       src: "{{ local_binary_path }}"
       dest: "{{ install_path }}"
       owner: root
       group: root
       mode: "0755"
-    when: installed_version != desired_version
+    notify:
+    - service_restart
 
-  - name: Deploy service unit
-    template:
-      src: ./pdf_zfs_exporter.service
-      dest: /etc/systemd/system/pdf_zfs_exporter.service
-      owner: root
-      group: root
-      mode: "0644"
-    notify: systemd-daemon-reload
-
-  - name: Create service group
+  - name: create service group
     group:
       name: pdf_zfs_exporter
       state: present
       system: true
-
-  - name: Create service user
+  - name: create service user
     user:
       name: pdf_zfs_exporter
       group: pdf_zfs_exporter
@@ -98,14 +41,26 @@
       system: true
       state: present
 
-  - name: Start service
-    systemd:
+  - name: copy pdf_zfs_exporter.service
+    copy:
+      src: ./pdf_zfs_exporter.service
+      dest: /etc/systemd/system/pdf_zfs_exporter.service
+      owner: root
+      group: root
+      mode: "0644"
+    notify:
+    - service_restart
+    - systemd_daemon-reload
+
+  handlers:
+  - name: systemd_daemon-reload
+    ansible.builtin.systemd_service:
+      daemon_reload: true
+  - name: Start pdf_zfs_exporter.service
+    listen:
+    - service_restart
+    ansible.builtin.systemd_service:
       name: pdf_zfs_exporter.service
       enabled: yes
-      state: started
+      state: restarted
       daemon_reload: no
-  handlers:
-  - name: systemd-daemon-reload
-    systemd:
-      daemon_reload: yes
-    listen: systemd-daemon-reload
