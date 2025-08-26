@@ -1099,7 +1099,7 @@
         "y": 20
       },
       "id": 79,
-      "maxDataPoints": 200,
+      "maxDataPoints": 250,
       "options": {
         "alignValue": "center",
         "legend": {
@@ -1203,7 +1203,7 @@
         "y": 20
       },
       "id": 53,
-      "maxDataPoints": 500,
+      "maxDataPoints": 250,
       "options": {
         "alignValue": "left",
         "legend": {
@@ -1400,7 +1400,7 @@
         "y": 27
       },
       "id": 6,
-      "maxDataPoints": 500,
+      "maxDataPoints": 250,
       "options": {
         "alignValue": "center",
         "legend": {
@@ -1505,7 +1505,7 @@
         "y": 27
       },
       "id": 80,
-      "maxDataPoints": 500,
+      "maxDataPoints": 250,
       "options": {
         "alignValue": "left",
         "legend": {
@@ -1669,7 +1669,8 @@
             "lineWidth": 1,
             "pointSize": 5,
             "scaleDistribution": {
-              "type": "linear"
+              "log": 2,
+              "type": "log"
             },
             "showPoints": "never",
             "spanNulls": false,
@@ -1737,7 +1738,7 @@
           "refId": "uptime"
         }
       ],
-      "title": "uptime",
+      "title": "uptime (logarithmic)",
       "transformations": [
         {
           "id": "renameByRegex",
@@ -1979,7 +1980,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by($split_ids) (\r\n  (rate(container_cpu_cfs_throttled_seconds_total{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]) )\r\n)",
+          "expr": "sum by($split_ids) (\r\n  (rate(container_cpu_cfs_throttled_seconds_total{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]) )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}}, name={{name}}",
@@ -2098,7 +2099,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by($split_ids) (\r\n  (rate(container_cpu_system_seconds_total{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))\r\n  /\r\n  sum without(cpu) (rate(container_cpu_usage_seconds_total{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\"}[$__rate_interval]) + 1e-12)\r\n)",
+          "expr": "# using max to see if some individual container had high kernel %\r\nmax by($split_ids) (\r\n  (rate(container_cpu_system_seconds_total{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]))\r\n  /\r\n  sum without(cpu) (rate(container_cpu_usage_seconds_total{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\", cpu=\"total\"}[$__rate_interval]) + 1e-12)\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}}, name={{name}}",
@@ -2217,7 +2218,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by($split_ids) (\r\n  (rate(container_cpu_cfs_throttled_seconds_total{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]) * $__interval_ms / 1000 )\r\n)",
+          "expr": "sum by($split_ids) (\r\n  (rate(container_cpu_cfs_throttled_seconds_total{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]) * $__interval_ms / 1000 )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}}, name={{name}}",
@@ -2461,7 +2462,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by($split_ids) (\r\n  (rate(container_cpu_cgroup_burst_seconds_total{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]) * $__interval_ms / 1000 )\r\n)",
+          "expr": "sum by($split_ids) (\r\n  (rate(container_cpu_cgroup_burst_seconds_total{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]) * $__interval_ms / 1000 )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}}, name={{name}}",
@@ -2963,7 +2964,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "# if container didn't run at some interval, you will have division by zero, so we do ` / increase + epsilon`\r\nmax by($split_ids) (\r\n  (increase(container_cpu_cfs_throttled_periods_total{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]) )\r\n  /\r\n  (increase(container_cpu_cfs_periods_total{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]) + 1e-12 )\r\n)",
+          "expr": "# using max to see if some individual container had high throttle %\r\nmax by($split_ids) (\r\n  (increase(container_cpu_cfs_throttled_periods_total{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]) )\r\n  /\r\n  (increase(container_cpu_cfs_periods_total{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval]) + 1e-12 )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}}, name={{name}}",
@@ -3231,7 +3232,7 @@
           "id": "renameByRegex",
           "options": {
             "regex": "(.*), name=(.{8}).*",
-            "renamePattern": "$1, $2$4$5"
+            "renamePattern": "$1, $2"
           }
         },
         {
@@ -5401,7 +5402,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(container) (avg_over_time(kube_summary_container_rootfs_used_bytes{container!=\"\", container=~\"$container\", location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\"}[$__interval]))",
+          "expr": "max by(container) (avg_over_time(kube_summary_container_rootfs_used_bytes{container!=\"\", container=~\"$container\", location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\"}[$__interval]))",
           "instant": false,
           "legendFormat": "{{container}}",
           "range": true,
@@ -5810,7 +5811,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(container) (avg_over_time(kube_summary_container_logs_used_bytes{container!=\"\", container=~\"$container\", location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\"}[$__interval]))",
+          "expr": "max by(container) (avg_over_time(kube_summary_container_logs_used_bytes{container!=\"\", container=~\"$container\", location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\"}[$__interval]))",
           "instant": false,
           "legendFormat": "{{container}}",
           "range": true,
@@ -6071,5 +6072,5 @@
   "timezone": "browser",
   "title": "Pod / Containers",
   "uid": "mo6wf2ukdv3l72howqnq",
-  "version": 46
+  "version": 53
 }

@@ -534,7 +534,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(instance, pool) (zfs_dataset_creation{instance=~\"$instance\", pool=~\"$pool\"}) * 1000",
+          "expr": "max by(instance, pool) (\r\n  zfs_dataset_creation_timestamp{instance=~\"$instance\", pool=~\"$pool\"}\r\n  or\r\n  # zfs_dataset_creation was used before official support for creation was added\r\n  zfs_dataset_creation{instance=~\"$instance\", pool=~\"$pool\"}\r\n) * 1000",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -914,7 +914,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "# max_over_time to get the newest creation date in case pool with the same name was recreated\r\n# min by(pool) because we want to get the oldest dataset in a pool, which is always root dataset\r\n$__to / 1000 - min by(instance, pool) (max_over_time(zfs_dataset_creation{instance=~\"$instance\", pool=~\"$pool\"}[$__interval]))",
+          "expr": "# max_over_time to get the newest creation date in case pool with the same name was recreated\r\n# using name=~\"$pool\" selects root dataset of apool, which is always the oldest dataset\r\n$__to / 1000 - min by(instance, pool) (\r\n  max_over_time(zfs_dataset_creation_timestamp{instance=~\"$instance\", pool=~\"$pool\", name=~\"$pool\"}[$__interval])\r\n  or\r\n  # zfs_dataset_creation was used before official support for creation was added\r\n  max_over_time(zfs_dataset_creation{instance=~\"$instance\", pool=~\"$pool\", name=~\"$pool\"}[$__interval])\r\n)",
           "instant": false,
           "legendFormat": "{{instance}}/{{pool}}",
           "range": true,
@@ -2310,7 +2310,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(instance, zpool) (\r\n  avg by(instance, zpool, vdev) (rate(zfs_vdev_bytes{instance=~\"$instance\", zpool=~\"$pool\", type=\"read\", path=\"\", vdev=~\"mirror-.*\"}[$__rate_interval]))\r\n  # avg by(instance, zpool, vdev) (rate(zfs_vdev_bytes{instance=~\"$instance\", zpool=~\"$pool\", type=\"read\", path!=\"\", vdev=~\"mirror-.*\"}[$__rate_interval]))\r\n  or\r\n  rate(zfs_vdev_bytes{instance=~\"$instance\", zpool=~\"$pool\", type=\"read\", path!=\"\", vdev=~\"disk-.*\"}[$__rate_interval])\r\n  # or\r\n  # rate(zfs_vdev_bytes{instance=~\"$instance\", zpool=~\"$pool\", type=\"read\", path!=\"\", vdev=~\"raidz-.*\"}[$__rate_interval])\r\n)\r\n-\r\nsum by (instance, zpool) (rate(zfs_pool_scan_issued_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__rate_interval]))",
+          "expr": "sum by(instance, zpool) (\r\n  # for single-device vdevs get exact value\r\n  rate(zfs_vdev_bytes{instance=~\"$instance\", zpool=~\"$pool\", type=\"read\", path!=\"\", vdev=~\"disk-.*\"}[$__rate_interval])\r\n  or\r\n  # for mirror vdevs get average between leaf vdevs\r\n  avg by(instance, zpool, vdev) (rate(zfs_vdev_bytes{instance=~\"$instance\", zpool=~\"$pool\", type=\"read\", path!=\"\", vdev=~\"mirror-.*\"}[$__rate_interval]))\r\n  or\r\n  # for raid-z vdevs get avg * (count - 1)\r\n  (\r\n    avg by(instance, zpool, vdev) (rate(zfs_vdev_bytes{instance=~\"$instance\", zpool=~\"$pool\", type=\"read\", path!=\"\", vdev=~\"raidz1-.*\"}[$__rate_interval]))\r\n    *\r\n    (-1 + count by(instance, zpool, vdev) (zfs_vdev_bytes{instance=~\"$instance\", zpool=~\"$pool\", type=\"read\", path!=\"\", vdev=~\"raidz1-.*\"}))\r\n  )\r\n  or\r\n  # for raid-z2 vdevs get avg * (count - 2)\r\n  (\r\n    avg by(instance, zpool, vdev) (rate(zfs_vdev_bytes{instance=~\"$instance\", zpool=~\"$pool\", type=\"read\", path!=\"\", vdev=~\"raidz2-.*\"}[$__rate_interval]))\r\n    *\r\n    (-2 + count by(instance, zpool, vdev) (zfs_vdev_bytes{instance=~\"$instance\", zpool=~\"$pool\", type=\"read\", path!=\"\", vdev=~\"raidz2-.*\"}))\r\n  )\r\n  or\r\n  # for raid-z3 vdevs get avg * (count - 3)\r\n  (\r\n    avg by(instance, zpool, vdev) (rate(zfs_vdev_bytes{instance=~\"$instance\", zpool=~\"$pool\", type=\"read\", path!=\"\", vdev=~\"raidz3-.*\"}[$__rate_interval]))\r\n    *\r\n    (-3 + count by(instance, zpool, vdev) (zfs_vdev_bytes{instance=~\"$instance\", zpool=~\"$pool\", type=\"read\", path!=\"\", vdev=~\"raidz3-.*\"}))\r\n  )\r\n)\r\n-\r\nsum by (instance, zpool) (rate(zfs_pool_scan_issued_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__rate_interval]))",
           "hide": false,
           "legendFormat": "{{instance}}/{{zpool}}",
           "range": true,
@@ -3246,7 +3246,7 @@
         "type": "prometheus",
         "uid": "${prometheus_datasource}"
       },
-      "description": "this will be empty, unless trim is running",
+      "description": "Empty, unless trim ran in time range. \"calc\" is a very rough approximation, it is only correct when you zoom in. If you have a special recording rule, you will also have \"record\" value which is always correct.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -3337,7 +3337,7 @@
           "hide": false,
           "legendFormat": "{{instance}}/{{zpool}} (calc)",
           "range": true,
-          "refId": "A"
+          "refId": "calc"
         },
         {
           "datasource": {
@@ -3349,7 +3349,7 @@
           "hide": false,
           "legendFormat": "{{instance}}/{{zpool}} (record)",
           "range": true,
-          "refId": "B"
+          "refId": "record"
         }
       ],
       "title": "trim: estimated remaining time",
@@ -3692,7 +3692,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "scan info is empty for pools\nthat have never run\nscrub or resilver\nin their lifetime",
+        "content": "Scan info is empty for pools\nthat have never run\nscrub or resilver\nin their lifetime.\n\n`examined` is about\ngathering metadata for scan.\n\n`issued` is actually\nreading/writing data.",
         "mode": "markdown"
       },
       "title": "notes",
@@ -4696,7 +4696,7 @@
         "type": "prometheus",
         "uid": "${prometheus_datasource}"
       },
-      "description": "this will be empty, unless scan was active in selected time range",
+      "description": "Empty, unless scan ran in time range. \"calc\" is a very rough approximation, it is only correct when you zoom in. If you have a special recording rule, you will also have \"record\" value which is always correct.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -4899,7 +4899,7 @@
         "type": "prometheus",
         "uid": "${prometheus_datasource}"
       },
-      "description": "this will be empty, unless scan was active in selected time range",
+      "description": "Empty, unless scan ran in time range. \"calc\" is a very rough approximation, it is only correct when you zoom in. If you have a special recording rule, you will also have \"record\" value which is always correct.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -5100,5 +5100,5 @@
   "timezone": "browser",
   "title": "ZFS Pool Overview",
   "uid": "AweIwvnk4",
-  "version": 55
+  "version": 60
 }
