@@ -15,7 +15,9 @@ You only need to do this when updating the app.
 helm repo add jetstack https://charts.jetstack.io
 helm repo update jetstack
 helm search repo jetstack/cert-manager --versions --devel | head
-helm show values jetstack/cert-manager --version v1.17.1 > ./ingress/cert-manager/default-values.yaml
+helm show values jetstack/cert-manager --version v1.18.2 > ./ingress/cert-manager/default-values.yaml
+helm search repo jetstack/trust-manager --versions --devel | head
+helm show values jetstack/trust-manager --version v0.19.0 > ./ingress/cert-manager/trust-manager/default-values.yaml
 ```
 
 ```bash
@@ -23,13 +25,26 @@ helm show values jetstack/cert-manager --version v1.17.1 > ./ingress/cert-manage
 helm template \
   cert-manager jetstack/cert-manager \
   --values ./ingress/cert-manager/values.yaml \
-  --version v1.17.1 \
+  --version v1.18.2 \
   --namespace cert-manager \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/version|d' \
   > ./ingress/cert-manager/cert-manager.gen.yaml
 
 wget https://github.com/cert-manager/cert-manager/releases/download/v1.17.1/cert-manager.crds.yaml \
   -O ./ingress/cert-manager/cert-manager.crds.yaml
+
+mkdir -p ./ingress/cert-manager/trust-manager/env/
+
+helm template \
+  trust-manager jetstack/trust-manager \
+  --values ./ingress/cert-manager/trust-manager/values.yaml \
+  --version v0.19.0 \
+  --namespace cert-manager \
+  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/version|d' \
+  > ./ingress/cert-manager/trust-manager/env/trust-manager-raw.gen.yaml
+
+yq 'select(.kind == "CustomResourceDefinition")' ./ingress/cert-manager/trust-manager/env/trust-manager-raw.gen.yaml > ./ingress/cert-manager/trust-manager/trust-manager-crd.gen.yaml
+yq 'select(.kind != "CustomResourceDefinition")' ./ingress/cert-manager/trust-manager/env/trust-manager-raw.gen.yaml > ./ingress/cert-manager/trust-manager/trust-manager.gen.yaml
 
 ```
 
