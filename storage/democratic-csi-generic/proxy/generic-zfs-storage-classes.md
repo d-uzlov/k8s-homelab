@@ -32,7 +32,7 @@ zfs:
 # {{ nvmeof.shareStrategyNvmetCli.basename }}:{{ nvmeof.namePrefix }}{{ nvmeof.nameTemplate }}{{ nvmeof.nameSuffix }}
 nvmeof:
   transports: # connection from node
-  - tcp://$serverAddress:4420
+  - tcp://$serverAddress:4420?nr-io-queues=4
   namePrefix: '$nqnPrefix'
   shareStrategyNvmetCli:
     basename: $nqnBaseName
