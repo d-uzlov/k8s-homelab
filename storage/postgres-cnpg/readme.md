@@ -16,17 +16,17 @@ You only need to do this when updating the app.
 helm repo add cnpg https://cloudnative-pg.github.io/charts
 helm repo update cnpg
 helm search repo cnpg/cloudnative-pg --versions --devel | head
-helm show values cnpg/cloudnative-pg --version 0.24.0 > ./storage/postgres-cnpg/default-values.yaml
+helm show values cnpg/cloudnative-pg --version 0.26.0 > ./storage/postgres-cnpg/default-values.yaml
 ```
 
 ```bash
 
-kubectl kustomize "github.com/cloudnative-pg/cloudnative-pg/config/crd?ref=v1.26.0" > ./storage/postgres-cnpg/crd.yaml
+kubectl kustomize "github.com/cloudnative-pg/cloudnative-pg/config/crd?ref=v1.27.0" > ./storage/postgres-cnpg/crd.yaml
 
 helm template \
   cnpg \
   cnpg/cloudnative-pg \
-  --version 0.24.0 \
+  --version 0.26.0 \
   --namespace pgo-cnpg \
   --values ./storage/postgres-cnpg/values.yaml \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/instance|d' -e '\|app.kubernetes.io/part-of|d' \
@@ -46,7 +46,6 @@ kl label ns pgo-cnpg pod-security.kubernetes.io/enforce=baseline
 kl apply -f storage/postgres-cnpg/cnpg.gen.yaml
 kl -n pgo-cnpg get pod -o wide
 
-# sometimes postgres operator is stuck
 kl -n pgo-cnpg logs deployments/cnpg > ./cnpg.log
 
 ```
