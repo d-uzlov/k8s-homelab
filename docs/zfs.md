@@ -275,6 +275,21 @@ As noted in the [`nopwrite`](#nopwrite) section, encryption breaks nopwrite.
     > - - Free Space
     > - - Used Space
 
+# Safety tuning
+
+```bash
+
+# https://github.com/openzfs/zfs/issues/17559#issuecomment-3148618350
+echo 0 | sudo tee /sys/module/zfs/parameters/zfs_bclone_enabled
+
+ sudo tee /etc/modprobe.d/51-zfs_safety.conf << EOF
+options zfs zfs_bclone_enabled=0
+EOF
+cat /etc/modprobe.d/51-zfs_safety.conf
+sudo update-initramfs -u
+
+```
+
 # Set limit for ARC size
 
 In `htop` arc_min shows as used memory, the remaining arc_min to arc_max shows as cache memory.
@@ -337,6 +352,7 @@ References:
 
 # disable l2 caching for the special metadata device
 echo 1 | sudo tee /sys/module/zfs/parameters/l2arc_exclude_special
+
 # set max write speed of l2arc device
 # the default speed is just a few MB/s
 # this sets average write limit to 100 MB/s, peak to 200 MB/s

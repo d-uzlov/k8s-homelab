@@ -23,4 +23,9 @@ sudo usermod -aG docker $USER
 newgrp docker
 # check that everything is working
 docker run --rm hello-world
+
+# reclaim space used by docker
+# it's safe to run, only unused data will be deleted
+docker system prune -a
+
 ```

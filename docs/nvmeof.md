@@ -23,6 +23,7 @@ Some maybe related drivers:
 # Set up target on a Linux system
 
 ```bash
+
 apt-get install nvme-cli
 
 sudo modprobe nvmet
@@ -43,15 +44,53 @@ echo ipv4 | sudo tee -a /sys/kernel/config/nvmet/ports/1/addr_adrfam > /dev/null
 sudo ln -s /sys/kernel/config/nvmet/subsystems/nvmet-test/ /sys/kernel/config/nvmet/ports/1/subsystems/nvmet-t
 
 dmesg | grep "nvmet_tcp"
+
 ```
+
+# Setup via nvmetcli
+
+```bash
+
+cd /subsystems
+create test-v2
+cd test-v2
+set attr allow_any_host=1
+cd namespaces
+create 1
+cd 1
+set device path=/dev/zvol/pool-name/test-nvmeof/v2
+set device path=/dev/nvme1n1
+set device path=/dev/nvme1
+enable
+disable
+
+cd /ports/1/subsystems/
+create test-v2
+
+```
+
+References:
+- https://man.archlinux.org/man/extra/nvmetcli/nvmetcli.8.en
+- https://wiki.archlinux.org/title/NVMe_over_Fabrics
 
 # Discover targets from a Linux client
 
 ```bash
+
 sudo modprobe nvme
 sudo modprobe nvme-tcp
 
-sudo nvme discover -t tcp -a server-address-or-ip.local -s 4420
+# list targets available on server_ip
+# you can't use domain name, you should resolve it to ip
+sudo nvme discover --transport tcp --traddr $server_ip -s 4420
+
+sudo nvme connect --transport tcp --traddr $server_ip --trsvcid 4420 --nr-io-queues 4 --nqn $subnqn
+
+sudo nvme list
+sudo nvme list-subsys
+
+sudo nvme disconnect -n $subnqn
+
 ```
 
 # Install NVMe-oF client on Windows:

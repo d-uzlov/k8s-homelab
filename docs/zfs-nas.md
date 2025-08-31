@@ -65,7 +65,7 @@ nvmet-tcp
 nvmet-rdma
 EOF
 sudo systemctl restart systemd-modules-load.service
-lsmod | grep -e nvmet_tcp -e nvmet_rdma
+lsmod | grep -e nvmet
 
 sudo apt-get install -y git pip python3-six python3-pyparsing python3-configshell-fb
 
@@ -73,6 +73,7 @@ git clone --depth 1 git://git.infradead.org/users/hch/nvmetcli.git
 
 ( cd nvmetcli && sudo python3 setup.py install --prefix=/usr )
 # .nvmetcli has excessive logs
+sudo mkdir -p /root/.nvmetcli/
 sudo ln -sf /dev/null /root/.nvmetcli/log.txt
 # sudo ln -sf /dev/null /root/.nvmetcli/history.txt
 
@@ -83,7 +84,8 @@ sudo systemctl enable --now nvmet.service
 sudo systemctl status nvmet.service
 
 # create a tcp port listening on all IPs on port 4420
-sudo nvmetcli << EOF
+
+ sudo nvmetcli << EOF
 cd /ports
 create 1
 cd 1

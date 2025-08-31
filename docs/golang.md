@@ -8,12 +8,15 @@ Prerequisites:
 
 # check out the latest release
 # https://go.dev/doc/devel/release
-release=1.24.2
+
+release=1.25.0
 filename=go$release.linux-amd64.tar.gz
 curl -OL https://golang.org/dl/$filename &&
 sudo rm -rf /usr/local/go &&
 sudo tar -C /usr/local -xzf $filename &&
 rm $filename
+
+go version
 
 cat << "EOF" > ~/.bashrc.d/0-gopath.sh
 if [[ $PATH != *"/usr/local/go/bin"* ]];then
