@@ -2,7 +2,7 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: postgres
+  name: pg-main
   namespace: pgo-cnpg-test
 spec:
   instances: 2
@@ -18,14 +18,14 @@ spec:
     #   auto_explain.log_min_duration: '10s'
     # pg_hba:
     #   - host all all 10.244.0.0/16 md5
-  bootstrap:
-    initdb:
-      database: app
-      owner: app
-      # secret:
-      # the secret should be of type kubernetes.io/basic-auth
-      # https://cloudnative-pg.io/documentation/1.25/bootstrap/#bootstrap-an-empty-cluster-initdb
-      #   name: cluster-example-app-user
+  # bootstrap:
+  #   initdb:
+  #     database: app
+  #     owner: app
+  #     secret:
+  #     # the secret should be of type kubernetes.io/basic-auth
+  #     # https://cloudnative-pg.io/documentation/1.25/bootstrap/#bootstrap-an-empty-cluster-initdb
+  #       name: cluster-example-app-user
   enableSuperuserAccess: true
   # when specified, superuserSecret must be pre-created
   # superuserSecret:
@@ -33,10 +33,10 @@ spec:
   managed:
     services:
       disabledDefaultServices: [ "ro", "r" ]
-  # affinity:
-  #   enablePodAntiAffinity: true # default is true
-  #   podAntiAffinityType: preferred
-  #   topologyKey: failure-domain.beta.kubernetes.io/zone
+  affinity:
+    enablePodAntiAffinity: true
+    podAntiAffinityType: required
+    topologyKey: kubernetes.io/hostname
   # nodeMaintenanceWindow:
   #   inProgress: false
   #   reusePVC: false
