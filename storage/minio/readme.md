@@ -24,7 +24,10 @@ EOF
 minio_volume=/mnt/tulip/minio/
 # get fresh image here: https://quay.io/repository/minio/minio?tab=tags
 # alternatively: https://hub.docker.com/r/minio/minio/tags
-minio_image=quay.io/minio/minio:RELEASE.2025-06-13T11-33-47Z
+# the latest tag with proper web interface is RELEASE.2025-04-22T22-12-26Z
+#   https://old.reddit.com/r/selfhosted/comments/1kva3pw/avoid_minio_developers_introduce_trojan_horse/
+# but we don't really need web interface, cli is completely fine
+minio_image=quay.io/minio/minio:RELEASE.2025-07-23T15-54-02Z
 
 cat << EOF > ~/minio/docker-compose.yaml
 services:
@@ -44,7 +47,7 @@ services:
     - $minio_volume:/data
 EOF
 
-docker compose up -d
+docker compose --project-directory ~/minio/ up -d
 docker compose logs
 
 # show admin credentials
