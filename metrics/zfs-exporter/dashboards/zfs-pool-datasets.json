@@ -563,7 +563,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(pool, name, type) (zfs_dataset_creation{instance=~\"$instance\", pool=~\"$pool\", name=~\"$dataset\"}) * 1000",
+          "expr": "max by(pool, name, type) (\r\n  zfs_dataset_creation_timestamp{instance=~\"$instance\", pool=~\"$pool\", name=~\"$dataset\"}\r\n  or\r\n  zfs_dataset_creation{instance=~\"$instance\", pool=~\"$pool\", name=~\"$dataset\"}\r\n) * 1000",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -740,9 +740,9 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "$__to / 1000 - max by(name) (max_over_time(zfs_dataset_creation{instance=~\"$instance\", pool=~\"$pool\", name=~\"$dataset\"}[$__interval]))",
+          "expr": "$__to / 1000 - max by(name) (\r\n  max_over_time(zfs_dataset_creation_timestamp{instance=~\"$instance\", pool=~\"$pool\", name=~\"$dataset\"}[$__interval])\r\n  or\r\n  max_over_time(zfs_dataset_creation{instance=~\"$instance\", pool=~\"$pool\", name=~\"$dataset\"}[$__interval])\r\n)",
           "instant": false,
-          "legendFormat": "{{name}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "created"
         }
@@ -856,7 +856,7 @@
           "expr": "sum by(name) (delta(zfs_dataset_logical_referenced_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__rate_interval])) * ($__interval_ms / $__rate_interval_ms)",
           "format": "time_series",
           "instant": false,
-          "legendFormat": "{{name}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "A"
         }
@@ -960,7 +960,7 @@
           "expr": "max by(name) (\r\nmax_over_time(zfs_dataset_used_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval]) /\r\n(max_over_time(zfs_dataset_quota_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval]) != 0)\r\n)",
           "format": "time_series",
           "instant": false,
-          "legendFormat": "{{name}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "used"
         }
@@ -1064,7 +1064,7 @@
           "expr": "max by(name) (\r\nmax_over_time(zfs_dataset_referenced_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval]) /\r\n(last_over_time(zfs_dataset_referenced_quota_bytes{instance=\"$instance\", pool=~\"$pool\", type=~\"$type\", name=~\"$dataset\"}[$__interval]) != 0)\r\n)",
           "format": "time_series",
           "instant": false,
-          "legendFormat": "{{name}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "used"
         }
@@ -1169,7 +1169,7 @@
           "format": "time_series",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{name}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "volume"
         }
@@ -1255,7 +1255,7 @@
         "y": 71
       },
       "id": 16,
-      "maxDataPoints": 100,
+      "maxDataPoints": 200,
       "options": {
         "legend": {
           "calcs": [
@@ -1280,9 +1280,9 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (dataset) (rate(node_zfs_zpool_dataset_nread{instance=\"$instance\", dataset=~\"$dataset\"}[$__rate_interval]))",
+          "expr": "sum by(dataset) (rate(node_zfs_zpool_dataset_nread{instance=\"$instance\", dataset=~\"$dataset\"}[$__rate_interval]))",
           "hide": false,
-          "legendFormat": "{{dataset}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "read"
         }
@@ -1355,7 +1355,7 @@
         "y": 80
       },
       "id": 334,
-      "maxDataPoints": 100,
+      "maxDataPoints": 200,
       "options": {
         "legend": {
           "calcs": [
@@ -1380,9 +1380,9 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (dataset) (rate(node_zfs_zpool_dataset_nread{instance=\"$instance\", dataset=~\"$dataset\"}[$__rate_interval])) * $__interval_ms / 1000",
+          "expr": "sum by(dataset) (rate(node_zfs_zpool_dataset_nread{instance=\"$instance\", dataset=~\"$dataset\"}[$__rate_interval])) * $__interval_ms / 1000",
           "hide": false,
-          "legendFormat": "{{dataset}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "read"
         }
@@ -1455,7 +1455,7 @@
         "y": 89
       },
       "id": 324,
-      "maxDataPoints": 100,
+      "maxDataPoints": 200,
       "options": {
         "legend": {
           "calcs": [
@@ -1480,8 +1480,8 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (dataset) (rate(node_zfs_zpool_dataset_nwritten{instance=~\"$instance\", dataset=~\"$dataset\"}[$__rate_interval]))",
-          "legendFormat": "{{dataset}}",
+          "expr": "sum by(dataset) (rate(node_zfs_zpool_dataset_nwritten{instance=~\"$instance\", dataset=~\"$dataset\"}[$__rate_interval]))",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "write"
         }
@@ -1554,7 +1554,7 @@
         "y": 98
       },
       "id": 335,
-      "maxDataPoints": 100,
+      "maxDataPoints": 200,
       "options": {
         "legend": {
           "calcs": [
@@ -1579,9 +1579,9 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (dataset) (rate(node_zfs_zpool_dataset_nwritten{instance=\"$instance\", dataset=~\"$dataset\"}[$__rate_interval])) * $__interval_ms / 1000",
+          "expr": "sum by(dataset) (rate(node_zfs_zpool_dataset_nwritten{instance=\"$instance\", dataset=~\"$dataset\"}[$__rate_interval])) * $__interval_ms / 1000",
           "hide": false,
-          "legendFormat": "{{dataset}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "read"
         }
@@ -1667,7 +1667,7 @@
         "y": 108
       },
       "id": 323,
-      "maxDataPoints": 100,
+      "maxDataPoints": 200,
       "options": {
         "legend": {
           "calcs": [
@@ -1692,10 +1692,10 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (dataset) (rate(node_zfs_zpool_dataset_reads{instance=\"$instance\", dataset=~\"$dataset\"}[$__rate_interval]))",
+          "expr": "sum by(dataset) (rate(node_zfs_zpool_dataset_reads{instance=\"$instance\", dataset=~\"$dataset\"}[$__rate_interval]))",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{dataset}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "read"
         }
@@ -1768,7 +1768,7 @@
         "y": 118
       },
       "id": 328,
-      "maxDataPoints": 100,
+      "maxDataPoints": 200,
       "options": {
         "legend": {
           "calcs": [
@@ -1793,10 +1793,10 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (dataset) (\r\n  rate(node_zfs_zpool_dataset_nread{instance=\"$instance\", dataset=~\"$dataset\"}[$__rate_interval]) /\r\n  (rate(node_zfs_zpool_dataset_reads{instance=\"$instance\", dataset=~\"$dataset\"}[$__rate_interval]) + 1e-6)\r\n)",
+          "expr": "sum by(dataset) (\r\n  rate(node_zfs_zpool_dataset_nread{instance=\"$instance\", dataset=~\"$dataset\"}[$__rate_interval]) /\r\n  (rate(node_zfs_zpool_dataset_reads{instance=\"$instance\", dataset=~\"$dataset\"}[$__rate_interval]) + 1e-6)\r\n)",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{dataset}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "read"
         }
@@ -1869,7 +1869,7 @@
         "y": 128
       },
       "id": 325,
-      "maxDataPoints": 100,
+      "maxDataPoints": 200,
       "options": {
         "legend": {
           "calcs": [
@@ -1894,8 +1894,8 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (dataset) (rate(node_zfs_zpool_dataset_writes{instance=~\"$instance\", dataset=~\"$dataset\"}[$__rate_interval]))",
-          "legendFormat": "{{dataset}}",
+          "expr": "sum by(dataset) (rate(node_zfs_zpool_dataset_writes{instance=~\"$instance\", dataset=~\"$dataset\"}[$__rate_interval]))",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "write"
         }
@@ -1968,7 +1968,7 @@
         "y": 138
       },
       "id": 329,
-      "maxDataPoints": 100,
+      "maxDataPoints": 200,
       "options": {
         "legend": {
           "calcs": [
@@ -1993,10 +1993,10 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (dataset) (\r\n  rate(node_zfs_zpool_dataset_nwritten{instance=\"$instance\", dataset=~\"$dataset\"}[$__rate_interval]) /\r\n  (rate(node_zfs_zpool_dataset_writes{instance=\"$instance\", dataset=~\"$dataset\"}[$__rate_interval]) + 1e-6)\r\n)",
+          "expr": "sum by(dataset) (\r\n  rate(node_zfs_zpool_dataset_nwritten{instance=\"$instance\", dataset=~\"$dataset\"}[$__rate_interval]) /\r\n  (rate(node_zfs_zpool_dataset_writes{instance=\"$instance\", dataset=~\"$dataset\"}[$__rate_interval]) + 1e-6)\r\n)",
           "hide": false,
           "instant": false,
-          "legendFormat": "{{dataset}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "read"
         }
@@ -2197,5 +2197,5 @@
   "timezone": "browser",
   "title": "ZFS Pool / Datasets",
   "uid": "AweIwvnk4g1",
-  "version": 0
+  "version": 14
 }

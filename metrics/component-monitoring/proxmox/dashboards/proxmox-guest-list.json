@@ -560,6 +560,23 @@
                 "value": 100
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "cgroup"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "cgroup details",
+                    "url": "/d/mo6wf2ukdv3l72howqnqcglmi/cadvisor-generic-cgroup-list-multi-instance?${prometheus_datasource:queryparam}&${location:queryparam}&var-prefix_filter=&var-id_prefix=%2F&&var-suffix_filter=&var-suffix_antifilter=-&var-id=${__data.fields.cgroup}&var-instance=$__all"
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
@@ -582,7 +599,12 @@
         },
         "frameIndex": 0,
         "showHeader": true,
-        "sortBy": []
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "ID"
+          }
+        ]
       },
       "targets": [
         {
@@ -592,7 +614,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by (id, name, type, node) (pve_guest_info{location=\"$location\", id=~\"$guest\"})",
+          "expr": "max by (id, name, type, node, cgroup) (\r\n  label_replace(\r\n    label_replace(\r\n      last_over_time(pve_guest_info{location=\"$location\", id=~\"$guest\"}[$__range])\r\n      , \"cgroup\", \"/lxc/$1\", \"id\", \"lxc/(.*)\")\r\n  , \"cgroup\", \"/qemu.slice/$1.scope\", \"id\", \"qemu/(.*)\")\r\n)",
           "format": "table",
           "instant": true,
           "legendFormat": "",
@@ -1742,5 +1764,5 @@
   "timezone": "browser",
   "title": "Proxmox / Guest list",
   "uid": "cdnsz3qi9ybk0fgl",
-  "version": 0
+  "version": 5
 }
