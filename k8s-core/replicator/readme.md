@@ -15,7 +15,7 @@ You only need to do this when updating the app.
 helm repo add mittwald https://helm.mittwald.de
 helm repo update mittwald
 helm search repo mittwald/kubernetes-replicator --versions --devel | head
-helm show values mittwald/kubernetes-replicator --version 2.9.2 > ./k8s-core/replicator/default-values.yaml
+helm show values mittwald/kubernetes-replicator --version 2.12.0 > ./k8s-core/replicator/default-values.yaml
 ```
 
 ```bash
@@ -23,7 +23,7 @@ helm show values mittwald/kubernetes-replicator --version 2.9.2 > ./k8s-core/rep
 helm template \
     kubernetes-replicator \
     mittwald/kubernetes-replicator \
-    --version 2.9.2 \
+    --version 2.12.0 \
     --values ./k8s-core/replicator/helm-values.yaml \
     --namespace replicator \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' -e '\|app.kubernetes.io/version|d' \
@@ -43,9 +43,10 @@ kl -n replicator get pod -o wide
 
 ```
 
-# Test that it works
+# test
 
 ```bash
+
 # create a test secret
 kl apply -f ./k8s-core/replicator/test.yaml
 
@@ -62,6 +63,29 @@ kl label ns --overwrite replicator-demo test-label=some-value
 kl -n replicator-demo get secret
 
 kl delete ns replicator-demo
+
+```
+
+# test push-based replication
+
+```bash
+
+kl create ns replicator-demo
+
+kl -n replicator-demo create secret generic test-replication --from-literal key1=val1 --from-literal key2=val2 --from-literal key3=val3
+# replicate to all namespaces (or use name regex instead of '.*' to limit it)
+kl -n replicator-demo annotate secret test-replication replicator.v1.mittwald.de/replicate-to=.*
+# replicate by label
+kl -n replicator-demo annotate secret test-replication replicator.v1.mittwald.de/replicate-to-matching=qwe=asd
+
+kl -n replicator-demo describe secret test-replication
+kl get secret test-replication
+kl describe secret test-replication
+
+kl -n replicator-demo delete secret test-replication
+
+kl delete ns replicator-demo
+
 ```
 
 # How to use

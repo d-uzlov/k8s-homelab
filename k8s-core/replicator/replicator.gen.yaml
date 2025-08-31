@@ -14,15 +14,42 @@ metadata:
   labels:
     app.kubernetes.io/name: replicator
 rules:
-  - apiGroups: [ "" ]
-    resources: [ "namespaces" ]
-    verbs: [ "get", "watch", "list" ]
-  - apiGroups: [""]
-    resources: ["secrets", "configmaps", "serviceaccounts"]
-    verbs: ["get", "watch", "list", "create", "update", "patch", "delete"]
-  - apiGroups: ["rbac.authorization.k8s.io"]
-    resources: ["roles", "rolebindings"]
-    verbs: ["get", "watch", "list", "create", "update", "patch", "delete"]
+  - apiGroups:
+    - ""
+    resources:
+    - namespaces
+    verbs: 
+    - get
+    - watch
+    - list
+
+  - apiGroups:
+    - ""
+    resources:
+    - secrets
+    - configmaps
+    - serviceaccounts
+    verbs:  
+    - get
+    - watch
+    - list
+    - create
+    - update
+    - patch
+    - delete
+  - apiGroups:
+    - rbac.authorization.k8s.io
+    resources:
+    - roles
+    - rolebindings
+    verbs:  
+    - get
+    - watch
+    - list
+    - create
+    - update
+    - patch
+    - delete
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -47,6 +74,7 @@ metadata:
     app.kubernetes.io/name: replicator
 spec:
   replicas: 1
+  revisionHistoryLimit: 10
   selector:
     matchLabels:
       app.kubernetes.io/name: replicator
@@ -68,10 +96,14 @@ spec:
             readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 1000
-          image: "quay.io/mittwald/kubernetes-replicator:v2.9.2"
+          image: "quay.io/mittwald/kubernetes-replicator:v2.12.0"
           imagePullPolicy: IfNotPresent
           args:
-            []
+            - -replicate-secrets=true
+            - -replicate-configmaps=true
+            - -replicate-roles=true
+            - -replicate-role-bindings=true
+            - -replicate-service-accounts=true
           ports:
             - name: health
               containerPort: 9102
@@ -97,7 +129,7 @@ spec:
           resources:
             limits:
               cpu: null
-              memory: 50Mi
+              memory: 100Mi
             requests:
               cpu: null
-              memory: 30Mi
+              memory: 50Mi
