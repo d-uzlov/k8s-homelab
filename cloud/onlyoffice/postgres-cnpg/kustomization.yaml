@@ -6,7 +6,6 @@ namespace: onlyoffice
 
 resources:
 - ./postgres.yaml
-- ./scheduled-backup.yaml
 
 configMapGenerator:
 - name: postgres-sc
@@ -15,19 +14,6 @@ configMapGenerator:
   options:
     annotations:
       config.kubernetes.io/local-config: 'true'
-- name: backup-s3
-  envs:
-  - ./env/backup-s3.env
-  options:
-    annotations:
-      config.kubernetes.io/local-config: 'true'
-
-secretGenerator:
-- name: postgres-backup-credentials
-  envs:
-  - ./env/backup-s3-credentials.env
-  options:
-    disableNameSuffixHash: true
 
 replacements:
 - source:
@@ -40,23 +26,3 @@ replacements:
       name: postgres
     fieldPaths:
     - spec.storage.storageClass
-- source:
-    kind: ConfigMap
-    name: backup-s3
-    fieldPath: data.server_address
-  targets:
-  - select:
-      kind: Cluster
-      name: postgres
-    fieldPaths:
-    - spec.backup.barmanObjectStore.endpointURL
-- source:
-    kind: ConfigMap
-    name: backup-s3
-    fieldPath: data.bucket_path
-  targets:
-  - select:
-      kind: Cluster
-      name: postgres
-    fieldPaths:
-    - spec.backup.barmanObjectStore.destinationPath
