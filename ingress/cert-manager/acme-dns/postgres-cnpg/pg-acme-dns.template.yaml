@@ -1,0 +1,25 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: postgres
+  namespace: cm-acme-dns
+spec:
+  instances: 2
+  storage:
+    size: REPLACE_ME_SIZE
+    storageClass: REPLACE_ME_STORAGE_CLASS
+  primaryUpdateStrategy: unsupervised
+  postgresql: {}
+  managed:
+    services:
+      disabledDefaultServices: ["ro", "r"]
+  affinity:
+    enablePodAntiAffinity: true
+    podAntiAffinityType: required
+    topologyKey: kubernetes.io/hostname
+  plugins:
+  - name: barman-cloud.cloudnative-pg.io
+    isWALArchiver: true
+    parameters:
+      barmanObjectName: s3-acme-dns-backup
