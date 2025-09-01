@@ -58,7 +58,7 @@ EOF
 kl apply -k ./cloud/nextcloud/postgres-cnpg/backups/
 
 kl -n nextcloud get objectstore
-kl -n nextcloud describe objectstore s3-postgres-backup
+kl -n nextcloud describe objectstore s3-nextcloud-backup
 
 ```
 
