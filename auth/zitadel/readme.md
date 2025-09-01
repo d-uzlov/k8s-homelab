@@ -39,41 +39,6 @@ Generate passwords and set up config.
 
 ```bash
 
-# ======== Postgres setup ========
-
-mkdir -p ./auth/zitadel/postgres-cnpg/env/
-
-storage_class=
-storage_size=1Gi
-s3_server_address=http://nas.example.com:9000/
-# make sure that bucket path is empty
-# otherwise cnpg will refuse to upload backups
-# apparently it shouldn't even start, but currently there is only error in logs:
-#     WAL archive check failed for server postgres: Expected empty archive
-s3_bucket_path=s3://postgres-test/subfolder/
-
- cat << EOF > ./auth/zitadel/postgres-cnpg/env/backup-s3-credentials.env
-key=dmzER5pleUdusVaG9n8d
-secret=zD07Jfk483DAJU8soRLZ4x9xdbtsU1QPcnU2eCp7
-EOF
-
- cat << EOF > ./auth/zitadel/postgres-cnpg/env/patch.env
----
-apiVersion: postgresql.cnpg.io/v1
-kind: Cluster
-metadata:
-  name: postgres
-spec:
-  instances: 2
-  storage:
-    size: $storage_size
-    storageClass: $storage_class
-  backup:
-    barmanObjectStore:
-      endpointURL: $s3_server_address
-      destinationPath: $s3_bucket_path
-EOF
-
 mkdir -p ./auth/zitadel/config/env/
  cat << EOF > ./auth/zitadel/config/env/master_key.env
 master_key=$(LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 32)
@@ -85,20 +50,6 @@ EOF
 
 kl create ns zitadel
 kl label ns zitadel pod-security.kubernetes.io/enforce=baseline
-
-kl apply -k ./auth/zitadel/postgres-cnpg/
-
-kl -n zitadel get cluster
-kl -n zitadel describe cluster cnpg
-kl -n zitadel get pvc
-kl -n zitadel get pods -o wide -L role -L cnpg.io/jobRole
-kl -n zitadel get svc
-kl -n zitadel get secrets
-kl cnpg -n zitadel status cnpg
-
-# show connection secret contents
-kl -n zitadel get secret cnpg-app -o json | jq -r '.data | to_entries | map(.value |= @base64d) | from_entries'
-kl -n zitadel get secret cnpg-superuser -o json | jq -r '.data | to_entries | map(.value |= @base64d) | from_entries'
 
 kl apply -k ./auth/zitadel/init/
 kl -n zitadel get pod -o wide

@@ -1,0 +1,26 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg-zitadel
+  namespace: zitadel
+spec:
+  instances: 2
+  storage:
+    size: REPLACE_ME_SIZE
+    storageClass: REPLACE_ME_STORAGE_CLASS
+  primaryUpdateStrategy: unsupervised
+  enableSuperuserAccess: true
+  postgresql: {}
+  managed:
+    services:
+      disabledDefaultServices: ["ro", "r"]
+  affinity:
+    enablePodAntiAffinity: true
+    podAntiAffinityType: required
+    topologyKey: kubernetes.io/hostname
+  plugins:
+  - name: barman-cloud.cloudnative-pg.io
+    isWALArchiver: true
+    parameters:
+      barmanObjectName: s3-zitadel-backup
