@@ -93,35 +93,7 @@ References:
 
 ```bash
 
-# check out the latest stable release
-# see also: https://kubernetes.io/releases/
-echo $(curl -Ls https://dl.k8s.io/release/stable.txt)
-
-# you need to upgrade one major version at a time
-
-new_version=v1.33
-sudo rm -f /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-curl -fsSL https://pkgs.k8s.io/core:/stable:/$new_version/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/'"$new_version"'/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
-
-sudo apt-get update
-sudo apt autoremove -y
-sudo apt full-upgrade -y
-sudo apt autoremove -y
-
-apt-cache policy kubeadm | head
-
-new_package_version=1.33.3
-sudo apt-mark unhold kubeadm kubelet && \
-sudo apt-get install -y kubeadm="$new_package_version"'-*' kubelet="$new_package_version"'-*' && \
-sudo apt-mark hold kubeadm kubelet &&
-sudo systemctl daemon-reload && sudo systemctl restart kubelet
-
-kubeadm version -o short
-
-# `kubeadm upgrade plan` may fail immediately after kubelet upgrade, wait a bit if this happens
-
-# === choose one node of the cluster ===
+# === choose a master node ===
 # this node must have the /etc/kubernetes/admin.conf file
 # study the upgrade plan manually
 sudo kubeadm upgrade plan

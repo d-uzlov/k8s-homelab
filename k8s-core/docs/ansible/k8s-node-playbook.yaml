@@ -1,0 +1,193 @@
+---
+- name: Install k8s dependencies
+  hosts: kubelet
+  become: true
+
+  vars:
+    runc_version: 1.3.0
+    containerd_version: 2.1.3
+    crictl_version: v1.33.0
+    kubelet_version: v1.34.0
+    kubeadm_version: v1.34.0
+
+  tasks:
+
+  - name: setup kernel modules
+    ansible.builtin.copy:
+      src: ./containerd-modules.conf
+      dest: /etc/modules-load.d/containerd.conf
+      owner: root
+      group: root
+      mode: "0644"
+    notify:
+    - modules_service_restart
+
+  - name: /etc/sysctl.d/kubernetes.conf
+    become: true
+    ansible.builtin.copy:
+      src: ./sysctl/kubernetes.conf
+      dest: /etc/sysctl.d/kubernetes.conf
+      owner: root
+      group: root
+      mode: "0644"
+    notify:
+    - sysctl_apply
+
+  - name: /etc/sysctl.d/inotify.conf
+    become: true
+    ansible.builtin.copy:
+      src: ./sysctl/inotify.conf
+      dest: /etc/sysctl.d/inotify.conf
+      owner: root
+      group: root
+      mode: "0644"
+    notify:
+    - sysctl_apply
+
+  - name: /etc/sysctl.d/apr_proxy.conf
+    become: true
+    ansible.builtin.copy:
+      src: ./sysctl/apr_proxy.conf
+      dest: /etc/sysctl.d/apr_proxy.conf
+      owner: root
+      group: root
+      mode: "0644"
+    notify:
+    - sysctl_apply
+
+  - name: install runc
+    ansible.builtin.copy:
+      src: ./env/runc-{{ runc_version }}.amd64
+      dest: /usr/local/sbin/runc
+      owner: root
+      group: root
+      mode: "0755"
+
+  - name: install containerd
+    ansible.builtin.copy:
+      src: ./env/containerd-{{ containerd_version}}/bin/
+      dest: /usr/local/bin/
+      owner: root
+      group: root
+      mode: "0755"
+    notify:
+    - containerd_service_restart
+
+  - name: remove containerd service on path from guides
+    ansible.builtin.file:
+      path: /usr/lib/systemd/system/containerd.service
+      state: absent
+    notify:
+    - systemd_daemon-reload
+    - containerd_service_restart
+
+  - name: copy containerd.service
+    copy:
+      src: ./containerd.service
+      dest: /etc/systemd/system/containerd.service
+      owner: root
+      group: root
+      mode: "0644"
+    notify:
+    - systemd_daemon-reload
+    - containerd_service_restart
+
+  - name: install crictl
+    ansible.builtin.copy:
+      src: ./env/crictl-{{ crictl_version }}/crictl
+      dest: /usr/local/bin/crictl
+      owner: root
+      group: root
+      mode: "0755"
+    notify:
+    - sysctl_apply
+
+  - name: remove k8s apt packages
+    ansible.builtin.apt:
+      name: "{{ item }}"
+      state: absent
+      allow_change_held_packages: true
+    loop:
+    - kubelet
+    - kubeadm
+
+  - name: install kubelet
+    ansible.builtin.copy:
+      src: ./env/kubelet-{{ kubelet_version }}.amd64
+      dest: /usr/local/bin/kubelet
+      owner: root
+      group: root
+      mode: "0755"
+
+  - name: copy kubelet.service
+    copy:
+      src: ./kubelet.service
+      dest: /etc/systemd/system/kubelet.service
+      owner: root
+      group: root
+      mode: "0644"
+    notify:
+    - systemd_daemon-reload
+    - kubelet_service_restart
+
+  - name: create
+    ansible.builtin.file:
+      path: /etc/systemd/system/kubelet.service.d/
+      state: directory
+      mode: '0755'
+      
+  - name: copy kubelet-kubeadm.conf
+    copy:
+      src: ./kubelet-kubeadm.conf
+      dest: /etc/systemd/system/kubelet.service.d/kubelet-kubeadm.conf
+      owner: root
+      group: root
+      mode: "0644"
+    notify:
+    - systemd_daemon-reload
+    - kubelet_service_restart
+
+  - name: install kubeadm
+    ansible.builtin.copy:
+      src: ./env/kubeadm-{{ kubeadm_version }}.amd64
+      dest: /usr/local/bin/kubeadm
+      owner: root
+      group: root
+      mode: "0755"
+
+  handlers:
+  - name: apply sysctl params
+    listen:
+    - sysctl_apply
+    shell: sysctl --system
+  - name: crictl config
+    listen:
+    - crictl_config
+    shell: crictl config --set runtime-endpoint=unix:///run/containerd/containerd.sock --set image-endpoint=unix:///run/containerd/containerd.sock
+  - name: systemd_daemon-reload
+    ansible.builtin.systemd_service:
+      daemon_reload: true
+  - name: restart systemd-modules-load.service
+    listen:
+    - modules_service_restart
+    ansible.builtin.systemd_service:
+      name: systemd-modules-load.service
+      enabled: yes
+      state: restarted
+      daemon_reload: no
+  - name: restart containerd.service
+    listen:
+    - containerd_service_restart
+    ansible.builtin.systemd_service:
+      name: containerd.service
+      enabled: yes
+      state: restarted
+      daemon_reload: no
+  - name: restart kubelet.service
+    listen:
+    - kubelet_service_restart
+    ansible.builtin.systemd_service:
+      name: kubelet.service
+      enabled: yes
+      state: restarted
+      daemon_reload: no

@@ -11,12 +11,11 @@ so you only need to run this on your local machine.
 ```bash
 kubectl_version=$(curl -L -s https://dl.k8s.io/release/stable.txt)
 echo $kubectl_version
-curl -LO "https://dl.k8s.io/release/$kubectl_version/bin/linux/amd64/kubectl"
-curl -LO "https://dl.k8s.io/release/$kubectl_version/bin/linux/amd64/kubectl.sha256"
-echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
-sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+wget "https://dl.k8s.io/release/$kubectl_version/bin/linux/amd64/kubectl" -O ./k8s-core/docs/env/kubectl-$kubectl_version
+wget "https://dl.k8s.io/release/$kubectl_version/bin/linux/amd64/kubectl.sha256" -O ./k8s-core/docs/env/kubectl-$kubectl_version.sha256
+echo "$(cat ./k8s-core/docs/env/kubectl-$kubectl_version.sha256)  ./k8s-core/docs/env/kubectl-$kubectl_version" | sha256sum --check
+sudo install -o root -g root -m 0755 ./k8s-core/docs/env/kubectl-$kubectl_version /usr/local/bin/kubectl
 kubectl version --client
-rm -rf kubectl kubectl.sha256
 ```
 
 References:
@@ -31,14 +30,12 @@ Kubecolor can be used as a direct replacement for kubectl.
 
 ```bash
 # check latest version: https://github.com/kubecolor/kubecolor/releases
-kubecolor_version=0.4.0
-mkdir -p kubecolor
-cd kubecolor
-curl -LO "https://github.com/kubecolor/kubecolor/releases/download/v$kubecolor_version/kubecolor_${kubecolor_version}_linux_amd64.tar.gz"
-tar -xzf "kubecolor_${kubecolor_version}_linux_amd64.tar.gz"
-sudo install -o root -g root -m 0755 kubecolor /usr/local/bin/kubecolor
-cd ..
-rm -rf kubecolor
+kubecolor_version=0.5.1
+wget "https://github.com/kubecolor/kubecolor/releases/download/v$kubecolor_version/kubecolor_${kubecolor_version}_linux_amd64.tar.gz" -O ./k8s-core/docs/env/kubecolor_${kubecolor_version}_linux_amd64.tar.gz
+mkdir -p ./k8s-core/docs/env/kubecolor_${kubecolor_version}_linux_amd64
+tar -xzf "./k8s-core/docs/env/kubecolor_${kubecolor_version}_linux_amd64.tar.gz" -C ./k8s-core/docs/env/kubecolor_${kubecolor_version}_linux_amd64
+sudo install -o root -g root -m 0755 ./k8s-core/docs/env/kubecolor_${kubecolor_version}_linux_amd64/kubecolor /usr/local/bin/kubecolor
+kubecolor version --client
 ```
 
 # Bash completion

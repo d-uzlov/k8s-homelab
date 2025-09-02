@@ -8,11 +8,18 @@
 # sudo apt install ansible
 # apt version is outdated
 pipx install --include-deps ansible
-pipx inject ansible argcomplete
-
 pipx inject --include-apps ansible argcomplete
 
 pipx upgrade --include-injected ansible
+
+```
+
+# cleanup
+
+```bash
+
+pipx uninstall ansible
+ll ~/.local/pipx/venvs/ansible
 
 ```
 
