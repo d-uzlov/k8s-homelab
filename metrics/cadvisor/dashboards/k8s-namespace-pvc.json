@@ -17,7 +17,7 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "id": null,
   "links": [
     {
@@ -65,18 +65,6 @@
         "overrides": [
           {
             "matcher": {
-              "id": "byName",
-              "options": "__name__"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 304
-              }
-            ]
-          },
-          {
-            "matcher": {
               "id": "byRegexp",
               "options": "/.*/"
             },
@@ -113,7 +101,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Capacity"
+              "options": "capacity"
             },
             "properties": [
               {
@@ -125,7 +113,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Used %"
+              "options": "used %"
             },
             "properties": [
               {
@@ -137,7 +125,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Used"
+              "options": "used"
             },
             "properties": [
               {
@@ -149,7 +137,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Free"
+              "options": "free"
             },
             "properties": [
               {
@@ -161,7 +149,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Max inodes"
+              "options": "max inodes"
             },
             "properties": [
               {
@@ -173,7 +161,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Capacity Request"
+              "options": "capacity request"
             },
             "properties": [
               {
@@ -181,12 +169,28 @@
                 "value": 143
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #created"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIsoNoDateIfToday"
+              },
+              {
+                "id": "custom.width",
+                "value": 189
+              }
+            ]
           }
         ]
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 11,
         "x": 1,
         "y": 0
       },
@@ -217,7 +221,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(namesapce, persistentvolumeclaim) (last_over_time(kubelet_volume_stats_capacity_bytes{location=\"$location\", namespace=\"$namespace\", persistentvolumeclaim=~\"$pvc\"}[$__range]))",
+          "expr": "max by(persistentvolumeclaim) (last_over_time(kubelet_volume_stats_capacity_bytes{location=\"$location\", namespace=\"$namespace\", persistentvolumeclaim=~\"$pvc\"}[$__range]))",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -231,7 +235,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(namesapce, persistentvolumeclaim) (\r\n  last_over_time(kube_persistentvolumeclaim_resource_requests_storage_bytes{location=\"$location\", namespace=\"$namespace\", persistentvolumeclaim=~\"$pvc\"}[$__range])\r\n)",
+          "expr": "max by(persistentvolumeclaim) (\r\n  last_over_time(kube_persistentvolumeclaim_resource_requests_storage_bytes{location=\"$location\", namespace=\"$namespace\", persistentvolumeclaim=~\"$pvc\"}[$__range])\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -246,7 +250,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(namesapce, persistentvolumeclaim) (last_over_time(kubelet_volume_stats_available_bytes{location=\"$location\", namespace=\"$namespace\", persistentvolumeclaim=~\"$pvc\"}[$__range]))",
+          "expr": "max by(persistentvolumeclaim) (last_over_time(kubelet_volume_stats_available_bytes{location=\"$location\", namespace=\"$namespace\", persistentvolumeclaim=~\"$pvc\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -261,7 +265,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(namesapce, persistentvolumeclaim) (last_over_time(kubelet_volume_stats_used_bytes{location=\"$location\", namespace=\"$namespace\", persistentvolumeclaim=~\"$pvc\"}[$__range]))",
+          "expr": "max by(persistentvolumeclaim) (last_over_time(kubelet_volume_stats_used_bytes{location=\"$location\", namespace=\"$namespace\", persistentvolumeclaim=~\"$pvc\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -276,13 +280,28 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(namesapce, persistentvolumeclaim) (last_over_time(kubelet_volume_stats_inodes{location=\"$location\", namespace=\"$namespace\", persistentvolumeclaim=~\"$pvc\"}[$__range]))",
+          "expr": "max by(persistentvolumeclaim) (last_over_time(kubelet_volume_stats_inodes{location=\"$location\", namespace=\"$namespace\", persistentvolumeclaim=~\"$pvc\"}[$__range]))",
           "format": "table",
           "hide": false,
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
           "refId": "inode_capacity"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "max by(persistentvolumeclaim) (max_over_time(kube_persistentvolumeclaim_created{location=\"$location\", namespace=\"$namespace\", persistentvolumeclaim=~\"$pvc\"}[$__range])) * 1000",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "created"
         }
       ],
       "title": "info",
@@ -294,7 +313,7 @@
         {
           "id": "calculateField",
           "options": {
-            "alias": "",
+            "alias": "used%",
             "binary": {
               "left": {
                 "matcher": {
@@ -321,27 +340,31 @@
           "options": {
             "excludeByName": {
               "Time": true,
+              "Value #info": true,
               "__name__": false
             },
             "includeByName": {},
             "indexByName": {
               "Time": 0,
-              "Value #available": 6,
-              "Value #capacity": 3,
-              "Value #capacity_request": 2,
-              "Value #inode_capacity": 7,
+              "Value #available": 7,
+              "Value #capacity": 4,
+              "Value #capacity_request": 3,
+              "Value #created": 2,
+              "Value #inode_capacity": 8,
               "Value #used": 5,
-              "Value #used / Value #capacity": 4,
-              "persistentvolumeclaim": 1
+              "persistentvolumeclaim": 1,
+              "used%": 6
             },
             "renameByName": {
-              "Value #available": "Free",
-              "Value #capacity": "Capacity",
-              "Value #capacity_request": "Capacity Request",
-              "Value #inode_capacity": "Max inodes",
-              "Value #used": "Used",
-              "Value #used / Value #capacity": "Used %",
-              "persistentvolumeclaim": ""
+              "Value #available": "free",
+              "Value #capacity": "capacity",
+              "Value #capacity_request": "capacity request",
+              "Value #created": "created",
+              "Value #inode_capacity": "max inodes",
+              "Value #used": "used",
+              "Value #used / Value #capacity": "",
+              "persistentvolumeclaim": "pvc",
+              "used%": "used %"
             }
           }
         }
@@ -400,13 +423,73 @@
                 "value": 386
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #created"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsIsoNoDateIfToday"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "created"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 183
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "csi_driver"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 217
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "storageclass"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 184
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "reclaim"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 73
+              }
+            ]
           }
         ]
       },
       "gridPos": {
         "h": 8,
-        "w": 9,
-        "x": 13,
+        "w": 12,
+        "x": 12,
         "y": 0
       },
       "id": 11,
@@ -421,7 +504,12 @@
           "show": false
         },
         "showHeader": true,
-        "sortBy": []
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "pvc"
+          }
+        ]
       },
       "targets": [
         {
@@ -431,38 +519,90 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(persistentvolumeclaim, namespace, persistentvolume) (\r\nlabel_replace(\r\nlabel_replace(\r\nlast_over_time(kube_persistentvolume_claim_ref{location=\"$location\", claim_namespace=\"$namespace\", name=~\"$pvc\", persistentvolume=~\"$pv\"}[$__range]),\r\n\"persistentvolumeclaim\", \"$1\", \"name\", \"(.*)\"\r\n),\r\n\"namespace\", \"$1\", \"claim_namespace\", \"(.*)\"\r\n)\r\n)",
+          "expr": "max by(name, claim_namespace, persistentvolume) (\r\nlast_over_time(kube_persistentvolume_claim_ref{location=\"$location\", claim_namespace=\"$namespace\", name=~\"$pvc\", persistentvolume=~\"$pv\"}[$__range])\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
-          "refId": "volume_info"
+          "refId": "claim_ref"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "max by(persistentvolume) (\r\nlast_over_time(kube_persistentvolume_created{location=\"$location\", persistentvolume=~\"$pv\"}[$__range])\r\n) * 1000",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "created"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "max by(persistentvolume, reclaim_policy, csi_driver, storageclass) (\r\nlast_over_time(kube_persistentvolume_info{location=\"$location\", persistentvolume=~\"$pv\"}[$__range])\r\n)",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "info"
         }
       ],
-      "title": "PVC to PV mapping",
+      "title": "backing PV info",
       "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
         {
           "id": "organize",
           "options": {
             "excludeByName": {
               "Time": true,
-              "Value": true
+              "Value": true,
+              "Value #claim_ref": true,
+              "Value #info": true,
+              "Value #volume_info": true,
+              "claim_namespace": true
             },
             "includeByName": {},
             "indexByName": {
               "Time": 0,
-              "Value": 4,
-              "namespace": 1,
+              "Value #claim_ref": 8,
+              "Value #created": 5,
+              "Value #info": 7,
+              "claim_namespace": 4,
+              "csi_driver": 9,
+              "name": 1,
               "persistentvolume": 3,
-              "persistentvolumeclaim": 2
+              "reclaim_policy": 6,
+              "storageclass": 2
             },
             "renameByName": {
+              "Time": "",
               "Value": "Size",
+              "Value #created": "created",
+              "Value #info": "",
+              "Value #volume_info": "",
+              "claim_namespace": "",
+              "csi_driver": "csi driver",
               "instance": "Node",
-              "persistentvolume": "",
+              "name": "pvc",
+              "persistentvolume": "pv name",
               "persistentvolumeclaim": "PVC name",
               "pod": "Pod",
+              "reclaim_policy": "reclaim",
+              "storageclass": "storage class",
               "volume": "Volume name"
             }
           }
@@ -478,7 +618,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "fixedColor": "green",
+            "fixedColor": "text",
             "mode": "fixed"
           },
           "custom": {
@@ -496,9 +636,20 @@
           "mappings": [
             {
               "options": {
-                "1": {
+                "2": {
+                  "color": "green",
                   "index": 0,
-                  "text": "mounted"
+                  "text": "bound"
+                },
+                "3": {
+                  "color": "red",
+                  "index": 1,
+                  "text": "lost"
+                },
+                "4": {
+                  "color": "yellow",
+                  "index": 2,
+                  "text": "pending"
                 }
               },
               "type": "value"
@@ -517,13 +668,13 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 11,
+        "h": 8,
         "w": 12,
         "x": 0,
         "y": 8
       },
-      "id": 12,
-      "maxDataPoints": 300,
+      "id": 16,
+      "maxDataPoints": 250,
       "options": {
         "alignValue": "left",
         "legend": {
@@ -532,9 +683,9 @@
           "showLegend": false
         },
         "mergeValues": true,
-        "perPage": 15,
+        "perPage": 10,
         "rowHeight": 0.9,
-        "showValue": "never",
+        "showValue": "auto",
         "tooltip": {
           "hideZeros": false,
           "mode": "single",
@@ -548,14 +699,14 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "group by(persistentvolumeclaim, instance) (last_over_time(kubelet_volume_stats_capacity_bytes{location=\"$location\", namespace=\"$namespace\", persistentvolumeclaim=~\"$pvc\"}[$__interval]))",
+          "expr": "max by(persistentvolumeclaim) (\r\n  last_over_time(kube_persistentvolumeclaim_status_phase{location=\"$location\", namespace=\"$namespace\", persistentvolumeclaim=~\"$pvc\", phase=\"Bound\"}[$__interval]) * 2\r\n  or\r\n  last_over_time(kube_persistentvolumeclaim_status_phase{location=\"$location\", namespace=\"$namespace\", persistentvolumeclaim=~\"$pvc\", phase=\"Lost\"}[$__interval]) * 3\r\n  or\r\n  last_over_time(kube_persistentvolumeclaim_status_phase{location=\"$location\", namespace=\"$namespace\", persistentvolumeclaim=~\"$pvc\", phase=\"Pending\"}[$__interval]) * 4\r\n)",
           "instant": false,
-          "legendFormat": "{{persistentvolumeclaim}} @ {{instance}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "mounts",
+      "title": "status",
       "type": "state-timeline"
     },
     {
@@ -610,8 +761,208 @@
         "x": 12,
         "y": 8
       },
+      "id": 12,
+      "maxDataPoints": 250,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "perPage": 15,
+        "rowHeight": 0.9,
+        "showValue": "never",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "group by(persistentvolumeclaim, instance) (last_over_time(kubelet_volume_stats_capacity_bytes{location=\"$location\", namespace=\"$namespace\", persistentvolumeclaim=~\"$pvc\"}[$__interval]))",
+          "instant": false,
+          "legendFormat": "{{persistentvolumeclaim}} @ {{instance}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "mounted on nodes",
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "green",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 3,
+            "spanNulls": false
+          },
+          "links": [
+            {
+              "title": "filter PV",
+              "url": "/d/t4hcwkxp76w9r60uq197/namespace-pvc?${prometheus_datasource:queryparam}&${location:queryparam}&${namespace:queryparam}&var-pv=${__value.text}"
+            }
+          ],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "id": 19,
+      "maxDataPoints": 250,
+      "options": {
+        "alignValue": "center",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "perPage": 10,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "max by(persistentvolumeclaim, volumename) (\r\n  last_over_time(kube_persistentvolumeclaim_info{location=\"$location\", namespace=\"$namespace\", persistentvolumeclaim=~\"$pvc\", volumename=~\"$pv\"}[$__interval])\r\n)\r\nor on()\r\n(\r\n  vector(0) unless on()\r\n  last_over_time(kube_persistentvolumeclaim_info{location=\"$location\", namespace=\"$namespace\", persistentvolumeclaim=~\"$pvc\", volumename=~\"$pv\"}[$__interval])\r\n)",
+          "format": "table",
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "backing PV history",
+      "transformations": [
+        {
+          "id": "groupingToMatrix",
+          "options": {
+            "columnField": "persistentvolumeclaim",
+            "emptyValue": "null",
+            "rowField": "Time",
+            "valueField": "volumename"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Value": true,
+              "postgres-1": false
+            },
+            "includeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "Value": "",
+              "version": ""
+            }
+          }
+        }
+      ],
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "green",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "1": {
+                  "index": 0,
+                  "text": "mounted"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 12,
+        "y": 19
+      },
       "id": 13,
-      "maxDataPoints": 300,
+      "maxDataPoints": 250,
       "options": {
         "alignValue": "left",
         "legend": {
@@ -643,7 +994,86 @@
           "refId": "A"
         }
       ],
-      "title": "used by pods",
+      "title": "mounted for pods",
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "green",
+            "mode": "continuous-RdYlGr"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "id": 18,
+      "maxDataPoints": 250,
+      "options": {
+        "alignValue": "left",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "perPage": 10,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by(persistentvolumeclaim) (\r\n  last_over_time(kube_persistentvolumeclaim_resource_requests_storage_bytes{location=\"$location\", namespace=\"$namespace\", persistentvolumeclaim=~\"$pvc\"}[$__interval])\r\n)",
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "size: request",
       "type": "state-timeline"
     },
     {
@@ -674,111 +1104,8 @@
             },
             "insertNulls": false,
             "lineInterpolation": "linear",
-            "lineStyle": {
-              "fill": "solid"
-            },
             "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "bytes"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 12,
-        "x": 0,
-        "y": 19
-      },
-      "id": 6,
-      "maxDataPoints": 300,
-      "options": {
-        "legend": {
-          "asTable": true,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${prometheus_datasource}"
-          },
-          "editorMode": "code",
-          "expr": "max by(name) (\r\n  max_over_time(kube_persistentvolume_capacity_bytes{location=\"$location\", persistentvolume=~\"$pv\"}[$__interval])\r\n  * on(persistentvolume) group_left(name)\r\n  last_over_time(kube_persistentvolume_claim_ref{location=\"$location\", claim_namespace=\"$namespace\", name=~\"$pvc\"}[$__interval])\r\n)",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{name}}",
-          "range": true,
-          "refId": "B"
-        }
-      ],
-      "title": "size: spec",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${prometheus_datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 3,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
+            "pointSize": 3,
             "scaleDistribution": {
               "type": "linear"
             },
@@ -811,10 +1138,10 @@
         "h": 6,
         "w": 12,
         "x": 12,
-        "y": 19
+        "y": 30
       },
       "id": 5,
-      "maxDataPoints": 300,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "asTable": true,
@@ -857,46 +1184,22 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "fixedColor": "green",
+            "mode": "continuous-RdYlGr"
           },
           "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
             "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 3,
-            "gradientMode": "none",
+            "fillOpacity": 70,
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
             "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineStyle": {
-              "fill": "solid"
-            },
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
+            "lineWidth": 0,
+            "spanNulls": false
           },
           "mappings": [],
-          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -911,27 +1214,28 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
+        "h": 8,
         "w": 12,
         "x": 0,
-        "y": 25
+        "y": 32
       },
-      "id": 14,
-      "maxDataPoints": 300,
+      "id": 17,
+      "maxDataPoints": 250,
       "options": {
+        "alignValue": "left",
         "legend": {
-          "asTable": true,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
         },
+        "mergeValues": true,
+        "perPage": 10,
+        "rowHeight": 0.9,
+        "showValue": "auto",
         "tooltip": {
           "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
+          "mode": "single",
+          "sort": "none"
         }
       },
       "targets": [
@@ -941,16 +1245,15 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(persistentvolumeclaim) (max_over_time(kubelet_volume_stats_capacity_bytes{location=\"$location\", namespace=\"$namespace\", persistentvolumeclaim=~\"$pvc\"}[$__interval]))",
-          "hide": false,
+          "expr": "max by(name) (\r\n  max_over_time(kube_persistentvolume_capacity_bytes{location=\"$location\", persistentvolume=~\"$pv\"}[$__interval])\r\n  * on(persistentvolume) group_left(name)\r\n  topk by(persistentvolume) (1, last_over_time(kube_persistentvolume_claim_ref{location=\"$location\", claim_namespace=\"$namespace\", name=~\"$pvc\"}[$__interval]))\r\n)",
           "instant": false,
-          "legendFormat": "{{persistentvolumeclaim}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "size: real",
-      "type": "timeseries"
+      "title": "size: volume spec",
+      "type": "state-timeline"
     },
     {
       "datasource": {
@@ -982,11 +1285,11 @@
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
-            "pointSize": 5,
+            "pointSize": 3,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "never",
+            "showPoints": "auto",
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -1016,10 +1319,10 @@
         "h": 6,
         "w": 12,
         "x": 12,
-        "y": 25
+        "y": 36
       },
       "id": 7,
-      "maxDataPoints": 300,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "asTable": true,
@@ -1070,6 +1373,111 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 1,
+            "pointSize": 3,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 40
+      },
+      "id": 14,
+      "maxDataPoints": 150,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Last *",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by(persistentvolumeclaim) (max_over_time(kubelet_volume_stats_capacity_bytes{location=\"$location\", namespace=\"$namespace\", persistentvolumeclaim=~\"$pvc\"}[$__interval]))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{persistentvolumeclaim}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "size: mount info from kubelet",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
             "axisSoftMax": 1,
             "barAlignment": 0,
             "barWidthFactor": 0.6,
@@ -1084,11 +1492,11 @@
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
-            "pointSize": 5,
+            "pointSize": 3,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "never",
+            "showPoints": "auto",
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -1118,10 +1526,10 @@
         "h": 6,
         "w": 12,
         "x": 12,
-        "y": 31
+        "y": 42
       },
       "id": 3,
-      "maxDataPoints": 300,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "asTable": true,
@@ -1224,7 +1632,7 @@
             "value": ".*"
           }
         ],
-        "query": "",
+        "query": "pg",
         "type": "textbox"
       },
       {
@@ -1233,14 +1641,14 @@
           "type": "prometheus",
           "uid": "${prometheus_datasource}"
         },
-        "definition": "query_result(last_over_time(kubelet_volume_stats_capacity_bytes{location=\"$location\", namespace=\"$namespace\", persistentvolumeclaim=~\".*($pvc_filter).*\"}[$__range]))",
+        "definition": "query_result(group by(persistentvolumeclaim) (last_over_time(kube_persistentvolumeclaim_info{location=\"$location\", namespace=\"$namespace\", persistentvolumeclaim=~\".*($pvc_filter).*\"}[$__range])))",
         "includeAll": true,
         "label": "pvc",
         "name": "pvc",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(last_over_time(kubelet_volume_stats_capacity_bytes{location=\"$location\", namespace=\"$namespace\", persistentvolumeclaim=~\".*($pvc_filter).*\"}[$__range]))",
+          "query": "query_result(group by(persistentvolumeclaim) (last_over_time(kube_persistentvolumeclaim_info{location=\"$location\", namespace=\"$namespace\", persistentvolumeclaim=~\".*($pvc_filter).*\"}[$__range])))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -1254,18 +1662,17 @@
           "type": "prometheus",
           "uid": "${prometheus_datasource}"
         },
-        "definition": "query_result(last_over_time(kube_persistentvolume_claim_ref{location=\"$location\", claim_namespace=\"$namespace\", name=~\"$pvc\"}[$__range]))",
-        "hide": 2,
+        "definition": "query_result(group by(volumename) (last_over_time(kube_persistentvolumeclaim_info{location=\"$location\", namespace=\"$namespace\", persistentvolumeclaim=~\"$pvc\"}[$__range])))",
         "includeAll": true,
         "name": "pv",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(last_over_time(kube_persistentvolume_claim_ref{location=\"$location\", claim_namespace=\"$namespace\", name=~\"$pvc\"}[$__range]))",
+          "query": "query_result(group by(volumename) (last_over_time(kube_persistentvolumeclaim_info{location=\"$location\", namespace=\"$namespace\", persistentvolumeclaim=~\"$pvc\"}[$__range])))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
-        "regex": "/persistentvolume=\"(?<text>[^\"]+)|persistentvolume=\"(?<value>[^\"]+)/g",
+        "regex": "/volumename=\"(?<text>[^\"]+)|volumename=\"(?<value>[^\"]+)/g",
         "sort": 1,
         "type": "query"
       }
@@ -1279,5 +1686,5 @@
   "timezone": "browser",
   "title": "Namespace / PVC",
   "uid": "t4hcwkxp76w9r60uq197",
-  "version": 5
+  "version": 14
 }

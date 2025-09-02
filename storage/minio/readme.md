@@ -63,42 +63,26 @@ Currently there is no setup for proper certificates.
 # Cleanup
 
 ```bash
-cd ~/minio/
-docker compose up -d
+docker compose --project-directory ~/minio/ up -d
 ```
 
 # Metrics
 
-Generate prometheus config.
-
-Run this on the minio node
-
 ```bash
 
-# minio is very stupid
-# in the docker container they don't have auth by default
-# if you tried to run `prometheus generate` without auth,
-# you would get a token that doesn't have authorization to get metrics,
-# and all requests would result in "Access denied"
-. ~/minio/.env
-docker compose exec minio mc alias set local http://localhost:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD
-docker compose exec minio mc admin prometheus generate local
+minio_address=$(mc alias export ${minio_alias} | jq -r .url)
+minio_bearer_token=$(mc admin prometheus generate ${minio_alias} | grep bearer_token | sed -E 's/.*bearer_token: (.*)/\1/')
 
-```
-
-Run on the management machine.
-
-```bash
-
-# take bearer token from output of "mc admin prometheus generate"
-
-minio_bearer_token=
-minio_address=
-cluster_name=
+ cat << EOF > ./storage/minio/env/metrics-bearer.env
+minio_bearer_token=$minio_bearer_token
+EOF
 
 # check metrics manually
-curl -sS -H "Authorization: Bearer $minio_bearer_token" http://$minio_address/minio/metrics/v3/cluster/usage > ./minio-v3-usage.log
+curl -sS -H "Authorization: Bearer $minio_bearer_token" $minio_address/minio/metrics/v3 > ./minio-v3.log
+curl -sS -H "Authorization: Bearer $minio_bearer_token" $minio_address/minio/metrics/v3/cluster > ./minio-v3-cluster.log
+curl -sS -H "Authorization: Bearer $minio_bearer_token" $minio_address/minio/metrics/v3/cluster/usage > ./minio-v3-cluster-usage.log
 
+cluster_name=
 minio_instance_name=
 kl -n prometheus create secret generic minio-$minio_instance_name-bearer --from-literal minio-bearer=$minio_bearer_token
 
