@@ -500,16 +500,122 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
+            "mode": "fixed"
           },
           "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
             },
-            "inspect": false
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
           },
-          "mappings": [],
+          "mappings": [
+            {
+              "options": {
+                "pattern": ".*\\..*0\\..*",
+                "result": {
+                  "color": "super-light-red",
+                  "index": 0
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": ".*\\..*1\\..*",
+                "result": {
+                  "color": "super-light-orange",
+                  "index": 1
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": ".*\\..*2\\..*",
+                "result": {
+                  "color": "super-light-yellow",
+                  "index": 2
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": ".*\\..*3\\..*",
+                "result": {
+                  "color": "super-light-green",
+                  "index": 3
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": ".*\\..*4\\..*",
+                "result": {
+                  "color": "super-light-blue",
+                  "index": 4
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": ".*\\..*5\\..*",
+                "result": {
+                  "color": "super-light-purple",
+                  "index": 5
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": ".*\\..*6\\..*",
+                "result": {
+                  "color": "light-red",
+                  "index": 6
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": ".*\\..*7\\..*",
+                "result": {
+                  "color": "light-orange",
+                  "index": 7
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": ".*\\..*8\\..*",
+                "result": {
+                  "color": "light-yellow",
+                  "index": 8
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": ".*\\..*9\\..*",
+                "result": {
+                  "color": "light-green",
+                  "index": 9
+                }
+              },
+              "type": "regex"
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -523,35 +629,50 @@
         "overrides": [
           {
             "matcher": {
-              "id": "byRegexp",
-              "options": "/.*/"
+              "id": "byValue",
+              "options": {
+                "op": "gte",
+                "reducer": "allIsZero",
+                "value": 0
+              }
             },
             "properties": [
               {
-                "id": "filterable"
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                }
               }
             ]
           }
         ]
       },
       "gridPos": {
-        "h": 14,
-        "w": 6,
+        "h": 11,
+        "w": 12,
         "x": 0,
         "y": 7
       },
-      "id": 29,
+      "id": 38,
+      "maxDataPoints": 250,
       "options": {
-        "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
+        "alignValue": "center",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
         },
-        "showHeader": true
+        "mergeValues": true,
+        "perPage": 15,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
       },
       "targets": [
         {
@@ -561,32 +682,40 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "count by (image_registry) (\r\n  label_replace(kube_pod_container_info{location=\"$location\"}, \"image_registry\", \"$1\", \"image_id\", \"([^/]*)/.*\")\r\n)",
+          "expr": "max by(instance, git_version) (\r\n  label_join(\r\n    last_over_time(kubernetes_build_info{location=\"$location\"}[$__interval])\r\n    , \"instance\", \": \", \"job\", \"instance\"\r\n  )\r\n)\r\nor on()\r\n(\r\n  vector(0) unless on() last_over_time(kubernetes_build_info{location=\"$location\"}[$__interval])\r\n)",
           "format": "table",
-          "instant": true,
+          "instant": false,
           "legendFormat": "__auto",
-          "range": false,
+          "range": true,
           "refId": "A"
         }
       ],
-      "title": "Image registries",
+      "title": "control  plane version history",
       "transformations": [
+        {
+          "id": "groupingToMatrix",
+          "options": {
+            "columnField": "instance",
+            "emptyValue": "null",
+            "rowField": "Time",
+            "valueField": "git_version"
+          }
+        },
         {
           "id": "organize",
           "options": {
             "excludeByName": {
-              "Time": true
+              "Value": true
             },
             "includeByName": {},
             "indexByName": {},
-            "renameByName": {
-              "Value": "Containers",
-              "image_registry": "Registry"
-            }
+            "orderBy": [],
+            "orderByMode": "auto",
+            "renameByName": {}
           }
         }
       ],
-      "type": "table"
+      "type": "state-timeline"
     },
     {
       "datasource": {
@@ -655,9 +784,9 @@
         ]
       },
       "gridPos": {
-        "h": 14,
-        "w": 15,
-        "x": 6,
+        "h": 19,
+        "w": 12,
+        "x": 12,
         "y": 7
       },
       "id": 30,
@@ -690,7 +819,7 @@
           "refId": "A"
         }
       ],
-      "title": "Images",
+      "title": "Images (used now)",
       "transformations": [
         {
           "id": "organize",
@@ -774,9 +903,9 @@
       },
       "gridPos": {
         "h": 7,
-        "w": 24,
+        "w": 12,
         "x": 0,
-        "y": 21
+        "y": 18
       },
       "id": 28,
       "maxDataPoints": 300,
@@ -892,9 +1021,9 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 24,
+        "w": 12,
         "x": 0,
-        "y": 28
+        "y": 25
       },
       "id": 27,
       "maxDataPoints": 300,
@@ -939,7 +1068,7 @@
           "expr": "sum(ephemeral_storage_node_capacity{location=\"$location\"})",
           "hide": false,
           "instant": false,
-          "legendFormat": "capacity",
+          "legendFormat": "node capacity",
           "range": true,
           "refId": "storage_capacity"
         },
@@ -952,7 +1081,7 @@
           "expr": "sum(ephemeral_storage_node_capacity{location=\"$location\"} - ephemeral_storage_node_available{location=\"$location\"})",
           "hide": false,
           "instant": false,
-          "legendFormat": "used",
+          "legendFormat": "node used",
           "range": true,
           "refId": "storage_used"
         }
@@ -961,12 +1090,112 @@
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 3,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 26
+      },
+      "id": 39,
+      "maxDataPoints": 300,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": false
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "count by(image_registry) (\r\n  label_replace(last_over_time(kube_pod_container_info{location=\"$location\", image_id!=\"\"}[$__interval]), \"image_registry\", \"$1\", \"image_id\", \"([^/]*)/.*\")\r\n)",
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "image registries",
+      "type": "timeseries"
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 36
+        "y": 33
       },
       "id": 24,
       "panels": [],
@@ -1078,9 +1307,9 @@
       },
       "gridPos": {
         "h": 7,
-        "w": 24,
+        "w": 12,
         "x": 0,
-        "y": 37
+        "y": 34
       },
       "id": 7,
       "maxDataPoints": 300,
@@ -1249,10 +1478,10 @@
         ]
       },
       "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 44
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 34
       },
       "id": 9,
       "maxDataPoints": 300,
@@ -1337,7 +1566,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 52
+        "y": 41
       },
       "id": 23,
       "panels": [],
@@ -1403,9 +1632,9 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 24,
+        "w": 12,
         "x": 0,
-        "y": 53
+        "y": 42
       },
       "id": 12,
       "maxDataPoints": 300,
@@ -1439,7 +1668,7 @@
           "refId": "A"
         }
       ],
-      "title": "Receive Bandwidth",
+      "title": "receive rate",
       "type": "timeseries"
     },
     {
@@ -1505,9 +1734,9 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 24,
-        "x": 0,
-        "y": 59
+        "w": 12,
+        "x": 12,
+        "y": 42
       },
       "id": 13,
       "maxDataPoints": 300,
@@ -1592,5 +1821,5 @@
   "timezone": "browser",
   "title": "Cluster Overview",
   "uid": "ccc0ky0jwjgoks6632q3",
-  "version": 5
+  "version": 1
 }
