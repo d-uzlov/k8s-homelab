@@ -85,11 +85,14 @@ sudo reboot
 When using local etcd, master node removal requires additional configuration.
 For example: https://paranoiaque.fr/en/2020/04/19/remove-master-node-from-ha-kubernetes/
 
-# Upgrade kubeadm and cluster
+# upgrade cluster control plane
 
 References:
 - https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/
 - https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/change-package-repository/
+
+Prerequisites:
+- [upgrade kubelet and kubeadm](./ansible/readme.md)
 
 ```bash
 
@@ -98,20 +101,16 @@ References:
 # study the upgrade plan manually
 sudo kubeadm upgrade plan
 # choose a version offered by the upgrade plan
-sudo kubeadm upgrade apply v1.33.3 --patches ./patches/
-sudo kubeadm upgrade apply v1.33.3 --patches ./patches/ --skip-phases addon/kube-proxy
+sudo kubeadm upgrade apply v1.34.0 --patches ./patches/
+sudo kubeadm upgrade apply v1.34.0 --patches ./patches/ --skip-phases addon/kube-proxy
 # if you disabled kube-proxy for your CNI, you need to re-disable it again after the upgrade
 
 # On all remaining master nodes
 sudo kubeadm upgrade node --patches ./patches/
 
-# === on all other nodes ===
-# - repeat upgrade via apt-get
-# - run `upgrade node` instead of `upgrade apply`
-# on worker nodes this should finish instantly
-sudo kubeadm upgrade node
-
 ```
+
+There is no need to run anything on worker nodes.
 
 # Edit kubelet args
 
