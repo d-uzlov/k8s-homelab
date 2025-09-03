@@ -12,7 +12,6 @@ References:
 
 - 1 or 3 VMs or LXC containers dedicated to etcd
 - - 1 is no redundancy, 2 is still no redundancy, with 3 instances one may fail without affecting clients
-- - It's possible to run etcd in docker but I think creating a VM with a single container inside is overengineering
 - Network connectivity between hosts, L3 should be enough
 - DNS records for all etcd hosts
 
@@ -30,7 +29,9 @@ Execute on each etcd node:
 # make sure that you have "test-etcd" group is present in ansible inventory
 ansible-inventory --graph test-etcd
 
-ansible-playbook ./k8s-core/docs/etcd/etcd-playbook.yaml
+# run on a single host when upgrading
+# don't forget to consult upgrade guide before running this
+ansible-playbook ./k8s-core/docs/etcd/etcd-playbook.yaml --limit "k8s1-etcd3.k8s.lan"
 
 ```
 
