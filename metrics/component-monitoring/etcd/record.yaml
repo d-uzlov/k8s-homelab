@@ -14,12 +14,14 @@ spec:
     # `irate[1m]` is much more precise than `rate[25s]`
     rules:
     - record: etcd_disk_backend_commit_duration_seconds:quantile_irate
-      expr: |-
-        histogram_quantile(0.99, irate(etcd_disk_backend_commit_duration_seconds_bucket[1m]))
+      expr: histogram_quantile(0.99, irate(etcd_disk_backend_commit_duration_seconds_bucket[1m]))
       labels:
         quantile: '0.99'
     - record: etcd_disk_wal_fsync_duration_seconds:quantile_irate
-      expr: |-
-        histogram_quantile(0.99, irate(etcd_disk_wal_fsync_duration_seconds_bucket[1m]))
+      expr: histogram_quantile(0.99, irate(etcd_disk_wal_fsync_duration_seconds_bucket[1m]))
       labels:
         quantile: '0.99'
+    - record: etcd_disk_backend_commit_duration_seconds:irate_hour_p99
+      expr: quantile_over_time(0.99, etcd_disk_backend_commit_duration_seconds:quantile_irate[1h])
+    - record: etcd_disk_wal_fsync_duration_seconds:irate_hour_p99
+      expr: quantile_over_time(0.99, etcd_disk_wal_fsync_duration_seconds:quantile_irate[1h])

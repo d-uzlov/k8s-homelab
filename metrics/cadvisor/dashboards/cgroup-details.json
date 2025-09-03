@@ -2122,7 +2122,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "- `rss` is anon memory\n- `wss` = rss + active cache\n- `raw` = `rss` + full cache + kernel\n- Cache is active if it used _often_ (more than once?)\n\nWhat to look for:\n- WSS reaching limit causes file garbage collection\n- RSS reaching limit causes OOM kill\n",
+        "content": "- `rss` is anon memory\n- `wss` = rss + active cache + kernel\n- `raw` = `rss` + full cache + kernel\n- Cache is active if it used _often_ (more than once?)\n\nWhat to look for:\n- WSS reaching limit causes file garbage collection\n- RSS reaching limit causes OOM kill\n",
         "mode": "markdown"
       },
       "title": "Memory notes",
@@ -2222,13 +2222,13 @@
         "legend": {
           "asTable": true,
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
-          "sortBy": "Name",
-          "sortDesc": false
+          "sortBy": "Mean",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -2243,7 +2243,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max(\r\n  max_over_time(container_memory_max_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_max_usage_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)",
+          "expr": "max(\r\n  max_over_time(container_memory_max_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  max_over_time(container_memory_max_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "max",
@@ -2256,7 +2256,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max(\r\n  max_over_time(container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)",
+          "expr": "max(\r\n  max_over_time(container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  max_over_time(container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])\r\n)",
           "instant": false,
           "legendFormat": "raw",
           "range": true,
@@ -2268,7 +2268,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max(\r\n  max_over_time(container_memory_working_set_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_working_set_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)",
+          "expr": "max(\r\n  max_over_time(container_memory_working_set_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  max_over_time(container_memory_working_set_bytes{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "wss",
@@ -2281,7 +2281,20 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max(\r\n  max_over_time(container_memory_rss{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_rss{instance=\"$instance\", id=~\"$id\"}\r\n)",
+          "expr": "max(\r\n  max_over_time(container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  max_over_time(container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])\r\n)\r\n-\r\nmax(\r\n  avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "rss+kernel",
+          "range": true,
+          "refId": "memory_without_cache"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max(\r\n  max_over_time(container_memory_rss{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  max_over_time(container_memory_rss{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "rss",
@@ -2294,7 +2307,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max(\r\n  max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_spec_memory_limit_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)",
+          "expr": "max(\r\n  max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])\r\n) != 0",
           "hide": false,
           "instant": false,
           "legendFormat": "limit",
@@ -2411,12 +2424,12 @@
         "legend": {
           "asTable": true,
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
-          "sortBy": "Last *",
+          "sortBy": "Mean",
           "sortDesc": true
         },
         "tooltip": {
@@ -2432,7 +2445,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max(\r\n  avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_cache{instance=\"$instance\", id=~\"$id\"}\r\n)",
+          "expr": "max(\r\n  avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "cache",
@@ -2445,7 +2458,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max(\r\n  avg_over_time(container_memory_rss{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_rss{instance=\"$instance\", id=~\"$id\"}\r\n)",
+          "expr": "max(\r\n  avg_over_time(container_memory_rss{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  avg_over_time(container_memory_rss{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "rss",
@@ -2458,7 +2471,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "# container_memory_usage_bytes = rss + cache + kernel\r\n# but container_memory_kernel_usage is broken in current version of cadvisor, it's always zero\r\nmax(\r\n  (\r\n    avg_over_time(container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n    -\r\n    avg_over_time(container_memory_rss{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n    -\r\n    avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  )\r\n  or\r\n  (\r\n  container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}\r\n  -\r\n  container_memory_rss{instance=\"$instance\", id=~\"$id\"}\r\n  -\r\n  container_memory_cache{instance=\"$instance\", id=~\"$id\"}\r\n  )\r\n)",
+          "expr": "# container_memory_usage_bytes = rss + cache + kernel\r\n# but container_memory_kernel_usage is broken in current version of cadvisor, it's always zero\r\nmax(\r\n  (\r\n    avg_over_time(container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n    -\r\n    avg_over_time(container_memory_rss{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n    -\r\n    avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  )\r\n  or\r\n  (\r\n    avg_over_time(container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])\r\n    -\r\n    avg_over_time(container_memory_rss{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])\r\n    -\r\n    avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])\r\n  )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "kernel",
@@ -2471,7 +2484,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max(\r\n  avg_over_time(container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)",
+          "expr": "max(\r\n  avg_over_time(container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  avg_over_time(container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "raw",
@@ -2554,7 +2567,7 @@
         "legend": {
           "asTable": true,
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "displayMode": "table",
           "placement": "right",
@@ -2575,7 +2588,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max(\r\n    (\r\n        max_over_time(container_memory_max_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n        or\r\n        container_memory_max_usage_bytes{instance=\"$instance\", id=~\"$id\"}\r\n    )\r\n/\r\n    (max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval]) != 0)\r\n)",
+          "expr": "max(\r\n    (\r\n        max_over_time(container_memory_max_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n        or\r\n        max_over_time(container_memory_max_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])\r\n    )\r\n/\r\n    (max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval]) != 0)\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "max",
@@ -2588,7 +2601,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max(\r\n    (\r\n        max_over_time(container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n        or\r\n        container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}\r\n    )\r\n/\r\n    (max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval]) != 0)\r\n)",
+          "expr": "max(\r\n    (\r\n        max_over_time(container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n        or\r\n        max_over_time(container_memory_usage_bytes{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])\r\n    )\r\n/\r\n    (max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval]) != 0)\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "raw",
@@ -2601,7 +2614,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max(\r\n    (\r\n        max_over_time(container_memory_working_set_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n        or\r\n        container_memory_working_set_bytes{instance=\"$instance\", id=~\"$id\"}\r\n    )\r\n/\r\n    (max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval]) != 0)\r\n)",
+          "expr": "max(\r\n    (\r\n        max_over_time(container_memory_working_set_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n        or\r\n        max_over_time(container_memory_working_set_bytes{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])\r\n    )\r\n/\r\n    (max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval]) != 0)\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "wss",
@@ -2614,7 +2627,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max(\r\n    (\r\n        max_over_time(container_memory_rss{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n        or\r\n        container_memory_rss{instance=\"$instance\", id=~\"$id\"}\r\n    )\r\n/\r\n    (max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval]) != 0)\r\n)",
+          "expr": "max(\r\n    (\r\n        max_over_time(container_memory_rss{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n        or\r\n        max_over_time(container_memory_rss{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])\r\n    )\r\n/\r\n    (max_over_time(container_spec_memory_limit_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval]) != 0)\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "rss",
@@ -2731,12 +2744,12 @@
         "legend": {
           "asTable": true,
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
-          "sortBy": "Last *",
+          "sortBy": "Mean",
           "sortDesc": true
         },
         "tooltip": {
@@ -2752,7 +2765,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max(\r\n  avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_cache{instance=\"$instance\", id=~\"$id\"}\r\n)",
+          "expr": "max(\r\n  avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "total",
@@ -2765,7 +2778,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max(\r\n  avg_over_time(container_memory_mapped_file{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_mapped_file{instance=\"$instance\", id=~\"$id\"}\r\n)",
+          "expr": "max(\r\n  avg_over_time(container_memory_mapped_file{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  avg_over_time(container_memory_mapped_file{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "mapped",
@@ -2778,7 +2791,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max(\r\n  (\r\n  avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  -\r\n  avg_over_time(container_memory_mapped_file{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  )\r\n  or\r\n  (\r\n  container_memory_cache{instance=\"$instance\", id=~\"$id\"}\r\n  -\r\n  container_memory_mapped_file{instance=\"$instance\", id=~\"$id\"}\r\n  )\r\n)",
+          "expr": "max(\r\n  (\r\n    avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n    -\r\n    avg_over_time(container_memory_mapped_file{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  )\r\n  or\r\n  (\r\n    avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])\r\n    -\r\n    avg_over_time(container_memory_mapped_file{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])\r\n  )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "unmapped",
@@ -2859,12 +2872,12 @@
         "legend": {
           "asTable": true,
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
-          "sortBy": "Last *",
+          "sortBy": "Mean",
           "sortDesc": true
         },
         "tooltip": {
@@ -2996,12 +3009,12 @@
         "legend": {
           "asTable": true,
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
-          "sortBy": "Last *",
+          "sortBy": "Mean",
           "sortDesc": true
         },
         "tooltip": {
@@ -3017,7 +3030,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max(\r\n  avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_cache{instance=\"$instance\", id=~\"$id\"}\r\n)",
+          "expr": "max(\r\n  avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  avg_over_time(container_memory_cache{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "total",
@@ -3030,7 +3043,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max(\r\n  avg_over_time(container_memory_total_inactive_file_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_total_inactive_file_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)",
+          "expr": "max(\r\n  avg_over_time(container_memory_total_inactive_file_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  avg_over_time(container_memory_total_inactive_file_bytes{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "inactive",
@@ -3043,7 +3056,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max(\r\n  avg_over_time(container_memory_total_active_file_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  container_memory_total_active_file_bytes{instance=\"$instance\", id=~\"$id\"}\r\n)",
+          "expr": "max(\r\n  avg_over_time(container_memory_total_active_file_bytes{instance=\"$instance\", id=~\"$id\"}[$__interval])\r\n  or\r\n  avg_over_time(container_memory_total_active_file_bytes{instance=\"$instance\", id=~\"$id\"}[$__rate_interval])\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "active",
@@ -3051,7 +3064,7 @@
           "refId": "raw"
         }
       ],
-      "title": "cache [un]mapped",
+      "title": "cache [in]active",
       "type": "timeseries"
     },
     {
@@ -4163,7 +4176,7 @@
             "value": ""
           }
         ],
-        "query": "",
+        "query": "/system.slice/kubelet.service",
         "type": "textbox"
       }
     ]
@@ -4176,5 +4189,5 @@
   "timezone": "browser",
   "title": "cadvisor / cgroup details",
   "uid": "mo6wf2ukdv3l72howqnqcgd",
-  "version": 26
+  "version": 3
 }

@@ -150,3 +150,16 @@ spec:
       for: 10m
       labels:
         severity: warning
+    - alert: etcdDifferentVersion
+      annotations:
+        description: >-
+          {{ $labels.server_version }}:
+          {{ $value }} versions
+        summary: etcd cluster is running several different version
+      expr: |-
+        count without(instance) (etcd_server_version)
+        and ignoring(server_version)
+        (count without(server_version) (count without(instance) (etcd_server_version)) != 1)
+      for: 1m
+      labels:
+        severity: warning

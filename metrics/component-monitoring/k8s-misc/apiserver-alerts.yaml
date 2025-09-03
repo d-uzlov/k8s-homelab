@@ -15,9 +15,14 @@ spec:
     - alert: KubeVersionMismatch
       annotations:
         description: >-
+          {{ $labels.git_version }}:
           {{ $value }} versions
         summary: Different semantic versions of Kubernetes components running
       expr: |-
+        count without(job, build_date, compiler, git_commit, git_tree_state, go_version, instance, major, minor, platform, namespace, node, pod, container) (
+          kubernetes_build_info{job!~"kube-dns|coredns"}
+        )
+        and ignoring(git_version)
         count without(git_version) (
           count without(job, build_date, compiler, git_commit, git_tree_state, go_version, instance, major, minor, platform, namespace, node, pod) (
             # removing minor version
