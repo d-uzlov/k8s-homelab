@@ -1,0 +1,90 @@
+---
+- name: Install etcd
+  hosts: etcd
+  become: true
+
+  vars:
+    etcd_version: v3.5.22
+
+  pre_tasks:
+  - name: Check if docker compose works
+    ansible.builtin.command: docker compose version
+    register: docker_ver_check
+    changed_when: false
+    failed_when: false
+    become: true
+  - name: Set docker_installed fact
+    ansible.builtin.set_fact:
+      docker_installed: "{{ docker_ver_check.rc == 0 }}"
+
+  tasks:
+  - name: Install docker if missing
+    import_role:
+      name: geerlingguy.docker
+    when: not docker_installed
+    become: true
+
+  - name: create /opt/etcd
+    become: true
+    ansible.builtin.file:
+      path: /opt/etcd/
+      state: directory
+      owner: root
+      mode: "0755"
+
+  - name: copy docker-compose.yml
+    become: true
+    ansible.builtin.copy:
+      src: ./docker-compose.yaml
+      dest: /opt/etcd/docker-compose.yml
+      owner: root
+      mode: "0644"
+
+  - name: create /opt/etcd/pki
+    become: true
+    ansible.builtin.file:
+      path: /opt/etcd/pki/
+      state: directory
+      owner: root
+      mode: "0755"
+
+  - name: copy pki ca
+    become: true
+    ansible.builtin.copy:
+      src: "./env/config-{{ etcd_cluster_name }}/{{ item }}.pem"
+      dest: /opt/etcd/pki/{{ item }}.pem
+      owner: root
+      mode: "0644"
+    loop:
+    - ca
+    - etcd-client
+    - etcd-client-key
+
+  - name: copy pki
+    become: true
+    ansible.builtin.copy:
+      src: "./env/config-{{ etcd_cluster_name }}/{{ ansible_host }}-{{ item }}.pem"
+      dest: /opt/etcd/pki/{{ item }}.pem
+      owner: root
+      mode: "0644"
+    loop:
+    - etcd-peer
+    - etcd-peer-key
+
+  - name: copy etcd.env
+    become: true
+    ansible.builtin.copy:
+      src: ./env/config-{{ etcd_cluster_name }}/{{ ansible_host }}-etcd.env
+      dest: /opt/etcd/.env
+      owner: root
+      mode: "0644"
+
+  - name: start docker compose
+    become: true
+    community.docker.docker_compose_v2:
+      project_src: /opt/etcd/
+      files:
+      - docker-compose.yml
+      state: present
+      wait: true
+      wait_timeout: 300

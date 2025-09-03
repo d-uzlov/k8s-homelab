@@ -1,0 +1,46 @@
+---
+name: etcd
+services:
+  cadvisor:
+    container_name: '${COMPOSE_PROJECT_NAME}'
+    image: gcr.io/etcd-development/etcd:v3.5.22
+    restart: always
+    command:
+    - /usr/local/bin/etcd
+    - --heartbeat-interval=500
+    - --election-timeout=5000
+    - --data-dir=/var/lib/etcd
+    - --auto-compaction-retention=24h
+    - --auto-compaction-mode=periodic
+    - --peer-client-cert-auth
+    - --peer-trusted-ca-file=/etc/etcd/pki/ca.pem
+    - --peer-cert-file=/etc/etcd/pki/etcd-peer.pem
+    - --peer-key-file=/etc/etcd/pki/etcd-peer-key.pem
+    - --client-cert-auth
+    - --trusted-ca-file=/etc/etcd/pki/ca.pem
+    - --cert-file=/etc/etcd/pki/etcd-client.pem
+    - --key-file=/etc/etcd/pki/etcd-client-key.pem
+    - --initial-cluster-state=new
+    - --initial-cluster-token=${CLUSTER_TOKEN:?error}
+    - --name=${NODE_NAME:?error}
+    - --initial-advertise-peer-urls=${NODE_ADDRESS:?error}
+    - --initial-cluster=${CLUSTER_NODES}
+    - --advertise-client-urls=${NODE_ADDRESS:?error}
+    - --listen-client-urls=https://0.0.0.0:2379
+    - --listen-peer-urls=https://0.0.0.0:2380
+    # - --listen-metrics-urls=https://0.0.0.0:2381
+    ports:
+    - 2379:2379
+    - 2380:2380
+    volumes:
+    - ./data:/var/lib/etcd:rw
+    - ./pki:/etc/etcd/pki/:ro
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       memory: 50M
+    #       cpus: 0.05
+    #     limits:
+    #       # cadvisor memory usage heavily depends on the amount of cgroups on the system
+    #       memory: 200M
+    #       cpus: 0.3
