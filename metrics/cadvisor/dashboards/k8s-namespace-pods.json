@@ -702,13 +702,13 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 13,
-        "w": 24,
+        "h": 11,
+        "w": 12,
         "x": 0,
         "y": 10
       },
       "id": 31,
-      "maxDataPoints": 500,
+      "maxDataPoints": 250,
       "options": {
         "alignValue": "center",
         "legend": {
@@ -733,14 +733,282 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "min by(pod, node) (\r\n(\r\n    (max_over_time(kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Failed\"}[$__interval]) == 1) * 2\r\n    or\r\n    (max_over_time(kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Succeeded\"}[$__interval]) == 1) * 3\r\n    or\r\n    (max_over_time(kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Pending\"}[$__interval]) == 1) * 4\r\n    or\r\n    (\r\n        max_over_time(kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Running\"}[$__interval]) == 1\r\n        and on(namespace, pod, uid)\r\n        min_over_time(kube_pod_status_ready{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", condition=\"true\"}[$__interval]) == 1\r\n    ) * 5\r\n    or\r\n    (\r\n        max_over_time(kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Running\"}[$__interval]) == 1\r\n        and on(namespace, pod, uid)\r\n        min_over_time(kube_pod_status_ready{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", condition=\"true\"}[$__interval]) == 0\r\n    ) * 6\r\n    or\r\n    (max_over_time(kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Unknown\"}[$__interval]) == 1) * 7\r\n    or\r\n    # when no condition above satisfied, use this as a fallback\r\n    (max_over_time(kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Unknown\"}[$__interval]) * 0 + 8)\r\n)\r\n* on(namespace, pod, uid) group_left(node)\r\nkube_pod_info{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}\r\n)",
+          "expr": "min by(pod) (\r\n    (max_over_time(kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Failed\"}[$__interval]) == 1) * 2\r\n    or\r\n    (max_over_time(kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Succeeded\"}[$__interval]) == 1) * 3\r\n    or\r\n    (max_over_time(kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Pending\"}[$__interval]) == 1) * 4\r\n    or\r\n    (\r\n        max_over_time(kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Running\"}[$__interval]) == 1\r\n        and on(namespace, pod, uid)\r\n        min_over_time(kube_pod_status_ready{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", condition=\"true\"}[$__interval]) == 1\r\n    ) * 5\r\n    or\r\n    (\r\n        max_over_time(kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Running\"}[$__interval]) == 1\r\n        and on(namespace, pod, uid)\r\n        min_over_time(kube_pod_status_ready{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", condition=\"true\"}[$__interval]) == 0\r\n    ) * 6\r\n    or\r\n    (max_over_time(kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Unknown\"}[$__interval]) == 1) * 7\r\n    or\r\n    # when no condition above satisfied, use this as a fallback\r\n    (max_over_time(kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Unknown\"}[$__interval]) * 0 + 8)\r\n)",
           "instant": false,
-          "legendFormat": "{{pod}} @ {{node}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "A"
         }
       ],
       "title": "status",
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "super-light-green",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 3,
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byValue",
+              "options": {
+                "op": "gte",
+                "reducer": "allIsZero",
+                "value": 0
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 12,
+        "y": 10
+      },
+      "id": 59,
+      "maxDataPoints": 250,
+      "options": {
+        "alignValue": "center",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "perPage": 15,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "max by(pod, uid) (\r\n  last_over_time(kube_pod_info{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval])\r\n)\r\nor on()\r\n(\r\n  vector(0) unless on() last_over_time(kube_pod_info{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval])\r\n)",
+          "format": "table",
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "pod uid history",
+      "transformations": [
+        {
+          "id": "groupingToMatrix",
+          "options": {
+            "columnField": "pod",
+            "emptyValue": "null",
+            "rowField": "Time",
+            "valueField": "uid"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Value": true
+            },
+            "includeByName": {},
+            "indexByName": {},
+            "orderBy": [
+              {
+                "desc": false,
+                "type": "name"
+              }
+            ],
+            "orderByMode": "auto",
+            "renameByName": {
+              "Value": "",
+              "version": ""
+            }
+          }
+        }
+      ],
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#7c7c7c",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 3,
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byValue",
+              "options": {
+                "op": "gte",
+                "reducer": "allIsZero",
+                "value": 0
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 0,
+        "y": 21
+      },
+      "id": 57,
+      "maxDataPoints": 250,
+      "options": {
+        "alignValue": "center",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "perPage": 15,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "max by(pod, node) (\r\n  last_over_time(kube_pod_info{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval])\r\n)\r\nor on()\r\n(\r\n  vector(0) unless on() last_over_time(kube_pod_info{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval])\r\n)",
+          "format": "table",
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "pod-to-node mapping",
+      "transformations": [
+        {
+          "id": "groupingToMatrix",
+          "options": {
+            "columnField": "pod",
+            "emptyValue": "null",
+            "rowField": "Time",
+            "valueField": "node"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Value": true
+            },
+            "includeByName": {},
+            "indexByName": {},
+            "orderBy": [
+              {
+                "desc": false,
+                "type": "name"
+              }
+            ],
+            "orderByMode": "auto",
+            "renameByName": {
+              "Value": "",
+              "version": ""
+            }
+          }
+        }
+      ],
       "type": "state-timeline"
     },
     {
@@ -781,9 +1049,9 @@
       },
       "gridPos": {
         "h": 11,
-        "w": 24,
-        "x": 0,
-        "y": 23
+        "w": 12,
+        "x": 12,
+        "y": 21
       },
       "id": 46,
       "maxDataPoints": 500,
@@ -813,12 +1081,247 @@
           "editorMode": "code",
           "expr": "max by(pod) (max_over_time(kube_pod_created{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\"}[$__interval])) * 1000",
           "instant": false,
-          "legendFormat": "{{container}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "A"
         }
       ],
       "title": "pod created",
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#7c7c7c",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 3,
+            "spanNulls": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "pattern": ".*0",
+                "result": {
+                  "color": "super-light-red",
+                  "index": 0
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": ".*1",
+                "result": {
+                  "color": "super-light-orange",
+                  "index": 1
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": ".*2",
+                "result": {
+                  "color": "super-light-yellow",
+                  "index": 2
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": ".*3",
+                "result": {
+                  "color": "super-light-green",
+                  "index": 3
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": ".*4",
+                "result": {
+                  "color": "super-light-blue",
+                  "index": 4
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": ".*5",
+                "result": {
+                  "color": "super-light-purple",
+                  "index": 5
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": ".*6",
+                "result": {
+                  "color": "light-red",
+                  "index": 6
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": ".*7",
+                "result": {
+                  "color": "light-orange",
+                  "index": 7
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": ".*8",
+                "result": {
+                  "color": "light-yellow",
+                  "index": 8
+                }
+              },
+              "type": "regex"
+            },
+            {
+              "options": {
+                "pattern": ".*9",
+                "result": {
+                  "color": "light-green",
+                  "index": 9
+                }
+              },
+              "type": "regex"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byValue",
+              "options": {
+                "op": "gte",
+                "reducer": "allIsZero",
+                "value": 0
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "id": 58,
+      "maxDataPoints": 250,
+      "options": {
+        "alignValue": "center",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "perPage": 15,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "max by(pod, pod_ip) (\r\n  last_over_time(kube_pod_info{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval])\r\n)\r\nor on()\r\n(\r\n  vector(0) unless on() last_over_time(kube_pod_info{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval])\r\n)",
+          "format": "table",
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "pod IP history",
+      "transformations": [
+        {
+          "id": "groupingToMatrix",
+          "options": {
+            "columnField": "pod",
+            "emptyValue": "null",
+            "rowField": "Time",
+            "valueField": "pod_ip"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Value": true
+            },
+            "includeByName": {},
+            "indexByName": {},
+            "orderBy": [
+              {
+                "desc": false,
+                "type": "name"
+              }
+            ],
+            "orderByMode": "auto",
+            "renameByName": {
+              "Value": "",
+              "version": ""
+            }
+          }
+        }
+      ],
       "type": "state-timeline"
     },
     {
@@ -860,9 +1363,9 @@
       },
       "gridPos": {
         "h": 11,
-        "w": 24,
-        "x": 0,
-        "y": 34
+        "w": 12,
+        "x": 12,
+        "y": 32
       },
       "id": 53,
       "maxDataPoints": 500,
@@ -892,7 +1395,7 @@
           "editorMode": "code",
           "expr": "$__to / 1000 - max by(pod) (max_over_time(container_start_time_seconds{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\"}[$__interval]))",
           "instant": false,
-          "legendFormat": "{{container}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "A"
         }
@@ -963,7 +1466,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 45
+        "y": 43
       },
       "id": 24,
       "maxDataPoints": 150,
@@ -971,12 +1474,12 @@
         "legend": {
           "asTable": true,
           "calcs": [
-            "lastNotNull"
+            "sum"
           ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
-          "sortBy": "Last *",
+          "sortBy": "Total",
           "sortDesc": true
         },
         "tooltip": {
@@ -992,7 +1495,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(pod) (max by(pod, container) (max_over_time(kube_pod_container_status_restarts_total{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval])))",
+          "expr": "sum by(pod) (rate(kube_pod_container_status_restarts_total{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__rate_interval])) * $__interval_ms / 1000",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -1000,7 +1503,7 @@
           "refId": "A"
         }
       ],
-      "title": "container restarts",
+      "title": "container restarts (sum over time)",
       "type": "timeseries"
     },
     {
@@ -1066,7 +1569,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 45
+        "y": 43
       },
       "id": 47,
       "maxDataPoints": 500,
@@ -1128,7 +1631,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 53
+        "y": 51
       },
       "id": 20,
       "panels": [],
@@ -1240,7 +1743,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 54
+        "y": 52
       },
       "id": 33,
       "maxDataPoints": 150,
@@ -1404,7 +1907,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 54
+        "y": 52
       },
       "id": 55,
       "maxDataPoints": 150,
@@ -1555,7 +2058,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 61
+        "y": 59
       },
       "id": 5,
       "maxDataPoints": 150,
@@ -1672,7 +2175,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 61
+        "y": 59
       },
       "id": 50,
       "maxDataPoints": 150,
@@ -1775,7 +2278,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 68
+        "y": 66
       },
       "id": 36,
       "maxDataPoints": 150,
@@ -1822,7 +2325,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 75
+        "y": 73
       },
       "id": 22,
       "panels": [],
@@ -1927,7 +2430,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 76
+        "y": 74
       },
       "id": 54,
       "maxDataPoints": 500,
@@ -2091,7 +2594,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 76
+        "y": 74
       },
       "id": 32,
       "maxDataPoints": 500,
@@ -2243,7 +2746,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 83
+        "y": 81
       },
       "id": 26,
       "maxDataPoints": 150,
@@ -2362,7 +2865,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 83
+        "y": 81
       },
       "id": 34,
       "maxDataPoints": 150,
@@ -2489,7 +2992,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 90
+        "y": 88
       },
       "id": 7,
       "maxDataPoints": 150,
@@ -2608,7 +3111,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 90
+        "y": 88
       },
       "id": 35,
       "maxDataPoints": 150,
@@ -2735,7 +3238,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 97
+        "y": 95
       },
       "id": 43,
       "maxDataPoints": 150,
@@ -2854,7 +3357,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 97
+        "y": 95
       },
       "id": 56,
       "maxDataPoints": 150,
@@ -2901,7 +3404,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 104
+        "y": 102
       },
       "id": 23,
       "panels": [],
@@ -2993,7 +3496,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 105
+        "y": 103
       },
       "id": 10,
       "maxDataPoints": 150,
@@ -3131,7 +3634,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 105
+        "y": 103
       },
       "id": 48,
       "maxDataPoints": 150,
@@ -3268,7 +3771,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 112
+        "y": 110
       },
       "id": 11,
       "maxDataPoints": 150,
@@ -3406,7 +3909,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 112
+        "y": 110
       },
       "id": 49,
       "maxDataPoints": 150,
@@ -3464,7 +3967,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 119
+        "y": 117
       },
       "id": 19,
       "panels": [],
@@ -3481,7 +3984,7 @@
         "h": 4,
         "w": 6,
         "x": 9,
-        "y": 120
+        "y": 118
       },
       "id": 30,
       "options": {
@@ -3555,10 +4058,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
+        "h": 8,
         "w": 12,
         "x": 0,
-        "y": 124
+        "y": 122
       },
       "id": 17,
       "maxDataPoints": 150,
@@ -3651,15 +4154,116 @@
               }
             ]
           },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 122
+      },
+      "id": 51,
+      "maxDataPoints": 150,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Total",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(pod) (rate(container_fs_reads_bytes_total{container!=\"\", location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__rate_interval])) * $__interval_ms / 1000",
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "disk read total",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic-by-name"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 3,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
           "unit": "binBps"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
+        "h": 8,
         "w": 12,
-        "x": 12,
-        "y": 124
+        "x": 0,
+        "y": 130
       },
       "id": 38,
       "maxDataPoints": 100,
@@ -3757,111 +4361,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 0,
-        "y": 131
-      },
-      "id": 51,
-      "maxDataPoints": 150,
-      "options": {
-        "legend": {
-          "asTable": true,
-          "calcs": [
-            "sum"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Total",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${prometheus_datasource}"
-          },
-          "editorMode": "code",
-          "expr": "sum by(pod) (rate(container_fs_reads_bytes_total{container!=\"\", location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__rate_interval])) * $__interval_ms / 1000",
-          "instant": false,
-          "legendFormat": "__auto",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "disk read total",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${prometheus_datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic-by-name"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 3,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 3,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "bytes"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
+        "h": 8,
         "w": 12,
         "x": 12,
-        "y": 131
+        "y": 130
       },
       "id": 52,
       "maxDataPoints": 100,
@@ -4961,5 +5464,5 @@
   "timezone": "browser",
   "title": "Namespace / Pods",
   "uid": "vsl6ot4yad5hedtly8ey",
-  "version": 1
+  "version": 10
 }

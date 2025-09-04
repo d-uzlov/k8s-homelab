@@ -1364,24 +1364,29 @@
                   "index": 2,
                   "text": "crash loop backoff"
                 },
+                "21": {
+                  "color": "dark-purple",
+                  "index": 3,
+                  "text": "image pull error"
+                },
                 "29": {
                   "color": "yellow",
-                  "index": 3,
+                  "index": 4,
                   "text": "pending"
                 },
                 "30": {
                   "color": "green",
-                  "index": 4,
+                  "index": 5,
                   "text": "ready"
                 },
                 "31": {
                   "color": "light-red",
-                  "index": 5,
+                  "index": 6,
                   "text": "not ready"
                 },
                 "40": {
                   "color": "#808080",
-                  "index": 6,
+                  "index": 7,
                   "text": "Unknown"
                 }
               },
@@ -1432,7 +1437,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "min by(container) (\r\n    (\r\n        max_over_time(kube_pod_container_status_terminated{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n        and\r\n        min_over_time(kube_pod_container_status_last_terminated_exitcode{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 0\r\n    ) * 10\r\n    or\r\n    (\r\n        max_over_time(kube_pod_container_status_terminated{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n        and\r\n        min_over_time(kube_pod_container_status_last_terminated_exitcode{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) != 0\r\n    ) * 11\r\n    or\r\n    (\r\n        max_over_time(kube_pod_container_status_waiting{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n        and ignoring(reason)\r\n        max_over_time(kube_pod_container_status_waiting_reason{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\", reason=\"CrashLoopBackOff\"}[$__interval]) == 1\r\n    ) * 20\r\n    or\r\n    (\r\n        max_over_time(kube_pod_container_status_waiting{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n    ) * 29\r\n    or\r\n    (\r\n        min_over_time(kube_pod_container_status_ready{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n        and\r\n        min_over_time(kube_pod_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n    ) * 30\r\n    or\r\n    (\r\n        min_over_time(kube_pod_container_status_ready{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == bool 0\r\n        and\r\n        min_over_time(kube_pod_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n    ) * 31\r\n    or\r\n    # for some reason I don't see kube_pod_container_status_last_terminated_exitcode on some job containers\r\n    (\r\n        (kube_pod_container_status_terminated{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}) == 1\r\n    ) * 40\r\n)",
+          "expr": "min by(container) (\r\n    (\r\n        max_over_time(kube_pod_container_status_terminated{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n        and\r\n        min_over_time(kube_pod_container_status_last_terminated_exitcode{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 0\r\n    ) * 10\r\n    or\r\n    (\r\n        max_over_time(kube_pod_container_status_terminated{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n        and\r\n        min_over_time(kube_pod_container_status_last_terminated_exitcode{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) != 0\r\n    ) * 11\r\n    or\r\n    (\r\n        max_over_time(kube_pod_container_status_waiting{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n        and ignoring(reason)\r\n        max_over_time(kube_pod_container_status_waiting_reason{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\", reason=\"CrashLoopBackOff\"}[$__interval]) == 1\r\n    ) * 20\r\n    or\r\n    (\r\n        max_over_time(kube_pod_container_status_waiting{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n        and ignoring(reason)\r\n        max_over_time(kube_pod_container_status_waiting_reason{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\", reason=~\"ErrImagePull|ImagePullBackOff\"}[$__interval]) == 1\r\n    ) * 21\r\n    or\r\n    (\r\n        max_over_time(kube_pod_container_status_waiting{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n    ) * 29\r\n    or\r\n    (\r\n        min_over_time(kube_pod_container_status_ready{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n        and\r\n        min_over_time(kube_pod_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n    ) * 30\r\n    or\r\n    (\r\n        min_over_time(kube_pod_container_status_ready{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == bool 0\r\n        and\r\n        min_over_time(kube_pod_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n    ) * 31\r\n    or\r\n    # for some reason I don't see kube_pod_container_status_last_terminated_exitcode on some job containers\r\n    (\r\n        (kube_pod_container_status_terminated{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}) == 1\r\n    ) * 40\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -1723,7 +1728,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(container, image) (last_over_time(container_start_time_seconds{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", container=~\"$container\", name=~\"$id\"}[$__interval]))\r\nor on()\r\n(\r\n  vector(0) unless on() last_over_time(container_start_time_seconds{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", container=~\"$container\", name=~\"$id\"}[$__interval])\r\n)",
+          "expr": "max by(container, image) (last_over_time(kube_pod_container_info{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", container=~\"$container\"}[$__interval]))\r\nor on()\r\n(\r\n  vector(0) unless on() last_over_time(kube_pod_container_info{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", container=~\"$container\"}[$__interval])\r\n)",
           "format": "table",
           "instant": false,
           "legendFormat": "__auto",
@@ -6710,5 +6715,5 @@
   "timezone": "browser",
   "title": "Pod / Containers",
   "uid": "mo6wf2ukdv3l72howqnq",
-  "version": 12
+  "version": 13
 }
