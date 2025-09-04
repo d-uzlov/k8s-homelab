@@ -1,0 +1,90 @@
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: alert-cnpg-cluster
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  # https://github.com/cloudnative-pg/cloudnative-pg/blob/main/docs/src/samples/monitoring/prometheusrule.yaml
+  groups:
+  - name: alert-cnpg-cluster
+    rules:
+    - alert: CnpgLongRunningTransaction
+      annotations:
+        description: >-
+          {{ $labels.instance }}:
+          {{ $value | humanizeDuration }}
+        summary: A query is taking longer than 5 minutes.
+      expr: |-
+        cnpg_backends_max_tx_duration_seconds > 300
+      for: 1m
+      labels:
+        severity: warning
+    - alert: CnpgBackendsWaiting
+      annotations:
+        description: >-
+          {{ $labels.instance }}:
+          {{ $value | humanizeDuration }}
+        summary: A backend is waiting for longer than 5 minutes
+      expr: |-
+        cnpg_backends_waiting_total > 300
+      for: 1m
+      labels:
+        severity: warning
+    - alert: CnpgPGDatabase
+      annotations:
+        description: >-
+          {{ $labels.instance }}:
+          {{ $value | humanize }}
+        summary: Over 300,000,000 transactions from frozen XID to the current one
+      expr: |-
+        cnpg_pg_database_xid_age > 300000000
+      for: 1m
+      labels:
+        severity: warning
+    - alert: CnpgPGReplication
+      annotations:
+        description: >-
+          {{ $labels.instance }}:
+          {{ $value | humanizeDuration }}
+        summary: The standby is lagging behind the primary by over 5 minutes
+      expr: |-
+        cnpg_pg_replication_lag > 300
+      for: 1m
+      labels:
+        severity: warning
+    - alert: CnpgLastFailedArchiveTime 
+      annotations:
+        description: >-
+          {{ $labels.instance }}
+        summary: Archiving failed
+      expr: |-
+        (cnpg_pg_stat_archiver_last_failed_time - cnpg_pg_stat_archiver_last_archived_time) > 1
+      for: 1m
+      labels:
+        severity: warning
+    - alert: CnpgDatabaseDeadlockConflicts 
+      annotations:
+        description: >-
+          {{ $labels.instance }}:
+          {{ $value | humanize }}
+        summary: There are over 10 database deadlock conflicts
+      expr: |-
+        cnpg_pg_stat_database_deadlocks > 10
+      for: 1m
+      labels:
+        severity: warning
+    - alert: CnpgReplicaFailingReplication
+      annotations:
+        description: >-
+          {{ $labels.instance }}
+        summary: Replica is failing to replicate
+      expr: |-
+        cnpg_pg_replication_in_recovery > cnpg_pg_replication_is_wal_receiver_up
+      for: 1m
+      labels:
+        severity: warning

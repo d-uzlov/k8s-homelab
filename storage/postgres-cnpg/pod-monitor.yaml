@@ -1,0 +1,34 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: all-cnpg-clusters
+  namespace: pgo-cnpg
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  selector:
+    matchLabels:
+      cnpg.io/podRole: instance
+  namespaceSelector:
+    any: true
+  podMetricsEndpoints:
+  - port: metrics
+    relabelings:
+    - targetLabel: instance
+      action: replace
+      sourceLabels: [ location, __meta_kubernetes_namespace, __meta_kubernetes_pod_name ]
+      separator: /
+    - targetLabel: pg_cluster
+      action: replace
+      sourceLabels: [ __meta_kubernetes_pod_label_cnpg_io_cluster ]
+    - targetLabel: pg_role
+      action: replace
+      # TODO do we really need this label?
+      sourceLabels: [ __meta_kubernetes_pod_label_cnpg_io_instanceRole ]
+    metricRelabelings:
+    - action: drop
+      sourceLabels: [ __name__ ]
+      regex: go_.*
