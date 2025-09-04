@@ -846,7 +846,7 @@
         ]
       },
       "gridPos": {
-        "h": 10,
+        "h": 7,
         "w": 12,
         "x": 0,
         "y": 11
@@ -1062,7 +1062,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(container) (max_over_time(container_start_time_seconds{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__interval])) * 1000",
+          "expr": "max by(container) (max_over_time(container_start_time_seconds{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__interval])) * 1000\r\nor\r\nmax by(container) (max_over_time(kube_pod_container_state_started{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__interval])) * 1000",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -1155,7 +1155,7 @@
         "h": 3,
         "w": 12,
         "x": 0,
-        "y": 21
+        "y": 18
       },
       "id": 84,
       "maxDataPoints": 500,
@@ -1184,12 +1184,138 @@
           "editorMode": "code",
           "expr": "min by(pod) (\r\n(\r\n    (max_over_time(kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Failed\"}[$__interval]) == 1) * 2\r\n    or\r\n    (max_over_time(kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Succeeded\"}[$__interval]) == 1) * 3\r\n    or\r\n    (max_over_time(kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Pending\"}[$__interval]) == 1) * 4\r\n    or\r\n    (\r\n        max_over_time(kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Running\"}[$__interval]) == 1\r\n        and on(namespace, pod, uid)\r\n        min_over_time(kube_pod_status_ready{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", condition=\"true\"}[$__interval]) == 1\r\n    ) * 5\r\n    or\r\n    (\r\n        max_over_time(kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Running\"}[$__interval]) == 1\r\n        and on(namespace, pod, uid)\r\n        min_over_time(kube_pod_status_ready{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", condition=\"true\"}[$__interval]) == 0\r\n    ) * 6\r\n    or\r\n    (max_over_time(kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Unknown\"}[$__interval]) == 1) * 7\r\n    or\r\n    # when no condition above satisfied, use this as a fallback\r\n    (max_over_time(kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Unknown\"}[$__interval]) * 0 + 8)\r\n)\r\n* on(namespace, pod, uid) group_left(node)\r\nkube_pod_info{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}\r\n)",
           "instant": false,
-          "legendFormat": "pod",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "A"
         }
       ],
       "title": "pod status",
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "super-light-green",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 3,
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byValue",
+              "options": {
+                "op": "gte",
+                "reducer": "allIsZero",
+                "value": 0
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 12,
+        "x": 0,
+        "y": 21
+      },
+      "id": 91,
+      "maxDataPoints": 250,
+      "options": {
+        "alignValue": "center",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "max by(pod, uid) (\r\n  last_over_time(kube_pod_info{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\"}[$__interval])\r\n)\r\nor on()\r\n(\r\n  vector(0) unless on() last_over_time(kube_pod_info{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\"}[$__interval])\r\n)",
+          "format": "table",
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "pod uid history",
+      "transformations": [
+        {
+          "id": "groupingToMatrix",
+          "options": {
+            "columnField": "pod",
+            "emptyValue": "null",
+            "rowField": "Time",
+            "valueField": "uid"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Value": true
+            },
+            "includeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "Value": "",
+              "version": ""
+            }
+          }
+        }
+      ],
       "type": "state-timeline"
     },
     {
@@ -1223,60 +1349,43 @@
           "mappings": [
             {
               "options": {
-                "1": {
-                  "color": "dark-green",
+                "10": {
+                  "color": "light-blue",
                   "index": 0,
-                  "text": "OK"
+                  "text": "success"
                 },
-                "2": {
+                "11": {
                   "color": "orange",
+                  "index": 1,
+                  "text": "failed"
+                },
+                "20": {
+                  "color": "dark-red",
                   "index": 2,
-                  "text": "Failed"
+                  "text": "crash loop backoff"
                 },
-                "3": {
-                  "color": "dark-yellow",
+                "29": {
+                  "color": "yellow",
                   "index": 3,
-                  "text": "Pending"
+                  "text": "pending"
                 },
-                "4": {
+                "30": {
                   "color": "green",
                   "index": 4,
-                  "text": "OK"
+                  "text": "ready"
                 },
-                "5": {
-                  "color": "red",
+                "31": {
+                  "color": "light-red",
                   "index": 5,
-                  "text": "Error"
+                  "text": "not ready"
                 },
-                "6": {
-                  "color": "purple",
-                  "index": 6,
-                  "text": "Success"
-                },
-                "7": {
+                "40": {
                   "color": "#808080",
-                  "index": 7,
+                  "index": 6,
                   "text": "Unknown"
-                },
-                "8": {
-                  "color": "super-light-blue",
-                  "index": 8,
-                  "text": "Unknown Exit Code"
                 }
               },
               "type": "value"
-            },
-            {
-              "options": {
-                "from": 0,
-                "result": {
-                  "color": "dark-red",
-                  "index": 1,
-                  "text": "Unknown Error"
-                },
-                "to": 1
-              },
-              "type": "range"
             }
           ],
           "min": 0,
@@ -1290,63 +1399,7 @@
             ]
           }
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "pod"
-            },
-            "properties": [
-              {
-                "id": "links"
-              },
-              {
-                "id": "mappings",
-                "value": [
-                  {
-                    "options": {
-                      "2": {
-                        "color": "dark-red",
-                        "index": 0,
-                        "text": "failed"
-                      },
-                      "3": {
-                        "index": 1,
-                        "text": "succeeded"
-                      },
-                      "4": {
-                        "color": "yellow",
-                        "index": 2,
-                        "text": "pending"
-                      },
-                      "5": {
-                        "color": "green",
-                        "index": 3,
-                        "text": "ready"
-                      },
-                      "6": {
-                        "color": "red",
-                        "index": 4,
-                        "text": "not ready"
-                      },
-                      "7": {
-                        "color": "blue",
-                        "index": 5,
-                        "text": "unknown"
-                      },
-                      "8": {
-                        "color": "purple",
-                        "index": 6,
-                        "text": "unexpected"
-                      }
-                    },
-                    "type": "value"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 7,
@@ -1354,7 +1407,7 @@
         "x": 0,
         "y": 24
       },
-      "id": 83,
+      "id": 90,
       "maxDataPoints": 250,
       "options": {
         "alignValue": "center",
@@ -1379,7 +1432,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "min by(container) (\r\n    (\r\n        kube_pod_container_status_waiting{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n    ) * 3\r\n    or\r\n    (\r\n        min_over_time(kube_pod_container_status_ready{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n        and\r\n        kube_pod_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n    ) * 4\r\n    or\r\n    (\r\n        min_over_time(kube_pod_container_status_ready{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == bool 0\r\n        and\r\n        kube_pod_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n    ) * 5\r\n    or\r\n    (\r\n        (kube_pod_container_status_terminated{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1)\r\n        and\r\n        kube_pod_container_status_last_terminated_exitcode{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 0\r\n    ) * 6\r\n    or\r\n    (\r\n        (kube_pod_container_status_terminated{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1)\r\n        and\r\n        kube_pod_container_status_last_terminated_exitcode{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} != 0\r\n    ) * 2\r\n    or\r\n    # for some reason I don't see kube_pod_container_status_last_terminated_exitcode on some job containers\r\n    (\r\n        (kube_pod_container_status_terminated{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1)\r\n    ) * 8\r\n)",
+          "expr": "min by(container) (\r\n    (\r\n        max_over_time(kube_pod_container_status_terminated{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n        and\r\n        min_over_time(kube_pod_container_status_last_terminated_exitcode{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 0\r\n    ) * 10\r\n    or\r\n    (\r\n        max_over_time(kube_pod_container_status_terminated{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n        and\r\n        min_over_time(kube_pod_container_status_last_terminated_exitcode{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) != 0\r\n    ) * 11\r\n    or\r\n    (\r\n        max_over_time(kube_pod_container_status_waiting{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n        and ignoring(reason)\r\n        max_over_time(kube_pod_container_status_waiting_reason{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\", reason=\"CrashLoopBackOff\"}[$__interval]) == 1\r\n    ) * 20\r\n    or\r\n    (\r\n        max_over_time(kube_pod_container_status_waiting{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n    ) * 29\r\n    or\r\n    (\r\n        min_over_time(kube_pod_container_status_ready{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n        and\r\n        min_over_time(kube_pod_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n    ) * 30\r\n    or\r\n    (\r\n        min_over_time(kube_pod_container_status_ready{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == bool 0\r\n        and\r\n        min_over_time(kube_pod_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n    ) * 31\r\n    or\r\n    # for some reason I don't see kube_pod_container_status_last_terminated_exitcode on some job containers\r\n    (\r\n        (kube_pod_container_status_terminated{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}) == 1\r\n    ) * 40\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -1392,7 +1445,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "group by(container) (\r\n  max_over_time(kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Pending\"}[$__interval]) == 1\r\n  or\r\n  max_over_time(kube_pod_init_container_info{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", restart_policy=\"Always\"}[$__interval])\r\n) * 0\r\n+\r\nmin by(container) (\r\n    (\r\n        kube_pod_init_container_status_waiting{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n        and on(namespace, pod, container)\r\n        kube_pod_init_container_status_waiting_reason{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}\r\n    ) * 3\r\n    or\r\n    (\r\n        kube_pod_init_container_status_waiting{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n    ) * 3\r\n    or\r\n    (\r\n        kube_pod_init_container_status_ready{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n        and\r\n        kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n    ) * 4\r\n    or\r\n    (\r\n        kube_pod_init_container_status_ready{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} != 1\r\n        and\r\n        kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1\r\n    ) * 5\r\n    or\r\n    (\r\n        (kube_pod_init_container_status_terminated{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1)\r\n        and on(namespace, pod, container)\r\n        kube_pod_init_container_status_terminated_reason{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\", reason=\"Completed\"} == 1\r\n    ) * 6\r\n    or\r\n    (\r\n        (kube_pod_init_container_status_terminated{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\"} == 1)\r\n        and on(namespace, pod, container)\r\n        count by(namespace, pod, container) (\r\n            kube_pod_init_container_status_terminated_reason{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\", reason!=\"Completed\"} == 1\r\n        ) > 0\r\n    ) * 2\r\n    or\r\n    (\r\n        (kube_pod_init_container_status_terminated{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1)\r\n    ) * 8\r\n)",
+          "expr": "group by(container) (\r\n  max_over_time(kube_pod_status_phase{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", phase=\"Pending\"}[$__interval]) == 1\r\n  or\r\n  max_over_time(kube_pod_init_container_info{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", restart_policy=\"Always\"}[$__interval])\r\n) * 0\r\n+\r\nmin by(container) (\r\n    (\r\n        max_over_time(kube_pod_init_container_status_terminated{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n        and on(namespace, pod, container)\r\n        max_over_time(kube_pod_init_container_status_terminated_reason{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\", reason=\"Completed\"}[$__interval]) == 1\r\n    ) * 10\r\n    or\r\n    (\r\n        max_over_time(kube_pod_init_container_status_terminated{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\"}[$__interval]) == 1\r\n        and on(namespace, pod, container)\r\n        count by(namespace, pod, container) (\r\n            max_over_time(kube_pod_init_container_status_terminated_reason{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\", reason!=\"Completed\"}[$__interval]) == 1\r\n        ) > 0\r\n    ) * 11\r\n    or\r\n    (\r\n        max_over_time(kube_pod_init_container_status_waiting{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n    ) * 29\r\n    or\r\n    (\r\n        min_over_time(kube_pod_init_container_status_ready{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n        and\r\n        min_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n    ) * 30\r\n    or\r\n    (\r\n        min_over_time(kube_pod_init_container_status_ready{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) != 1\r\n        and\r\n        min_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"}[$__interval]) == 1\r\n    ) * 31\r\n    or\r\n    (\r\n        (kube_pod_init_container_status_terminated{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", uid=~\"$pod_uid\", container=~\"$container\"} == 1)\r\n    ) * 40\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -1471,7 +1524,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "$__to / 1000 - max by(container) (max_over_time(container_start_time_seconds{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__interval]))",
+          "expr": "$__to / 1000 - max by(container) (max_over_time(container_start_time_seconds{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__interval]))\r\nor\r\n$__to / 1000 - max by(container) (max_over_time(kube_pod_container_state_started{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__interval]))",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -1936,7 +1989,7 @@
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
-          "sortBy": "Last *",
+          "sortBy": "Name",
           "sortDesc": true
         },
         "tooltip": {
@@ -3859,7 +3912,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by($split_ids) (\r\n  max_over_time(container_spec_memory_limit_bytes{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__interval])\r\n  or\r\n  max_over_time(container_spec_memory_limit_bytes{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval])\r\n)",
+          "expr": "max by($split_ids) (\r\n  max_over_time(container_spec_memory_limit_bytes{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__interval])\r\n  or\r\n  max_over_time(container_spec_memory_limit_bytes{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval])\r\n) != 0",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}}, name={{name}}",
@@ -4098,7 +4151,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by($split_ids) (\r\n  max_over_time(container_memory_rss{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__interval])\r\n  or\r\n  max_over_time(container_memory_rss{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval])\r\n)\r\n/ on(container) group_left\r\nmax by(container) (max_over_time(kube_pod_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"}[$__interval]))",
+          "expr": "max by($split_ids) (\r\n  max_over_time(container_memory_rss{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__interval])\r\n  or\r\n  max_over_time(container_memory_rss{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval])\r\n)\r\n/ on(container) group_left\r\nmax by(container) (max_over_time(kube_pod_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", resource=\"memory\", container=~\"$container\"}[$__interval]) != 0)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}}, name={{name}}",
@@ -4341,7 +4394,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "(\r\nmax by($split_ids) (\r\n  avg_over_time(container_memory_usage_bytes{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__interval])\r\n  or\r\n  avg_over_time(container_memory_usage_bytes{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval])\r\n)\r\n-\r\nmax by($split_ids) (\r\n  avg_over_time(container_memory_cache{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__interval])\r\n  or\r\n  avg_over_time(container_memory_cache{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval])\r\n)\r\n)\r\n/ on(container) group_left\r\nmax by(container) (max_over_time(container_spec_memory_limit_bytes{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__interval]))",
+          "expr": "(\r\nmax by($split_ids) (\r\n  avg_over_time(container_memory_usage_bytes{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__interval])\r\n  or\r\n  avg_over_time(container_memory_usage_bytes{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval])\r\n)\r\n-\r\nmax by($split_ids) (\r\n  avg_over_time(container_memory_cache{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__interval])\r\n  or\r\n  avg_over_time(container_memory_cache{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval])\r\n)\r\n)\r\n/ (max by($split_ids) (\r\n  max_over_time(container_spec_memory_limit_bytes{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__interval])\r\n  or\r\n  max_over_time(container_spec_memory_limit_bytes{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval])\r\n) != 0)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}}, name={{name}}",
@@ -4580,7 +4633,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by($split_ids) (\r\n  max_over_time(container_memory_working_set_bytes{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__interval])\r\n  or\r\n  max_over_time(container_memory_working_set_bytes{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval])\r\n)\r\n/ on(container) group_left\r\nmax by(container) (max_over_time(container_spec_memory_limit_bytes{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\"}[$__interval]))",
+          "expr": "max by($split_ids) (\r\n  max_over_time(container_memory_working_set_bytes{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__interval])\r\n  or\r\n  max_over_time(container_memory_working_set_bytes{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval])\r\n)\r\n/ (max by($split_ids) (\r\n  max_over_time(container_spec_memory_limit_bytes{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__interval])\r\n  or\r\n  max_over_time(container_spec_memory_limit_bytes{location=\"$location\", namespace=\"$namespace\", pod=\"$pod\", container=~\"$container\", name=~\"$id\"}[$__rate_interval])\r\n) != 0)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{container}}, name={{name}}",
@@ -5960,7 +6013,7 @@
         "y": 146
       },
       "id": 47,
-      "maxDataPoints": 100,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "asTable": true,
@@ -6657,5 +6710,5 @@
   "timezone": "browser",
   "title": "Pod / Containers",
   "uid": "mo6wf2ukdv3l72howqnq",
-  "version": 8
+  "version": 12
 }

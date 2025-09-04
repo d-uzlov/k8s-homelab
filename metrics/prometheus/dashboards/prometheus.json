@@ -602,6 +602,7 @@
           "exemplar": false,
           "expr": "max by(instance, version) (last_over_time(prometheus_build_info{instance=~\"$instance\"}[$__interval]))\r\nor on()\r\n(\r\n  vector(0) unless on() last_over_time(prometheus_build_info{instance=~\"$instance\"}[$__interval])\r\n)",
           "format": "table",
+          "hide": false,
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -1540,6 +1541,19 @@
           "legendFormat": "tsdb 24h delta",
           "range": true,
           "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max(avg_over_time(prometheus_tsdb_storage_blocks_bytes:delta_24h{instance=\"$instance\"}[$__interval]))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "tsdb 24h delta (recoding)",
+          "range": true,
+          "refId": "A"
         }
       ],
       "title": "db delta",
@@ -1839,6 +1853,118 @@
       "gridPos": {
         "h": 5,
         "w": 12,
+        "x": 0,
+        "y": 38
+      },
+      "id": 40,
+      "maxDataPoints": 150,
+      "options": {
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Total",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max(rate(prometheus_tsdb_size_retentions_total{instance=\"$instance\"}[$__rate_interval])) * $__interval_ms / 1000",
+          "instant": false,
+          "legendFormat": "size",
+          "range": true,
+          "refId": "out_of_order"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max(rate(prometheus_tsdb_time_retentions_total{instance=\"$instance\"}[$__rate_interval])) * $__interval_ms / 1000",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "time",
+          "range": true,
+          "refId": "out_of_bounds"
+        }
+      ],
+      "title": "retentions (total)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 12,
         "x": 12,
         "y": 38
       },
@@ -1847,11 +1973,13 @@
       "options": {
         "legend": {
           "calcs": [
-            "mean"
+            "sum"
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Total",
+          "sortDesc": true
         },
         "tooltip": {
           "hideZeros": false,
@@ -1886,7 +2014,7 @@
           "refId": "out_of_bounds"
         }
       ],
-      "title": "dropped out of order samples ",
+      "title": "dropped out of order samples (total)",
       "type": "timeseries"
     },
     {
@@ -1992,7 +2120,7 @@
           "editorMode": "code",
           "expr": "max by(slice) (rate(prometheus_engine_query_duration_seconds_count{instance=\"$instance\"}[$__rate_interval]))",
           "instant": false,
-          "legendFormat": "{{slice}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "A"
         }
@@ -2088,9 +2216,9 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(slice) (prometheus_engine_query_duration_seconds{instance=\"$instance\", quantile=\"0.5\"})",
+          "expr": "max by(slice) (avg_over_time(prometheus_engine_query_duration_seconds{instance=\"$instance\", quantile=\"0.5\"}[$__interval]))",
           "instant": false,
-          "legendFormat": "{{slice}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "A"
         }
@@ -2188,7 +2316,7 @@
           "editorMode": "code",
           "expr": "max by(slice) (rate(prometheus_engine_query_duration_seconds_sum{instance=\"$instance\"}[$__rate_interval]))",
           "instant": false,
-          "legendFormat": "{{slice}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "A"
         }
@@ -2284,9 +2412,9 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(slice) (prometheus_engine_query_duration_seconds{instance=\"$instance\", quantile=\"0.99\"})",
+          "expr": "max by(slice) (avg_over_time(prometheus_engine_query_duration_seconds{instance=\"$instance\", quantile=\"0.99\"}[$__interval]))",
           "instant": false,
-          "legendFormat": "{{slice}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "A"
         }
@@ -2926,5 +3054,5 @@
   "timezone": "browser",
   "title": "prometheus",
   "uid": "cpmesfi4zrumpn9chbrf",
-  "version": 8
+  "version": 1
 }
