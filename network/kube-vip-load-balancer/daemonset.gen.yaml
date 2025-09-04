@@ -3,7 +3,7 @@ kind: DaemonSet
 metadata:
   labels:
     app.kubernetes.io/name: kube-vip-ds
-    app.kubernetes.io/version: v0.8.0
+    app.kubernetes.io/version: v1.0.0
   name: kube-vip-ds
   namespace: kube-system
 spec:
@@ -14,7 +14,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: kube-vip-ds
-        app.kubernetes.io/version: v0.8.0
+        app.kubernetes.io/version: v1.0.0
     spec:
       containers:
       - args:
@@ -28,8 +28,6 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        - name: vip_cidr
-          value: "32"
         - name: dns_mode
           value: first
         - name: svc_enable
@@ -38,10 +36,12 @@ spec:
           value: plndr-svcs-lock
         - name: svc_election
           value: "true"
+        - name: enable_service_security
+          value: "true"
         - name: vip_address
         - name: prometheus_server
           value: :2113
-        image: ghcr.io/kube-vip/kube-vip:v0.8.0
+        image: ghcr.io/kube-vip/kube-vip:v1.0.0
         imagePullPolicy: IfNotPresent
         name: kube-vip
         resources: {}
@@ -50,12 +50,9 @@ spec:
             add:
             - NET_ADMIN
             - NET_RAW
+            drop:
+            - ALL
       hostNetwork: true
       serviceAccountName: kube-vip
   updateStrategy: {}
-status:
-  currentNumberScheduled: 0
-  desiredNumberScheduled: 0
-  numberMisscheduled: 0
-  numberReady: 0
 

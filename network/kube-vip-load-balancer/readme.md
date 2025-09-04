@@ -15,10 +15,11 @@ Required for major config changes or updates.
 You don't need to do it if you are just deploying it.
 
 ```bash
+
 docker run \
   --network host \
   --rm \
-  ghcr.io/kube-vip/kube-vip:v0.8.0 \
+  ghcr.io/kube-vip/kube-vip:v1.0.0 \
   manifest \
   daemonset \
   --log 5 \
@@ -27,8 +28,13 @@ docker run \
   --arp \
   --servicesElection \
   --prometheusHTTPServer :2113 \
+  --onlyAllowTrafficServicePorts \
   | sed -e '/creationTimestamp/d' \
   > ./network/kube-vip-load-balancer/daemonset.gen.yaml
+
+wget https://kube-vip.io/manifests/rbac.yaml -O ./network/kube-vip-load-balancer/rbac.yaml
+wget https://raw.githubusercontent.com/kube-vip/kube-vip-cloud-provider/main/manifest/kube-vip-cloud-controller.yaml -O ./network/kube-vip-load-balancer/kube-vip-cloud-controller.yaml
+
 ```
 
 # Set up your local environment
@@ -36,16 +42,19 @@ docker run \
 Define CIDR or range of IPs that LoadBalancer services are allowed to use:
 
 ```bash
+
 mkdir -p ./network/kube-vip-load-balancer/ccm/cm/env/
  cat << EOF > ./network/kube-vip-load-balancer/ccm/cm/env/ccm.env
 cidr-global=10.0.2.0/24
 range-global=
 EOF
+
 ```
 
 # Deploy
 
 ```bash
+
 kl create ns kube-vip
 
 kl apply -k ./network/kube-vip-load-balancer/
@@ -53,6 +62,7 @@ kl apply -k ./network/kube-vip-load-balancer/ip-pool-config/
 
 kl -n kube-vip get pod -o wide
 kl -n kube-vip logs ds/kube-vip-ds
+
 ```
 
 # Cleanup
