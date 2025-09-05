@@ -17,7 +17,7 @@ mkdir -p ./cloud/nextcloud/postgres-cnpg/backups/env/
 
 cluster_name=
 namespace=nextcloud
-user_name=${cluster_name}.$namespace.$(openssl rand -hex 10)
+user_name=${cluster_name}.$namespace.$(openssl rand -hex 3)
 
  cat << EOF > ./cloud/nextcloud/postgres-cnpg/backups/env/s3-info.env
 user_name=$user_name
@@ -94,11 +94,12 @@ cp ./cloud/nextcloud/postgres-cnpg/backups/scheduled-backup.template.yaml ./clou
 kl apply -f ./cloud/nextcloud/postgres-cnpg/backups/env/scheduled-backup.yaml
 
 kl -n nextcloud get scheduledbackup
+kl -n nextcloud describe scheduledbackup
 kl -n nextcloud get backup
 
 # change primary instance
 kl cnpg -n nextcloud promote pg-nextcloud pg-nextcloud-1
-kl cnpg -n nextcloud promote pg-nextcloud pg-nextcloud-2
+kl cnpg -n nextcloud promote pg-nextcloud pg-nextcloud-3
 
 ```
 
@@ -114,6 +115,9 @@ kl -n nextcloud get pods -o wide -L role -L cnpg.io/jobRole
 kl -n nextcloud get pvc
 
 (. ./cloud/nextcloud/postgres-cnpg/backups/env/s3-info.env; mc tree ${minio_alias}/$bucket_name/pg-backup)
+(. ./cloud/nextcloud/postgres-cnpg/backups/env/s3-info.env; mc ls ${minio_alias}/$bucket_name/pg-backup/pg-nextcloud/wals/)
+(. ./cloud/nextcloud/postgres-cnpg/backups/env/s3-info.env; mc du --depth 2 ${minio_alias}/$bucket_name/pg-backup/pg-nextcloud/wals/)
+(. ./cloud/nextcloud/postgres-cnpg/backups/env/s3-info.env; mc du --depth 2 ${minio_alias}/$bucket_name/pg-backup/pg-nextcloud/base/)
 
  (
   # warning, this will irreversibly remove all backups

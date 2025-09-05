@@ -17,7 +17,7 @@ mkdir -p ./auth/zitadel/postgres-cnpg/backups/env/
 
 cluster_name=trixie
 namespace=zitadel
-user_name=${cluster_name}.$namespace.$(openssl rand -hex 10)
+user_name=${cluster_name}.$namespace.$(openssl rand -hex 3)
 
  cat << EOF > ./auth/zitadel/postgres-cnpg/backups/env/s3-info.env
 user_name=$user_name
