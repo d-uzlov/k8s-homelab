@@ -31,6 +31,7 @@ ansible-inventory --graph test-etcd
 
 # run on a single host when upgrading
 # don't forget to consult upgrade guide before running this
+ansible-playbook ./k8s-core/docs/etcd/etcd-playbook.yaml
 ansible-playbook ./k8s-core/docs/etcd/etcd-playbook.yaml --limit "k8s1-etcd3.k8s.lan"
 
 ```
@@ -94,30 +95,23 @@ Adjust node names and addresses appropriately.
 
 ```bash
 
-alias etcdctl="ETCDCTL_API=3 /usr/local/bin/etcdctl \
-  --endpoints=https://$node2:2379,https://$node3:2379 \
-  --cacert=./k8s-core/docs/etcd/env/ca.pem \
-  --cert=./k8s-core/docs/etcd/env/etcd-client.pem \
-  --key=./k8s-core/docs/etcd/env/etcd-client-key.pem"
-
-etcdctl member list -w table
+etcdctl_cluster member list -w table
 # replace ID with your value
-etcdctl member remove b5a71f0b96b3191f
+etcdctl_cluster member remove b5a71f0b96b3191f
+etcdctl_cluster member list -w table
 
-# on the existing member node
-systemctl stop etcd3
-rm -rf /var/lib/etcd/
-nano /etc/systemd/system/etcd3.service
-# change --initial-cluster-state=new to --initial-cluster-state=existing
+# Choose any name.
+# Here I reuse the old name because I re-init the old node.
+# Set correct URL for your new node.
+etcdctl_cluster member add k8s1-etcd1.k8s.lan --peer-urls=https://k8s1-etcd1.k8s.lan:2380
 
-# for a new node, init it as usual and then run steps above
-
-# choose any name, here I just reuse the old name
-# set correct URL for your new node
-etcdctl member add k8s1-etcd1.k8s.lan --peer-urls=https://k8s1-etcd1.k8s.lan:2380
-
-# on the member node
-systemctl restart etcd3
+# change --initial-cluster-state=new to --initial-cluster-state=existing in docker-compose.yml
+# On an existing failed node you also need to remove the old data folder.
+cd /opt/etcd/
+sudo docker compose down
+sudo nano ./docker-compose.yml
+sudo rm -r /opt/etcd/data/
+sudo docker compose up
 
 ```
 
