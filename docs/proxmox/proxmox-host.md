@@ -299,18 +299,31 @@ References:
 Add second device permanently, or temporarily, or migrate to a different boot device.
 
 ```bash
+
+# check if you are using UEFI
+sudo proxmox-boot-tool status
+
 # find what disk you are currently using
 zpool status rpool
 # example: nvme-eui.34333630524469720025384300000001-part3
 # strip the -part3 and use it as disk id
 
+ll /dev/disk/by-id/*
+
 old_disk=
 # example: old_disk=/dev/disk/by-id/nvme-eui.34333630524469720025384300000001
 new_disk=
-# example: old_disk=/dev/disk/by-id/ata-PLEXTOR_PX-128M5S_P02313102798
+# example: new_disk=/dev/disk/by-id/ata-PLEXTOR_PX-128M5S_P02313102798
 
 # show partition table
 sudo sgdisk --print $old_disk
+sudo sgdisk --print $new_disk
+
+# make sure that you select correct disk (compare PARTUUID with efibootmgr output)
+lsblk -o +PARTUUID,PTUUID,UUID $old_disk $new_disk
+efibootmgr --verbose
+# you may wish to delete old boot entries
+sudo efibootmgr --verbose --delete-bootnum --bootnum 0001
 
 # === When disks are similar ===
 # works only if disks have the same size and sector size
@@ -325,32 +338,47 @@ sudo sgdisk --print $new_disk
 # - if the new disk is bigger, partitions will be too small
 # - sgdisk works with sectors, so when going from 512b to 4096b, partition sizes will change 8x
 sudo sgdisk --zap-all $new_disk
+
+# get sector size
+sudo blockdev --getss $old_disk
+sudo blockdev --getss $new_disk
 # For proxmox 8.0 you need 1 GB boot partition, the rest is usually used for ZFS root
 # - for 512b sectors
-sudo sgdisk --new 1:2048:2099199 --new 2:2099200 $new_disk
+sudo sgdisk --new 1:2048:4095 --new 2:4096:2099199 --new 3:2099200 $new_disk
 # - for 4k sectors
-sudo sgdisk --new 1:256:262399 --new 2:262400 $new_disk
+sudo sgdisk --new 1:256:511 --new 2:512:262399 --new 3:262400 $new_disk
 
 sudo sgdisk --print $new_disk
 
+ll /dev/disk/by-id/*
+
 # init boot partition
-sudo pve-efiboot-tool format $new_disk-part1 --force
-sudo pve-efiboot-tool init $new_disk-part1
+sudo pve-efiboot-tool format $new_disk-part2 --force
+sudo pve-efiboot-tool init $new_disk-part2
+
+sudo proxmox-boot-tool clean
+
+cat /etc/kernel/proxmox-boot-uuids
+efibootmgr --verbose
+
+zpool status rpool
 
 # === ZFS mirror ===
 # in case you want to add the disk permanently
 # disk needs to be the same size or bigger
 sudo zpool set autoexpand=off rpool
-sudo zpool attach rpool $old_disk-part3 $new_disk-part2
+sudo zpool set failmode=continue rpool
+sudo zpool attach rpool $old_disk-part3 $new_disk-part3
 
 # === Copy zfs to a temporary device ===
-sudo zpool create rpool2 $new_disk-part2
+sudo zpool create rpool2 $new_disk-part3
 # prepare data for transfer
 sudo zfs snapshot -r rpool@send1
 # overwrite the whole new pool with data from the old disk
 sudo zfs send -R rpool@send1 | sudo zfs receive rpool2 -F
 
 sudo pve-efiboot-tool refresh
+
 ```
 
 References:
