@@ -9,10 +9,6 @@
 
 ```bash
 
-ansible-galaxy role install geerlingguy.docker
-ansible-galaxy collection install community.docker
-
-# make sure that you have "smartctl_exporter" group is present in ansible inventory
 ansible-inventory --graph smartctl_exporter
 
 ansible-playbook ./metrics/smart/external/playbook.yaml

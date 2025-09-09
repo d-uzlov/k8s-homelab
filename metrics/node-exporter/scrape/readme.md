@@ -9,10 +9,6 @@
 
 ```bash
 
-ansible-galaxy role install geerlingguy.docker
-ansible-galaxy collection install community.docker
-
-# make sure that you have "node_exporter" group is present in ansible inventory
 ansible-inventory --graph node_exporter
 
 ansible-playbook ./metrics/node-exporter/scrape/playbook.yaml

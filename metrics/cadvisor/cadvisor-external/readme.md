@@ -14,12 +14,9 @@ References:
 
 ```bash
 
-ansible-galaxy role install geerlingguy.docker
-ansible-galaxy collection install community.docker
-
-# make sure that you have "cadvisor" group is present in ansible inventory
 ansible-inventory --graph cadvisor
 
+# start/restart of cadvisor container can be a bit slow, give it a minute
 ansible-playbook ./metrics/cadvisor/cadvisor-external/playbook.yaml
 
 ```

@@ -12,10 +12,6 @@ References:
 
 ```bash
 
-ansible-galaxy role install geerlingguy.docker
-ansible-galaxy collection install community.docker
-
-# make sure that you have "node_textfile" group is present in ansible inventory
 ansible-inventory --graph node_textfile
 
 ansible-playbook ./metrics/node-exporter/textfile-exporters/playbook.yaml

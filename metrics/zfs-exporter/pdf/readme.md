@@ -24,10 +24,6 @@ tar zxv -f ./metrics/zfs-exporter/pdf/env/zfs_exporter-${zfs_exporter_version}.l
 
 ```bash
 
-ansible-galaxy role install geerlingguy.docker
-ansible-galaxy collection install community.docker
-
-# make sure that you have "zfs" group is present in ansible inventory
 ansible-inventory --graph zfs
 
 ansible-playbook ./metrics/zfs-exporter/pdf/playbook.yaml
