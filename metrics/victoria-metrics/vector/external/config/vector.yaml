@@ -1,0 +1,85 @@
+---
+data_dir: /vector-data-dir
+# data_dir: /tmp
+schema:
+  log_namespace: true
+api:
+  enabled: true
+  address: 0.0.0.0:8686
+  playground: true
+sources:
+  internal_metrics:
+    type: internal_metrics
+  journald_units:
+    type: journald
+    journal_directory: /var/log/journal
+    # exclude_units:
+    include_units:
+    - cloud-init.service # boot info
+    - containerd.service # container info
+    - docker.service # docker logs are mostly useless but when using journald log driver they contain container logs
+    - qemu-guest-agent.service # signals from host
+    - ssh.service
+    - systemd-logind.service # some useful timings on power-up / login / power-down
+    - systemd-networkd.service
+    - zfs-import-cache.service
+    - zfs-import-scan.service
+    - nvmet.service
+    # proxmox services
+    - corosync.service
+    - pveproxy.service # pveproxy logs can be useful to debug login issues
+    - pvestatd.service
+    - qmeventd.service
+  dmesg:
+    type: journald
+    # https://github.com/vectordotdev/vector/issues/6508#issuecomment-1994264453
+    include_matches:
+      SYSLOG_FACILITY: [ "0" ]
+  # docker:
+  #   # note that old logs will not be collected:
+  #   #   https://github.com/vectordotdev/vector/issues/7358
+  #   type: docker_logs
+  #   exclude_containers:
+  #   - logs-vector
+transforms:
+  generic_parser:
+    type: remap
+    drop_on_abort: true
+    inputs:
+    - journald_units
+    - dmesg
+    # - docker
+    files:
+    - /etc/vector/basic.vrl
+    - /etc/vector/attach-metadata.vrl
+    - /etc/vector/parse-log.vrl
+    - /etc/vector/extract-message.vrl
+    - /etc/vector/extract-level.vrl
+sinks:
+  exporter:
+    type: prometheus_exporter
+    address: 0.0.0.0:9090
+    inputs: [ internal_metrics ]
+  # my_sink_id:
+  #   type: console
+  #   inputs:
+  #   - generic_parser
+  #   encoding:
+  #     codec: json
+  vlogs_0:
+    type: elasticsearch
+    inputs: [ generic_parser ]
+    endpoints:
+    - https://vlogs-private.meoe.cloudns.be/insert/elasticsearch
+    mode: bulk
+    api_version: v8
+    compression: zstd
+    healthcheck:
+      enabled: false
+    request:
+      headers:
+        VL-Time-Field: metadata.timestamp
+        VL-Stream-Fields: metadata.stream,metadata.source_type,metadata.journald_type,metadata.hostname,metadata.journald.machine_id,metadata.journald.systemd_unit,metadata.docker.container_id,metadata.docker.container_name
+        VL-Msg-Field: message
+        AccountID: "0"
+        ProjectID: "0"

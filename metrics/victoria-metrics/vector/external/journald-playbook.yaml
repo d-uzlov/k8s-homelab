@@ -1,0 +1,37 @@
+---
+- name: setup vector log gathering in docker
+  hosts: journald
+  become: true
+  tasks:
+  - name: create /usr/lib/systemd/journald.conf.d/
+    ansible.builtin.file:
+      path: /usr/lib/systemd/journald.conf.d/
+      state: directory
+      owner: root
+      mode: "0755"
+
+  - name: copy retention.conf
+    ansible.builtin.copy:
+      src: ./retention.conf
+      dest: /usr/lib/systemd/journald.conf.d/retention.conf
+      owner: root
+      mode: "0644"
+    notify:
+    - restart_journald_service
+
+  - name: journalctl --vacuum-time=14d
+    # dispose of old logs to ensure
+    # that we don't have gigabytes of old logs
+    ansible.builtin.command: journalctl --vacuum-time=14d
+    changed_when: false
+
+  handlers:
+
+  - name: restart systemd-journald.service
+    listen:
+    - restart_journald_service
+    ansible.builtin.systemd_service:
+      name: systemd-journald.service
+      enabled: yes
+      state: restarted
+      daemon_reload: no

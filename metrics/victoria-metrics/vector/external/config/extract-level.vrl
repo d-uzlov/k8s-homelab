@@ -1,0 +1,114 @@
+
+.level_raw = downcase(string(.log.level) ?? "")
+.level = 
+  if .level_raw == "" {
+    ""
+  } else if .level_raw == "t" || .level_raw == "trc" || .level_raw == "trac" || .level_raw == "trace" {
+    "trace"
+  } else if .level_raw == "v" || .level_raw == "vrb" || .level_raw == "verb" || .level_raw == "verbose" {
+    "verbose"
+  } else if .level_raw == "d" || .level_raw == "dbg" || .level_raw == "debu" || .level_raw == "debug" {
+    "debug"
+  } else if .level_raw == "i" || .level_raw == "inf" || .level_raw == "info" {
+    "info"
+  } else if .level_raw == "w" || .level_raw == "wrn" || .level_raw == "warn" || .level_raw == "warning" {
+    "warning"
+  } else if .level_raw == "e" || .level_raw == "err" || .level_raw == "erro" || .level_raw == "error" {
+    "error"
+  } else if .level_raw == "c" || .level_raw == "crt" || .level_raw == "crit" || .level_raw == "critical" {
+    "critical"
+  } else if .level_raw == "f" || .level_raw == "ftl" || .level_raw == "fata" || .level_raw == "fatal" {
+    "fatal"
+  } else {
+    ""
+  }
+if .level != "" {
+  .level_type = "verb"
+}
+
+if .level == "" && exists(.log.v) {
+  .empty = {}
+  verbosity, err = int(.log.v)
+  if err == null {
+    .empty = {}
+    .level_type = "verbosity"
+    .level_raw = .log.v
+    # this is tuned to OpenKruise log levels
+    if false {
+      null
+    } else if verbosity < 0 {
+      .level = "warn"
+    } else if verbosity == 0 {
+      .level = "info"
+    } else if verbosity <= 4 {
+      .level = "debug"
+    } else if verbosity <= 8 {
+      .level = "verbose"
+    } else {
+      .level = "trace"
+    }
+  }
+}
+
+status_code = 0
+if exists(.log.response_code) {
+  .empty = {}
+  status_code = int(.log.response_code) ?? 0
+} else if exists(.log.status) {
+  .empty = {}
+  status_code = int(.log.status) ?? 0
+}
+
+if .level == "" && status_code != 0 {
+  .empty = {}
+  .level_type = "status_code"
+  .level_raw = "status_code=" + to_string(status_code)
+  if status_code >= 500 {
+    .level = "error"
+  } else if status_code >= 400 {
+    .level = "warning"
+  } else {
+    .level = "info"
+  }
+}
+
+if .level == "" && .metadata.source_type == "journald" && exists(.metadata.journald.priority) {
+  .empty = {}
+  priority, err = to_int(.metadata.journald.priority)
+  if err == null {
+    .empty = {}
+    .level_type = "journald_priority"
+    .level_raw = .metadata.journald.priority
+    # this is tuned to OpenKruise log levels
+    if false {
+      null
+    } else if priority == 0 {
+      .level = "emergency"
+    } else if priority == 1 {
+      .level = "alert"
+    } else if priority == 2 {
+      .level = "critical"
+    } else if priority == 3 {
+      .level = "error"
+    } else if priority == 4 {
+      .level = "warning"
+    } else if priority == 5 {
+      .level = "notice"
+    } else if priority == 6 {
+      .level = "info"
+    } else {
+      .level = "debug"
+    }
+  }
+}
+
+if .level == "" {
+  .empty = {}
+  .level = .level_raw
+  .level_type = "unknown"
+}
+# sometimes .level_raw is empty
+if .level == "" {
+  .empty = {}
+  .level = "unknown"
+}

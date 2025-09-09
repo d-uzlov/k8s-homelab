@@ -1,0 +1,34 @@
+---
+- name: setup vector log gathering in docker
+  hosts: logs_vector_in_docker
+  become: true
+  tasks:
+
+  - name: create /opt/vector.dev/
+    ansible.builtin.file:
+      path: /opt/vector.dev/
+      state: directory
+      owner: root
+      mode: "0755"
+
+  - name: copy docker-compose.yml
+    ansible.builtin.copy:
+      src: ./docker-compose.yaml
+      dest: /opt/vector.dev/docker-compose.yml
+      owner: root
+      mode: "0644"
+
+  - name: copy config
+    ansible.builtin.copy:
+      src: ./config/
+      dest: /opt/vector.dev/config/
+      owner: root
+      mode: "0644"
+
+  - name: start docker compose
+    community.docker.docker_compose_v2:
+      project_src: /opt/vector.dev/
+      state: present
+      wait: true
+      wait_timeout: 300
+      remove_orphans: true

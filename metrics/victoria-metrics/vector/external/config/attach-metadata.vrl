@@ -1,0 +1,112 @@
+
+# empty={} is used as a workaround
+# for an outdated syntax highlight plugin
+# which doesn't support if{} blocks
+# .empty = {}
+
+.metadata = {}
+.metadata.source_type = %vector.source_type
+.metadata.ingest_timestamp = %vector.ingest_timestamp
+# default timestamp, in case entry doesn't have a timestamp
+.metadata.timestamp = .metadata.ingest_timestamp
+
+if (%vector.source_type == "docker_logs") {
+  .empty = {}
+  .metadata._docker = %docker_logs
+  .metadata._docker.labels = null
+
+  .metadata.timestamp = .metadata._docker.timestamp
+  .metadata.hostname = .metadata._docker.host
+} else if (%vector.source_type == "journald" && exists(%journald.metadata.CONTAINER_ID)) {
+  .empty = {}
+  # handle docker when journald driver is used
+
+  if %journald.metadata.CONTAINER_NAME == "logs-vector" {
+    # prevent loop logging messages from own container
+    abort
+  }
+
+  .metadata.timestamp = %journald.timestamp
+
+  .metadata.journald_type = "docker"
+  .metadata.journald = {}
+  .metadata.journald.ingest_timestamp = %journald.timestamp
+  .metadata.hostname =                  %journald.metadata._HOSTNAME
+  .metadata.journald.machine_id =       %journald.metadata._MACHINE_ID
+  .metadata.journald.priority =         %journald.metadata.PRIORITY
+
+  .metadata.docker = {}
+  .metadata.docker.container_id =       %journald.metadata.CONTAINER_ID_FULL
+  .metadata.docker.container_name =     %journald.metadata.CONTAINER_NAME
+  .metadata.docker.container_image =    %journald.metadata.IMAGE_NAME
+  .metadata.docker.partial_message =    %journald.metadata.CONTAINER_PARTIAL_MESSAGE
+
+  if %journald.metadata.PRIORITY == "6" {
+    .metadata.stream = "stdout"
+  } else {
+    .metadata.stream = "stderr"
+  }
+} else if %vector.source_type == "journald" {
+  .empty = {}
+  
+  .metadata.timestamp = %journald.timestamp
+
+  .metadata.journald = {}
+  .metadata.journald.ingest_timestamp = %journald.timestamp
+  .metadata.hostname =                  %journald.metadata._HOSTNAME
+  .metadata.journald.machine_id =       %journald.metadata._MACHINE_ID
+  .metadata.journald.boot_id =          %journald.metadata._BOOT_ID
+  .metadata.journald.priority =         %journald.metadata.PRIORITY
+  .metadata.journald.systemd_unit =     %journald.metadata._SYSTEMD_UNIT
+  .metadata.journald.cgroup =           %journald.metadata._SYSTEMD_CGROUP
+  .metadata.journald_type =             %journald.metadata._TRANSPORT
+
+  if %journald.metadata._TRANSPORT == "journal" {
+    .empty = {}
+    if is_string(%journald.metadata.CODE_FILE) {
+      .empty = {}
+      .metadata.journald.program_source = 
+        string(%journald.metadata.CODE_FILE) ?? "unknown_file" +
+        ":" + string(%journald.metadata.CODE_LINE) ?? "---" +
+        "(" + (string(%journald.metadata.CODE_FUNC) ?? "unknown_func") + ")"
+    }
+
+    .metadata.journald.custom_fields = {}
+    for_each(object(%journald.metadata) ?? {}) -> |key, value| {
+      .empty = {}
+      if (starts_with(key, "_") || 
+      starts_with(key, "CODE_") || 
+      starts_with(key, "SYSLOG_") || 
+      key == "PRIORITY" || 
+      key == "TID"
+      ) {
+        .empty = {}
+      } else {
+        .empty = {}
+        .metadata.journald.custom_fields = set!(value: .metadata.journald.custom_fields, path: [ key ], data: value)
+      }
+    }
+  } else if (%journald.metadata._TRANSPORT == "kernel" ||
+    %journald.metadata._TRANSPORT == "syslog" ||
+    %journald.metadata._TRANSPORT == "stdout"
+  ) {
+    .empty = {}
+    # no additional fields here
+  } else {
+    .empty = {}
+    .metadata.journald_type_unknown = true
+    # if _TRANSPORT has unexpected value,
+    # attach all metadata, there might be something valuable in there
+    .metadata._journald = %journald
+  }
+} else if %vector.source_type == "kubernetes_logs" {
+  .empty = {}
+  .metadata._k8s = %kubernetes_logs
+  .metadata._k8s.container_image_id = null
+  .metadata._k8s.namespace_labels = null
+  .metadata._k8s.pod_annotations = null
+  .metadata._k8s.pod_labels = null
+  .metadata._k8s.pod_ip = null
+  .metadata._k8s.pod_ips = null
+  # .file = null
+}

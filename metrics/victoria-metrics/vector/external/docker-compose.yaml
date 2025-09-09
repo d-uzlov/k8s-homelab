@@ -1,0 +1,38 @@
+---
+# when changed, don't forget to also change name check in attach-metadata.vrl
+name: logs-vector
+services:
+  vector:
+    container_name: '${COMPOSE_PROJECT_NAME}'
+    # we need this to attach proper hostname for docker_logs source
+    # hostname: "${host}"
+    # journalctl is only present in debian images
+    image: docker.io/timberio/vector:0.49.0-debian
+    user: root
+    restart: always
+    command:
+    - --watch-config
+    - --config-dir=/etc/vector/
+    ports:
+    - 8686:8686
+    - 9090:9090
+    # environment:
+    # - VECTOR_LOG=debug
+    # - VECTOR_CONFIG=/etc/vector/vector.yaml
+    # - DOCKER_HOST=unix:///var/run/docker.sock
+    # - HOST_HOSTNAME=${HOSTNAME}
+    volumes:
+    - ./config/:/etc/vector/:ro
+    - ./data:/vector-data-dir:rw
+    - /var/log/journal:/var/log/journal:ro # persistent logs
+    - /run/log/journal:/run/log/journal:ro # runtime logs in tmpfs
+    - /etc/machine-id:/etc/machine-id:ro
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       memory: 15M
+    #       cpus: 0.01
+    #     limits:
+    #       memory: 50M
+    #       cpus: 4
