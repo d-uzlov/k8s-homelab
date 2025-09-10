@@ -11,31 +11,27 @@ spec:
   groups:
   - name: alert-general
     rules:
+    - alert: InstanceDown
+      annotations:
+        description: >-
+          {{ $labels.instance }}
+        summary: Instance is down
+      expr: |-
+        max by(instance, location) (up{ok_to_be_missing!="true"}) == 0
+      for: 0m
+      labels:
+        severity: warning
     - alert: TargetDown
       annotations:
         description: >-
           job {{ $labels.job }}:
           {{ $labels.instance }}
-        summary: Target is unreachable
+        summary: Target is down
       expr: |-
         up{ok_to_be_missing!="true"} == 0
-      for: 10m
-      labels:
-        severity: warning
-    - alert: ServiceTargetsDown
-      annotations:
-        description: >-
-          job {{ $labels.job }}:
-          {{ $labels.namespace }}/{{ $labels.service }}:
-          {{ $value | humanizePercentage }}
-        summary: More than 10% of targets are unreachable
-      expr: |-
-        (
-          count by (location, job, namespace, service) (up{namespace!="", service!=""} == 0)
-          /
-          count by (location, job, namespace, service) (up{namespace!="", service!=""})
-        ) > 0
-      for: 10m
+        unless on(instance)
+        max by(instance) (up{ok_to_be_missing!="true"}) == 0
+      for: 0m
       labels:
         severity: warning
     - alert: Watchdog
@@ -62,7 +58,7 @@ spec:
           '
         runbook_url: https://runbooks.prometheus-operator.dev/runbooks/general/infoinhibitor
         summary: Info-level alert inhibition.
-      expr: ALERTS{severity = "info"} == 1 unless on (namespace) ALERTS{alertname != "InfoInhibitor", severity =~ "warning|critical", alertstate="firing"} == 1
+      expr: ALERTS{severity="info", namespace!=""} == 1 unless on (namespace) ALERTS{alertname != "InfoInhibitor", severity =~ "warning|critical", alertstate="firing"} == 1
       labels:
         severity: none
     - alert: MismatchedInstanceLocation
@@ -93,16 +89,19 @@ spec:
           {{ $value | humanizePercentage }}
         summary: Scrape duration is too close to timeout
       expr: |
-        # when scrape times out (duration/timeout == 1), we should instead receive "target down" alert
         (
           # trigger on peak above 90%
-          (scrape_duration_seconds / scrape_timeout_seconds) > 0.9 < 1
+          (scrape_duration_seconds / scrape_timeout_seconds) > 0.9
+          unless
+          (up == 0)
         ) or (
           # trigger on average above 80%
-          avg_over_time(scrape_duration_seconds[5m]) / scrape_timeout_seconds > 0.8 < 1
+          avg_over_time(scrape_duration_seconds[5m]) / scrape_timeout_seconds > 0.8
+          unless
+          (up == 0)
         ) or (
           # hysteresis: don't disable alert unless average falls below 0.6
-          avg_over_time(scrape_duration_seconds[5m]) / scrape_timeout_seconds > 0.6 < 1
+          avg_over_time(scrape_duration_seconds[5m]) / scrape_timeout_seconds > 0.6
           and ignoring(alertname, alertstate, severity)
           ALERTS{alertname="ScrapeCloseToTimeout", alertstate="firing"}
         )
