@@ -61,7 +61,4 @@ ansible-inventory --graph
 ansible nas -m ping
 ansible generic -m ping
 
-ansible-galaxy role install geerlingguy.docker
-ansible-galaxy collection install community.docker
-
 ```

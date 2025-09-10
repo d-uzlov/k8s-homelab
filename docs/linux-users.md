@@ -48,4 +48,6 @@ echo "$username ALL=(ALL:ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/$username
 # when already running as user
 echo "$USER ALL=(ALL:ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/$USER
 
+sudo usermod -a -G systemd-journal $USER
+
 ```

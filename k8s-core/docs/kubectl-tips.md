@@ -227,6 +227,10 @@ Checkpointing has limitations:
 - It operates on containers. Pod context is lost (emptydir content, ip address, etc)
 - It can fail when hostPath mounts are used, at least with some types (`unsupported id 10547`)
 
+References:
+- https://github.com/kubernetes/enhancements/issues/5091
+- https://github.com/kubernetes/enhancements/pull/5092
+
 # API fairness
 
 - Official docs: https://kubernetes.io/docs/concepts/cluster-administration/flow-control/
