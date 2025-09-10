@@ -23,14 +23,26 @@ spec:
       expr: |-
         sum without(pod, container, name, image) (
           max without(id) (
-            container_memory_usage_bytes{namespace!="", pod!="", container!=""}
+            # we need last_over_time here because else we will also count stale data from up to 5 minutes in the past
+            last_over_time(container_memory_usage_bytes{namespace!="", pod!="", container!=""}[20s])
           )
         )
     - record: node_namespace:container_memory_rss
       expr: |-
         sum without(pod, container, name, image) (
           max without(id) (
-            container_memory_rss{namespace!="", pod!="", container!=""}
+            # we need last_over_time here because else we will also count stale data from up to 5 minutes in the past
+            last_over_time(container_memory_rss{namespace!="", pod!="", container!=""}[20s])
+          )
+        )
+    - record: node_namespace:container_memory_rss_kernel
+      expr: |-
+        sum without(pod, container, name, image) (
+          max without(id) (
+            # we need last_over_time here because else we will also count stale data from up to 5 minutes in the past
+            last_over_time(container_memory_usage_bytes{namespace!="", pod!="", container!=""}[20s])
+            -
+            last_over_time(container_memory_cache{namespace!="", pod!="", container!=""}[20s])
           )
         )
     - record: node_namespace:container_network_receive_bytes:irate
