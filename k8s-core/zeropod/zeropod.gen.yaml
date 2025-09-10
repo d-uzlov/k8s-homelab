@@ -26,6 +26,18 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
+  name: zeropod:event-creator
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
   name: zeropod:migration-manager
 rules:
   - apiGroups:
@@ -94,6 +106,19 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
+  name: zeropod:event-creator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: zeropod:event-creator
+subjects:
+  - kind: ServiceAccount
+    name: zeropod-node
+    namespace: zeropod-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
   name: zeropod:migration-manager
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -149,7 +174,9 @@ spec:
       containers:
         - args:
             - -metrics-addr=:8080
+            - -in-place-scaling=true
             - -status-labels=true
+            - -status-events=true
           command:
             - /zeropod-manager
           env:
@@ -161,7 +188,7 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
-          image: ghcr.io/ctrox/zeropod-manager:v0.6.3
+          image: ghcr.io/ctrox/zeropod-manager:v0.7.0
           imagePullPolicy: IfNotPresent
           name: manager
           ports:
@@ -191,8 +218,8 @@ spec:
               name: tls
       initContainers:
         - args:
-            - -criu-image=ghcr.io/ctrox/zeropod-criu:8d5cef546a035c4dda3a1be28ff1202c3b1b4c72
-          image: ghcr.io/ctrox/zeropod-installer:v0.6.3
+            - -criu-image=ghcr.io/ctrox/zeropod-criu:v4.1
+          image: ghcr.io/ctrox/zeropod-installer:v0.7.0
           imagePullPolicy: IfNotPresent
           name: installer
           volumeMounts:

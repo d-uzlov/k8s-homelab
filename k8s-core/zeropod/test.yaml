@@ -13,7 +13,7 @@ spec:
       labels:
         app: nginx-zeropod
       annotations:
-        zeropod.ctrox.dev/scaledown-duration: 60s
+        zeropod.ctrox.dev/scaledown-duration: 10s
         zeropod.ctrox.dev/migrate: nginx
     spec:
       runtimeClassName: zeropod
@@ -21,4 +21,36 @@ spec:
       - name: nginx
         image: nginx
         ports:
-        - containerPort: 80
+        - name: http
+          containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-zeropod
+  namespace: zeropod-test
+spec:
+  selector:
+    app: nginx-zeropod
+  ports:
+  - port: 80
+    targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alpine
+  namespace: zeropod-test
+spec:
+  selector:
+    matchLabels:
+      app: alpine
+  template:
+    metadata:
+      labels:
+        app: alpine
+    spec:
+      containers:
+      - name: alpine
+        image: alpine
+        command: ["/bin/sh", "-c", "trap : TERM INT; sleep infinity & wait"]

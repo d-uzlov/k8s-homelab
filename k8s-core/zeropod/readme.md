@@ -2,14 +2,15 @@
 # zeropod
 
 References:
-- 
+- https://github.com/ctrox/zeropod
+- https://github.com/kubernetes/enhancements/issues/5091#issuecomment-2973784622
 
 # Update
 
 ```bash
 
 mkdir -p ./k8s-core/zeropod/env/
-kl kustomize https://github.com/ctrox/zeropod/config/production?ref=v0.6.3 > ./k8s-core/zeropod/env/zeropod.gen.yaml
+kl kustomize https://github.com/ctrox/zeropod/config/production?ref=main > ./k8s-core/zeropod/env/zeropod.gen.yaml
 yq 'select(.kind == "CustomResourceDefinition")' ./k8s-core/zeropod/env/zeropod.gen.yaml > ./k8s-core/zeropod/crd.gen.yaml
 yq 'select(.kind != "CustomResourceDefinition")' -i ./k8s-core/zeropod/env/zeropod.gen.yaml
 cp ./k8s-core/zeropod/env/zeropod.gen.yaml ./k8s-core/zeropod/zeropod.gen.yaml
@@ -51,6 +52,15 @@ kl label ns zeropod-test pod-security.kubernetes.io/enforce=baseline --overwrite
 
 kl apply -f ./k8s-core/zeropod/test.yaml
 kl -n zeropod-test get pod -o wide
+kl -n zeropod-test describe pod -l app=nginx-zeropod
+kl -n zeropod-test get events --sort-by='.lastTimestamp'
+
+kl -n zeropod-test exec deployments/alpine -- apk add curl
+
+while true; do
+kl -n zeropod-test exec deployments/alpine -- curl -sS http://nginx-zeropod.zeropod-test
+sleep 1
+done
 
 kl delete -f ./k8s-core/zeropod/test.yaml
 kl delete ns zeropod-test
