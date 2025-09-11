@@ -2605,7 +2605,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "palette-classic-by-name"
           },
           "custom": {
             "axisBorderShow": false,
@@ -2688,7 +2688,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "min by (instance, zpool, vdev, path) (\r\nlabel_replace(\r\n  (\r\n    max_over_time(zfs_vdev_trim_processed_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])\r\n    /\r\n    (max_over_time(zfs_vdev_trim_estimated_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)\r\n  )\r\n  and\r\n  (min_over_time(zfs_vdev_trim_state{instance=~\"$instance\", zpool=~\"$pool\", path!=\"\"}[$__rate_interval]) < 4)\r\n, \"path\", \"$1\", \"path\", \".*/([^/]*)\")\r\n)",
+          "expr": "min by (instance, zpool, vdev, path) (\r\nlabel_replace(\r\n  (\r\n    max_over_time(zfs_vdev_trim_processed_bytes{instance=~\"$instance\", zpool=~\"$pool\", path=~\"$disk\"}[$__interval])\r\n    /\r\n    (max_over_time(zfs_vdev_trim_estimated_bytes{instance=~\"$instance\", zpool=~\"$pool\", path=~\"$disk\"}[$__interval]) != 0)\r\n  )\r\n  and\r\n  (min_over_time(zfs_vdev_trim_state{instance=~\"$instance\", zpool=~\"$pool\", path=~\"$disk\"}[$__rate_interval]) < 4)\r\n, \"path\", \"$1\", \"path\", \".*/([^/]*)\")\r\n)",
           "hide": false,
           "legendFormat": "{{zpool}}/{{vdev}}/{{path}}",
           "range": true,
@@ -2973,8 +2973,6 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "axisSoftMax": 1,
-            "axisSoftMin": 0,
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
@@ -3023,7 +3021,7 @@
         "y": 103
       },
       "id": 29,
-      "maxDataPoints": 100,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": [
@@ -3048,21 +3046,9 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(instance, zpool, vdev, path) (label_replace(\r\n  max_over_time(zfs_vdev_trim_estimated_remaining_seconds{instance=~\"$instance\", zpool=~\"$pool\", path=~\"$disk\"}[$__interval]) != inf\r\n, \"path\", \"$1\", \"path\", \".*/([^/]*)\")\r\n)",
+          "expr": "avg by(instance, zpool, vdev, path) (label_replace(\r\n  clamp_min(\r\n    # We are evaluating at the end of an interval but we need to calculate average\r\n    # so we need to add a correction to the time() function.\r\n    time() - $__interval_ms / 1000 / 2 - (max_over_time(zfs_vdev_trim_action_time{instance=~\"$instance\", zpool=~\"$pool\", path=~\"$disk\"}[$__interval]) != 0) > 0\r\n    or\r\n    # for the very first and last points (time-interval/2 < zfs_vdev_trim_action_time), we need to handle it as a special case\r\n    timestamp(zfs_vdev_trim_action_time{instance=~\"$instance\", zpool=~\"$pool\", path=~\"$disk\"})\r\n  - (max_over_time(zfs_vdev_trim_action_time{instance=~\"$instance\", zpool=~\"$pool\", path=~\"$disk\"}[$__interval])!= 0)\r\n  , 0\r\n  )\r\n  *\r\n  (\r\n    (avg_over_time(zfs_vdev_trim_estimated_bytes{instance=~\"$instance\", zpool=~\"$pool\", path=~\"$disk\"}[$__interval]) != 0)\r\n    /\r\n    (avg_over_time(zfs_vdev_trim_processed_bytes{instance=~\"$instance\", zpool=~\"$pool\", path=~\"$disk\"}[$__interval]) != 0)\r\n    - 1\r\n  )\r\n  and\r\n  (min_over_time(zfs_vdev_trim_state{instance=~\"$instance\", zpool=~\"$pool\", path=~\"$disk\"}[$__interval]) <= 1)\r\n, \"path\", \"$1\", \"path\", \".*/([^/]*)\")\r\n)",
           "hide": false,
           "legendFormat": "{{zpool}}/{{vdev}}/{{path}}",
-          "range": true,
-          "refId": "record"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${prometheus_datasource}"
-          },
-          "editorMode": "code",
-          "expr": "avg by(instance, zpool, vdev, path) (label_replace(\r\n  (time() - (max_over_time(zfs_vdev_trim_action_time{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0))\r\n  *\r\n  (1 / (\r\n    (avg_over_time(zfs_vdev_trim_processed_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)\r\n    /\r\n    (avg_over_time(zfs_vdev_trim_estimated_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)\r\n  ) - 1)\r\n  and\r\n  (min_over_time(zfs_vdev_trim_state{instance=~\"$instance\", zpool=~\"$pool\", path!=\"\"}[$__rate_interval]) < 4)\r\n, \"path\", \"$1\", \"path\", \".*/([^/]*)\")\r\n)",
-          "hide": true,
-          "legendFormat": "{{zpool}}/{{vdev}}/{{path}} (calc)",
           "range": true,
           "refId": "calc"
         }
@@ -3200,5 +3186,5 @@
   "timezone": "browser",
   "title": "ZFS vdev disks",
   "uid": "AweIwvnk4slsds",
-  "version": 16
+  "version": 18
 }
