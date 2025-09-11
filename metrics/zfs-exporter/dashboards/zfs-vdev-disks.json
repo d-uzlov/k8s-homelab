@@ -2688,21 +2688,9 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "min by (instance, zpool, vdev, path) (\r\nlabel_replace(\r\n  avg_over_time(zfs_vdev_trim_processed_ratio{instance=~\"$instance\", zpool=~\"$pool\", path=~\"$disk\"}[$__interval])\r\n, \"path\", \"$1\", \"path\", \".*/([^/]*)\")\r\n)",
+          "expr": "min by (instance, zpool, vdev, path) (\r\nlabel_replace(\r\n  (\r\n    max_over_time(zfs_vdev_trim_processed_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])\r\n    /\r\n    (max_over_time(zfs_vdev_trim_estimated_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)\r\n  )\r\n  and\r\n  (min_over_time(zfs_vdev_trim_state{instance=~\"$instance\", zpool=~\"$pool\", path!=\"\"}[$__rate_interval]) < 4)\r\n, \"path\", \"$1\", \"path\", \".*/([^/]*)\")\r\n)",
           "hide": false,
           "legendFormat": "{{zpool}}/{{vdev}}/{{path}}",
-          "range": true,
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${prometheus_datasource}"
-          },
-          "editorMode": "code",
-          "expr": "min by (instance, zpool, vdev, path) (\r\nlabel_replace(\r\n  avg_over_time(zfs_vdev_trim_processed_bytes{instance=~\"$instance\", zpool=~\"$pool\", path=~\"$disk\"}[$__interval])\r\n  /\r\n  (avg_over_time(zfs_vdev_trim_estimated_bytes{instance=~\"$instance\", zpool=~\"$pool\", path=~\"$disk\"}[$__interval]) != 0)\r\n, \"path\", \"$1\", \"path\", \".*/([^/]*)\")\r\n)",
-          "hide": true,
-          "legendFormat": "{{zpool}}/{{vdev}}/{{path}} (calc)",
           "range": true,
           "refId": "B"
         }
@@ -3060,7 +3048,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(instance, zpool, vdev, path) (label_replace(\r\n  max_over_time(zfs_vdev_trim_estimated_remaining_seconds{instance=~\"$instance\", zpool=~\"$pool\", path=~\"$disk\"}[$__interval])\r\n, \"path\", \"$1\", \"path\", \".*/([^/]*)\")\r\n)",
+          "expr": "max by(instance, zpool, vdev, path) (label_replace(\r\n  max_over_time(zfs_vdev_trim_estimated_remaining_seconds{instance=~\"$instance\", zpool=~\"$pool\", path=~\"$disk\"}[$__interval]) != inf\r\n, \"path\", \"$1\", \"path\", \".*/([^/]*)\")\r\n)",
           "hide": false,
           "legendFormat": "{{zpool}}/{{vdev}}/{{path}}",
           "range": true,
@@ -3072,11 +3060,11 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(instance, zpool, vdev, path) (label_replace(\r\n    max by(instance, zpool, vdev, path) (time() - (max_over_time(zfs_vdev_trim_action_time{instance=~\"$instance\", zpool=~\"$pool\", path=~\"$disk\"}[$__interval]) != 0))\r\n    *\r\n    (1 / min by (instance, zpool, vdev, path) (min_over_time(zfs_vdev_trim_active_processed_ratio{instance=~\"$instance\", zpool=~\"$pool\", path=~\"$disk\"}[$__interval])) - 1)\r\n, \"path\", \"$1\", \"path\", \".*/([^/]*)\")\r\n)",
+          "expr": "avg by(instance, zpool, vdev, path) (label_replace(\r\n  (time() - (max_over_time(zfs_vdev_trim_action_time{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0))\r\n  *\r\n  (1 / (\r\n    (avg_over_time(zfs_vdev_trim_processed_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)\r\n    /\r\n    (avg_over_time(zfs_vdev_trim_estimated_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)\r\n  ) - 1)\r\n  and\r\n  (min_over_time(zfs_vdev_trim_state{instance=~\"$instance\", zpool=~\"$pool\", path!=\"\"}[$__rate_interval]) < 4)\r\n, \"path\", \"$1\", \"path\", \".*/([^/]*)\")\r\n)",
           "hide": true,
           "legendFormat": "{{zpool}}/{{vdev}}/{{path}} (calc)",
           "range": true,
-          "refId": "A"
+          "refId": "calc"
         }
       ],
       "title": "trim: estimated remaining time",
@@ -3212,5 +3200,5 @@
   "timezone": "browser",
   "title": "ZFS vdev disks",
   "uid": "AweIwvnk4slsds",
-  "version": 14
+  "version": 16
 }
