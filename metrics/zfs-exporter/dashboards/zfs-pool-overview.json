@@ -970,7 +970,7 @@
         "y": 17
       },
       "id": 324,
-      "maxDataPoints": 100,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": [
@@ -1150,7 +1150,7 @@
         "y": 25
       },
       "id": 364,
-      "maxDataPoints": 200,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": [
@@ -1185,6 +1185,30 @@
       ],
       "title": "fragmentation %",
       "type": "timeseries"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 7,
+        "y": 33
+      },
+      "id": 337,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "zfs_exporter for vdevs doesn't have info about l2arc devices,\r\nso vdev read/write speed includes only main disks.",
+        "mode": "markdown"
+      },
+      "title": "Notes",
+      "type": "text"
     },
     {
       "datasource": {
@@ -1252,7 +1276,7 @@
         "y": 33
       },
       "id": 251,
-      "maxDataPoints": 200,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": [
@@ -1367,7 +1391,7 @@
         "y": 42
       },
       "id": 363,
-      "maxDataPoints": 200,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": [
@@ -1501,7 +1525,7 @@
           "refId": "A"
         }
       ],
-      "title": "Pool Growth",
+      "title": "usage delta",
       "type": "timeseries"
     },
     {
@@ -1569,6 +1593,7 @@
         "y": 51
       },
       "id": 325,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": [
@@ -1669,6 +1694,7 @@
         "y": 51
       },
       "id": 329,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": [
@@ -1782,7 +1808,7 @@
         "y": 61
       },
       "id": 16,
-      "maxDataPoints": 100,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": [
@@ -1814,7 +1840,7 @@
           "refId": "read"
         }
       ],
-      "title": "Read (logical)",
+      "title": "read rate (logical)",
       "type": "timeseries"
     },
     {
@@ -1882,7 +1908,7 @@
         "y": 61
       },
       "id": 331,
-      "maxDataPoints": 100,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": [
@@ -1913,7 +1939,7 @@
           "refId": "write"
         }
       ],
-      "title": "Write (logical)",
+      "title": "write rate (logical)",
       "type": "timeseries"
     },
     {
@@ -1981,7 +2007,7 @@
         "y": 69
       },
       "id": 326,
-      "maxDataPoints": 100,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": [
@@ -2013,7 +2039,7 @@
           "refId": "read"
         }
       ],
-      "title": "Read (vdev)",
+      "title": "read rate (vdev)",
       "type": "timeseries"
     },
     {
@@ -2081,7 +2107,7 @@
         "y": 69
       },
       "id": 333,
-      "maxDataPoints": 100,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": [
@@ -2112,7 +2138,7 @@
           "refId": "write"
         }
       ],
-      "title": "Write (vdev)",
+      "title": "write rate (vdev)",
       "type": "timeseries"
     },
     {
@@ -2120,6 +2146,7 @@
         "type": "prometheus",
         "uid": "${prometheus_datasource}"
       },
+      "description": "empty when scrub is not running; draid is not supported",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2131,6 +2158,7 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisSoftMin": 0,
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
@@ -2159,7 +2187,6 @@
             }
           },
           "mappings": [],
-          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -2179,8 +2206,8 @@
         "x": 0,
         "y": 77
       },
-      "id": 362,
-      "maxDataPoints": 100,
+      "id": 378,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": [
@@ -2205,39 +2232,318 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(instance, zpool) (\r\n  # single-device coefficient: 1\r\n  rate(zfs_vdev_bytes{instance=~\"$instance\", zpool=~\"$pool\", type=\"read\", path!=\"\", vdev=~\"disk-.*\"}[$__rate_interval])\r\n  or\r\n  # mirror coefficient: 1/count\r\n  (\r\n    rate(zfs_vdev_bytes{instance=~\"$instance\", zpool=~\"$pool\", type=\"read\", path=\"\", vdev=~\"mirror-.*\"}[$__rate_interval])\r\n    / on(instance, zpool, vdev) group_left()\r\n    avg_over_time(zfs_vdev_children{instance=~\"$instance\", zpool=~\"$pool\", vdev=~\"mirror-.*\"}[$__rate_interval])\r\n  )\r\n  or\r\n  # raid-z coefficient: (count-1)/count\r\n  (\r\n    rate(zfs_vdev_bytes{instance=~\"$instance\", zpool=~\"$pool\", type=\"read\", path=\"\", vdev=~\"raidz-.*\"}[$__rate_interval])\r\n    * on(instance, zpool, vdev) group_left()\r\n    (1 - 1 / avg_over_time(zfs_vdev_children{instance=~\"$instance\", zpool=~\"$pool\", vdev=~\"raidz-.*\"}[$__rate_interval]))\r\n  )\r\n  or\r\n  # raid-z2 coefficient: (count-2)/count\r\n  (\r\n    rate(zfs_vdev_bytes{instance=~\"$instance\", zpool=~\"$pool\", type=\"read\", path=\"\", vdev=~\"raidz2-.*\"}[$__rate_interval])\r\n    * on(instance, zpool, vdev) group_left()\r\n    (1 - 2 / avg_over_time(zfs_vdev_children{instance=~\"$instance\", zpool=~\"$pool\", vdev=~\"raidz2-.*\"}[$__rate_interval]))\r\n  )\r\n  or\r\n  # raid-z3 coefficient: (count-3)/count\r\n  (\r\n    rate(zfs_vdev_bytes{instance=~\"$instance\", zpool=~\"$pool\", type=\"read\", path=\"\", vdev=~\"raidz2-.*\"}[$__rate_interval])\r\n    * on(instance, zpool, vdev) group_left()\r\n    (1 - 3 / avg_over_time(zfs_vdev_children{instance=~\"$instance\", zpool=~\"$pool\", vdev=~\"raidz2-.*\"}[$__rate_interval]))\r\n  )\r\n)\r\n-\r\nsum by (instance, zpool) (rate(zfs_pool_scan_issued_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__rate_interval]))",
+          "expr": "sum by(instance, zpool) (\r\n  # single-device coefficient: 1\r\n  rate(zfs_vdev_bytes{instance=~\"$instance\", zpool=~\"$pool\", type=\"read\", path!=\"\", vdev=~\"disk-.*\"}[$__rate_interval])\r\n  or\r\n  # mirror coefficient: 1/count\r\n  (\r\n    rate(zfs_vdev_bytes{instance=~\"$instance\", zpool=~\"$pool\", type=\"read\", path=\"\", vdev=~\"mirror-.*\"}[$__rate_interval])\r\n    / on(instance, zpool, vdev) group_left()\r\n    avg by(instance, zpool, vdev) (avg_over_time(zfs_vdev_children{instance=~\"$instance\", zpool=~\"$pool\", vdev=~\"mirror-.*\"}[$__rate_interval]))\r\n  )\r\n  or\r\n  # raid-z coefficient: (count-1)/count\r\n  (\r\n    rate(zfs_vdev_bytes{instance=~\"$instance\", zpool=~\"$pool\", type=\"read\", path=\"\", vdev=~\"raidz-.*\"}[$__rate_interval])\r\n    * on(instance, zpool, vdev) group_left()\r\n    avg by(instance, zpool, vdev) (1 - 1 / avg_over_time(zfs_vdev_children{instance=~\"$instance\", zpool=~\"$pool\", vdev=~\"raidz-.*\"}[$__rate_interval]))\r\n  )\r\n  or\r\n  # raid-z2 coefficient: (count-2)/count\r\n  (\r\n    rate(zfs_vdev_bytes{instance=~\"$instance\", zpool=~\"$pool\", type=\"read\", path=\"\", vdev=~\"raidz2-.*\"}[$__rate_interval])\r\n    * on(instance, zpool, vdev) group_left()\r\n    avg by(instance, zpool, vdev) (1 - 2 / avg_over_time(zfs_vdev_children{instance=~\"$instance\", zpool=~\"$pool\", vdev=~\"raidz2-.*\"}[$__rate_interval]))\r\n  )\r\n  or\r\n  # raid-z3 coefficient: (count-3)/count\r\n  (\r\n    rate(zfs_vdev_bytes{instance=~\"$instance\", zpool=~\"$pool\", type=\"read\", path=\"\", vdev=~\"raidz2-.*\"}[$__rate_interval])\r\n    * on(instance, zpool, vdev) group_left()\r\n    avg by(instance, zpool, vdev) (1 - 3 / avg_over_time(zfs_vdev_children{instance=~\"$instance\", zpool=~\"$pool\", vdev=~\"raidz2-.*\"}[$__rate_interval]))\r\n  )\r\n)\r\n-\r\nsum by (instance, zpool) (rate(zfs_pool_scan_issued_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__rate_interval]))\r\nand\r\n(\r\n  min by(instance, zpool) (min_over_time(zfs_pool_scan_func{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])) == 1\r\n  and\r\n  min by(instance, zpool) (min_over_time(zfs_pool_scan_state{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])) == 1\r\n)",
           "hide": false,
           "legendFormat": "{{instance}}/{{zpool}}",
           "range": true,
           "refId": "read"
         }
       ],
-      "title": "Read (vdev) without scan (approximation, divided by parity coefficient)",
+      "title": "scrub: approx read rate (vdev) divided by parity coefficient, without scrub",
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
+      "description": "draid is not supported",
       "fieldConfig": {
-        "defaults": {},
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMin": 0,
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 5,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": 120000,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "binBps"
+        },
         "overrides": []
       },
       "gridPos": {
-        "h": 5,
-        "w": 4,
-        "x": 13,
+        "h": 8,
+        "w": 12,
+        "x": 12,
         "y": 77
       },
-      "id": 337,
+      "id": 362,
+      "maxDataPoints": 150,
       "options": {
-        "code": {
-          "language": "plaintext",
-          "showLineNumbers": false,
-          "showMiniMap": false
+        "legend": {
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
         },
-        "content": "zfs_exporter for vdevs doesn't have info about l2arc devices,\r\nso vdev read/write speed includes only main disks.",
-        "mode": "markdown"
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
-      "title": "Notes",
-      "type": "text"
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(instance, zpool) (\r\n  # single-device coefficient: 1\r\n  rate(zfs_vdev_bytes{instance=~\"$instance\", zpool=~\"$pool\", type=\"write\", path!=\"\", vdev=~\"disk-.*\"}[$__rate_interval])\r\n  or\r\n  # mirror coefficient: 1/count\r\n  (\r\n    rate(zfs_vdev_bytes{instance=~\"$instance\", zpool=~\"$pool\", type=\"write\", path=\"\", vdev=~\"mirror-.*\"}[$__rate_interval])\r\n    / on(instance, zpool, vdev) group_left()\r\n    avg by(instance, zpool, vdev) (avg_over_time(zfs_vdev_children{instance=~\"$instance\", zpool=~\"$pool\", vdev=~\"mirror-.*\"}[$__rate_interval]))\r\n  )\r\n  or\r\n  # raid-z coefficient: (count-1)/count\r\n  (\r\n    rate(zfs_vdev_bytes{instance=~\"$instance\", zpool=~\"$pool\", type=\"write\", path=\"\", vdev=~\"raidz-.*\"}[$__rate_interval])\r\n    * on(instance, zpool, vdev) group_left()\r\n    avg by(instance, zpool, vdev) (1 - 1 / avg_over_time(zfs_vdev_children{instance=~\"$instance\", zpool=~\"$pool\", vdev=~\"raidz-.*\"}[$__rate_interval]))\r\n  )\r\n  or\r\n  # raid-z2 coefficient: (count-2)/count\r\n  (\r\n    rate(zfs_vdev_bytes{instance=~\"$instance\", zpool=~\"$pool\", type=\"write\", path=\"\", vdev=~\"raidz2-.*\"}[$__rate_interval])\r\n    * on(instance, zpool, vdev) group_left()\r\n    avg by(instance, zpool, vdev) (1 - 2 / avg_over_time(zfs_vdev_children{instance=~\"$instance\", zpool=~\"$pool\", vdev=~\"raidz2-.*\"}[$__rate_interval]))\r\n  )\r\n  or\r\n  # raid-z3 coefficient: (count-3)/count\r\n  (\r\n    rate(zfs_vdev_bytes{instance=~\"$instance\", zpool=~\"$pool\", type=\"write\", path=\"\", vdev=~\"raidz2-.*\"}[$__rate_interval])\r\n    * on(instance, zpool, vdev) group_left()\r\n    avg by(instance, zpool, vdev) (1 - 3 / avg_over_time(zfs_vdev_children{instance=~\"$instance\", zpool=~\"$pool\", vdev=~\"raidz2-.*\"}[$__rate_interval]))\r\n  )\r\n)",
+          "hide": false,
+          "legendFormat": "{{instance}}/{{zpool}}",
+          "range": true,
+          "refId": "read"
+        }
+      ],
+      "title": "approx write rate (vdev) divided by parity coefficient",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
+      "description": "empty when resilver is not running; draid is not supported",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMin": 0,
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 5,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": 120000,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "binBps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 85
+      },
+      "id": 379,
+      "maxDataPoints": 150,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(instance, zpool) (\r\n  rate(zfs_vdev_bytes{instance=~\"$instance\", zpool=~\"$pool\", type=\"read\", vdev=\"root\"}[$__rate_interval])\r\n)\r\n-\r\nsum by (instance, zpool) (rate(zfs_pool_scan_issued_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__rate_interval]))\r\nand\r\n(\r\n  min by(instance, zpool) (min_over_time(zfs_pool_scan_func{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])) == 2\r\n  and\r\n  min by(instance, zpool) (min_over_time(zfs_pool_scan_state{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])) == 1\r\n)",
+          "hide": false,
+          "legendFormat": "{{instance}}/{{zpool}}",
+          "range": true,
+          "refId": "read"
+        }
+      ],
+      "title": "resilver: approx read rate (vdev), without resilver",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
+      "description": "empty when resilver is not running; draid is not supported",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMin": 0,
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 5,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": 120000,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "binBps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 85
+      },
+      "id": 380,
+      "maxDataPoints": 150,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(instance, zpool) (\r\n  rate(zfs_vdev_bytes{instance=~\"$instance\", zpool=~\"$pool\", type=\"write\", vdev=\"root\"}[$__rate_interval])\r\n)\r\n-\r\nsum by (instance, zpool) (rate(zfs_pool_scan_issued_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__rate_interval]))\r\nand\r\n(\r\n  min by(instance, zpool) (min_over_time(zfs_pool_scan_func{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])) == 2\r\n  and\r\n  min by(instance, zpool) (min_over_time(zfs_pool_scan_state{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])) == 1\r\n)",
+          "hide": false,
+          "legendFormat": "{{instance}}/{{zpool}}",
+          "range": true,
+          "refId": "read"
+        }
+      ],
+      "title": "resilver: approx write rate (vdev), without resilver",
+      "type": "timeseries"
     },
     {
       "collapsed": false,
@@ -2245,7 +2551,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 85
+        "y": 93
       },
       "id": 334,
       "panels": [],
@@ -2314,10 +2620,10 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 86
+        "y": 94
       },
       "id": 323,
-      "maxDataPoints": 100,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": [
@@ -2350,7 +2656,7 @@
           "refId": "read"
         }
       ],
-      "title": "Read IOPS (logical)",
+      "title": "read IOPS (logical)",
       "type": "timeseries"
     },
     {
@@ -2415,10 +2721,10 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 86
+        "y": 94
       },
       "id": 335,
-      "maxDataPoints": 100,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": [
@@ -2449,7 +2755,7 @@
           "refId": "write"
         }
       ],
-      "title": "Write IOPS (logical)",
+      "title": "write IOPS (logical)",
       "type": "timeseries"
     },
     {
@@ -2514,10 +2820,10 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 94
+        "y": 102
       },
       "id": 327,
-      "maxDataPoints": 100,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": [
@@ -2550,7 +2856,7 @@
           "refId": "read"
         }
       ],
-      "title": "Read IOPS (vdev)",
+      "title": "read IOPS (vdev)",
       "type": "timeseries"
     },
     {
@@ -2615,10 +2921,10 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 94
+        "y": 102
       },
       "id": 336,
-      "maxDataPoints": 100,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": [
@@ -2649,7 +2955,7 @@
           "refId": "write"
         }
       ],
-      "title": "Write IOPS (vdev)",
+      "title": "write IOPS (vdev)",
       "type": "timeseries"
     },
     {
@@ -2658,7 +2964,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 102
+        "y": 110
       },
       "id": 357,
       "panels": [],
@@ -2771,7 +3077,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 103
+        "y": 111
       },
       "id": 356,
       "maxDataPoints": 250,
@@ -2828,7 +3134,7 @@
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
-            "fillOpacity": 0,
+            "fillOpacity": 3,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -2870,10 +3176,10 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 103
+        "y": 111
       },
       "id": 359,
-      "maxDataPoints": 100,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": [
@@ -2948,7 +3254,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 111
+        "y": 119
       },
       "id": 355,
       "maxDataPoints": 250,
@@ -3049,10 +3355,10 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 111
+        "y": 119
       },
       "id": 353,
-      "maxDataPoints": 100,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": [
@@ -3077,11 +3383,11 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "min by (instance, zpool) (\r\navg_over_time(zfs_vdev_trim_processed_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])\r\n/\r\n(max_over_time(zfs_vdev_trim_estimated_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)\r\n)",
+          "expr": "min by (instance, zpool) (\r\n  (\r\n    max_over_time(zfs_vdev_trim_processed_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])\r\n    /\r\n    (max_over_time(zfs_vdev_trim_estimated_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)\r\n  )\r\n  and\r\n  (\r\n    (min_over_time(zfs_vdev_trim_state{instance=~\"$instance\", zpool=~\"$pool\", path!=\"\"}[$__rate_interval]) == 1)\r\n    or\r\n    (max_over_time(zfs_vdev_trim_state{instance=~\"$instance\", zpool=~\"$pool\", path!=\"\"}[$__rate_interval]) != 4)\r\n  )\r\n)",
           "hide": false,
           "legendFormat": "{{instance}}/{{zpool}}",
           "range": true,
-          "refId": "A"
+          "refId": "B"
         }
       ],
       "title": "trim: completed %",
@@ -3128,7 +3434,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 119
+        "y": 127
       },
       "id": 375,
       "maxDataPoints": 250,
@@ -3171,7 +3477,7 @@
         "type": "prometheus",
         "uid": "${prometheus_datasource}"
       },
-      "description": "Empty, unless trim ran in time range. \"calc\" is a very rough approximation, it is only correct when you zoom in. If you have a special recording rule, you will also have \"record\" value which is always correct.",
+      "description": "Empty, unless trim ran in time range",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -3230,7 +3536,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 119
+        "y": 127
       },
       "id": 360,
       "maxDataPoints": 150,
@@ -3258,7 +3564,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(instance, zpool) (max_over_time(zfs_vdev_trim_estimated_remaining_seconds{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]))",
+          "expr": "max by(instance, zpool) (max_over_time(zfs_vdev_trim_estimated_remaining_seconds{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != Inf)",
           "hide": false,
           "legendFormat": "{{instance}}/{{zpool}}",
           "range": true,
@@ -3270,11 +3576,11 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(instance, zpool) (time() - (max_over_time(zfs_vdev_trim_action_time{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0))\r\n*\r\n(1 / min by (instance, zpool) (min_over_time(zfs_vdev_trim_active_processed_ratio{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])) - 1)",
+          "expr": "# \"calc\" is a very rough approximation, it is only correct when you zoom in\r\n# \"record\" value is always correct\r\nmax by(instance, zpool) (\r\n  (time() - (max_over_time(zfs_vdev_trim_action_time{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0))\r\n  *\r\n  (1 / (\r\n    (avg_over_time(zfs_vdev_trim_processed_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)\r\n    /\r\n    (avg_over_time(zfs_vdev_trim_estimated_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)\r\n  ) - 1)\r\n  and\r\n  (\r\n    (min_over_time(zfs_vdev_trim_state{instance=~\"$instance\", zpool=~\"$pool\", path!=\"\"}[$__rate_interval]) == 1)\r\n    or\r\n    (max_over_time(zfs_vdev_trim_state{instance=~\"$instance\", zpool=~\"$pool\", path!=\"\"}[$__rate_interval]) != 4)\r\n  )\r\n)",
           "hide": true,
           "legendFormat": "{{instance}}/{{zpool}} (calc)",
           "range": true,
-          "refId": "calc"
+          "refId": "A"
         }
       ],
       "title": "trim: estimated remaining time",
@@ -3321,7 +3627,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 127
+        "y": 135
       },
       "id": 358,
       "maxDataPoints": 250,
@@ -3420,10 +3726,10 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 127
+        "y": 135
       },
       "id": 371,
-      "maxDataPoints": 100,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": [
@@ -3464,11 +3770,11 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 135
+        "y": 143
       },
-      "id": 340,
+      "id": 377,
       "panels": [],
-      "title": "scan: scrub/resilver",
+      "title": "scan state (scrub/resilver)",
       "type": "row"
     },
     {
@@ -3480,7 +3786,7 @@
         "h": 5,
         "w": 7,
         "x": 8,
-        "y": 136
+        "y": 144
       },
       "id": 349,
       "options": {
@@ -3520,32 +3826,23 @@
           "mappings": [
             {
               "options": {
-                "0": {
-                  "color": "red",
-                  "index": 0,
-                  "text": "never run"
-                },
-                "1": {
-                  "index": 1,
-                  "text": "scanning"
-                },
                 "2": {
                   "color": "green",
-                  "index": 2,
+                  "index": 0,
                   "text": "finished"
                 },
                 "3": {
                   "color": "orange",
-                  "index": 3,
+                  "index": 1,
                   "text": "cancelled"
                 },
                 "11": {
                   "color": "purple",
-                  "index": 4,
+                  "index": 3,
                   "text": "scrub"
                 },
                 "12": {
-                  "color": "yellow",
+                  "color": "semi-dark-yellow",
                   "index": 5,
                   "text": "resilver"
                 },
@@ -3553,6 +3850,16 @@
                   "color": "orange",
                   "index": 6,
                   "text": "rebuild ??"
+                },
+                "16": {
+                  "color": "light-purple",
+                  "index": 2,
+                  "text": "scrub (examine)"
+                },
+                "17": {
+                  "color": "light-yellow",
+                  "index": 4,
+                  "text": "resilver (examine)"
                 },
                 "21": {
                   "color": "blue",
@@ -3584,7 +3891,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 141
+        "y": 149
       },
       "id": 346,
       "maxDataPoints": 250,
@@ -3612,7 +3919,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "# scan is finished or cancelled\r\nmin by(instance, zpool) (min_over_time(zfs_pool_scan_state{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) > 1)\r\nor\r\n# scan is running but paused\r\n(group by(instance, zpool) (max_over_time(zfs_pool_scan_scrub_pause{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0) + 20)\r\nor\r\n# scan is running: show function (scrub/resilver)\r\n(\r\n  min by(instance, zpool) (min_over_time(zfs_pool_scan_func{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])) + 10\r\n  and\r\n  min by(instance, zpool) (min_over_time(zfs_pool_scan_state{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])) == 1\r\n)\r\nor\r\n# pool was never scanned\r\nmin by(instance, zpool) (min_over_time(zfs_pool_scan_state{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) + 30)",
+          "expr": "# scan is finished or cancelled, show as is\r\nmin by(instance, zpool) (min_over_time(zfs_pool_scan_state{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) > 1)\r\nor\r\n# scan is running but paused\r\n(group by(instance, zpool) (max_over_time(zfs_pool_scan_scrub_pause{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0) + 20)\r\nor\r\n# scan is running: show function (scrub/resilver)\r\n(\r\n  (\r\n    min by(instance, zpool) (min_over_time(zfs_pool_scan_func{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])) + 10\r\n    +\r\n    # distinguish examine and issue stages\r\n    max by(instance, zpool) (max_over_time(zfs_pool_scan_pass_examined_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != bool 0) * 5\r\n  )\r\n  and\r\n  min by(instance, zpool) (min_over_time(zfs_pool_scan_state{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])) == 1\r\n)\r\nor\r\n# pool was never scanned\r\nmin by(instance, zpool) ((min_over_time(zfs_pool_scan_state{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) == 0) + 30)\r\nor\r\n# catch all unexpected values\r\nmin by(instance, zpool) (min_over_time(zfs_pool_scan_state{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) + 40)",
           "instant": false,
           "legendFormat": "{{instance}}/{{zpool}}",
           "range": true,
@@ -3663,7 +3970,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 141
+        "y": 149
       },
       "id": 344,
       "maxDataPoints": 250,
@@ -3741,7 +4048,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 150
+        "y": 158
       },
       "id": 372,
       "maxDataPoints": 250,
@@ -3769,14 +4076,14 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(instance, zpool) (\r\n(max_over_time(zfs_pool_scan_end_time_seconds{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)\r\n-\r\nmax_over_time(zfs_pool_scan_start_time_seconds{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])\r\n) > 0",
+          "expr": "max by(instance, zpool) (\r\n  (\r\n    max_over_time(zfs_pool_scan_end_time_seconds{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])\r\n    > on(instance, zpool) group_left()\r\n    max by(instance, zpool) (max_over_time(zfs_pool_load_time_seconds{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]))\r\n  )\r\n  -\r\n  max_over_time(zfs_pool_scan_start_time_seconds{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])\r\n) >= 0\r\nor\r\nmax by(instance, zpool) (\r\n  max by(instance, zpool) (max_over_time(zfs_pool_scan_pass_start_seconds{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]))\r\n  -\r\n  max by(instance, zpool) (\r\n    # zfs_pool_load_time_seconds has different labels, so this max works as union\r\n    max_over_time(zfs_pool_load_time_seconds{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])\r\n    or\r\n    max_over_time(zfs_pool_scan_start_time_seconds{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])\r\n  )\r\n)",
           "instant": false,
           "legendFormat": "{{instance}}/{{zpool}}",
           "range": true,
           "refId": "created"
         }
       ],
-      "title": "last scan duration",
+      "title": "last scan stage duration",
       "type": "state-timeline"
     },
     {
@@ -3820,7 +4127,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 150
+        "y": 158
       },
       "id": 345,
       "maxDataPoints": 250,
@@ -3899,7 +4206,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 159
+        "y": 167
       },
       "id": 342,
       "maxDataPoints": 250,
@@ -3942,6 +4249,7 @@
         "type": "prometheus",
         "uid": "${prometheus_datasource}"
       },
+      "description": "can be used to detect scan examine stage ending, also shows a brief scan when pool is imported",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -3978,7 +4286,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 159
+        "y": 167
       },
       "id": 350,
       "maxDataPoints": 250,
@@ -4017,11 +4325,24 @@
       "type": "state-timeline"
     },
     {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 176
+      },
+      "id": 340,
+      "panels": [],
+      "title": "scan stats (scrub/resilver)",
+      "type": "row"
+    },
+    {
       "datasource": {
         "type": "prometheus",
         "uid": "${prometheus_datasource}"
       },
-      "description": "Empty, unless scan ran in time range. \"calc\" is a very rough approximation, it is only correct when you zoom in. If you have a special recording rule, you will also have \"record\" value which is always correct.",
+      "description": "empty if examine stage of scan was not running",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -4079,7 +4400,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 168
+        "y": 177
       },
       "id": 373,
       "maxDataPoints": 150,
@@ -4107,11 +4428,11 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(instance, zpool) (max_over_time(zfs_pool_scan_examine_estimated_remaining_seconds{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]))",
+          "expr": "max by(instance, zpool) (\r\n  avg_over_time(zfs_pool_scan_examine_estimated_remaining_seconds{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != Inf\r\n  and\r\n  (max_over_time(zfs_pool_scan_pass_examined_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__rate_interval]) != 0)\r\n)",
           "hide": false,
           "legendFormat": "{{instance}}/{{zpool}}",
           "range": true,
-          "refId": "D"
+          "refId": "record"
         },
         {
           "datasource": {
@@ -4119,11 +4440,11 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "min by(instance, zpool) (min_over_time(zfs_pool_scan_state{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) == 1)\r\n*\r\navg by(instance, zpool) (time() - (max_over_time(zfs_pool_scan_start_time_seconds{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])))\r\n*\r\n  (1 / avg by (instance, zpool) (\r\n  avg_over_time(zfs_pool_scan_examined_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])\r\n  /\r\n  (avg_over_time(zfs_pool_scan_to_examine_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)\r\n) - 1)",
+          "expr": "# \"calc\" is a very rough approximation, it is only correct when you zoom in\r\n# \"record\" value is always correct\r\nmin by(instance, zpool) (min_over_time(zfs_pool_scan_state{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) == 1)\r\n*\r\navg by(instance, zpool) (time() - (max_over_time(zfs_pool_scan_start_time_seconds{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0))\r\n*\r\n  (1 / avg by (instance, zpool) (\r\n    (\r\n      (avg_over_time(zfs_pool_scan_examined_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)\r\n      /\r\n      (avg_over_time(zfs_pool_scan_to_examine_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)\r\n    )\r\n    and\r\n    (max_over_time(zfs_pool_scan_pass_examined_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__rate_interval]) != 0)\r\n  )\r\n  - 1\r\n)",
           "hide": true,
           "legendFormat": "{{instance}}/{{zpool}} (calc)",
           "range": true,
-          "refId": "A"
+          "refId": "calc"
         }
       ],
       "title": "scan: examined: estimated remaining time",
@@ -4134,6 +4455,7 @@
         "type": "prometheus",
         "uid": "${prometheus_datasource}"
       },
+      "description": "empty if examine stage of scan was not running",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -4192,7 +4514,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 168
+        "y": 177
       },
       "id": 369,
       "maxDataPoints": 150,
@@ -4220,21 +4542,9 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "min by (instance, zpool) (avg_over_time(zfs_pool_scan_examined_ratio{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]))",
+          "expr": "avg by (instance, zpool) (\r\n  (\r\n    min_over_time(zfs_pool_scan_examined_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])\r\n    /\r\n    (avg_over_time(zfs_pool_scan_to_examine_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)\r\n  )\r\n  and\r\n  (max_over_time(zfs_pool_scan_pass_examined_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__rate_interval]) != 0)\r\n)",
           "hide": false,
           "legendFormat": "{{instance}}/{{zpool}}",
-          "range": true,
-          "refId": "record"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${prometheus_datasource}"
-          },
-          "editorMode": "code",
-          "expr": "avg by (instance, zpool) (\r\n  avg_over_time(zfs_pool_scan_examined_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])\r\n  /\r\n  (avg_over_time(zfs_pool_scan_to_examine_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)\r\n)",
-          "hide": true,
-          "legendFormat": "{{instance}}/{{zpool}} (calc)",
           "range": true,
           "refId": "calc"
         }
@@ -4247,7 +4557,7 @@
         "type": "prometheus",
         "uid": "${prometheus_datasource}"
       },
-      "description": "Empty, unless scan ran in time range. \"calc\" is a very rough approximation, it is only correct when you zoom in. If you have a special recording rule, you will also have \"record\" value which is always correct.",
+      "description": "Empty, unless scan ran in time range",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -4305,7 +4615,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 176
+        "y": 185
       },
       "id": 354,
       "maxDataPoints": 150,
@@ -4333,7 +4643,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(instance, zpool) (max_over_time(zfs_pool_scan_issue_estimated_remaining_seconds{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]))",
+          "expr": "max by(instance, zpool) (avg_over_time(zfs_pool_scan_issue_estimated_remaining_seconds{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != Inf)",
           "hide": false,
           "legendFormat": "{{instance}}/{{zpool}}",
           "range": true,
@@ -4345,7 +4655,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "min by(instance, zpool) (min_over_time(zfs_pool_scan_state{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) == 1)\r\n*\r\navg by(instance, zpool) (time() - (max_over_time(zfs_pool_scan_start_time_seconds{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])))\r\n*\r\n  (1 / avg by (instance, zpool) (\r\n  avg_over_time(zfs_pool_scan_issued_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])\r\n  /\r\n  (avg_over_time(zfs_pool_scan_to_examine_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)\r\n) - 1)",
+          "expr": "# \"calc\" is a very rough approximation, it is only correct when you zoom in\r\n# \"record\" value is always correct\r\nmin by(instance, zpool) (min_over_time(zfs_pool_scan_state{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) == 1)\r\n*\r\navg by(instance, zpool) (time() - (max_over_time(zfs_pool_scan_start_time_seconds{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0))\r\n*\r\n(1 / avg by (instance, zpool) (\r\n  (avg_over_time(zfs_pool_scan_issued_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)\r\n  /\r\n  (avg_over_time(zfs_pool_scan_to_examine_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)\r\n) - 1)",
           "hide": true,
           "legendFormat": "{{instance}}/{{zpool}} (calc)",
           "range": true,
@@ -4418,7 +4728,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 176
+        "y": 185
       },
       "id": 368,
       "maxDataPoints": 150,
@@ -4446,21 +4756,9 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "min by (instance, zpool) (avg_over_time(zfs_pool_scan_issued_ratio{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]))",
+          "expr": "avg by (instance, zpool) (\r\n  min_over_time(zfs_pool_scan_issued_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])\r\n  /\r\n  (avg_over_time(zfs_pool_scan_to_examine_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)\r\n)\r\nand\r\nmin by(instance, zpool) (min_over_time(zfs_pool_scan_state{instance=~\"$instance\", zpool=~\"$pool\"}[$__rate_interval]) == 1)",
           "hide": false,
           "legendFormat": "{{instance}}/{{zpool}}",
-          "range": true,
-          "refId": "record"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${prometheus_datasource}"
-          },
-          "editorMode": "code",
-          "expr": "avg by (instance, zpool) (\r\n  avg_over_time(zfs_pool_scan_issued_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval])\r\n  /\r\n  (avg_over_time(zfs_pool_scan_to_examine_bytes{instance=~\"$instance\", zpool=~\"$pool\"}[$__interval]) != 0)\r\n)",
-          "hide": true,
-          "legendFormat": "{{instance}}/{{zpool}} (calc)",
           "range": true,
           "refId": "calc"
         }
@@ -4529,7 +4827,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 184
+        "y": 193
       },
       "id": 339,
       "maxDataPoints": 150,
@@ -4628,7 +4926,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 184
+        "y": 193
       },
       "id": 348,
       "maxDataPoints": 150,
@@ -4727,10 +5025,10 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 192
+        "y": 201
       },
       "id": 341,
-      "maxDataPoints": 100,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": [
@@ -4826,7 +5124,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 192
+        "y": 201
       },
       "id": 332,
       "maxDataPoints": 150,
@@ -4968,5 +5266,5 @@
   "timezone": "browser",
   "title": "ZFS Pool Overview",
   "uid": "AweIwvnk4",
-  "version": 16
+  "version": 29
 }
