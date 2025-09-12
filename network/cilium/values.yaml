@@ -8,10 +8,10 @@ logOptions:
   format: json
 
 resources:
-# cilium memory includes BPF data (which apparently counts as cache, as far as cadvisor is concerned)
-# it depends on the number on pods on the node
-# apparently, on startup it need more memory than when running
-# considering all of the above, cilium recommends to run cilium without memory limit
+# Cilium memory includes BPF data,
+# its size depends on the number on pods on the node.
+# Memory requirements range from 200Mi on small nodes to 1Gi+ on big nodes.
+# Cilium recommends to run cilium without memory limit
 # https://docs.cilium.io/en/stable/operations/performance/scalability/report/
 # https://github.com/cilium/cilium/issues/23436
 #   limits:
@@ -111,6 +111,12 @@ envoy:
   # by default envoy is running in the cilium agent pods
   # this options decouples it into separate pods
   enabled: true
+  resources:
+    requests:
+      cpu: 5m
+      memory: 20Mi
+    limits:
+      memory: 100Mi
 l2podAnnouncements:
   # Gratuitous ARP only, you still need proxy_arp to allow connectivity
   enabled: true
@@ -175,8 +181,28 @@ hubble:
   enabled: true
   relay:
     enabled: true
+    resources:
+      requests:
+        cpu: 1m
+        memory: 30Mi
+      limits:
+        memory: 50Mi
   ui:
     enabled: true
+    backend:
+      resources:
+        requests:
+          cpu: 1m
+          memory: 15Mi
+        limits:
+          memory: 30Mi
+    frontend:
+      resources:
+        requests:
+          cpu: 1m
+          memory: 5Mi
+        limits:
+          memory: 10Mi
   metrics:
     enableOpenMetrics: false
     # -- Configures the list of metrics to collect. If empty or null, metrics are disabled.
@@ -219,6 +245,12 @@ hubble:
 rollOutCiliumPods: true
 operator:
   rollOutPods: true
+  resources:
+    requests:
+      cpu: 5m
+      memory: 64Mi
+    limits:
+      memory: 128Mi
   # tolerations: []
     # - operator: Exists
       # - key: "key"

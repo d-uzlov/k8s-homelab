@@ -22,7 +22,7 @@ helm show values kyverno/kyverno --version 3.4.0 > ./k8s-core/kyverno/default-va
 
 ```bash
 
-helm template \
+helm template --no-hooks \
   kyverno \
   kyverno/kyverno \
   --version 3.4.0 \

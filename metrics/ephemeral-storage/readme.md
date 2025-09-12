@@ -12,7 +12,7 @@ You only need to do this if you change `values.yaml` file.
 helm repo add k8s-ephemeral-storage-metrics https://jmcgrath207.github.io/k8s-ephemeral-storage-metrics/chart
 helm repo update k8s-ephemeral-storage-metrics
 helm search repo k8s-ephemeral-storage-metrics/k8s-ephemeral-storage-metrics --versions --devel | head
-helm show values k8s-ephemeral-storage-metrics/k8s-ephemeral-storage-metrics --version 1.18.0 > ./metrics/ephemeral-storage/default-values.yaml
+helm show values k8s-ephemeral-storage-metrics/k8s-ephemeral-storage-metrics --version 1.18.2 > ./metrics/ephemeral-storage/default-values.yaml
 ```
 
 ```bash
@@ -20,7 +20,7 @@ helm show values k8s-ephemeral-storage-metrics/k8s-ephemeral-storage-metrics --v
 helm template \
   ephemeral-storage \
   k8s-ephemeral-storage-metrics/k8s-ephemeral-storage-metrics \
-  --version 1.18.0 \
+  --version 1.18.2 \
   --values ./metrics/ephemeral-storage/values.yaml \
   --namespace ephemeral-storage \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' -e '\|app.kubernetes.io/version|d' -e '\|creationTimestamp: null|d' \

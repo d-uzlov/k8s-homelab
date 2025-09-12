@@ -26,18 +26,18 @@ kl label ns pgo-cnpg-test pod-security.kubernetes.io/enforce=baseline
 kl apply -f ./storage/postgres-cnpg/test/env/pg-main.yaml
 
 kl -n pgo-cnpg-test get cluster
-kl -n pgo-cnpg-test describe cluster postgres
+kl -n pgo-cnpg-test describe cluster pg-main
 kl -n pgo-cnpg-test get pvc
 kl -n pgo-cnpg-test get pods -o wide -L role -L cnpg.io/jobRole
 kl -n pgo-cnpg-test get svc
 kl -n pgo-cnpg-test get secrets
-kl cnpg -n pgo-cnpg-test status postgres
+kl cnpg -n pgo-cnpg-test status pg-main
 
 kl -n pgo-cnpg logs deployments/cnpg manager --tail 20 --follow > ./cnpg.log
 
 # change primary instance
-kl cnpg -n pgo-cnpg-test promote postgres postgres-1
-kl cnpg -n pgo-cnpg-test promote postgres postgres-2
+kl cnpg -n pgo-cnpg-test promote pg-main pg-main-1
+kl cnpg -n pgo-cnpg-test promote pg-main pg-main-2
 
 ```
 
@@ -174,7 +174,12 @@ at `.spec.plugins`:
 
 ```bash
 
-# reapply the postgres Cluster manifest after you added the backup plugin
+kl apply -k ./storage/postgres-cnpg/test/backups/
+
+kl -n pgo-cnpg-test get objectstore
+kl -n pgo-cnpg-test describe objectstore s3-postgres-backup
+
+# reapply the postgres Cluster manifest
 kl apply -f ./storage/postgres-cnpg/test/env/pg-main.yaml
 
 kl cnpg -n pgo-cnpg-test status pg-main
@@ -183,12 +188,6 @@ kl -n pgo-cnpg-test get pods -o wide -L role -L cnpg.io/jobRole
 # check logs in case something went wrong
 kl -n pgo-cnpg logs deployments/cnpg manager --tail 10
 kl -n pgo-cnpg logs deployments/barman-cloud --tail 10
-
-# finally, you can create backups
-kl apply -k ./storage/postgres-cnpg/test/backups/
-
-kl -n pgo-cnpg-test get objectstore
-kl -n pgo-cnpg-test describe objectstore s3-postgres-backup
 
 kl -n pgo-cnpg-test get scheduledbackup
 kl -n pgo-cnpg-test describe scheduledbackup postgres-daily

@@ -19,12 +19,14 @@ helm show values mongodb/community-operator --version 0.10.0 > ./storage/mongo/d
 ```
 
 ```bash
+
 helm template \
   mongo-operator-crds \
   mongodb/community-operator-crds \
   --version 0.10.0 \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/instance|d' -e '\|app.kubernetes.io/part-of|d' \
   > ./storage/mongo/mongo-crds.gen.yaml
+
 helm template \
   mongo-operator \
   mongodb/community-operator \
@@ -33,6 +35,7 @@ helm template \
   --values ./storage/mongo/values.yaml \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/instance|d' -e '\|app.kubernetes.io/part-of|d' \
   > ./storage/mongo/mongo.gen.yaml
+
 ```
 
 # Deploy

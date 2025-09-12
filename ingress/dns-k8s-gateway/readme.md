@@ -40,6 +40,7 @@ helm show values k8s_gateway/k8s-gateway --version 2.4.0 > ./ingress/dns-k8s-gat
 ```
 
 ```bash
+
 helm template \
   exdns \
   k8s_gateway/k8s-gateway \
@@ -48,11 +49,13 @@ helm template \
   --values ./ingress/dns-k8s-gateway/values.yaml \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/instance|d' -e '\|app.kubernetes.io/part-of|d' -e '\|app.kubernetes.io/version|d' \
   > ./ingress/dns-k8s-gateway/exdns.gen.yaml
+
 ```
 
 # Deploy
 
 ```bash
+
 kl create ns exdns
 kl label ns exdns pod-security.kubernetes.io/enforce=baseline
 
@@ -61,6 +64,7 @@ kl -n exdns get pod -o wide
 
 # get load balancer external ip
 kl -n exdns get svc exdns-k8s-gateway
+
 ```
 
 # Cleanup

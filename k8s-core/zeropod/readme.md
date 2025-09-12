@@ -27,7 +27,7 @@ kl create ns zeropod-system
 kl label ns zeropod-system pod-security.kubernetes.io/enforce=privileged --overwrite
 
 kl label node --all zeropod.ctrox.dev/node=true
-kl apply -f ./k8s-core/zeropod/zeropod.gen.yaml
+kl apply -k ./k8s-core/zeropod/
 kl -n zeropod-system get pod -o wide
 
 ```
