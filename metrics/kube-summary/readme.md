@@ -10,8 +10,10 @@ References:
 
 ```bash
 
-wget https://github.com/utilitywarehouse/kube-summary-exporter/raw/refs/tags/v0.4.5/manifests/cluster/clusterrole.yaml -O ./metrics/kube-summary/rbac.yaml
-wget https://github.com/utilitywarehouse/kube-summary-exporter/raw/refs/tags/v0.4.5/manifests/base/deployment.yaml -O ./metrics/kube-summary/deployment.yaml
+wget https://github.com/utilitywarehouse/kube-summary-exporter/raw/refs/tags/v0.4.6/manifests/cluster/clusterrole.yaml -O ./metrics/kube-summary/rbac.yaml
+wget https://github.com/utilitywarehouse/kube-summary-exporter/raw/refs/tags/v0.4.6/manifests/base/deployment.yaml -O ./metrics/kube-summary/deployment.yaml
+
+sed -i 's/namespace: sys-prom/namespace: kube-summary/' ./metrics/kube-summary/rbac.yaml
 
 ```
 
