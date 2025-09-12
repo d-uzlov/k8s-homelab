@@ -17,6 +17,14 @@ sed -i 's/namespace: sys-prom/namespace: kube-summary/' ./metrics/kube-summary/r
 
 ```
 
+Manually edit RBAC after update:
+
+```yaml
+  - apiGroups: [""]
+    resources: ["nodes", "nodes/proxy"]
+    verbs: ["get", "list"]
+```
+
 # Local config setup
 
 ```bash
