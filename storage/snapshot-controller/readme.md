@@ -2,19 +2,16 @@
 # Snapshot-controller
 
 References:
-- https://github.com/kubernetes-csi/external-snapshotter?tab=readme-ov-file#usage
+- https://github.com/kubernetes-csi/external-snapshotter
 
 # Update
 
 ```bash
 
-rm -r ./storage/snapshot-controller/crd/
-mkdir -p ./storage/snapshot-controller/crd/
+release_tag=release-8.3
 
 (
 cd ./storage/snapshot-controller/crd/
-
-release_tag=release-8.2
 
 crd_files=(
   snapshot.storage.k8s.io_volumesnapshotclasses.yaml
@@ -30,12 +27,10 @@ for file in ${crd_files[@]}; do
 done
 )
 
-wget https://github.com/kubernetes-csi/external-snapshotter/raw/refs/heads/release-8.2/deploy/kubernetes/snapshot-controller/rbac-snapshot-controller.yaml -O ./storage/snapshot-controller/controller/rbac-snapshot-controller.yaml
+wget https://github.com/kubernetes-csi/external-snapshotter/raw/refs/heads/$release_tag/deploy/kubernetes/snapshot-controller/rbac-snapshot-controller.yaml -O ./storage/snapshot-controller/controller/rbac-snapshot-controller.yaml
+wget https://github.com/kubernetes-csi/external-snapshotter/raw/refs/heads/$release_tag/deploy/kubernetes/snapshot-controller/setup-snapshot-controller.yaml -O ./storage/snapshot-controller/controller/setup-snapshot-controller.yaml
 
-# you may want to skip downloading the deployment
-wget https://github.com/kubernetes-csi/external-snapshotter/raw/refs/heads/release-8.2/deploy/kubernetes/snapshot-controller/setup-snapshot-controller.yaml -O ./storage/snapshot-controller/controller/setup-snapshot-controller.yaml
-
-sed -i 's/kube-system/pv-snapshots/' \
+sed -i 's/namespace: kube-system/namespace: pv-snapshots/' \
   ./storage/snapshot-controller/controller/rbac-snapshot-controller.yaml \
   ./storage/snapshot-controller/controller/setup-snapshot-controller.yaml
 
@@ -44,13 +39,14 @@ sed -i 's/kube-system/pv-snapshots/' \
 
 ```
 
-Change the image version in the controller deployment manually.
+Don't forget to update version in patch file:
+- [controller-patch.yaml](./controller/controller-patch.yaml)
 
 # Deploy
 
 ```bash
 
-kl apply -f ./storage/snapshot-controller/crd/ --server-side
+kl apply -k ./storage/snapshot-controller/crd/ --server-side
 
 kl create ns pv-snapshots
 kl label ns pv-snapshots pod-security.kubernetes.io/enforce=baseline
