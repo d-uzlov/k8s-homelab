@@ -1,5 +1,8 @@
 
-# smartctl-exporter
+# vector
+
+References:
+- https://github.com/vectordotdev/vector
 
 # Prerequisites
 
