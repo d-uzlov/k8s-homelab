@@ -4,11 +4,11 @@
   become: true
 
   vars:
-    runc_version: 1.3.0
-    containerd_version: 2.1.3
-    crictl_version: v1.33.0
-    kubelet_version: v1.34.0
-    kubeadm_version: v1.34.0
+    runc_version: 1.3.1
+    containerd_version: 2.1.4
+    crictl_version: v1.34.0
+    kubelet_version: v1.34.1
+    kubeadm_version: v1.34.1
 
   tasks:
 
@@ -25,37 +25,19 @@
   - name: /etc/sysctl.d/kubernetes.conf
     become: true
     ansible.builtin.copy:
-      src: ./sysctl/kubernetes.conf
-      dest: /etc/sysctl.d/kubernetes.conf
+      src: ./sysctl/{{ item }}
+      dest: /etc/sysctl.d/{{ item }}
       owner: root
       group: root
       mode: "0644"
+    loop:
+    - kubernetes.conf
+    - inotify.conf
+    - apr_proxy.conf
     notify:
     - sysctl_apply
 
-  - name: /etc/sysctl.d/inotify.conf
-    become: true
-    ansible.builtin.copy:
-      src: ./sysctl/inotify.conf
-      dest: /etc/sysctl.d/inotify.conf
-      owner: root
-      group: root
-      mode: "0644"
-    notify:
-    - sysctl_apply
-
-  - name: /etc/sysctl.d/apr_proxy.conf
-    become: true
-    ansible.builtin.copy:
-      src: ./sysctl/apr_proxy.conf
-      dest: /etc/sysctl.d/apr_proxy.conf
-      owner: root
-      group: root
-      mode: "0644"
-    notify:
-    - sysctl_apply
-
-  - name: install runc
+  - name: copy runc binary
     ansible.builtin.copy:
       src: ./env/runc-{{ runc_version }}.amd64
       dest: /usr/local/sbin/runc
@@ -63,7 +45,7 @@
       group: root
       mode: "0755"
 
-  - name: install containerd
+  - name: copy containerd binary
     ansible.builtin.copy:
       src: ./env/containerd-{{ containerd_version}}/bin/
       dest: /usr/local/bin/
@@ -92,15 +74,13 @@
     - systemd_daemon-reload
     - containerd_service_restart
 
-  - name: install crictl
+  - name: copy crictl binary
     ansible.builtin.copy:
       src: ./env/crictl-{{ crictl_version }}/crictl
       dest: /usr/local/bin/crictl
       owner: root
       group: root
       mode: "0755"
-    notify:
-    - sysctl_apply
 
   - name: remove k8s apt packages
     ansible.builtin.apt:
@@ -111,7 +91,7 @@
     - kubelet
     - kubeadm
 
-  - name: install kubelet
+  - name: copy kubelet binary
     ansible.builtin.copy:
       src: ./env/kubelet-{{ kubelet_version }}.amd64
       dest: /usr/local/bin/kubelet
@@ -130,7 +110,7 @@
     - systemd_daemon-reload
     - kubelet_service_restart
 
-  - name: create
+  - name: create kubelet.service.d
     ansible.builtin.file:
       path: /etc/systemd/system/kubelet.service.d/
       state: directory
@@ -147,7 +127,7 @@
     - systemd_daemon-reload
     - kubelet_service_restart
 
-  - name: install kubeadm
+  - name: copy kubeadm binary
     ansible.builtin.copy:
       src: ./env/kubeadm-{{ kubeadm_version }}.amd64
       dest: /usr/local/bin/kubeadm
@@ -172,22 +152,22 @@
     - modules_service_restart
     ansible.builtin.systemd_service:
       name: systemd-modules-load.service
-      enabled: yes
+      enabled: true
       state: restarted
-      daemon_reload: no
+      daemon_reload: false
   - name: restart containerd.service
     listen:
     - containerd_service_restart
     ansible.builtin.systemd_service:
       name: containerd.service
-      enabled: yes
+      enabled: true
       state: restarted
-      daemon_reload: no
+      daemon_reload: false
   - name: restart kubelet.service
     listen:
     - kubelet_service_restart
     ansible.builtin.systemd_service:
       name: kubelet.service
-      enabled: yes
+      enabled: true
       state: restarted
-      daemon_reload: no
+      daemon_reload: false

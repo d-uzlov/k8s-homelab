@@ -43,7 +43,8 @@
       owner: root
       group: root
       mode: "0644"
-    notify: systemd-daemon-reload
+    notify:
+    - systemd_daemon_reload
 
   - name: copy node-textfile-apt_info.timer
     ansible.builtin.copy:
@@ -52,17 +53,22 @@
       owner: root
       group: root
       mode: "0644"
-    notify: systemd-daemon-reload
-
-  - name: start node-textfile-apt_info.timer
-    systemd:
-      name: node-textfile-apt_info.timer
-      enabled: yes
-      state: started
-      daemon_reload: no
+    notify:
+    - systemd_daemon_reload
+    - systemd_restart_textfile_timer
 
   handlers:
   - name: systemd-daemon-reload
-    listen: systemd-daemon-reload
+    listen:
+    - systemd_daemon_reload
     systemd:
-      daemon_reload: yes
+      daemon_reload: true
+
+  - name: start node-textfile-apt_info.timer
+    listen:
+    - systemd_restart_textfile_timer
+    systemd:
+      name: node-textfile-apt_info.timer
+      enabled: true
+      state: restarted
+      daemon_reload: false

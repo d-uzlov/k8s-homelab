@@ -22,7 +22,9 @@ ansible-playbook ./metrics/node-exporter/textfile-exporters/playbook.yaml
 
 ```bash
 
-wget -O ./metrics/node-exporter/textfile-exporters/apt_info.py https://github.com/prometheus-community/node-exporter-textfile-collector-scripts/raw/refs/heads/master/apt_info.py
+apt_info_url=https://github.com/prometheus-community/node-exporter-textfile-collector-scripts/raw/refs/heads/master/apt_info.py
+
+wget -O ./metrics/node-exporter/textfile-exporters/apt_info.py "$apt_info_url"
 chmod +x ./metrics/node-exporter/textfile-exporters/apt_info.py
 
 ```
