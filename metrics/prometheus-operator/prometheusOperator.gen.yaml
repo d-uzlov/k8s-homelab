@@ -37,6 +37,7 @@ rules:
   - thanosrulers/status
   - scrapeconfigs
   - servicemonitors
+  - servicemonitors/status
   - podmonitors
   - probes
   - prometheusrules
@@ -169,25 +170,26 @@ spec:
     spec:
       containers:
         - name: prometheus-operator
-          image: "quay.io/prometheus-operator/prometheus-operator:v0.83.0"
+          image: "quay.io/prometheus-operator/prometheus-operator:v0.85.0"
           imagePullPolicy: "IfNotPresent"
           args:
             - --kubelet-endpoints=true
             - --kubelet-endpointslice=false
             - --log-level=debug
             - --localhost=127.0.0.1
-            - --prometheus-config-reloader=quay.io/prometheus-operator/prometheus-config-reloader:v0.83.0
+            - --prometheus-config-reloader=quay.io/prometheus-operator/prometheus-config-reloader:v0.85.0
             - --config-reloader-cpu-request=0
             - --config-reloader-cpu-limit=0
             - --config-reloader-memory-request=0
             - --config-reloader-memory-limit=0
-            - --thanos-default-base-image=quay.io/thanos/thanos:v0.39.1
+            - --thanos-default-base-image=quay.io/thanos/thanos:v0.39.2
             - --secret-field-selector=type!=kubernetes.io/dockercfg,type!=kubernetes.io/service-account-token,type!=helm.sh/release.v1
             - --web.enable-tls=true
             - --web.cert-file=/cert/tls.crt
             - --web.key-file=/cert/tls.key
             - --web.listen-address=:10250
             - --web.tls-min-version=VersionTLS13
+            - -feature-gates=StatusForConfigurationResources=true
           ports:
             - containerPort: 10250
               name: https
