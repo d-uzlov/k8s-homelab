@@ -171,7 +171,7 @@
                 "value": [
                   {
                     "title": "filter pod",
-                    "url": "/d/vsl6ot4yad5hedtly8ey/kubernetes3a-namespace-pods?var-pod=${__data.fields.Pod}"
+                    "url": "/d/vsl6ot4yad5hedtly8ey/namespace-pods?${prometheus_datasource:queryparam}&${location:queryparam}&${namespace:queryparam}&${workload:queryparam}&${node_selector:queryparam}&var-pod=${__data.fields.Pod}"
                   }
                 ]
               },
@@ -465,7 +465,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(pod, uid, node, host_network, pod_ip) (\r\n  # if we show entries for pods without IP, when pod gets an IP there will be duplicate entries\r\n  last_over_time(kube_pod_info{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", pod_ip!=\"\"}[$__range])\r\n) * on(pod, uid) group_left(workload_type, workload)\r\nmax by(pod, uid, workload_type, workload) (\r\n  last_over_time(namespace_workload_pod:kube_pod_owner:relabel{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid!=\"\"}[$__range])\r\n)",
+          "expr": "max by(pod, uid, node, host_network) (\r\n  # if we show entries for pods without IP, when pod gets an IP there will be duplicate entries\r\n  last_over_time(kube_pod_info{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__range])\r\n) * on(pod, uid) group_left(workload_type, workload)\r\nmax by(pod, uid, workload_type, workload) (\r\n  last_over_time(namespace_workload_pod:kube_pod_owner:relabel{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid!=\"\"}[$__range])\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -1474,12 +1474,12 @@
         "legend": {
           "asTable": true,
           "calcs": [
-            "sum"
+            "mean"
           ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
-          "sortBy": "Total",
+          "sortBy": "Mean",
           "sortDesc": true
         },
         "tooltip": {
@@ -1495,7 +1495,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(pod) (rate(kube_pod_container_status_restarts_total{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__rate_interval])) * $__interval_ms / 1000",
+          "expr": "sum by(pod) (\r\n  group by(pod, container) (\r\n    last_over_time(container_cpu_usage_seconds_total{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__interval])\r\n  )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -1503,7 +1503,7 @@
           "refId": "A"
         }
       ],
-      "title": "container restarts (sum over time)",
+      "title": "containers",
       "type": "timeseries"
     },
     {
@@ -1626,12 +1626,115 @@
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic-by-name"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 3,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "fieldMinMax": false,
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 51
+      },
+      "id": 61,
+      "maxDataPoints": 150,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Total",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(pod) (rate(kube_pod_container_status_restarts_total{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__rate_interval])) * $__interval_ms / 1000",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "container restarts (sum over time)",
+      "type": "timeseries"
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 51
+        "y": 59
       },
       "id": 20,
       "panels": [],
@@ -1743,10 +1846,10 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 52
+        "y": 60
       },
       "id": 33,
-      "maxDataPoints": 150,
+      "maxDataPoints": 500,
       "options": {
         "legend": {
           "asTable": true,
@@ -1772,7 +1875,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nsum by(pod) (max by(pod, container) (max_over_time(kube_pod_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval])))",
+          "expr": "sum by(pod) (\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(pod, container) (\r\n    max_over_time(kube_pod_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval])\r\n    or\r\n    (\r\n      avg_over_time(kube_pod_init_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval])\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]) == 1)\r\n    )\r\n  )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -1785,7 +1888,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(max by(pod, container) (max_over_time(kube_pod_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval])))",
+          "expr": "sum(\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(pod, container) (\r\n    max_over_time(kube_pod_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval])\r\n    or\r\n    (\r\n      avg_over_time(kube_pod_init_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval])\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]) == 1)\r\n    )\r\n  )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "Total",
@@ -1907,10 +2010,10 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 52
+        "y": 60
       },
       "id": 55,
-      "maxDataPoints": 150,
+      "maxDataPoints": 500,
       "options": {
         "legend": {
           "asTable": true,
@@ -1936,7 +2039,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nsum by(pod) (max by(pod, container) (max_over_time(kube_pod_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval])))",
+          "expr": "sum by(pod) (\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(pod, container) (\r\n    max_over_time(kube_pod_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval])\r\n    or\r\n    (\r\n      avg_over_time(kube_pod_init_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval])\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]) == 1)\r\n    )\r\n  )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -1949,7 +2052,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(max by(pod, container) (max_over_time(kube_pod_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval])))",
+          "expr": "sum(\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(pod, container) (\r\n    max_over_time(kube_pod_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval])\r\n    or\r\n    (\r\n      avg_over_time(kube_pod_init_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval])\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]) == 1)\r\n    )\r\n  )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "Total",
@@ -2058,7 +2161,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 59
+        "y": 67
       },
       "id": 5,
       "maxDataPoints": 150,
@@ -2076,7 +2179,6 @@
         },
         "tooltip": {
           "hideZeros": false,
-          "hoverProximity": 50,
           "mode": "multi",
           "sort": "desc"
         }
@@ -2109,7 +2211,7 @@
           "refId": "total"
         }
       ],
-      "title": "cpu usage",
+      "title": "total cpu usage",
       "type": "timeseries"
     },
     {
@@ -2117,7 +2219,7 @@
         "type": "prometheus",
         "uid": "${prometheus_datasource}"
       },
-      "description": "Max over containers. Empty if containers in pod don't have cpu request",
+      "description": "clamped at 300%; empty if containers in pod don't have cpu request",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2129,6 +2231,7 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisSoftMax": 1,
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
@@ -2153,17 +2256,22 @@
               "mode": "none"
             },
             "thresholdsStyle": {
-              "mode": "off"
+              "mode": "dashed"
             }
           },
           "mappings": [],
+          "max": 3,
           "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "transparent",
                 "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
               }
             ]
           },
@@ -2175,7 +2283,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 59
+        "y": 67
       },
       "id": 36,
       "maxDataPoints": 150,
@@ -2193,7 +2301,6 @@
         },
         "tooltip": {
           "hideZeros": false,
-          "hoverProximity": 50,
           "mode": "multi",
           "sort": "desc"
         }
@@ -2205,7 +2312,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(pod) (\r\n  max by(pod, container) (rate(container_cpu_usage_seconds_total{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__rate_interval]))\r\n  /\r\n  max by(pod, container) (kube_pod_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"})\r\n)",
+          "expr": "sum by(pod) (rate(container_cpu_usage_seconds_total{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__rate_interval]))\r\n/\r\nsum by(pod) (\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(pod, container) (\r\n    avg_over_time(kube_pod_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__rate_interval]) != 0\r\n    or\r\n    (\r\n      avg_over_time(kube_pod_init_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval]) != 0\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]) == 1)\r\n    )\r\n  )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -2213,7 +2320,7 @@
           "refId": "usage"
         }
       ],
-      "title": "cpu usage / request %",
+      "title": "total cpu usage / total request",
       "type": "timeseries"
     },
     {
@@ -2279,7 +2386,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 66
+        "y": 74
       },
       "id": 50,
       "maxDataPoints": 150,
@@ -2297,7 +2404,6 @@
         },
         "tooltip": {
           "hideZeros": false,
-          "hoverProximity": 50,
           "mode": "multi",
           "sort": "desc"
         }
@@ -2321,12 +2427,116 @@
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
+      "description": "empty if containers in pod don't have cpu limit",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic-by-name"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMax": 1,
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 3,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "transparent",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 74
+      },
+      "id": 62,
+      "maxDataPoints": 150,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "max by(pod) (\r\n  sum by(pod, container) (rate(container_cpu_usage_seconds_total{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__rate_interval]))\r\n  /\r\n  avg by(pod, container) (\r\n    avg_over_time(kube_pod_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__rate_interval]) != 0\r\n    or\r\n    (\r\n      avg_over_time(kube_pod_init_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval]) != 0\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]) == 1)\r\n    )\r\n  )\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "usage"
+        }
+      ],
+      "title": "max(cpu usage / limit) %",
+      "type": "timeseries"
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 73
+        "y": 81
       },
       "id": 22,
       "panels": [],
@@ -2431,7 +2641,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 74
+        "y": 82
       },
       "id": 54,
       "maxDataPoints": 500,
@@ -2460,7 +2670,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nsum by(pod) (max by(pod, container) (max_over_time(kube_pod_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])))",
+          "expr": "sum by(pod) (\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(pod, container) (\r\n    avg_over_time(kube_pod_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n    or\r\n    (\r\n      avg_over_time(kube_pod_init_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]) == 1)\r\n    )\r\n  )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -2473,7 +2683,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(max by(pod, container) (max_over_time(kube_pod_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])))",
+          "expr": "sum(\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(pod, container) (\r\n    avg_over_time(kube_pod_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n    or\r\n    (\r\n      avg_over_time(kube_pod_init_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]) == 1)\r\n    )\r\n  )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "Total",
@@ -2595,7 +2805,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 74
+        "y": 82
       },
       "id": 32,
       "maxDataPoints": 500,
@@ -2624,7 +2834,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nsum by(pod) (max by(pod, container) (max_over_time(kube_pod_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])))",
+          "expr": "sum by(pod) (\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(pod, container) (\r\n    max_over_time(kube_pod_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n    or\r\n    (\r\n      avg_over_time(kube_pod_init_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]) == 1)\r\n    )\r\n  )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -2637,7 +2847,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(max by(pod, container) (max_over_time(kube_pod_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])))",
+          "expr": "sum(\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(pod, container) (\r\n    max_over_time(kube_pod_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n    or\r\n    (\r\n      avg_over_time(kube_pod_init_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]) == 1)\r\n    )\r\n  )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "Total",
@@ -2747,7 +2957,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 81
+        "y": 89
       },
       "id": 26,
       "maxDataPoints": 150,
@@ -2765,7 +2975,6 @@
         },
         "tooltip": {
           "hideZeros": false,
-          "hoverProximity": 50,
           "mode": "multi",
           "sort": "desc"
         }
@@ -2806,7 +3015,7 @@
         "type": "prometheus",
         "uid": "${prometheus_datasource}"
       },
-      "description": "Max over containers. Empty if containers in pod don't have memory request",
+      "description": "empty if containers in pod don't have memory request",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2819,6 +3028,113 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "axisSoftMax": 1,
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 3,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "fieldMinMax": false,
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "transparent",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 89
+      },
+      "id": 34,
+      "maxDataPoints": 150,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nsum by(pod) (\r\n  max by(pod, container) (\r\n    avg_over_time(container_memory_usage_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__interval])\r\n    -\r\n    avg_over_time(container_memory_cache{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__interval])\r\n    or\r\n    avg_over_time(container_memory_usage_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__rate_interval])\r\n    -\r\n    avg_over_time(container_memory_cache{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__rate_interval])\r\n  )\r\n)\r\n/\r\nsum by(pod) (\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(pod, container) (\r\n    avg_over_time(kube_pod_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n    or\r\n    (\r\n      avg_over_time(kube_pod_init_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]) == 1)\r\n    )\r\n  )\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "rss"
+        }
+      ],
+      "title": "total rss + kernel / total request %",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic-by-name"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
@@ -2858,17 +3174,40 @@
               }
             ]
           },
-          "unit": "percentunit"
+          "unit": "bytes"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "rss_total"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 7,
         "w": 12,
-        "x": 12,
-        "y": 81
+        "x": 0,
+        "y": 96
       },
-      "id": 34,
+      "id": 60,
       "maxDataPoints": 150,
       "options": {
         "legend": {
@@ -2884,7 +3223,6 @@
         },
         "tooltip": {
           "hideZeros": false,
-          "hoverProximity": 50,
           "mode": "multi",
           "sort": "desc"
         }
@@ -2896,7 +3234,129 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nmax by(pod) (\r\n  max by(pod, container) (\r\n    avg_over_time(container_memory_rss{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__interval])\r\n    or\r\n    avg_over_time(container_memory_rss{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__rate_interval])\r\n  )\r\n  /\r\n  max by(pod, container) (max_over_time(kube_pod_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval]))\r\n)",
+          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nsum by(pod) (max by(pod, container) (\r\n  avg_over_time(container_memory_usage_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__interval])\r\n  -\r\n  avg_over_time(container_memory_cache{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__interval])\r\n  or\r\n  avg_over_time(container_memory_usage_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__rate_interval])\r\n  -\r\n  avg_over_time(container_memory_cache{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__rate_interval])\r\n))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "rss"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum (max by(pod, container) (\r\n  avg_over_time(container_memory_usage_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\", invalid=$total}[$__interval])\r\n  -\r\n  avg_over_time(container_memory_cache{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\", invalid=$total}[$__interval])\r\n  or\r\n  avg_over_time(container_memory_usage_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\", invalid=$total}[$__rate_interval])\r\n  -\r\n  avg_over_time(container_memory_cache{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\", invalid=$total}[$__rate_interval])\r\n))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Total",
+          "range": true,
+          "refId": "rss_total"
+        }
+      ],
+      "title": "rss + kernel",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
+      "description": "empty if containers in pod don't have memory limit",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic-by-name"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMax": 1,
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 3,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "area"
+            }
+          },
+          "fieldMinMax": false,
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "transparent",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 0.8
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 96
+      },
+      "id": 56,
+      "maxDataPoints": 150,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nmax by(pod) (\r\n  max by(pod, container) (\r\n    (\r\n      avg_over_time(container_memory_usage_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__interval])\r\n      -\r\n      avg_over_time(container_memory_cache{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__interval])\r\n      or\r\n      avg_over_time(container_memory_usage_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__rate_interval])\r\n      -\r\n      avg_over_time(container_memory_cache{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__rate_interval])\r\n    )\r\n    /\r\n    (\r\n      max_over_time(container_spec_memory_limit_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__interval]) != 0\r\n      or\r\n      max_over_time(container_spec_memory_limit_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__rate_interval]) != 0\r\n    )\r\n  )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -2904,7 +3364,7 @@
           "refId": "rss"
         }
       ],
-      "title": "rss / request",
+      "title": "max(rss + kernel / limit %)",
       "type": "timeseries"
     },
     {
@@ -2993,7 +3453,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 88
+        "y": 103
       },
       "id": 7,
       "maxDataPoints": 150,
@@ -3011,7 +3471,6 @@
         },
         "tooltip": {
           "hideZeros": false,
-          "hoverProximity": 50,
           "mode": "multi",
           "sort": "desc"
         }
@@ -3052,7 +3511,7 @@
         "type": "prometheus",
         "uid": "${prometheus_datasource}"
       },
-      "description": "Max over containers. Empty if containers in pod don't have memory limit",
+      "description": "empty if containers in pod don't have memory limit",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -3089,7 +3548,7 @@
               "mode": "none"
             },
             "thresholdsStyle": {
-              "mode": "off"
+              "mode": "dashed"
             }
           },
           "fieldMinMax": false,
@@ -3099,8 +3558,12 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "transparent",
                 "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
               }
             ]
           },
@@ -3112,7 +3575,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 88
+        "y": 103
       },
       "id": 35,
       "maxDataPoints": 150,
@@ -3130,7 +3593,6 @@
         },
         "tooltip": {
           "hideZeros": false,
-          "hoverProximity": 50,
           "mode": "multi",
           "sort": "desc"
         }
@@ -3142,7 +3604,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nmax by(pod) (\r\n  max by(pod, container) (\r\n    (\r\n      avg_over_time(container_memory_working_set_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__interval])\r\n      or\r\n      avg_over_time(container_memory_working_set_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__rate_interval])\r\n    )\r\n    /\r\n    (max_over_time(container_spec_memory_limit_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__interval]) != 0)\r\n  )\r\n)",
+          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nsum by(pod) (\r\n  max by(pod, container) (\r\n    avg_over_time(container_memory_working_set_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__interval])\r\n    or\r\n    avg_over_time(container_memory_working_set_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__rate_interval])\r\n  )\r\n)\r\n/\r\nsum by(pod) (\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(pod, container) (\r\n    avg_over_time(kube_pod_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n    or\r\n    (\r\n      avg_over_time(kube_pod_init_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]) == 1)\r\n    )\r\n  )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -3150,7 +3612,7 @@
           "refId": "rss"
         }
       ],
-      "title": "wss / limit",
+      "title": "total wss / total request",
       "type": "timeseries"
     },
     {
@@ -3239,7 +3701,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 95
+        "y": 110
       },
       "id": 43,
       "maxDataPoints": 150,
@@ -3257,7 +3719,6 @@
         },
         "tooltip": {
           "hideZeros": false,
-          "hoverProximity": 50,
           "mode": "multi",
           "sort": "desc"
         }
@@ -3298,7 +3759,7 @@
         "type": "prometheus",
         "uid": "${prometheus_datasource}"
       },
-      "description": "Max over containers. Empty if containers in pod don't have memory limit",
+      "description": "empty if containers in pod don't have memory limit",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -3335,7 +3796,7 @@
               "mode": "none"
             },
             "thresholdsStyle": {
-              "mode": "area"
+              "mode": "off"
             }
           },
           "fieldMinMax": false,
@@ -3345,12 +3806,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "transparent",
+                "color": "green",
                 "value": 0
-              },
-              {
-                "color": "red",
-                "value": 0.8
               }
             ]
           },
@@ -3362,9 +3819,9 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 95
+        "y": 110
       },
-      "id": 56,
+      "id": 63,
       "maxDataPoints": 150,
       "options": {
         "legend": {
@@ -3380,7 +3837,6 @@
         },
         "tooltip": {
           "hideZeros": false,
-          "hoverProximity": 50,
           "mode": "multi",
           "sort": "desc"
         }
@@ -3392,7 +3848,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nmax by(pod) (\r\n  max by(pod, container) (\r\n    (\r\n      avg_over_time(container_memory_usage_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__interval])\r\n      -\r\n      avg_over_time(container_memory_cache{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__interval])\r\n      or\r\n      avg_over_time(container_memory_usage_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__rate_interval])\r\n      -\r\n      avg_over_time(container_memory_cache{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__rate_interval])\r\n    )\r\n    /\r\n    (\r\n      max_over_time(container_spec_memory_limit_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__interval]) != 0\r\n      or\r\n      max_over_time(container_spec_memory_limit_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__rate_interval]) != 0\r\n    )\r\n  )\r\n)",
+          "expr": "# max by(pod, container) should fix overlapping data on container restarts\r\nmax by(pod) (\r\n  max by(pod, container) (\r\n    (\r\n      avg_over_time(container_memory_working_set_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__interval])\r\n      or\r\n      avg_over_time(container_memory_working_set_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__rate_interval])\r\n    )\r\n    /\r\n    (\r\n      (max_over_time(container_spec_memory_limit_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__interval]) != 0)\r\n      or\r\n      (max_over_time(container_spec_memory_limit_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__rate_interval]) != 0)\r\n    )\r\n  )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -3400,7 +3856,7 @@
           "refId": "rss"
         }
       ],
-      "title": "rss + kernel / limit",
+      "title": "max(wss / limit %)",
       "type": "timeseries"
     },
     {
@@ -3409,7 +3865,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 102
+        "y": 117
       },
       "id": 23,
       "panels": [],
@@ -3501,7 +3957,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 103
+        "y": 118
       },
       "id": 10,
       "maxDataPoints": 150,
@@ -3639,7 +4095,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 103
+        "y": 118
       },
       "id": 48,
       "maxDataPoints": 150,
@@ -3776,7 +4232,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 110
+        "y": 125
       },
       "id": 11,
       "maxDataPoints": 150,
@@ -3914,7 +4370,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 110
+        "y": 125
       },
       "id": 49,
       "maxDataPoints": 150,
@@ -3972,7 +4428,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 117
+        "y": 132
       },
       "id": 19,
       "panels": [],
@@ -3989,7 +4445,7 @@
         "h": 4,
         "w": 6,
         "x": 9,
-        "y": 118
+        "y": 133
       },
       "id": 30,
       "options": {
@@ -4066,7 +4522,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 122
+        "y": 137
       },
       "id": 17,
       "maxDataPoints": 150,
@@ -4167,7 +4623,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 122
+        "y": 137
       },
       "id": 51,
       "maxDataPoints": 150,
@@ -4268,7 +4724,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 130
+        "y": 145
       },
       "id": 38,
       "maxDataPoints": 100,
@@ -4369,7 +4825,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 130
+        "y": 145
       },
       "id": 52,
       "maxDataPoints": 100,
@@ -4493,7 +4949,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 138
+        "y": 153
       },
       "id": 41,
       "maxDataPoints": 150,
@@ -4630,7 +5086,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 138
+        "y": 153
       },
       "id": 45,
       "maxDataPoints": 100,
@@ -4768,7 +5224,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 146
+        "y": 161
       },
       "id": 40,
       "maxDataPoints": 150,
@@ -4905,7 +5361,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 146
+        "y": 161
       },
       "id": 39,
       "maxDataPoints": 100,
@@ -5044,7 +5500,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 154
+        "y": 169
       },
       "id": 44,
       "maxDataPoints": 150,
@@ -5181,7 +5637,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 154
+        "y": 169
       },
       "id": 37,
       "maxDataPoints": 100,
@@ -5404,7 +5860,7 @@
           "type": "prometheus",
           "uid": "${prometheus_datasource}"
         },
-        "definition": "query_result(group by(name) (label_replace(last_over_time(kube_pod_container_info{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__range]), \"name\", \"$1\", \"container_id\", \"containerd://(.*)\")))",
+        "definition": "query_result(group by (name) (  label_replace(    last_over_time(kube_pod_container_info{location=\"$location\",namespace=\"$namespace\",pod=~\"$pod\",uid=~\"$pod_uid\", container_id!=\"\"}[$__range])    or    last_over_time(kube_pod_init_container_info{location=\"$location\",namespace=\"$namespace\",pod=~\"$pod\",uid=~\"$pod_uid\", container_id!=\"\", restart_policy!=\"Always\"}[$__range])    * on(location, namespace, pod, uid, container) group_left()    (max_over_time(kube_pod_init_container_status_running{location=\"$location\",namespace=\"$namespace\",pod=~\"$pod\",uid=~\"$pod_uid\"}[$__range]) == 1)    or    last_over_time(kube_pod_init_container_info{location=\"$location\",namespace=\"$namespace\",pod=~\"$pod\",uid=~\"$pod_uid\", container_id!=\"\", restart_policy=\"Always\"}[$__range])    , \"name\", \"$1\", \"container_id\", \"containerd://(.*)\"  )))",
         "description": "this hidden variable is used to convert selected UID to container_ID, because cadvisor metrics don't have [reliable] UID on them",
         "hide": 2,
         "includeAll": true,
@@ -5412,7 +5868,7 @@
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(group by(name) (label_replace(last_over_time(kube_pod_container_info{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__range]), \"name\", \"$1\", \"container_id\", \"containerd://(.*)\")))",
+          "query": "query_result(group by (name) (  label_replace(    last_over_time(kube_pod_container_info{location=\"$location\",namespace=\"$namespace\",pod=~\"$pod\",uid=~\"$pod_uid\", container_id!=\"\"}[$__range])    or    last_over_time(kube_pod_init_container_info{location=\"$location\",namespace=\"$namespace\",pod=~\"$pod\",uid=~\"$pod_uid\", container_id!=\"\", restart_policy!=\"Always\"}[$__range])    * on(location, namespace, pod, uid, container) group_left()    (max_over_time(kube_pod_init_container_status_running{location=\"$location\",namespace=\"$namespace\",pod=~\"$pod\",uid=~\"$pod_uid\"}[$__range]) == 1)    or    last_over_time(kube_pod_init_container_info{location=\"$location\",namespace=\"$namespace\",pod=~\"$pod\",uid=~\"$pod_uid\", container_id!=\"\", restart_policy=\"Always\"}[$__range])    , \"name\", \"$1\", \"container_id\", \"containerd://(.*)\"  )))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -5469,5 +5925,5 @@
   "timezone": "browser",
   "title": "Namespace / Pods",
   "uid": "vsl6ot4yad5hedtly8ey",
-  "version": 11
+  "version": 20
 }
