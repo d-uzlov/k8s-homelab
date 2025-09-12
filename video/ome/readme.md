@@ -72,6 +72,9 @@ kl apply -k ./video/ome/ingress-route/
 kl -n ome describe httproute
 kl -n ome get httproute
 
+ome_signal_url=$(kl -n ome get htr signal -o go-template --template "{{ (index .spec.hostnames 0)}}")
+kl create cm ome-public-domain --dry-run=client -o yaml --from-literal public_url=$ome_signal_url | kl -n ome apply -f -
+kl apply -k ./video/ome/api-exporter/
 kl apply -k ./video/ome/svc-api/
 kl apply -k ./video/ome/api-route/
 
@@ -83,6 +86,9 @@ kl -n ome get svc
 # Cleanup
 
 ```bash
+kl delete -k ./video/ome/api-exporter/
+kl delete -k ./video/ome/api-route/
+kl delete -k ./video/ome/svc-api/
 kl delete -k ./video/ome/edge/
 kl delete -k ./video/ome/redis/
 kl delete -k ./video/ome/origin-cpu/
