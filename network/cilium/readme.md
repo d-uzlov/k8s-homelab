@@ -13,10 +13,10 @@ References:
 helm repo add cilium https://helm.cilium.io/
 helm repo update cilium
 helm search repo cilium/cilium --versions --devel | head
-helm show values cilium/cilium --version 1.18.0 > ./network/cilium/default-values.yaml
+helm show values cilium/cilium --version 1.18.1 > ./network/cilium/default-values.yaml
 
 helm template cilium cilium/cilium \
-  --version 1.18.0 \
+  --version 1.18.1 \
   --values ./network/cilium/values.yaml \
   --namespace cilium \
   --api-versions gateway.networking.k8s.io/v1/GatewayClass \
