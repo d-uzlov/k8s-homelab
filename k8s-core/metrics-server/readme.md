@@ -7,7 +7,7 @@ References:
 # Generate config
 
 ```bash
-wget https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.7.2/components.yaml -O ./k8s-core/metrics-server/secure/metrics-server.yaml
+wget https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.8.0/components.yaml -O ./k8s-core/metrics-server/secure/metrics-server.yaml
 ```
 
 # Install
