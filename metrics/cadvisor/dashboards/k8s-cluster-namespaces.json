@@ -200,7 +200,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "pods w/o mem request"
+              "options": "containers w/o mem request"
             },
             "properties": [
               {
@@ -233,7 +233,7 @@
         "sortBy": [
           {
             "desc": true,
-            "displayName": "Memory Request"
+            "displayName": "containers w/o mem request"
           }
         ]
       },
@@ -335,7 +335,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by(namespace) (\r\n  kube_pod_info{location=\"$location\", namespace=~\"$namespace\"}\r\n  unless on(namespace, pod)\r\n  kube_pod_container_resource_requests{location=\"$location\", namespace=~\"$namespace\", resource=\"memory\"}\r\n)",
+          "expr": "sum by(namespace) (\r\n  (\r\n    kube_pod_container_info{location=\"$location\", namespace=~\"$namespace\"}\r\n    unless on(namespace, pod, container)\r\n    kube_pod_container_resource_requests{location=\"$location\", namespace=~\"$namespace\", resource=\"memory\"}\r\n  )\r\n  or\r\n  (\r\n    (\r\n      kube_pod_init_container_info{location=\"$location\", namespace=~\"$namespace\"}\r\n      and on(location, namespace, pod, uid, container)\r\n      (kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"} == 1)\r\n    )\r\n    unless on(namespace, pod, container)\r\n    kube_pod_init_container_resource_requests{location=\"$location\", namespace=~\"$namespace\", resource=\"memory\"}\r\n  )\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -390,7 +390,7 @@
               "Value #memory_request": "Memory Request",
               "Value #memory_rss": "Memory RSS",
               "Value #pods": "Pods",
-              "Value #pods_without_memory_request": "pods w/o mem request",
+              "Value #pods_without_memory_request": "containers w/o mem request",
               "namespace": "Namespace"
             }
           }
@@ -1466,5 +1466,5 @@
   "timezone": "browser",
   "title": "Cluster / Namespaces",
   "uid": "ccc0ky0jwjgoks6632q1",
-  "version": 0
+  "version": 3
 }
