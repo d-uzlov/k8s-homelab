@@ -4,7 +4,7 @@
 This cadvisor deployment is not standalone nodes.
 
 References:
-- https://github.com/prometheus-community/systemd_exporter
+- https://github.com/google/cadvisor
 
 # Prerequisites
 
