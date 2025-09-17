@@ -845,6 +845,17 @@
       "title": "pod uid history",
       "transformations": [
         {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "pod"
+              }
+            ]
+          }
+        },
+        {
           "id": "groupingToMatrix",
           "options": {
             "columnField": "pod",
@@ -861,12 +872,7 @@
             },
             "includeByName": {},
             "indexByName": {},
-            "orderBy": [
-              {
-                "desc": false,
-                "type": "name"
-              }
-            ],
+            "orderBy": [],
             "orderByMode": "auto",
             "renameByName": {
               "Value": "",
@@ -979,6 +985,17 @@
       "title": "pod-to-node mapping",
       "transformations": [
         {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "pod"
+              }
+            ]
+          }
+        },
+        {
           "id": "groupingToMatrix",
           "options": {
             "columnField": "pod",
@@ -995,12 +1012,7 @@
             },
             "includeByName": {},
             "indexByName": {},
-            "orderBy": [
-              {
-                "desc": false,
-                "type": "name"
-              }
-            ],
+            "orderBy": [],
             "orderByMode": "auto",
             "renameByName": {
               "Value": "",
@@ -1292,6 +1304,17 @@
       "title": "pod IP history",
       "transformations": [
         {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "pod"
+              }
+            ]
+          }
+        },
+        {
           "id": "groupingToMatrix",
           "options": {
             "columnField": "pod",
@@ -1308,12 +1331,7 @@
             },
             "includeByName": {},
             "indexByName": {},
-            "orderBy": [
-              {
-                "desc": false,
-                "type": "name"
-              }
-            ],
+            "orderBy": [],
             "orderByMode": "auto",
             "renameByName": {
               "Value": "",
@@ -1495,15 +1513,15 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(pod) (\r\n  group by(pod, container) (\r\n    last_over_time(container_cpu_usage_seconds_total{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__interval])\r\n  )\r\n)",
+          "expr": "sum by(pod) (group by(pod, container) (last_over_time(container_cpu_usage_seconds_total{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\"}[$__rate_interval])))",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
-          "refId": "A"
+          "refId": "running"
         }
       ],
-      "title": "containers",
+      "title": "containers (running)",
       "type": "timeseries"
     },
     {
@@ -1688,6 +1706,109 @@
         "h": 8,
         "w": 12,
         "x": 0,
+        "y": 51
+      },
+      "id": 64,
+      "maxDataPoints": 150,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(pod) (group by(pod, container) (\r\n    last_over_time(kube_pod_container_info{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\"}[$__rate_interval])\r\n    or\r\n    last_over_time(kube_pod_init_container_info{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", restart_policy=\"Always\"}[$__rate_interval])\r\n))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "scheduled"
+        }
+      ],
+      "title": "containers (scheduled)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic-by-name"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 3,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "fieldMinMax": false,
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
         "y": 51
       },
       "id": 61,
@@ -5529,7 +5650,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(pod) (rate(kube_summary_container_logs_used_bytes{container!=\"\", location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__rate_interval])) * $__interval_ms / 1000",
+          "expr": "sum by(pod) (rate(kube_summary_container_logs_used_bytes{container!=\"\", location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__rate_interval])) * $__interval_ms / 1000\r\n-\r\n# when logs are rotated, last 12M (decimal) seems to be kept, so we need to correct rate()\r\nsum by(pod) (resets(kube_summary_container_logs_used_bytes{container!=\"\", location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__rate_interval])) * 12000000",
           "instant": false,
           "legendFormat": "{{pod}}",
           "range": true,
@@ -5541,7 +5662,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(kube_summary_container_logs_used_bytes{container!=\"\", location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", invalid=$total}[$__rate_interval])) * $__interval_ms / 1000",
+          "expr": "sum(rate(kube_summary_container_logs_used_bytes{container!=\"\", location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", invalid=$total}[$__rate_interval])) * $__interval_ms / 1000\r\n-\r\nsum(resets(kube_summary_container_logs_used_bytes{container!=\"\", location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__rate_interval])) * 12000000",
           "hide": false,
           "instant": false,
           "legendFormat": "Total",
@@ -5925,5 +6046,5 @@
   "timezone": "browser",
   "title": "Namespace / Pods",
   "uid": "vsl6ot4yad5hedtly8ey",
-  "version": 20
+  "version": 6
 }

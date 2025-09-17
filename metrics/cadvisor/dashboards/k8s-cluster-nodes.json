@@ -1996,112 +1996,6 @@
         "type": "prometheus",
         "uid": "${prometheus_datasource}"
       },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 3,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 3,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "bytes"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 46
-      },
-      "id": 54,
-      "maxDataPoints": 150,
-      "options": {
-        "legend": {
-          "asTable": true,
-          "calcs": [
-            "mean"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Mean",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${prometheus_datasource}"
-          },
-          "editorMode": "code",
-          "expr": "sum by(node) (\r\n  avg_over_time(node_memory_MemTotal_bytes{location=\"$location\", node=~\"$node\"}[$__interval])\r\n  -\r\n  avg_over_time(node_memory_MemFree_bytes{location=\"$location\", node=~\"$node\"}[$__interval])\r\n  -\r\n  avg_over_time(node_memory_Buffers_bytes{location=\"$location\", node=~\"$node\"}[$__interval])\r\n  -\r\n  avg_over_time(node_memory_Cached_bytes{location=\"$location\", node=~\"$node\"}[$__interval])\r\n)\r\n-\r\nsum by(node) (avg_over_time(node_namespace:container_memory_rss_kernel{location=\"$location\", node=~\"$node\"}[$__interval]))",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "__auto",
-          "range": true,
-          "refId": "B"
-        }
-      ],
-      "title": "memory: rss + kernel: node-to-pod-delta",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${prometheus_datasource}"
-      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -2164,10 +2058,10 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 0,
-        "y": 54
+        "x": 12,
+        "y": 46
       },
-      "id": 51,
+      "id": 56,
       "maxDataPoints": 150,
       "options": {
         "legend": {
@@ -2194,14 +2088,15 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "(\r\n  sum by(node) (rate(node_cpu_seconds_total{location=\"$location\", node=~\"$node\", mode!~\"idle|iowait|steal\"}[$__rate_interval]))\r\n  -\r\n  sum by(node) (avg_over_time(node_namespace:container_cpu_usage_seconds:irate{location=\"$location\", node=~\"$node\"}[$__interval]))\r\n)\r\n/\r\n(\r\n  (\r\n    max by(node) (avg_over_time(kube_node_status_capacity{location=\"$location\", node=~\"$node\", resource=\"cpu\"}[$__range]))\r\n    -\r\n    avg by(node) (avg_over_time(kube_node_status_allocatable{location=\"$location\", node=~\"$node\", resource=\"cpu\"}[$__interval]))\r\n  ) != 0\r\n)",
+          "expr": "(\r\n  # sum by(node) (rate(node_cpu_seconds_total{location=\"$location\", node=~\"$node\", mode!~\"idle|iowait|steal\"}[$__rate_interval]))\r\n  sum by(node) (rate(container_cpu_usage_seconds_total{location=\"$location\", node=~\"$node\", id=\"/\", cpu=\"total\"}[$__rate_interval]))\r\n  -\r\n  # sum by(node) (avg_over_time(node_namespace:container_cpu_usage_seconds:irate{location=\"$location\", node=~\"$node\"}[$__interval]))\r\n  sum by(node) (rate(container_cpu_usage_seconds_total{location=\"$location\", node=~\"$node\", id=~\"/kubepods.slice|/kubepods\", cpu=\"total\"}[$__rate_interval]))\r\n)\r\n/ sum by(node) (avg_over_time(kubelet_active_pods{location=\"$location\", node=~\"$node\"}[$__interval]) != 0)",
+          "hide": false,
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "cpu: node-to-pod delta / node reserved  %",
+      "title": "cpu: node-to-pod delta / pod-count",
       "type": "timeseries"
     },
     {
@@ -2220,6 +2115,8 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisSoftMax": 0,
+            "axisSoftMin": 0,
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
@@ -2248,13 +2145,438 @@
             }
           },
           "mappings": [],
-          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "green",
                 "value": 0
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 54
+      },
+      "id": 60,
+      "maxDataPoints": 150,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "mean",
+            "range",
+            "stdDev"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "StdDev",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(\r\n  sum by(node) (\r\n    + avg_over_time(node_memory_Active_anon_bytes{location=\"$location\", node=~\"$node\"}[$__interval])\r\n    + avg_over_time(node_memory_Inactive_anon_bytes{location=\"$location\", node=~\"$node\"}[$__interval])\r\n    # + avg_over_time(node_memory_KernelStack_bytes{location=\"$location\", node=~\"$node\"}[$__interval])\r\n    # + avg_over_time(node_memory_PageTables_bytes{location=\"$location\", node=~\"$node\"}[$__interval])\r\n    # + avg_over_time(node_memory_VmallocUsed_bytes{location=\"$location\", node=~\"$node\"}[$__interval])\r\n    # + avg_over_time(node_memory_Slab_bytes{location=\"$location\", node=~\"$node\"}[$__interval])\r\n  )\r\n  - sum by(node) (avg_over_time(container_memory_rss{location=\"$location\", node=~\"$node\", id=~\"/\"}[$__interval]))\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{node}}",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "memory: node_rss - root_cgroup_rss",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMax": 0,
+            "axisSoftMin": 0,
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 3,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 54
+      },
+      "id": 62,
+      "maxDataPoints": 150,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "mean",
+            "range",
+            "stdDev"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "StdDev",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(\r\n  + sum by(node) (avg_over_time(container_memory_rss{location=\"$location\", node=~\"$node\", id=~\"/system.slice\"}[$__interval]))\r\n  - sum by(node) (avg_over_time(container_memory_rss{location=\"$location\", node=~\"$node\", id=~\"/system.slice/kubelet.service\"}[$__interval]))\r\n  - sum by(node) (avg_over_time(container_memory_rss{location=\"$location\", node=~\"$node\", id=~\"/system.slice/containerd.service\"}[$__interval]))\r\n  \r\n  # + sum by(node) (\r\n  #   + avg_over_time(container_memory_usage_bytes{location=\"$location\", node=~\"$node\", id=~\"/system.slice\"}[$__interval])\r\n  #   - avg_over_time(container_memory_cache{location=\"$location\", node=~\"$node\", id=~\"/system.slice\"}[$__interval])\r\n  # )\r\n  # - sum by(node) (\r\n  #   + avg_over_time(container_memory_usage_bytes{location=\"$location\", node=~\"$node\", id=~\"/system.slice/kubelet.service\"}[$__interval])\r\n  #   - avg_over_time(container_memory_cache{location=\"$location\", node=~\"$node\", id=~\"/system.slice/kubelet.service\"}[$__interval])\r\n  # )\r\n  # - sum by(node) (\r\n  #   + avg_over_time(container_memory_usage_bytes{location=\"$location\", node=~\"$node\", id=~\"/system.slice/containerd.service\"}[$__interval])\r\n  #   - avg_over_time(container_memory_cache{location=\"$location\", node=~\"$node\", id=~\"/system.slice/containerd.service\"}[$__interval])\r\n  # )\r\n)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{node}}",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "memory (rss): systemd -kubelet, -containerd",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMax": 0,
+            "axisSoftMin": 0,
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 3,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 62
+      },
+      "id": 54,
+      "maxDataPoints": 150,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(node) (\r\n  # + avg_over_time(node_memory_AnonPages_bytes{location=\"$location\", node=~\"$node\"}[$__interval])\r\n  + avg_over_time(node_memory_Active_anon_bytes{location=\"$location\", node=~\"$node\"}[$__interval])\r\n  + avg_over_time(node_memory_Inactive_anon_bytes{location=\"$location\", node=~\"$node\"}[$__interval])\r\n  # + avg_over_time(node_memory_AnonHugePages_bytes{location=\"$location\", node=~\"$node\"}[$__interval])\r\n  # + avg_over_time(node_memory_Cached_bytes{location=\"$location\", node=~\"$node\"}[$__interval])\r\n  # + avg_over_time(node_memory_Buffers_bytes{location=\"$location\", node=~\"$node\"}[$__interval])\r\n  # + avg_over_time(node_memory_Active_file_bytes{location=\"$location\", node=~\"$node\"}[$__interval])\r\n  # + avg_over_time(node_memory_Inactive_file_bytes{location=\"$location\", node=~\"$node\"}[$__interval])\r\n  + avg_over_time(node_memory_KernelStack_bytes{location=\"$location\", node=~\"$node\"}[$__interval])\r\n  + avg_over_time(node_memory_PageTables_bytes{location=\"$location\", node=~\"$node\"}[$__interval])\r\n  + avg_over_time(node_memory_VmallocUsed_bytes{location=\"$location\", node=~\"$node\"}[$__interval])\r\n  + avg_over_time(node_memory_Slab_bytes{location=\"$location\", node=~\"$node\"}[$__interval])\r\n  # + avg_over_time(node_memory_SUnreclaim_bytes{location=\"$location\", node=~\"$node\"}[$__interval])\r\n  + avg_over_time(node_memory_Unevictable_bytes{location=\"$location\", node=~\"$node\"}[$__interval])\r\n  + avg_over_time(node_memory_Percpu_bytes{location=\"$location\", node=~\"$node\"}[$__interval])\r\n  # + avg_over_time(node_memory_Shmem_bytes{location=\"$location\", node=~\"$node\"}[$__interval])\r\n  # + avg_over_time(node_memory_Mapped_bytes{location=\"$location\", node=~\"$node\"}[$__interval])\r\n)\r\n-\r\nsum by(node) (avg_over_time(node_namespace:container_memory_rss_kernel{location=\"$location\", node=~\"$node\"}[$__interval]))",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "memory: full_node_wo_cache - pod_wo_cache",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMax": 0,
+            "axisSoftMin": 0,
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 3,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 62
+      },
+      "id": 61,
+      "maxDataPoints": 150,
+      "options": {
+        "legend": {
+          "asTable": true,
+          "calcs": [
+            "mean",
+            "range",
+            "stdDev"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "StdDev",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(\r\n  + sum by(node) (avg_over_time(container_memory_rss{location=\"$location\", node=~\"$node\", id=~\"/system.slice/kubelet.service\"}[$__interval]))\r\n  + sum by(node) (avg_over_time(container_memory_rss{location=\"$location\", node=~\"$node\", id=~\"/system.slice/containerd.service\"}[$__interval]))\r\n  - 80 * 1024 * 1024\r\n)\r\n/ sum by(node) (avg_over_time(kubelet_active_pods{location=\"$location\", node=~\"$node\"}[$__interval]) != 0)",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{node}}",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "memory (rss): kubelet + containerd / pod_count",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMax": 0,
+            "axisSoftMin": 0,
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 3,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 3,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "transparent",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
               }
             ]
           },
@@ -2265,8 +2587,8 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 12,
-        "y": 54
+        "x": 0,
+        "y": 70
       },
       "id": 52,
       "maxDataPoints": 150,
@@ -2312,7 +2634,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 62
+        "y": 78
       },
       "id": 24,
       "panels": [],
@@ -2380,7 +2702,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 63
+        "y": 79
       },
       "id": 28,
       "maxDataPoints": 150,
@@ -2409,7 +2731,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(node) (max_over_time(kube_pod_info{location=\"$location\", node=~\"$node\"}[$__interval]))",
+          "expr": "sum by(node) (avg_over_time(kubelet_active_pods{location=\"$location\", node=~\"$node\"}[$__interval]))",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -2485,7 +2807,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 63
+        "y": 79
       },
       "id": 27,
       "maxDataPoints": 150,
@@ -2587,7 +2909,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 71
+        "y": 87
       },
       "id": 7,
       "maxDataPoints": 150,
@@ -2688,7 +3010,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 71
+        "y": 87
       },
       "id": 26,
       "maxDataPoints": 150,
@@ -2794,7 +3116,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 79
+        "y": 95
       },
       "id": 49,
       "maxDataPoints": 150,
@@ -2899,7 +3221,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 79
+        "y": 95
       },
       "id": 30,
       "maxDataPoints": 150,
@@ -3004,7 +3326,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 87
+        "y": 103
       },
       "id": 9,
       "maxDataPoints": 150,
@@ -3110,7 +3432,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 87
+        "y": 103
       },
       "id": 39,
       "maxDataPoints": 150,
@@ -3216,7 +3538,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 95
+        "y": 111
       },
       "id": 40,
       "maxDataPoints": 150,
@@ -3322,7 +3644,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 95
+        "y": 111
       },
       "id": 41,
       "maxDataPoints": 150,
@@ -3368,7 +3690,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 103
+        "y": 119
       },
       "id": 23,
       "panels": [],
@@ -3436,7 +3758,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 104
+        "y": 120
       },
       "id": 12,
       "maxDataPoints": 150,
@@ -3540,7 +3862,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 104
+        "y": 120
       },
       "id": 42,
       "maxDataPoints": 150,
@@ -3640,7 +3962,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 111
+        "y": 127
       },
       "id": 13,
       "maxDataPoints": 150,
@@ -3744,7 +4066,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 111
+        "y": 127
       },
       "id": 43,
       "maxDataPoints": 150,
@@ -3850,5 +4172,5 @@
   "timezone": "browser",
   "title": "Cluster / Nodes",
   "uid": "ccc0ky0jwjgoks6632q2",
-  "version": 12
+  "version": 1
 }

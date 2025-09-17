@@ -574,3 +574,43 @@ spec:
       for: 5m
       labels:
         severity: warning
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: alert-ksm-csr
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  groups:
+  - name: alert-ksm-csr
+    rules:
+    - alert: KubeCsrPending
+      annotations:
+        description: >-
+          signer {{ $labels.signer_name }}:
+          {{ $labels.certificatesigningrequest }}:
+          {{ $value | humanizeDuration }}
+        summary: CSR is pending for more than 30 minutes
+      expr: |-
+        (time() - kube_certificatesigningrequest_created)
+        and ignoring(condition)
+        kube_certificatesigningrequest_condition{condition="approved"} == 0
+        and ignoring(condition)
+        kube_certificatesigningrequest_condition{condition="denied"} == 0
+      for: 30m
+      labels:
+        severity: info
+    - alert: KubeCsrPending
+      # this alert aims to catch cases where CSRs are automatically and automatically denied in a loop
+      annotations:
+        description: >-
+          signer {{ $labels.signer_name }}:
+          {{ $value | humanize }}
+        summary: More than 20 CSRs are denied
+      expr: count without(certificatesigningrequest) (kube_certificatesigningrequest_condition{condition="denied"} == 1) > 20
+      for: 30m
+      labels:
+        severity: info

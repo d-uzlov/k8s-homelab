@@ -26,6 +26,110 @@
         "type": "prometheus",
         "uid": "${prometheus_datasource}"
       },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "disabled"
+                },
+                "1": {
+                  "color": "green",
+                  "index": 1,
+                  "text": "enabled"
+                }
+              },
+              "type": "value"
+            },
+            {
+              "options": {
+                "from": 0,
+                "result": {
+                  "color": "orange",
+                  "index": 2,
+                  "text": "mixed"
+                },
+                "to": 1
+              },
+              "type": "range"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "alignValue": "center",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "perPage": 15,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "avg by(name) (\r\n  avg_over_time(kubernetes_feature_enabled{name=~\"$feature\", job=\"kubelet-main\", instance=~\"$instance\"}[$__interval])\r\n)",
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "feature state",
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -198,7 +302,7 @@
         "h": 38,
         "w": 24,
         "x": 0,
-        "y": 0
+        "y": 8
       },
       "id": 3,
       "options": {
@@ -227,7 +331,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(node, name) (kubernetes_feature_enabled{name=~\"$feature\", job=\"kubelet-main\", node=~\"$node\"})",
+          "expr": "max by(instance, name) (kubernetes_feature_enabled{name=~\"$feature\", job=\"kubelet-main\", instance=~\"$instance\"})",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -242,7 +346,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(node, name) (kubernetes_feature_enabled{name=~\"$feature\", job=\"kube-apiserver\", node=~\"$node\"})",
+          "expr": "max by(instance, name) (kubernetes_feature_enabled{name=~\"$feature\", job=\"kube-apiserver\", instance=~\"$instance\"})",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -256,7 +360,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(node, name) (kubernetes_feature_enabled{name=~\"$feature\", job=\"kube-controller-manager\", node=~\"$node\"})",
+          "expr": "max by(instance, name) (kubernetes_feature_enabled{name=~\"$feature\", job=\"kube-controller-manager\", instance=~\"$instance\"})",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -271,7 +375,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(node, name) (kubernetes_feature_enabled{name=~\"$feature\", job=\"kube-scheduler\", node=~\"$node\"})",
+          "expr": "max by(instance, name) (kubernetes_feature_enabled{name=~\"$feature\", job=\"kube-scheduler\", instance=~\"$instance\"})",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -361,18 +465,18 @@
           "type": "prometheus",
           "uid": "${prometheus_datasource}"
         },
-        "definition": "query_result(group by(node) (last_over_time(up{job=\"kubelet-main\", location=\"$location\"}[$__range])))",
+        "definition": "query_result(group by(instance) (last_over_time(up{job=\"kubelet-main\", location=\"$location\"}[$__range]) or last_over_time(up{job=\"kube-apiserver\", location=\"$location\"}[$__range]) or last_over_time(up{job=\"kube-controller-manager\", location=\"$location\"}[$__range]) or last_over_time(up{job=\"kube-scheduler\", location=\"$location\"}[$__range])))",
         "includeAll": true,
         "multi": true,
-        "name": "node",
+        "name": "instance",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(group by(node) (last_over_time(up{job=\"kubelet-main\", location=\"$location\"}[$__range])))",
+          "query": "query_result(group by(instance) (last_over_time(up{job=\"kubelet-main\", location=\"$location\"}[$__range]) or last_over_time(up{job=\"kube-apiserver\", location=\"$location\"}[$__range]) or last_over_time(up{job=\"kube-controller-manager\", location=\"$location\"}[$__range]) or last_over_time(up{job=\"kube-scheduler\", location=\"$location\"}[$__range])))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
-        "regex": "/node=\"(?<text>[^\"]+)|node=\"(?<value>[^\"]+)/g",
+        "regex": "/instance=\"(?<text>[^\"]+)|instance=\"(?<value>[^\"]+)/g",
         "sort": 1,
         "type": "query"
       },
@@ -385,7 +489,7 @@
             "value": ""
           }
         ],
-        "query": "",
+        "query": "InPlacePodVerticalScaling",
         "type": "textbox"
       },
       {
@@ -394,13 +498,13 @@
           "type": "prometheus",
           "uid": "${prometheus_datasource}"
         },
-        "definition": "query_result(group by(name) (last_over_time(kubernetes_feature_enabled{node=~\"$node\", name=~\".*(?i:($feature_filter)).*\"}[$__range])))",
+        "definition": "query_result(group by(name) (last_over_time(kubernetes_feature_enabled{instance=~\"$instance\", name=~\".*(?i:($feature_filter)).*\"}[$__range])))",
         "includeAll": true,
         "name": "feature",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(group by(name) (last_over_time(kubernetes_feature_enabled{node=~\"$node\", name=~\".*(?i:($feature_filter)).*\"}[$__range])))",
+          "query": "query_result(group by(name) (last_over_time(kubernetes_feature_enabled{instance=~\"$instance\", name=~\".*(?i:($feature_filter)).*\"}[$__range])))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -418,5 +522,5 @@
   "timezone": "browser",
   "title": "k8s features",
   "uid": "edocfeat4ojmmkar5sc",
-  "version": 0
+  "version": 2
 }
