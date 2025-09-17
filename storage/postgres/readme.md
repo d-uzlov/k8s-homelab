@@ -46,7 +46,7 @@ kl -n postgres-operator get pod -o wide
 
 # sometimes postgres operator is stuck
 kl -n postgres-operator rollout restart deployment postgres-operator
-kl -n postgres-operator logs deployments/postgres-operator > ./postgres-operator.log
+kl -n postgres-operator logs deployments/postgres-operator --follow > ./postgres-operator.log
 
 ```
 
@@ -81,6 +81,7 @@ kl create ns postgres-test
 kl apply -k ./storage/postgres/test/
 
 kl -n postgres-test get postgresql
+kl -n postgres-test describe postgresql
 kl -n postgres-test get pvc
 kl -n postgres-test get pods -o wide -L spilo-role
 kl -n postgres-test get svc
