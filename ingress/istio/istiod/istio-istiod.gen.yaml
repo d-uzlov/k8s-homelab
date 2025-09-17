@@ -99,9 +99,9 @@ data:
         "meshNetworks": {},
         "mountMtlsCerts": false,
         "multiCluster": {
-          "clusterName": "",
-          "enabled": false
+          "clusterName": ""
         },
+        "nativeNftables": false,
         "network": "",
         "omitSidecarInjectorConfigMap": false,
         "operatorManageWebhooks": false,
@@ -154,7 +154,7 @@ data:
         "sts": {
           "servicePort": 0
         },
-        "tag": "1.26.2",
+        "tag": "1.27.1",
         "variant": "",
         "waypoint": {
           "affinity": {},
@@ -235,8 +235,9 @@ data:
             {{- end }}
           {{- end }}
         {{- end }}
-        {{ $nativeSidecar := (or (and (not (isset .ObjectMeta.Annotations `sidecar.istio.io/nativeSidecar`)) (eq (env "ENABLE_NATIVE_SIDECARS" "false") "true")) (eq (index .ObjectMeta.Annotations `sidecar.istio.io/nativeSidecar`) "true")) }}
         {{ $tproxy := (eq (annotation .ObjectMeta `sidecar.istio.io/interceptionMode` .ProxyConfig.InterceptionMode) `TPROXY`) }}
+        {{ $capNetBindService := (eq (annotation .ObjectMeta `sidecar.istio.io/capNetBindService` .Values.global.proxy.capNetBindService) `true`) }}
+        {{ $nativeSidecar := ne (index .ObjectMeta.Annotations `sidecar.istio.io/nativeSidecar` | default (printf "%t" .NativeSidecars)) "false" }}
         {{- $containers := list }}
         {{- range $index, $container := .Spec.Containers }}{{ if not (eq $container.Name "istio-proxy") }}{{ $containers = append $containers $container.Name }}{{end}}{{- end}}
         metadata:
@@ -348,6 +349,9 @@ data:
             - "--skip-rule-apply"
             {{ else if .Values.global.proxy_init.forceApplyIptables -}}
             - "--force-apply"
+            {{ end -}}
+            {{ if .Values.global.nativeNftables -}}
+            - "--native-nftables"
             {{ end -}}
             {{with .Values.global.imagePullPolicy }}imagePullPolicy: "{{.}}"{{end}}
           {{- if .ProxyConfig.ProxyMetadata }}
@@ -585,12 +589,12 @@ data:
               {{- else }}
               allowPrivilegeEscalation: {{ .Values.global.proxy.privileged }}
               capabilities:
-                {{ if or (eq (annotation .ObjectMeta `sidecar.istio.io/interceptionMode` .ProxyConfig.InterceptionMode) `TPROXY`) (eq (annotation .ObjectMeta `sidecar.istio.io/capNetBindService` .Values.global.proxy.capNetBindService) `true`) -}}
+                {{ if or $tproxy $capNetBindService -}}
                 add:
-                {{ if eq (annotation .ObjectMeta `sidecar.istio.io/interceptionMode` .ProxyConfig.InterceptionMode) `TPROXY` -}}
+                {{ if $tproxy -}}
                 - NET_ADMIN
                 {{- end }}
-                {{ if eq (annotation .ObjectMeta `sidecar.istio.io/capNetBindService` .Values.global.proxy.capNetBindService) `true` -}}
+                {{ if $capNetBindService -}}
                 - NET_BIND_SERVICE
                 {{- end }}
                 {{- end }}
@@ -598,7 +602,7 @@ data:
                 - ALL
               privileged: {{ .Values.global.proxy.privileged }}
               readOnlyRootFilesystem: true
-              {{ if or ($tproxy) (eq (annotation .ObjectMeta `sidecar.istio.io/capNetBindService` .Values.global.proxy.capNetBindService) `true`) -}}
+              {{ if or $tproxy $capNetBindService -}}
               runAsNonRoot: false
               runAsUser: 0
               runAsGroup: 1337
@@ -626,6 +630,8 @@ data:
             {{- if eq .Values.global.pilotCertProvider "istiod" }}
             - mountPath: /var/run/secrets/istio
               name: istiod-ca-cert
+            - mountPath: /var/run/secrets/istio/crl
+              name: istio-ca-crl
             {{- end }}
             - mountPath: /var/lib/istio/data
               name: istio-data
@@ -703,13 +709,17 @@ data:
             projected:
               sources:
               - clusterTrustBundle:
-                name: istio.io:istiod-ca:root-cert
-                path: root-cert.pem
+                  name: istio.io:istiod-ca:{{ .Values.global.trustBundleName | default "root-cert" }}
+                  path: root-cert.pem
           {{- else }}
             configMap:
-              name: istio-ca-root-cert
+              name: {{ .Values.global.trustBundleName | default "istio-ca-root-cert" }}
           {{- end }}
           {{- end }}
+          - name: istio-ca-crl
+            configMap:
+              name: istio-ca-crl
+              optional: true
           {{- if .Values.global.mountMtlsCerts }}
           # Use the key and cert mounted to /etc/certs/ for the in-cluster mTLS communications.
           - name: istio-certs
@@ -878,6 +888,10 @@ data:
             - name: ISTIO_META_OWNER
               value: kubernetes://apis/{{ .TypeMeta.APIVersion }}/namespaces/{{ valueOrDefault .DeploymentMeta.Namespace `default` }}/{{ toLower .TypeMeta.Kind}}s/{{ .DeploymentMeta.Name }}
             {{- end}}
+            {{- if (isset .ObjectMeta.Annotations `sidecar.istio.io/bootstrapOverride`) }}
+            - name: ISTIO_BOOTSTRAP_OVERRIDE
+              value: "/etc/istio/custom-bootstrap/custom_bootstrap.json"
+            {{- end }}
             {{- if .Values.global.meshID }}
             - name: ISTIO_META_MESH_ID
               value: "{{ .Values.global.meshID }}"
@@ -921,6 +935,10 @@ data:
             {{- end }}
             - mountPath: /var/lib/istio/data
               name: istio-data
+            {{ if (isset .ObjectMeta.Annotations `sidecar.istio.io/bootstrapOverride`) }}
+            - mountPath: /etc/istio/custom-bootstrap
+              name: custom-bootstrap-volume
+            {{- end }}
             # SDS channel between istioagent and Envoy
             - mountPath: /etc/istio/proxy
               name: istio-envoy
@@ -935,7 +953,7 @@ data:
             - name: istio-podinfo
               mountPath: /etc/istio/pod
           volumes:
-          - emptyDir: {}
+          - emptyDir:
             name: workload-socket
           - emptyDir: {}
             name: credential-socket
@@ -946,6 +964,11 @@ data:
           {{- else}}
           - emptyDir: {}
             name: workload-certs
+          {{- end }}
+          {{- if (isset .ObjectMeta.Annotations `sidecar.istio.io/bootstrapOverride`) }}
+          - name: custom-bootstrap-volume
+            configMap:
+              name: {{ annotation .ObjectMeta `sidecar.istio.io/bootstrapOverride` "" }}
           {{- end }}
           # SDS channel between istioagent and Envoy
           - emptyDir:
@@ -975,11 +998,11 @@ data:
             projected:
               sources:
               - clusterTrustBundle:
-                name: istio.io:istiod-ca:root-cert
-                path: root-cert.pem
+                  name: istio.io:istiod-ca:{{ .Values.global.trustBundleName | default "root-cert" }}
+                  path: root-cert.pem
           {{- else }}
             configMap:
-              name: istio-ca-root-cert
+              name: {{ .Values.global.trustBundleName | default "istio-ca-root-cert" }}
           {{- end }}
           {{- end }}
           {{- if .Values.global.mountMtlsCerts }}
@@ -1352,11 +1375,11 @@ data:
             projected:
               sources:
               - clusterTrustBundle:
-                name: istio.io:istiod-ca:root-cert
-                path: root-cert.pem
+                  name: istio.io:istiod-ca:{{ .Values.global.trustBundleName | default "root-cert" }}
+                  path: root-cert.pem
           {{- else }}
             configMap:
-              name: istio-ca-root-cert
+              name: {{ .Values.global.trustBundleName | default "istio-ca-root-cert" }}
           {{- end }}
           {{- end }}
           {{- if .Values.global.mountMtlsCerts }}
@@ -1417,7 +1440,7 @@ data:
               .InfrastructureLabels
               (strdict
                 "gateway.networking.k8s.io/gateway-name" .Name
-                "gateway.istio.io/managed" "istio.io-mesh-controller"
+                "gateway.istio.io/managed" .ControllerLabel
               ) | nindent 4 }}
           ownerReferences:
           - apiVersion: gateway.networking.k8s.io/v1beta1
@@ -1450,7 +1473,7 @@ data:
                   .InfrastructureLabels
                   (strdict
                     "gateway.networking.k8s.io/gateway-name" .Name
-                    "gateway.istio.io/managed" "istio.io-mesh-controller"
+                    "gateway.istio.io/managed" .ControllerLabel
                   ) | nindent 8}}
             spec:
               {{- if .Values.global.waypoint.affinity }}
@@ -1677,11 +1700,11 @@ data:
                 projected:
                   sources:
                   - clusterTrustBundle:
-                      name: istio.io:istiod-ca:root-cert
+                      name: istio.io:istiod-ca:{{ .Values.global.trustBundleName | default "root-cert" }}
                       path: root-cert.pem
               {{- else }}
                 configMap:
-                  name: istio-ca-root-cert
+                  name: {{ .Values.global.trustBundleName | default "istio-ca-root-cert" }}
               {{- end }}
               {{- if .Values.global.imagePullSecrets }}
               imagePullSecrets:
@@ -2084,11 +2107,11 @@ data:
                 projected:
                   sources:
                   - clusterTrustBundle:
-                      name: istio.io:istiod-ca:root-cert
+                      name: istio.io:istiod-ca:{{ .Values.global.trustBundleName | default "root-cert" }}
                       path: root-cert.pem
               {{- else }}
                 configMap:
-                  name: istio-ca-root-cert
+                  name: {{ .Values.global.trustBundleName | default "istio-ca-root-cert" }}
               {{- end }}
               {{- end }}
               {{- if .Values.global.imagePullSecrets }}
@@ -2253,6 +2276,7 @@ rules:
   - apiGroups: ["gateway.networking.x-k8s.io"]
     resources:
       - xbackendtrafficpolicies/status
+      - xlistenersets/status
     verbs: ["update", "patch"]
   - apiGroups: ["gateway.networking.k8s.io"]
     resources:
@@ -2269,6 +2293,12 @@ rules:
   - apiGroups: ["gateway.networking.k8s.io"]
     resources: ["gatewayclasses"]
     verbs: ["create", "update", "patch", "delete"]
+  - apiGroups: ["inference.networking.x-k8s.io"]
+    resources: ["inferencepools"]
+    verbs: ["get", "watch", "list"]
+  - apiGroups: ["inference.networking.x-k8s.io"]
+    resources: ["inferencepools/status"]
+    verbs: ["update", "patch"]
   # Needed for multicluster secret reading, possibly ingress certs in the future
   - apiGroups: [""]
     resources: ["secrets"]
@@ -2325,9 +2355,7 @@ rules:
     resources: ["*"]
     verbs: ["get", "list", "watch"]
   - apiGroups: [""]
-    # TODO(keithmattix): See if we can conditionally give permission to read secrets and configmaps iff externalIstiod
-    # is enabled. Best I can tell, these two resources are only needed for configuring proxy TLS (i.e. CA certs).
-    resources: ["endpoints", "pods", "services", "nodes", "replicationcontrollers", "namespaces", "secrets", "configmaps"]
+    resources: ["endpoints", "pods", "services", "nodes", "replicationcontrollers", "namespaces", "secrets"]
     verbs: ["get", "list", "watch"]
   - apiGroups: ["networking.istio.io"]
     verbs: ["get", "watch", "list"]
@@ -2526,7 +2554,7 @@ spec:
       serviceAccountName: istiod
       containers:
         - name: discovery
-          image: "docker.io/istio/pilot:1.26.2"
+          image: "docker.io/istio/pilot:1.27.1"
           args:
             - "discovery"
             - --monitoringAddr=:15014
@@ -2610,7 +2638,7 @@ spec:
               value: ""
           resources:
             requests:
-              cpu: 0m
+              cpu: 5m
               memory: 100Mi
           securityContext:
             allowPrivilegeEscalation: false
@@ -2696,8 +2724,6 @@ spec:
         target:
           type: Utilization
           averageUtilization: 80
----
-
 ---
 
 ---
