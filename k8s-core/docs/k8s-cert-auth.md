@@ -24,9 +24,11 @@ Any other names are allowed.
 Usernames are supposed to be unique, groups can be shared.
 
 ```bash
+
 short_user_name=john-smith
 full_user_name=user:friends:$short_user_name
 user_group=users:friends
+
 ```
 
 Prefixes proposed here (`user:friends`, `users:friends`) don't mean anything, you can choose your own.
@@ -34,10 +36,12 @@ Prefixes proposed here (`user:friends`, `users:friends`) don't mean anything, yo
 ## 2. User generates a private key and a CSR (certificate signing request)
 
 ```bash
+
 mkdir -p /tmp/k8s-auth/
 rm -rf /tmp/k8s-auth/"$short_user_name".key /tmp/k8s-auth/"$short_user_name".csr
 openssl genrsa -out /tmp/k8s-auth/"$short_user_name".key 2048
 openssl req -new -key /tmp/k8s-auth/"$short_user_name".key -out /tmp/k8s-auth/"$short_user_name".csr -subj "/CN=$full_user_name/O=$user_group"
+
 ```
 
 If needed, you can add several groups like this: `-subj "/CN=name/O=group-one/O=another-group"`.
@@ -49,6 +53,7 @@ User should then transfer the generated `.csr` file to cluster admin.
 ## 3. Admin creates a signed certificate based on CSR
 
 ```bash
+
 # path is the same for convenience when testing these instructions locally
 csr_path=/tmp/k8s-auth/"$short_user_name".csr
 csr_name="$short_user_name"

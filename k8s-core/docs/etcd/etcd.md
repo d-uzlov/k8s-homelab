@@ -18,11 +18,9 @@ References:
 # Installation
 
 References:
-- https://etcd.io/docs/v3.3/install/
+- https://etcd.io/docs/v3.6/install/
 - https://github.com/justmeandopensource/kubernetes/blob/master/kubeadm-external-etcd/2%20simple-cluster-tls.md
 - https://docs.ondat.io/docs/prerequisites/etcd/etcd-outside-the-cluster/
-
-Execute on each etcd node:
 
 ```bash
 

@@ -157,6 +157,9 @@ See here for details on customizing auth config:
 
 # deploy
 
+First make sure that node has docker:
+- [docker.md](../../../docs/docker/docker.md)
+
 ```bash
 
 ansible-inventory --graph k8s_control_plane
