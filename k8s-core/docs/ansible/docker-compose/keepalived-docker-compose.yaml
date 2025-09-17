@@ -1,0 +1,20 @@
+---
+name: keepalived
+services:
+  scheduler:
+    container_name: '${COMPOSE_PROJECT_NAME}'
+    image: ghcr.io/shawly/keepalived:2.3.1
+    restart: always
+    network_mode: host
+    cap_add:
+    - NET_ADMIN
+    - NET_BROADCAST
+    environment:
+    - KEEPALIVED_VIRTUAL_IP={{ apiserver_virtual_ip }}
+    - KEEPALIVED_VIRTUAL_MASK={{ apiserver_virtual_ip_prefix }}
+    - KEEPALIVED_VRID={{ apiserver_virtual_router_id }}
+    - KEEPALIVED_CHECK_SCRIPT=\/usr\/bin\/curl -s -k https:\/\/localhost:6443\/healthz -o \/dev\/null
+    deploy:
+      resources:
+        limits:
+          memory: 50M

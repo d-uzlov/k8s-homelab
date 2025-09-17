@@ -1,0 +1,105 @@
+---
+- name: Install k8s dependencies
+  hosts: k8s_control_plane
+  become: true
+
+  vars: {}
+
+  tasks:
+
+  - name: create pki folder
+    ansible.builtin.file:
+      path: ./kube-control-plane/{{ item }}/pki
+      state: directory
+      # owner: root
+      mode: "0755"
+    loop:
+    - apiserver
+    - scheduler
+    - controller-manager
+    - keepalived
+
+  - name: copy pki
+    ansible.builtin.copy:
+      src: ./env/cluster-{{ cluster_name }}/{{ item.source }}
+      dest: ./kube-control-plane/{{ item.dest }}
+      mode: "0644"
+      owner: root
+      group: root
+    loop:
+    # apiserver
+    - { source: ca/ca.pem, dest: apiserver/pki/ca.pem }
+    - { source: pki/apiserver.pem, dest: apiserver/pki/client.pem }
+    - { source: pki/apiserver-key.pem, dest: apiserver/pki/client-key.pem }
+    - { source: pki/etcd-ca.pem, dest: apiserver/pki/etcd-ca.pem }
+    - { source: pki/etcd-client.pem, dest: apiserver/pki/etcd-client.pem }
+    - { source: pki/etcd-client-key.pem, dest: apiserver/pki/etcd-client-key.pem }
+    - { source: pki/service-accounts.pem, dest: apiserver/pki/service-accounts.pem }
+    - { source: pki/service-accounts-key.pem, dest: apiserver/pki/service-accounts-key.pem }
+    # scheduler
+    - { source: ca/ca.pem, dest: scheduler/pki/ca.pem }
+    - { source: pki/scheduler.pem, dest: scheduler/pki/client.pem }
+    - { source: pki/scheduler-key.pem, dest: scheduler/pki/client-key.pem }
+    # controller-manager
+    - { source: ca/ca.pem, dest: controller-manager/pki/ca.pem }
+    - { source: ca/ca-key.pem, dest: controller-manager/pki/ca-key.pem }
+    - { source: pki/controller-manager.pem, dest: controller-manager/pki/client.pem }
+    - { source: pki/controller-manager-key.pem, dest: controller-manager/pki/client-key.pem }
+    - { source: pki/service-accounts-key.pem, dest: controller-manager/pki/service-accounts-key.pem }
+
+  - name: create config folder
+    ansible.builtin.file:
+      path: ./kube-control-plane/{{ item }}/config
+      state: directory
+      # owner: root
+      mode: "0755"
+    loop:
+    - apiserver
+    # - scheduler
+    # - controller-manager
+
+  - name: copy config
+    ansible.builtin.copy:
+      src: ./env/cluster-{{ cluster_name }}/auth-config.yaml
+      dest: ./kube-control-plane/apiserver/config/auth-config.yaml
+      mode: "0644"
+
+  - name: copy kubeconfig
+    ansible.builtin.copy:
+      src: ./env/cluster-{{ cluster_name }}/generic-kubeconfig.yaml
+      dest: ./kube-control-plane/{{ item }}/kubeconfig.yaml
+      mode: "0644"
+      owner: root
+      group: root
+    loop:
+    - scheduler
+    - controller-manager
+
+  - name: copy docker-compose.yaml
+    ansible.builtin.template:
+      src: ./docker-compose/{{ item }}-docker-compose.yaml
+      dest: ./kube-control-plane/{{ item }}/docker-compose.yaml
+      mode: "0644"
+    loop:
+    - apiserver
+    - scheduler
+    - controller-manager
+    - keepalived
+
+  - name: start docker compose
+    become: true
+    community.docker.docker_compose_v2:
+      project_src: ./kube-control-plane/{{ item }}
+      files:
+      - docker-compose.yaml
+      state: present
+      wait: true
+      wait_timeout: 300
+      remove_orphans: true
+    loop:
+    - apiserver
+    - scheduler
+    - controller-manager
+    - keepalived
+
+  handlers: []

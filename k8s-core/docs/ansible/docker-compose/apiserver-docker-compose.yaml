@@ -1,0 +1,55 @@
+---
+name: kube-apiserver
+services:
+  apiserver:
+    container_name: '${COMPOSE_PROJECT_NAME}'
+    image: registry.k8s.io/kube-apiserver:v1.34.1
+    restart: always
+    network_mode: host
+    command:
+    - kube-apiserver
+    # - -v=9
+    - --advertise-address={{ apiserver_advertise_address }}
+    - --allow-privileged=true
+    - --authentication-config=/etc/k8s/config/auth-config.yaml
+    - --authorization-mode=Node,RBAC
+    - --bind-address=0.0.0.0
+    - --client-ca-file=/etc/k8s/pki/ca.pem
+    - --enable-admission-plugins=NodeRestriction
+    - --enable-bootstrap-token-auth=true
+    - --etcd-cafile=/etc/k8s/pki/etcd-ca.pem
+    - --etcd-certfile=/etc/k8s/pki/etcd-client.pem
+    - --etcd-keyfile=/etc/k8s/pki/etcd-client-key.pem
+    - --etcd-prefix=/registry
+    - --etcd-servers={{ etcd_endpoints }}
+    - --feature-gates=InPlacePodVerticalScaling=true,InPlacePodVerticalScalingExclusiveCPUs=true,WatchList=true,WatchListClient=true
+    - --kubelet-client-certificate=/etc/k8s/pki/client.pem
+    - --kubelet-client-key=/etc/k8s/pki/client-key.pem
+    - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
+    - --proxy-client-cert-file=/etc/k8s/pki/client.pem
+    - --proxy-client-key-file=/etc/k8s/pki/client-key.pem
+    # https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/
+    # - --requestheader-allowed-names=front-proxy-client
+    - --requestheader-allowed-names=kubernetes
+    - --requestheader-client-ca-file=/etc/k8s/pki/ca.pem
+    - --requestheader-extra-headers-prefix=X-Remote-Extra-
+    - --requestheader-group-headers=X-Remote-Group
+    - --requestheader-username-headers=X-Remote-User
+    - --secure-port=6443
+    - --service-account-issuer=https://kubernetes.default.svc.cluster.local
+    - --service-account-key-file=/etc/k8s/pki/service-accounts.pem
+    - --service-account-signing-key-file=/etc/k8s/pki/service-accounts-key.pem
+    - --service-cluster-ip-range={{ cluster_service_cidr }}
+    - --tls-cert-file=/etc/k8s/pki/client.pem
+    - --tls-private-key-file=/etc/k8s/pki/client-key.pem
+    # use pod ID instead of services
+    - --enable-aggregator-routing
+    ports:
+    - 6443:6443
+    volumes:
+    - ./pki/:/etc/k8s/pki/:ro
+    - ./config/:/etc/k8s/config/:ro
+    deploy:
+      resources:
+        limits:
+          memory: 4G

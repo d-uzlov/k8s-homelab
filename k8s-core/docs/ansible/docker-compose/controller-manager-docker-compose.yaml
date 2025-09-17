@@ -1,0 +1,35 @@
+---
+name: kube-controller-manager
+services:
+  controller-manager:
+    container_name: '${COMPOSE_PROJECT_NAME}'
+    image: registry.k8s.io/kube-controller-manager:v1.34.1
+    restart: always
+    network_mode: host
+    command:
+    - kube-controller-manager
+    - --allocate-node-cidrs=true
+    - --authentication-kubeconfig=/etc/kubernetes/controller-manager.conf
+    - --authorization-kubeconfig=/etc/kubernetes/controller-manager.conf
+    - --bind-address=0.0.0.0
+    - --client-ca-file=/etc/k8s/pki/ca.pem
+    - --cluster-cidr={{ cluster_pod_cidr }}
+    - --cluster-name=kubernetes
+    - --cluster-signing-cert-file=/etc/k8s/pki/ca.pem
+    - --cluster-signing-key-file=/etc/k8s/pki/ca-key.pem
+    - --controllers=*,bootstrapsigner,tokencleaner
+    - --feature-gates=InPlacePodVerticalScaling=true,InPlacePodVerticalScalingAllocatedStatus=true,InPlacePodVerticalScalingExclusiveCPUs=true,WatchList=true,WatchListClient=true
+    - --kubeconfig=/etc/kubernetes/controller-manager.conf
+    - --leader-elect=true
+    - --requestheader-client-ca-file=/etc/k8s/pki/ca.pem
+    - --root-ca-file=/etc/k8s/pki/ca.pem
+    - --service-account-private-key-file=/etc/k8s/pki/service-accounts-key.pem
+    - --service-cluster-ip-range={{ cluster_service_cidr }}
+    - --use-service-account-credentials=true
+    volumes:
+    - ./pki/:/etc/k8s/pki/:ro
+    - ./kubeconfig.yaml:/etc/kubernetes/controller-manager.conf:ro
+    deploy:
+      resources:
+        limits:
+          memory: 80M
