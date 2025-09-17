@@ -35,19 +35,19 @@ References:
 ## Cloud image: Debian
 
 Check Debian cloud image archive for new versions:
-- https://cloud.debian.org/images/cloud/bookworm/
+- https://cloud.debian.org/images/cloud/trixie/
 
 ```bash
 
 # this is just an arbitrary version at the time of writing this
 # this is periodically updated
-version=20250530-2128
-wget https://cloud.debian.org/images/cloud/bookworm/$version/debian-12-generic-amd64-$version.tar.xz
+version=20250911-2232
+wget https://cloud.debian.org/images/cloud/trixie/$version/debian-13-generic-amd64-$version.tar.xz
 
 # tar will produce disk.raw in the current directory
-rm -rf ./debian-12-generic-amd64-$version
-mkdir -p ./debian-12-generic-amd64-$version
-tar --verbose --extract --directory ./debian-12-generic-amd64-$version --file debian-12-generic-amd64-$version.tar.xz
+rm -rf ./debian-13-generic-amd64-$version
+mkdir -p ./debian-13-generic-amd64-$version
+tar --verbose --extract --directory ./debian-13-generic-amd64-$version --file debian-13-generic-amd64-$version.tar.xz
 
 ```
 
@@ -55,7 +55,7 @@ tar --verbose --extract --directory ./debian-12-generic-amd64-$version --file de
 
 ```bash
 
-cd ./debian-12-generic-amd64-$version
+cd ./debian-13-generic-amd64-$version
 
 # install system tools
 virt-customize -a disk.raw --update --install qemu-guest-agent,ca-certificates,apt-transport-https,gnupg,lsb-release,open-iscsi,nfs-common,cachefilesd,samba,nvme-cli,lsscsi
@@ -77,6 +77,30 @@ virt-customize -a disk.raw \
 
 # clean files created during customization
 virt-customize -a disk.raw --run ~/cloud-scripts/image-cleanup.sh --truncate /etc/hostname --truncate /etc/machine-id
+
+```
+
+# modify existing VM without booting it
+
+Make sure VM is not running when you do this.
+
+```bash
+
+# look up disk name in VM hardware settings in proxmox web-ui
+disk_name=vm-206-disk-1
+
+sudo virt-customize -a /dev/zvol/rpool/data/$disk_name \
+  --copy-in ~/cloud-scripts/udev/80-hotplug-cpu.rules:/lib/udev/rules.d/ \
+  --mkdir /opt/scripts/ \
+  --copy-in ~/cloud-scripts/scripts/boot-cmd.sh:/opt/scripts/ \
+  --copy-in ~/cloud-scripts/image-cleanup.sh:/opt/scripts/ \
+  --copy-in ~/cloud-scripts/init-user-skel.sh:/opt/scripts/ \
+  --copy-in ~/cloud-scripts/sysctl/inotify.conf:/etc/sysctl.d/ \
+  --copy-in ~/cloud-scripts/sysctl/max_map_count.conf:/etc/sysctl.d/ \
+  --copy-in ~/cloud-scripts/logind/unattended-upgrades-logind-maxdelay.conf:/usr/lib/systemd/logind.conf.d/ \
+  --copy-in ~/cloud-scripts/cloud-systemd/cloud-boot.service:/etc/systemd/system/ \
+  --run-command 'sudo systemctl enable cloud-boot.service' \
+  --run ~/cloud-scripts/init-user-skel.sh
 
 ```
 

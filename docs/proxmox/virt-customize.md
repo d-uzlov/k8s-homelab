@@ -29,7 +29,6 @@ mkdir -p ~/cloud-scripts/cloud-systemd/
 SUBSYSTEM=="cpu", ACTION=="add", TEST=="online", ATTR{online}=="0", ATTR{online}="1"
 EOF
 
-# generate iSCSI and NVMEoF identifiers from hostname
  cat << "boot-cmd-EOF" > ~/cloud-scripts/scripts/boot-cmd.sh
 #!/bin/bash
 set -eux
@@ -39,7 +38,8 @@ exec >> /run/test-init.log 2>&1
 
 echo renewing DHCP lease...
 # dhcp name is outdated on the first boot
-/usr/sbin/dhclient
+# /usr/sbin/dhclient
+systemctl restart systemd-networkd.service
 
 echo generating iscsi name...
 tee /etc/iscsi/initiatorname.iscsi << initiatorname.iscsi-EOF
