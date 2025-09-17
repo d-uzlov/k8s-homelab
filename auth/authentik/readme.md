@@ -19,7 +19,7 @@ You only need to do this when updating the app.
 helm repo add authentik https://charts.goauthentik.io
 helm repo update authentik
 helm search repo authentik/authentik --versions --devel | head
-helm show values authentik/authentik --version 2025.8.1 > ./auth/authentik/default-values.yaml
+helm show values authentik/authentik --version 2025.8.3 > ./auth/authentik/default-values.yaml
 ```
 
 ```bash
@@ -30,7 +30,7 @@ helm show values oci://registry-1.docker.io/bitnamicharts/redis --version 20.6.2
 helm template \
   authentik \
   authentik/authentik \
-  --version 2025.8.1 \
+  --version 2025.8.3 \
   --namespace authentik \
   --values ./auth/authentik/values.yaml \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/part-of|d' -e '\|app.kubernetes.io/version|d' \
