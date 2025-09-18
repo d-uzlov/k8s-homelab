@@ -2,6 +2,27 @@
 # https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/
 apiVersion: kubelet.config.k8s.io/v1beta1
 kind: KubeletConfiguration
+authentication:
+  anonymous:
+    enabled: false
+  webhook:
+    cacheTTL: 0s
+    enabled: true
+  x509:
+    clientCAFile: /etc/kubernetes/pki/ca.crt
+authorization:
+  mode: Webhook
+  webhook:
+    cacheAuthorizedTTL: 0s
+    cacheUnauthorizedTTL: 0s
+cgroupDriver: systemd
+clusterDNS:
+- 10.202.0.10
+clusterDomain: cluster.local
+containerRuntimeEndpoint: unix:///var/run/containerd/containerd.sock
+cpuManagerReconcilePeriod: 0s
+crashLoopBackOff: {}
+evictionPressureTransitionPeriod: 0s
 featureGates:
   InPlacePodVerticalScaling: true
   InPlacePodVerticalScalingAllocatedStatus: true
@@ -11,24 +32,45 @@ featureGates:
   # seems like evented pleg is broken:
   # - https://github.com/kubernetes/enhancements/issues/3386
   # EventedPLEG: true
-clusterDomain: cluster.local
+fileCheckFrequency: 0s
+healthzBindAddress: 127.0.0.1
+healthzPort: 10248
+httpCheckFrequency: 0s
+imageMaximumGCAge: 0s
+imageMinimumGCAge: 0s
+logging:
+  flushFrequency: 0
+  options:
+    json:
+      infoBufferSize: "0"
+    text:
+      infoBufferSize: "0"
+  verbosity: 0
+# maxPods discussion: https://github.com/kubernetes/kubernetes/issues/23349
+maxPods: {{ k8s_max_pods }}
+memorySwap: {}
+nodeStatusReportFrequency: 0s
+nodeStatusUpdateFrequency: 0s
 resolvConf: /run/systemd/resolve/resolv.conf
+rotateCertificates: true
+runtimeRequestTimeout: 0s
+serverTLSBootstrap: true
 # k8s first evicts all non-critical pods, kills remaining ones on timeout, then starts evicting critical ones
 # shutdown timeout for non-critical pods is calculated as 'shutdownGracePeriod - shutdownGracePeriodCriticalPods'
 shutdownGracePeriod: 20s
 shutdownGracePeriodCriticalPods: 10s
 staticPodPath: /etc/kubernetes/manifests
+streamingConnectionIdleTimeout: 0s
 # reduce time of config map synchronization at expense of increased apiserver load
 # default value is 60s
 syncFrequency: 10s
-serverTLSBootstrap: REPLACE_ME_SERVER_TLS_BOOTSTRAP
-cgroupDriver: systemd
-# TODO cpuManagerPolicy requires additional configuration?
-# cpuManagerPolicy: static
-# maxPods discussion: https://github.com/kubernetes/kubernetes/issues/23349
-maxPods: 100
-# kubeAPIQPS: 50 # default is 50
-# kubeAPIBurst: 100 # default is 100
+volumeStatsAggPeriod: 0s
+
+failCgroupV1: true
+
+# by default image pull is serialized
+serializeImagePulls: false
+maxParallelImagePulls: 10
 
 # systemReserved should depend on on the underlying operating system and hardware
 # is is expected be roughly the same across all nodes
@@ -39,8 +81,7 @@ systemReserved: { cpu: 50m, memory: 200Mi }
 # but there is no hard formula 
 # here is an article how cloud providers do it:
 #   https://medium.com/@danielepolencic/reserved-cpu-and-memory-in-kubernetes-nodes-65aee1946afd
-# 1000Mi is reservation of ~10Mi for 100 pods
-kubeReserved: { memory: 1000Mi }
+kubeReserved: { memory: "{{ k8s_kube_reserved_memory }}" }
 
 evictionSoft:
   # kubelet doesn't know how to monitor memory,
@@ -49,3 +90,6 @@ evictionSoft:
   memory.available: 0%
 evictionHard:
   memory.available: 0%
+
+# TODO cpuManagerPolicy requires additional configuration?
+# cpuManagerPolicy: static

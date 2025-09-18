@@ -1,18 +1,4 @@
 
-# deploy
-
-```bash
-
-ansible-inventory --graph kubelet
-
-ansible-playbook ./k8s-core/docs/ansible/k8s-node-playbook.yaml
-
-```
-
-Note that the playbook above upgrades only node dependencies.
-
-You still need to run `kubeadm upgrade` manually if needed.
-
 # dependencies
 
 ```bash
@@ -83,3 +69,13 @@ chmod +x ./k8s-core/docs/ansible/env/$kubeadm_file
 
 - https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
 - https://github.com/kelseyhightower/kubernetes-the-hard-way/tree/master
+
+# deploy
+
+```bash
+
+ansible-inventory --graph kubelet
+
+ansible-playbook ./k8s-core/docs/ansible/k8s-node-dependencies-playbook.yaml
+
+```

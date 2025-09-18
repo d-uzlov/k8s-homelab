@@ -155,6 +155,34 @@ EOF
 See here for details on customizing auth config:
 - [auth-oidc.md](../auth-oidc.md)
 
+# ansible inventory
+
+You need to add your control plane nodes into ansible inventory,
+and set a few additional parameters.
+
+See example:
+
+```yaml
+control-plane-1:
+  ansible_host: control-plane-1.k8s.lan
+  ansible_python_interpreter: auto_silent
+  # cluster name is used to separate folder structure of different clusters
+  cluster_name: my-cluster-name
+  etcd_endpoints: https://etcd1.example.com.:2379,https://etcd2.example.com.:2379,https://etcd3.example.com.:2379
+  apiserver_advertise_address: 10.3.1.2
+  cluster_service_cidr: 10.202.0.0/16
+  # pod CIDR may be meaningless depending on your CNI choice and config
+  # but kube-controller-manager still needs it
+  cluster_pod_cidr: 10.201.0.0/16
+  # apiserver_virtual_ip is used to setup keepalived
+  apiserver_virtual_ip: 10.3.0.255
+  apiserver_virtual_ip_prefix: 16
+  apiserver_virtual_router_id: 87
+```
+
+Note that each control plane host must have its own `apiserver_advertise_address`,
+but all other options will be shared between hosts in a cluster.
+
 # deploy
 
 First make sure that node has docker:

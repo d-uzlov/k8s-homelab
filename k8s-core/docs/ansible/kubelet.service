@@ -6,12 +6,18 @@ Wants=network-online.target
 After=network-online.target
 
 [Service]
-ExecStart=/usr/local/bin/kubelet
 Restart=always
-StartLimitInterval=0
+StartLimitIntervalSec=1
 RestartSec=10
 
-OOMScoreAdjust=-999
+ExecStart=/usr/local/bin/kubelet \
+  --bootstrap-kubeconfig=/var/lib/kubelet/bootstrap-kubeconfig.yaml \
+  --kubeconfig=/var/lib/kubelet/kubeconfig.yaml \
+  --config=/var/lib/kubelet/config.yaml \
+  --cert-dir=/var/lib/kubelet/pki \
+  --hostname-override="{{k8s_node_name}}"
+
+OOMScoreAdjust=-900
 MemoryMin=150M
 MemoryLow=300M
 
