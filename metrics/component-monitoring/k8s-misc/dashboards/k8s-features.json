@@ -47,7 +47,7 @@
             {
               "options": {
                 "0": {
-                  "color": "red",
+                  "color": "blue",
                   "index": 0,
                   "text": "disabled"
                 },
@@ -85,7 +85,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 32,
         "w": 12,
         "x": 0,
         "y": 0
@@ -99,7 +99,7 @@
           "showLegend": false
         },
         "mergeValues": true,
-        "perPage": 15,
+        "perPage": 30,
         "rowHeight": 0.9,
         "showValue": "auto",
         "tooltip": {
@@ -147,7 +147,7 @@
             {
               "options": {
                 "0": {
-                  "color": "dark-red",
+                  "color": "blue",
                   "index": 0
                 },
                 "1": {
@@ -295,14 +295,28 @@
                 "value": 230
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              }
+            ]
           }
         ]
       },
       "gridPos": {
-        "h": 38,
-        "w": 24,
-        "x": 0,
-        "y": 8
+        "h": 32,
+        "w": 12,
+        "x": 12,
+        "y": 0
       },
       "id": 3,
       "options": {
@@ -331,57 +345,13 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "max by(instance, name) (kubernetes_feature_enabled{name=~\"$feature\", job=\"kubelet-main\", instance=~\"$instance\"})",
+          "expr": "max by(instance, job, name) (kubernetes_feature_enabled{name=~\"$feature\", instance=~\"$instance\"})",
           "format": "table",
           "hide": false,
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
           "refId": "kubelet"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${prometheus_datasource}"
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "max by(instance, name) (kubernetes_feature_enabled{name=~\"$feature\", job=\"kube-apiserver\", instance=~\"$instance\"})",
-          "format": "table",
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "apiserver"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${prometheus_datasource}"
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "max by(instance, name) (kubernetes_feature_enabled{name=~\"$feature\", job=\"kube-controller-manager\", instance=~\"$instance\"})",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "kube-controller-manager"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${prometheus_datasource}"
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "max by(instance, name) (kubernetes_feature_enabled{name=~\"$feature\", job=\"kube-scheduler\", instance=~\"$instance\"})",
-          "format": "table",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "kube-scheduler"
         }
       ],
       "title": "features",
@@ -445,13 +415,13 @@
           "type": "prometheus",
           "uid": "${prometheus_datasource}"
         },
-        "definition": "query_result(group by(location) (last_over_time(up{job=\"kube-apiserver\"}[$__range])))",
+        "definition": "query_result(group by(location) (last_over_time(kubernetes_feature_enabled{name=\"AllBeta\"}[$__range])))",
         "includeAll": false,
         "name": "location",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(group by(location) (last_over_time(up{job=\"kube-apiserver\"}[$__range])))",
+          "query": "query_result(group by(location) (last_over_time(kubernetes_feature_enabled{name=\"AllBeta\"}[$__range])))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -465,14 +435,14 @@
           "type": "prometheus",
           "uid": "${prometheus_datasource}"
         },
-        "definition": "query_result(group by(instance) (last_over_time(up{job=\"kubelet-main\", location=\"$location\"}[$__range]) or last_over_time(up{job=\"kube-apiserver\", location=\"$location\"}[$__range]) or last_over_time(up{job=\"kube-controller-manager\", location=\"$location\"}[$__range]) or last_over_time(up{job=\"kube-scheduler\", location=\"$location\"}[$__range])))",
+        "definition": "query_result(group by(instance) (last_over_time(kubernetes_feature_enabled{name=\"AllBeta\", location=\"$location\"}[$__range])))",
         "includeAll": true,
         "multi": true,
         "name": "instance",
         "options": [],
         "query": {
           "qryType": 3,
-          "query": "query_result(group by(instance) (last_over_time(up{job=\"kubelet-main\", location=\"$location\"}[$__range]) or last_over_time(up{job=\"kube-apiserver\", location=\"$location\"}[$__range]) or last_over_time(up{job=\"kube-controller-manager\", location=\"$location\"}[$__range]) or last_over_time(up{job=\"kube-scheduler\", location=\"$location\"}[$__range])))",
+          "query": "query_result(group by(instance) (last_over_time(kubernetes_feature_enabled{name=\"AllBeta\", location=\"$location\"}[$__range])))",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -489,7 +459,7 @@
             "value": ""
           }
         ],
-        "query": "InPlacePodVerticalScaling",
+        "query": "",
         "type": "textbox"
       },
       {

@@ -71,8 +71,8 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 12,
-        "w": 24,
+        "h": 13,
+        "w": 12,
         "x": 0,
         "y": 0
       },
@@ -102,7 +102,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(cpu, governor) (\r\n  (max_over_time(node_cpu_scaling_governor{instance=\"$instance\"}[$__interval]) == 1)\r\n)",
+          "expr": "max by(cpu, governor) ((max_over_time(node_cpu_scaling_governor{instance=\"$instance\"}[$__interval]) == 1))\r\nor on() vector(0)",
           "format": "table",
           "instant": false,
           "legendFormat": "__auto",
@@ -116,8 +116,20 @@
           "id": "groupingToMatrix",
           "options": {
             "columnField": "cpu",
+            "emptyValue": "null",
             "rowField": "Time",
             "valueField": "governor"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Value": true
+            },
+            "includeByName": {},
+            "indexByName": {},
+            "renameByName": {}
           }
         }
       ],
@@ -190,10 +202,10 @@
         ]
       },
       "gridPos": {
-        "h": 12,
-        "w": 15,
-        "x": 2,
-        "y": 12
+        "h": 13,
+        "w": 12,
+        "x": 12,
+        "y": 0
       },
       "id": 1,
       "options": {
@@ -303,15 +315,125 @@
               }
             ]
           },
+          "unit": "sishort"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 0,
+        "y": 13
+      },
+      "id": 4,
+      "maxDataPoints": 150,
+      "options": {
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(controller, csrow) (rate(node_edac_csrow_uncorrectable_errors_total{instance=\"$instance\"}[$__rate_interval])) * $__interval_ms / 1000",
+          "instant": false,
+          "legendFormat": "{{controller}}/{{csrow}} uncorrectable",
+          "range": true,
+          "refId": "uncorrectable"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(controller, csrow) (rate(node_edac_csrow_correctable_errors_total{instance=\"$instance\"}[$__rate_interval])) * $__interval_ms / 1000",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{controller}}/{{csrow}} correctable",
+          "range": true,
+          "refId": "correctable"
+        }
+      ],
+      "title": "memory errors (total)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
           "unit": "celsius"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 12,
-        "w": 24,
-        "x": 0,
-        "y": 24
+        "h": 11,
+        "w": 12,
+        "x": 12,
+        "y": 13
       },
       "id": 2,
       "maxDataPoints": 150,
@@ -346,216 +468,6 @@
         }
       ],
       "title": "temperature (max)",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${prometheus_datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "celsius"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 12,
-        "w": 24,
-        "x": 0,
-        "y": 36
-      },
-      "id": 7,
-      "maxDataPoints": 150,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull",
-            "mean"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Mean",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${prometheus_datasource}"
-          },
-          "editorMode": "code",
-          "expr": "avg by(chip, chip_name, label) (\r\n  avg_over_time(node_hwmon_temp_celsius{instance=\"$instance\"}[$__interval])\r\n* on(chip, sensor) group_right()\r\nlast_over_time(node_hwmon_sensor_label{instance=\"$instance\"}[$__interval])\r\n* on(chip) group_left(chip_name)\r\nlast_over_time(node_hwmon_chip_names{instance=\"$instance\"}[$__interval])\r\n)",
-          "instant": false,
-          "legendFormat": "{{chip}}/{{chip_name}}/{{label}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "temperature (avg)",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${prometheus_datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "sishort"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 12,
-        "w": 24,
-        "x": 0,
-        "y": 48
-      },
-      "id": 4,
-      "maxDataPoints": 150,
-      "options": {
-        "legend": {
-          "calcs": [
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${prometheus_datasource}"
-          },
-          "editorMode": "code",
-          "expr": "sum by(controller, csrow) (increase(node_edac_csrow_uncorrectable_errors_total{instance=\"$instance\"}[$__rate_interval]))",
-          "instant": false,
-          "legendFormat": "{{controller}}/{{csrow}} uncorrectable",
-          "range": true,
-          "refId": "uncorrectable"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${prometheus_datasource}"
-          },
-          "editorMode": "code",
-          "expr": "sum by(controller, csrow) (increase(node_edac_csrow_correctable_errors_total{instance=\"$instance\"}[$__rate_interval]))",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "{{controller}}/{{csrow}} correctable",
-          "range": true,
-          "refId": "correctable"
-        }
-      ],
-      "title": "Memory errors",
       "type": "timeseries"
     },
     {
@@ -678,10 +590,10 @@
         ]
       },
       "gridPos": {
-        "h": 12,
-        "w": 24,
+        "h": 11,
+        "w": 12,
         "x": 0,
-        "y": 60
+        "y": 24
       },
       "id": 3,
       "maxDataPoints": 150,
@@ -768,7 +680,107 @@
           "refId": "min"
         }
       ],
-      "title": "Core frequency",
+      "title": "core frequency",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "id": 7,
+      "maxDataPoints": 150,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "avg by(chip, chip_name, label) (\r\n  avg_over_time(node_hwmon_temp_celsius{instance=\"$instance\"}[$__interval])\r\n* on(chip, sensor) group_right()\r\nlast_over_time(node_hwmon_sensor_label{instance=\"$instance\"}[$__interval])\r\n* on(chip) group_left(chip_name)\r\nlast_over_time(node_hwmon_chip_names{instance=\"$instance\"}[$__interval])\r\n)",
+          "instant": false,
+          "legendFormat": "{{chip}}/{{chip_name}}/{{label}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "temperature (avg)",
       "type": "timeseries"
     },
     {
@@ -831,17 +843,17 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 12,
-        "w": 24,
-        "x": 0,
-        "y": 72
+        "h": 11,
+        "w": 12,
+        "x": 12,
+        "y": 35
       },
       "id": 5,
       "maxDataPoints": 150,
       "options": {
         "legend": {
           "calcs": [
-            "mean"
+            "sum"
           ],
           "displayMode": "table",
           "placement": "right",
@@ -860,7 +872,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(node_cpu_package_throttles_total{instance=\"$instance\"}[$__rate_interval]))",
+          "expr": "sum(rate(node_cpu_package_throttles_total{instance=\"$instance\"}[$__rate_interval])) * $__interval_ms / 1000",
           "hide": false,
           "instant": false,
           "legendFormat": "throttling",
@@ -868,7 +880,7 @@
           "refId": "throttling"
         }
       ],
-      "title": "throttling",
+      "title": "throttling (total events)",
       "type": "timeseries"
     }
   ],
