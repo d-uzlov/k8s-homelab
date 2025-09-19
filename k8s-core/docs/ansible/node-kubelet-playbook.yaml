@@ -8,6 +8,41 @@
 
   tasks:
 
+  - name: stat /var/lib/kubelet/kubeconfig.yaml
+    ansible.builtin.stat:
+      path: /var/lib/kubelet/kubeconfig.yaml
+    register: kubelet_kubeconfig_stat
+
+  - name: create kubelet bootstrap CSR
+    delegate_to: localhost
+    become: false
+    ansible.builtin.template:
+      src: ./csr/kubelet-template.json
+      dest: "./env/cluster-{{ k8s_cluster_name }}/pki/kubelet-{{ k8s_node_name }}-bootstrap.json"
+    register: csr
+
+  - name: create kubelet bootstrap cert
+    delegate_to: localhost
+    become: false
+    ansible.builtin.shell: |
+      set -e
+      set -o pipefail
+      cfssl gencert \
+        -ca "./env/cluster-{{ k8s_cluster_name }}/ca/ca.pem" \
+        -ca-key "./env/cluster-{{ k8s_cluster_name }}/ca/ca-key.pem" \
+        -config "./csr/ca-config.json" \
+        -profile kubelet \
+        "./env/cluster-{{ k8s_cluster_name }}/pki/kubelet-{{ k8s_node_name }}-bootstrap.json" \
+        | cfssljson -bare "./env/cluster-{{ k8s_cluster_name }}/pki/kubelet-{{ k8s_node_name }}-bootstrap"
+    register: cfssl_run
+    when: csr.changed or not kubelet_kubeconfig_stat.stat.exists
+
+  - name: delete /var/lib/kubelet/pki/ (when need to recreate certs)
+    ansible.builtin.file:
+      path: /var/lib/kubelet/pki/
+      state: absent
+    when: csr.changed
+
   - name: create /var/lib/kubelet/pki/
     ansible.builtin.file:
       path: /var/lib/kubelet/pki/
@@ -18,78 +53,31 @@
 
   - name: copy ca
     ansible.builtin.copy:
-      src: ./env/cluster-{{ cluster_name }}/ca/ca.pem
+      src: ./env/cluster-{{ k8s_cluster_name }}/ca/ca.pem
       dest: /var/lib/kubelet/pki/ca.pem
       owner: root
       group: root
       mode: "0644"
     register: copy_ca
 
-  - name: stat /var/lib/kubelet/kubeconfig.yaml
-    ansible.builtin.stat:
-      path: /var/lib/kubelet/kubeconfig.yaml
-    register: kubelet_kubeconfig_stat
-
-  - name: create kubelet bootstrap CSR
-    delegate_to: localhost
-    become: false
-    ansible.builtin.copy:
-      dest: "./env/cluster-{{ cluster_name }}/pki/kubelet-{{ k8s_node_name }}-bootstrap.json"
-      content: |
-        {
-          "CN": "system:node:{{ k8s_node_name }}",
-          "key": {
-            "algo": "ecdsa",
-            "size": 384
-          },
-          "names": [
-            {
-              "C": "GB",
-              "L": "London",
-              "O": "system:nodes",
-              "OU": "k8s",
-              "ST": "Britain"
-            }
-          ]
-        }
-    when: copy_ca.changed or not kubelet_kubeconfig_stat.stat.exists
-
-  - name: create kubelet bootstrap cert
-    delegate_to: localhost
-    become: false
-    ansible.builtin.shell: |
-      set -e
-      set -o pipefail
-      cfssl gencert \
-        -ca "./env/cluster-{{ cluster_name }}/ca/ca.pem" \
-        -ca-key "./env/cluster-{{ cluster_name }}/ca/ca-key.pem" \
-        -config "./csr/ca-config.json" \
-        -profile kubelet \
-        "./env/cluster-{{ cluster_name }}/pki/kubelet-{{ k8s_node_name }}-bootstrap.json" \
-        | cfssljson -bare "./env/cluster-{{ cluster_name }}/pki/kubelet-{{ k8s_node_name }}-bootstrap"
-    register: cfssl_run
-    when: copy_ca.changed or not kubelet_kubeconfig_stat.stat.exists
-
   - name: copy kubelet bootstrap cert
     ansible.builtin.copy:
-      src: ./env/cluster-{{ cluster_name }}/pki/{{ item.source }}
+      src: ./env/cluster-{{ k8s_cluster_name }}/pki/{{ item.source }}
       dest: /var/lib/kubelet/pki/{{ item.dest }}
       owner: root
       group: root
       mode: preserve
-    when: copy_ca.changed or not kubelet_kubeconfig_stat.stat.exists
+    when: csr.changed or not kubelet_kubeconfig_stat.stat.exists
     loop:
     - { source: "kubelet-{{ k8s_node_name }}-bootstrap.pem", dest: "kubelet-client-bootstrap.pem" }
     - { source: "kubelet-{{ k8s_node_name }}-bootstrap-key.pem", dest: "kubelet-client-bootstrap-key.pem" }
 
   - name: copy bootstrap-kubeconfig.yaml
-    ansible.builtin.copy:
-      src: ./env/cluster-{{ cluster_name }}/kubelet-bootstrap-kubeconfig.yaml
+    ansible.builtin.template:
+      src: ./kubelet-bootstrap-kubeconfig.yaml
       dest: /var/lib/kubelet/bootstrap-kubeconfig.yaml
-      owner: root
-      group: root
       mode: "0644"
-    when: copy_ca.changed or not kubelet_kubeconfig_stat.stat.exists
+    when: csr.changed or not kubelet_kubeconfig_stat.stat.exists
     notify:
     - kubelet_service_restart
 

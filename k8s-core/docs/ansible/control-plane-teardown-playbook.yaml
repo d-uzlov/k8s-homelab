@@ -1,0 +1,35 @@
+---
+- name: Install k8s dependencies
+  hosts: k8s_control_plane
+  become: false
+
+  vars: {}
+
+  tasks:
+
+  - name: stop docker compose
+    community.docker.docker_compose_v2:
+      project_src: ./kube-control-plane/{{ item }}
+      files:
+      - docker-compose.yaml
+      state: absent
+      wait: true
+      wait_timeout: 300
+      remove_orphans: true
+    loop:
+    - apiserver
+    - scheduler
+    - controller-manager
+    - keepalived
+
+  - name: delete project folders
+    ansible.builtin.file:
+      path: ./kube-control-plane/{{ item }}/
+      state: absent
+    loop:
+    - apiserver
+    - scheduler
+    - controller-manager
+    - keepalived
+
+  handlers: []

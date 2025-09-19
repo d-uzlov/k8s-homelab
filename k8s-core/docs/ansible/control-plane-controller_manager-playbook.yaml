@@ -1,0 +1,97 @@
+---
+- name: Install k8s dependencies
+  hosts: k8s_control_plane
+  become: false
+
+  vars:
+    project_root: ~/kube-control-plane
+
+  tasks:
+
+  - name: create CSR
+    delegate_to: localhost
+    become: false
+    ansible.builtin.template:
+      src: ./csr/controller-manager.json
+      dest: ./env/cluster-{{ k8s_cluster_name }}/pki/controller-manager-{{ ansible_host }}.json
+    register: csr
+
+  - name: create cert
+    delegate_to: localhost
+    become: false
+    ansible.builtin.shell: |
+      set -e
+      set -o pipefail
+      cfssl gencert \
+        -ca ./env/cluster-{{ k8s_cluster_name }}/ca/ca.pem \
+        -ca-key ./env/cluster-{{ k8s_cluster_name }}/ca/ca-key.pem \
+        -config ./csr/ca-config.json \
+        -profile controller-manager \
+        ./env/cluster-{{ k8s_cluster_name }}/pki/controller-manager-{{ ansible_host }}.json \
+        | cfssljson -bare ./env/cluster-{{ k8s_cluster_name }}/pki/controller-manager-{{ ansible_host }}
+    register: cfssl_run
+    when: csr.changed
+
+  - name: create folders
+    ansible.builtin.file:
+      path: "{{ project_root }}/{{ item }}"
+      state: directory
+      mode: "0755"
+    loop:
+    - controller-manager/pki
+
+  - name: copy ca
+    ansible.builtin.copy:
+      src: ./env/cluster-{{ k8s_cluster_name }}/ca/ca.pem
+      dest: "{{ project_root }}/{{ item }}/pki/ca.pem"
+      mode: preserve
+    loop:
+    - controller-manager
+
+  - name: copy ca key
+    ansible.builtin.copy:
+      src: ./env/cluster-{{ k8s_cluster_name }}/ca/ca-key.pem
+      dest: "{{ project_root }}/{{ item }}/pki/ca-key.pem"
+      mode: preserve
+    loop:
+    - controller-manager
+
+  - name: copy pki
+    ansible.builtin.copy:
+      src: ./env/cluster-{{ k8s_cluster_name }}/{{ item.source }}
+      dest: "{{ project_root }}/{{ item.dest }}"
+      mode: preserve
+    loop:
+    - { source: "pki/controller-manager-{{ ansible_host }}.pem", dest: controller-manager/pki/client.pem }
+    - { source: "pki/controller-manager-{{ ansible_host }}-key.pem", dest: controller-manager/pki/client-key.pem }
+    - { source: pki/service-accounts-key.pem, dest: controller-manager/pki/service-accounts-key.pem }
+
+  - name: copy kubeconfig
+    ansible.builtin.template:
+      src: ./generic-kubeconfig.yaml
+      dest: "{{ project_root }}/{{ item }}/kubeconfig.yaml"
+      mode: "0644"
+    loop:
+    - controller-manager
+
+  - name: copy docker-compose.yaml
+    ansible.builtin.template:
+      src: ./docker-compose/{{ item }}-docker-compose.yaml
+      dest: "{{ project_root }}/{{ item }}/docker-compose.yaml"
+      mode: "0644"
+    loop:
+    - controller-manager
+
+  - name: start docker compose
+    community.docker.docker_compose_v2:
+      project_src: "{{ project_root }}/{{ item }}"
+      files:
+      - docker-compose.yaml
+      state: present
+      wait: true
+      wait_timeout: 300
+      remove_orphans: true
+    loop:
+    - controller-manager
+
+  handlers: []

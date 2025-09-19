@@ -13,6 +13,10 @@ and there are no pods for apiserver, scheduler, or controller-manager.
 
 This guide also follows approach where essential k8s components are out of the cluster.
 
+Technically, control plane components don't need to run on the same host.
+But I don't really see a benefit in running them on separate nodes either,
+so we will be running `apiserver` + `controller-manager` + `scheduler` combo on each node.
+
 # reasoning
 
 There are a few reasons to abandon the kubeadm and other approaches.
@@ -20,8 +24,8 @@ There are a few reasons to abandon the kubeadm and other approaches.
 1. While one-click tools are very convenient and quick to setup, they are not very flexible.
 When using kubeadm I was feeling how I fight with it for every change in configuration.
 
-Want node-specific kubelet config?
-But there is no such thing as node-specific config.
+Do you want node-specific kubelet config?
+No, you can't have it. There is no such thing as node-specific config.
 You _can_ dig up things such as `/etc/default/kubelet` file, but it's not very flexible, and not guaranteed to work.
 You can also manually edit kubelet service files. But you need to figure out how kubeadm manages them,
 and there is no guarantee that the format will not change later.
@@ -32,21 +36,24 @@ The patches are not very convenient to use. It's a set of separate files with fi
 You need to manually upload them to nodes.
 If you ever forget to include `patches` as kubeadm arg, it will overwrite control plane manifests with default ones.
 
-For best stability control-plane nodes should not run any custom workloads.
+2. For best stability control-plane nodes should not run any custom workloads.
 But if control plane nodes are part of the cluster, they _can_ run them, theoretically.
 So they need to run infrastructure DaemonSet workloads, such as CNI and CSI plugins.
-It's unlikely a plugin will use too much memory or CPU. But you still pay for it. And democratic-csi, for example, it more resource-intensive than I would like.
+It's unlikely a plugin will use too much memory or CPU. But you still pay for it.
+And some plugins, like democratic-csi, are more resource-intensive than I would like.
 Removing such infrastructure daemonsets from control plane nodes would require you to tweak their tolerations,
 which is not the work I'm looking forward to do,
 _and_ it would compromise them as proper cluster nodes!
 
-If you want to add auth config, you need to copy it manually.
+3. Do you want to add auth config, you need to copy it manually.
 Any other config? Copy it manually.
 
-For any non-standard deployment you need to understand inner workings anyway.
+4. For any non-standard deployment you need to understand inner workings that kubeadm is trying to hide from you.
 
-If you need to do some things manually, automated things are not so convenient,
-and it consumes more resources, why use kubeadm?
+---
+
+So, if your configuration is not following the very rigid standard
+it doesn't make much sense to use kubeadm, IMo.
 
 # inspiration
 
@@ -58,70 +65,18 @@ References:
 # prerequisites
 
 - [external etcd setup](../etcd/etcd.md)
-- [cluster CA](./cluster-ca.md)
-
-Install dependencies:
-
-```bash
-
-# https://github.com/cloudflare/cfssl/releases
-cfssl_version=1.6.5
-
-wget -q --show-progress https://github.com/cloudflare/cfssl/releases/download/v${cfssl_version}/cfssl_${cfssl_version}_linux_amd64 -O ./k8s-core/docs/etcd/env/cfssl_${cfssl_version}_linux_amd64
-wget -q --show-progress https://github.com/cloudflare/cfssl/releases/download/v${cfssl_version}/cfssljson_${cfssl_version}_linux_amd64 -O ./k8s-core/docs/etcd/env/cfssljson_${cfssl_version}_linux_amd64
-
-chmod +x ./k8s-core/docs/etcd/env/cfssl_${cfssl_version}_linux_amd64
-chmod +x ./k8s-core/docs/etcd/env/cfssljson_${cfssl_version}_linux_amd64
-sudo cp ./k8s-core/docs/etcd/env/cfssl_${cfssl_version}_linux_amd64 /usr/local/bin/cfssl
-sudo cp ./k8s-core/docs/etcd/env/cfssljson_${cfssl_version}_linux_amd64 /usr/local/bin/cfssljson
-
-```
+- [cluster CA](./control-plane-ca.md)
+- [cfssl](../../../docs/cfssl.md)
 
 # generate config for node components
-
-Technically, control plane components don't need to run on the same host.
-But I don't really see a benefit in running them on separate nodes either,
-so we will be running `apiserver` + `controller-manager` + `scheduler` combo on each node.
 
 ```bash
 
 cluster_name=
 
+# unlike CA folder, pki folder is effectively disposable,
+# nothing will break if you delete it
 mkdir -p ./k8s-core/docs/ansible/env/cluster-$cluster_name/pki/
-
-cp ./k8s-core/docs/ansible/csr/apiserver.template.json ./k8s-core/docs/ansible/env/cluster-$cluster_name/pki/apiserver-csr.json
-echo ./k8s-core/docs/ansible/env/cluster-$cluster_name/pki/apiserver-csr.json
-
-# now you can open the csr template and adjust the list of possible apiserver names
-nano ./k8s-core/docs/ansible/env/cluster-$cluster_name/pki/apiserver-csr.json
-# kubernetes.default.svc.cluster.local and shorter versions are required (unless you want to change default cluster domain)
-# cluster.service.ip is also required. Set it to the first IP of cluster service CIDR. For example, 10.202.0.1
-# all other names are for your convenience
-# it's a good idea to list all possible addresses of apiserver,
-# but you will be able to just override tls-server-name in kubeconfig anyway
-
-cfssl gencert \
-  -ca=./k8s-core/docs/ansible/env/cluster-$cluster_name/ca/ca.pem \
-  -ca-key=./k8s-core/docs/ansible/env/cluster-$cluster_name/ca/ca-key.pem \
-  -config=./k8s-core/docs/ansible/csr/ca-config.json \
-  -profile=kubernetes \
-  ./k8s-core/docs/ansible/env/cluster-$cluster_name/pki/apiserver-csr.json | cfssljson -bare ./k8s-core/docs/ansible/env/cluster-$cluster_name/pki/apiserver
-
-openssl x509 -noout -in ./k8s-core/docs/ansible/env/cluster-$cluster_name/pki/apiserver.pem -text
-
-cfssl gencert \
-  -ca=./k8s-core/docs/ansible/env/cluster-$cluster_name/ca/ca.pem \
-  -ca-key=./k8s-core/docs/ansible/env/cluster-$cluster_name/ca/ca-key.pem \
-  -config=./k8s-core/docs/ansible/csr/ca-config.json \
-  -profile=kubernetes \
-  ./k8s-core/docs/ansible/csr/scheduler.json | cfssljson -bare ./k8s-core/docs/ansible/env/cluster-$cluster_name/pki/scheduler
-
-cfssl gencert \
-  -ca=./k8s-core/docs/ansible/env/cluster-$cluster_name/ca/ca.pem \
-  -ca-key=./k8s-core/docs/ansible/env/cluster-$cluster_name/ca/ca-key.pem \
-  -config=./k8s-core/docs/ansible/csr/ca-config.json \
-  -profile=kubernetes \
-  ./k8s-core/docs/ansible/csr/controller-manager.json | cfssljson -bare ./k8s-core/docs/ansible/env/cluster-$cluster_name/pki/controller-manager
 
 cfssl gencert \
   -ca=./k8s-core/docs/ansible/env/cluster-$cluster_name/ca/ca.pem \
@@ -130,14 +85,7 @@ cfssl gencert \
   -profile=kubernetes \
   ./k8s-core/docs/ansible/csr/service-accounts.json | cfssljson -bare ./k8s-core/docs/ansible/env/cluster-$cluster_name/pki/service-accounts
 
-apiserver_endpoint=cp.k8s.lan
-
-kubectl --kubeconfig "./k8s-core/docs/ansible/env/cluster-$cluster_name/generic-kubeconfig.yaml" config set-cluster kubernetes --certificate-authority /etc/k8s/pki/ca.pem --server "https://${apiserver_endpoint}:6443" --tls-server-name kubernetes
-kubectl --kubeconfig "./k8s-core/docs/ansible/env/cluster-$cluster_name/generic-kubeconfig.yaml" config set-credentials user --client-certificate /etc/k8s/pki/client.pem --client-key /etc/k8s/pki/client-key.pem
-kubectl --kubeconfig "./k8s-core/docs/ansible/env/cluster-$cluster_name/generic-kubeconfig.yaml" config set-context default --cluster kubernetes --user user
-kubectl --kubeconfig "./k8s-core/docs/ansible/env/cluster-$cluster_name/generic-kubeconfig.yaml" config use-context default
-
-etcd_cluster_name=b2788
+etcd_cluster_name=
 cp ./k8s-core/docs/etcd/env/config-$etcd_cluster_name/ca.pem ./k8s-core/docs/ansible/env/cluster-$cluster_name/pki/etcd-ca.pem
 cp ./k8s-core/docs/etcd/env/config-$etcd_cluster_name/etcd-client.pem ./k8s-core/docs/ansible/env/cluster-$cluster_name/pki/etcd-client.pem
 cp ./k8s-core/docs/etcd/env/config-$etcd_cluster_name/etcd-client-key.pem ./k8s-core/docs/ansible/env/cluster-$cluster_name/pki/etcd-client-key.pem
@@ -152,8 +100,7 @@ EOF
 
 ```
 
-See here for details on customizing auth config:
-- [auth-oidc.md](../auth-oidc.md)
+Check out [auth-oidc.md](../auth-oidc.md) for details about customizing auth config.
 
 # ansible inventory
 
@@ -164,36 +111,41 @@ See example:
 
 ```yaml
 control-plane-1:
-  ansible_host: control-plane-1.k8s.lan
+  ansible_host: control-plane-1.example.com
   ansible_python_interpreter: auto_silent
   # cluster name is used to separate folder structure of different clusters
-  cluster_name: my-cluster-name
-  etcd_endpoints: https://etcd1.example.com.:2379,https://etcd2.example.com.:2379,https://etcd3.example.com.:2379
-  apiserver_advertise_address: 10.3.1.2
-  cluster_service_cidr: 10.202.0.0/16
+  k8s_cluster_name: example-cluster
+  k8s_apiserver_advertise_address: 10.3.1.2
+  k8s_apiserver_etcd_endpoints: https://etcd1.example.com.:2379,https://etcd2.example.com.:2379,https://etcd3.example.com.:2379
+  k8s_apiserver_loadbalancer_endpoint: k8s-example-cp.example.com
+  k8s_cluster_service_cidr: 10.202.0.0/16
+  k8s_cluster_kubernetes_svc_ip: 10.202.0.1
   # pod CIDR may be meaningless depending on your CNI choice and config
   # but kube-controller-manager still needs it
-  cluster_pod_cidr: 10.201.0.0/16
-  # apiserver_virtual_ip is used to setup keepalived
-  apiserver_virtual_ip: 10.3.0.255
-  apiserver_virtual_ip_prefix: 16
-  apiserver_virtual_router_id: 87
+  k8s_cluster_pod_cidr: 10.201.0.0/16
+  # you are expected to point k8s_apiserver_loadbalancer_endpoint to this virtual IP
+  keepalived_apiserver_virtual_ip: 10.3.0.255
+  keepalived_apiserver_virtual_ip_prefix: 16
+  keepalived_apiserver_virtual_router_id: 87
 ```
 
-Note that each control plane host must have its own `apiserver_advertise_address`,
+Note that each control plane host must have its own `k8s_apiserver_advertise_address`,
 but all other options will be shared between hosts in a cluster.
 
 # deploy
 
-First make sure that node has docker:
+First make sure that each host has docker:
 - [docker.md](../../../docs/docker/docker.md)
 
 ```bash
 
 ansible-inventory --graph k8s_control_plane
 
-ansible-playbook ./k8s-core/docs/ansible/k8s-control-plane-playbook.yaml
+ansible-playbook ./k8s-core/docs/ansible/control-plane-apiserver-playbook.yaml --limit control-plane-1
+ansible-playbook ./k8s-core/docs/ansible/control-plane-scheduler-playbook.yaml --limit control-plane-1
+ansible-playbook ./k8s-core/docs/ansible/control-plane-controller_manager-playbook.yaml --limit control-plane-1
 
+# this allows apiserver to talk to kubelets
 kl create clusterrolebinding system:cluster-admins --clusterrole cluster-admin --group cluster-admins
 
 ```
@@ -204,3 +156,11 @@ You either need to ensure L3 connectivity from apiserver host to pod network,
 or deploy something like konnectivity proxy:
 
 - https://kubernetes.io/docs/tasks/extend-kubernetes/setup-konnectivity/
+
+# teardown control plane host
+
+```bash
+
+ansible-playbook ./k8s-core/docs/ansible/control-plane-teardown-playbook.yaml --limit control-plane-1
+
+```

@@ -19,19 +19,7 @@ References:
 - - 1 is no redundancy, 2 is still no redundancy, with 3 instances one may fail without affecting clients
 - L3 connectivity between hosts, L3 should be enough
 - DNS records for all etcd hosts
-
-```bash
-
-# install cfssl
-wget -q --show-progress https://github.com/cloudflare/cfssl/releases/download/v1.6.5/cfssl_1.6.5_linux_amd64 -O ./k8s-core/docs/etcd/env/cfssl_1.6.5_linux_amd64
-wget -q --show-progress https://github.com/cloudflare/cfssl/releases/download/v1.6.5/cfssljson_1.6.5_linux_amd64 -O ./k8s-core/docs/etcd/env/cfssljson_1.6.5_linux_amd64
-
-chmod +x ./k8s-core/docs/etcd/env/cfssl_1.6.5_linux_amd64
-chmod +x ./k8s-core/docs/etcd/env/cfssljson_1.6.5_linux_amd64
-sudo cp ./k8s-core/docs/etcd/env/cfssl_1.6.5_linux_amd64 /usr/local/bin/cfssl
-sudo cp ./k8s-core/docs/etcd/env/cfssljson_1.6.5_linux_amd64 /usr/local/bin/cfssljson
-
-```
+- [cfssl](../../../docs/cfssl.md)
 
 # generate ca cert
 

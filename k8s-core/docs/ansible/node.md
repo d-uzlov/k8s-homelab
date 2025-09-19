@@ -1,17 +1,7 @@
 
-# create config
+# prerequisites:
 
-```bash
-
-cluster_name=trixie
-apiserver_endpoint=cp.k8s.lan
-
-kubectl --kubeconfig "./k8s-core/docs/ansible/env/cluster-$cluster_name/kubelet-bootstrap-kubeconfig.yaml" config set-cluster kubernetes --certificate-authority /var/lib/kubelet/pki/ca.pem --server "https://${apiserver_endpoint}:6443" --tls-server-name kubernetes
-kubectl --kubeconfig "./k8s-core/docs/ansible/env/cluster-$cluster_name/kubelet-bootstrap-kubeconfig.yaml" config set-credentials user --client-certificate /var/lib/kubelet/pki/kubelet-client-bootstrap.pem --client-key /var/lib/kubelet/pki/kubelet-client-bootstrap-key.pem
-kubectl --kubeconfig "./k8s-core/docs/ansible/env/cluster-$cluster_name/kubelet-bootstrap-kubeconfig.yaml" config set-context default --cluster kubernetes --user user
-kubectl --kubeconfig "./k8s-core/docs/ansible/env/cluster-$cluster_name/kubelet-bootstrap-kubeconfig.yaml" config use-context default
-
-```
+- [cluster CA](./control-plane-ca.md)
 
 # ansible inventory
 
@@ -24,16 +14,18 @@ See example:
 worker-1:
   ansible_host: worker-1.k8s.lan
   ansible_python_interpreter: auto_silent
+  # same as in control plane config
+  k8s_apiserver_loadbalancer_endpoint: k8s-example-cp.example.com
   # must be the same as value in control plane nodes
-  cluster_name: my-cluster-name
+  k8s_cluster_name: example-cluster
   # how to register node in a cluster
   # may be the same as host address, or it may be different, it's just a matter of preference
   k8s_node_name: worker-1.k8s.lan
   # it's nice to have an ability to run a lot of pods,
-  # but if node is low on memory, you may want to limit it
+  # but if node is low on memory, you may want to lower the limit
   k8s_max_pods: 250
   # good value for k8s_kube_reserved_memory can be estimated as (10Mi * max_pods)
-  k8s_kube_reserved_memory: 500Mi
+  k8s_kube_reserved_memory: 2500Mi
 ```
 
 # deploy
@@ -43,10 +35,10 @@ worker-1:
 ansible-inventory --graph kubelet
 
 # install/update on a single new node
-ansible-playbook ./k8s-core/docs/ansible/k8s-node-kubelet-playbook.yaml --limit worker-1
+ansible-playbook ./k8s-core/docs/ansible/node-kubelet-playbook.yaml --limit worker-1
 
 # update kubelet or config on all nodes
 # (check on a single node to make sure nothing breaks before running)
-ansible-playbook ./k8s-core/docs/ansible/k8s-node-kubelet-playbook.yaml
+ansible-playbook ./k8s-core/docs/ansible/node-kubelet-playbook.yaml
 
 ```

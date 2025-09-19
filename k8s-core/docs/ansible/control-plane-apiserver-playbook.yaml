@@ -1,0 +1,100 @@
+---
+- name: Install k8s dependencies
+  hosts: k8s_control_plane
+  become: false
+
+  vars:
+    project_root: ~/kube-control-plane
+
+  tasks:
+
+  - name: create CSR
+    delegate_to: localhost
+    become: false
+    ansible.builtin.template:
+      src: ./csr/apiserver.template.json
+      dest: ./env/cluster-{{ k8s_cluster_name }}/pki/apiserver-{{ ansible_host }}.json
+    register: csr
+
+  - name: create cert
+    delegate_to: localhost
+    become: false
+    ansible.builtin.shell: |
+      set -e
+      set -o pipefail
+      cfssl gencert \
+        -ca ./env/cluster-{{ k8s_cluster_name }}/ca/ca.pem \
+        -ca-key ./env/cluster-{{ k8s_cluster_name }}/ca/ca-key.pem \
+        -config ./csr/ca-config.json \
+        -profile apiserver \
+        ./env/cluster-{{ k8s_cluster_name }}/pki/apiserver-{{ ansible_host }}.json \
+        | cfssljson -bare ./env/cluster-{{ k8s_cluster_name }}/pki/apiserver-{{ ansible_host }}
+    register: cfssl_run
+    when: csr.changed
+
+  - name: create folders
+    ansible.builtin.file:
+      path: "{{ project_root }}/{{ item }}"
+      state: directory
+      mode: "0755"
+    loop:
+    - apiserver/pki
+    - apiserver/config
+    - keepalived
+
+  - name: copy ca
+    ansible.builtin.copy:
+      src: ./env/cluster-{{ k8s_cluster_name }}/ca/ca.pem
+      dest: "{{ project_root }}/apiserver/pki/ca.pem"
+      mode: preserve
+
+  - name: copy pki
+    ansible.builtin.copy:
+      src: ./env/cluster-{{ k8s_cluster_name }}/{{ item.source }}
+      dest: "{{ project_root }}/{{ item.dest }}"
+      mode: preserve
+    loop:
+    - { source: "pki/apiserver-{{ ansible_host }}.pem", dest: apiserver/pki/apiserver.pem }
+    - { source: "pki/apiserver-{{ ansible_host }}-key.pem", dest: apiserver/pki/apiserver-key.pem }
+    - { source: pki/service-accounts.pem, dest: apiserver/pki/service-accounts.pem }
+    - { source: pki/service-accounts-key.pem, dest: apiserver/pki/service-accounts-key.pem }
+
+  - name: copy etcd cert
+    ansible.builtin.copy:
+      src: ./env/cluster-{{ k8s_cluster_name }}/{{ item.source }}
+      dest: "{{ project_root }}/{{ item.dest }}"
+      mode: preserve
+    loop:
+    - { source: pki/etcd-ca.pem, dest: apiserver/pki/etcd-ca.pem }
+    - { source: pki/etcd-client.pem, dest: apiserver/pki/etcd-client.pem }
+    - { source: pki/etcd-client-key.pem, dest: apiserver/pki/etcd-client-key.pem }
+
+  - name: copy config
+    ansible.builtin.copy:
+      src: ./env/cluster-{{ k8s_cluster_name }}/auth-config.yaml
+      dest: "{{ project_root }}/apiserver/config/auth-config.yaml"
+      mode: "0644"
+
+  - name: copy docker-compose.yaml
+    ansible.builtin.template:
+      src: ./docker-compose/{{ item }}-docker-compose.yaml
+      dest: "{{ project_root }}/{{ item }}/docker-compose.yaml"
+      mode: "0644"
+    loop:
+    - apiserver
+    - keepalived
+
+  - name: start docker compose
+    community.docker.docker_compose_v2:
+      project_src: "{{ project_root }}/{{ item }}"
+      files:
+      - docker-compose.yaml
+      state: present
+      wait: true
+      wait_timeout: 300
+      remove_orphans: true
+    loop:
+    - apiserver
+    - keepalived
+
+  handlers: []
