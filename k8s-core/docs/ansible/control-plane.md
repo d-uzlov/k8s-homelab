@@ -112,6 +112,8 @@ See example:
 control-plane-1:
   ansible_host: control-plane-1.example.com
   ansible_python_interpreter: auto_silent
+  # metrics_tls_name is added to the list of alt names in certificate
+  metrics_tls_name: control-plane-1.example.com
   # cluster name is used to separate folder structure of different clusters
   k8s_cluster_name: example-cluster
   k8s_apiserver_advertise_address: 10.3.1.2

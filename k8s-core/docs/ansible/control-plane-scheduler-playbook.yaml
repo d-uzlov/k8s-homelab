@@ -4,7 +4,7 @@
   become: false
 
   vars:
-    project_root: ~/kube-control-plane
+    project_root: ~/kube-control-plane/scheduler
 
   tasks:
 
@@ -12,7 +12,7 @@
     delegate_to: localhost
     become: false
     ansible.builtin.template:
-      src: ./csr/scheduler.json
+      src: ./csr/scheduler-template.json
       dest: ./env/cluster-{{ k8s_cluster_name }}/pki/scheduler-{{ ansible_host }}.json
     register: csr
 
@@ -29,24 +29,19 @@
         -profile scheduler \
         ./env/cluster-{{ k8s_cluster_name }}/pki/scheduler-{{ ansible_host }}.json \
         | cfssljson -bare ./env/cluster-{{ k8s_cluster_name }}/pki/scheduler-{{ ansible_host }}
-    register: cfssl_run
     when: csr.changed
 
   - name: create folders
     ansible.builtin.file:
-      path: "{{ project_root }}/{{ item }}"
+      path: "{{ project_root }}/pki"
       state: directory
       mode: "0755"
-    loop:
-    - scheduler/pki
 
   - name: copy ca
     ansible.builtin.copy:
       src: ./env/cluster-{{ k8s_cluster_name }}/ca/ca.pem
-      dest: "{{ project_root }}/{{ item }}/pki/ca.pem"
+      dest: "{{ project_root }}/pki/ca.pem"
       mode: preserve
-    loop:
-    - scheduler
 
   - name: copy pki
     ansible.builtin.copy:
@@ -54,35 +49,47 @@
       dest: "{{ project_root }}/{{ item.dest }}"
       mode: preserve
     loop:
-    - { source: "pki/scheduler-{{ ansible_host }}.pem", dest: scheduler/pki/client.pem }
-    - { source: "pki/scheduler-{{ ansible_host }}-key.pem", dest: scheduler/pki/client-key.pem }
+    - { source: "pki/scheduler-{{ ansible_host }}.pem", dest: pki/client.pem }
+    - { source: "pki/scheduler-{{ ansible_host }}-key.pem", dest: pki/client-key.pem }
+    notify:
+    - restart_docker_compose
 
   - name: copy kubeconfig
     ansible.builtin.template:
       src: ./generic-kubeconfig.yaml
-      dest: "{{ project_root }}/{{ item }}/kubeconfig.yaml"
+      dest: "{{ project_root }}/kubeconfig.yaml"
       mode: "0644"
-    loop:
-    - scheduler
+    notify:
+    - restart_docker_compose
 
   - name: copy docker-compose.yaml
     ansible.builtin.template:
-      src: ./docker-compose/{{ item }}-docker-compose.yaml
-      dest: "{{ project_root }}/{{ item }}/docker-compose.yaml"
+      src: ./docker-compose/scheduler-docker-compose.yaml
+      dest: "{{ project_root }}/docker-compose.yaml"
       mode: "0644"
-    loop:
-    - scheduler
 
   - name: start docker compose
     community.docker.docker_compose_v2:
-      project_src: "{{ project_root }}/{{ item }}"
+      project_src: "{{ project_root }}"
       files:
       - docker-compose.yaml
       state: present
       wait: true
       wait_timeout: 300
       remove_orphans: true
-    loop:
-    - scheduler
+    register: start_docker_compose
 
-  handlers: []
+  handlers:
+  - name: restart docker compose
+    # restart handles cases when app config changed but compose file didn't
+    listen:
+    - restart_docker_compose
+    community.docker.docker_compose_v2:
+      project_src: "{{ project_root }}"
+      files:
+      - docker-compose.yaml
+      state: present
+      wait: true
+      wait_timeout: 300
+      remove_orphans: true
+    when: not start_docker_compose.changed

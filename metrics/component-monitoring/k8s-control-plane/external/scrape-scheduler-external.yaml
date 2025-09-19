@@ -1,0 +1,40 @@
+---
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: external-kube-scheduler
+  namespace: prometheus
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  scheme: HTTPS
+  tlsConfig:
+    # caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    ca:
+      configMap:
+        name: kube-root-ca.crt
+        key: ca.crt
+    # unlike static pods, external components
+    # are under full control of cluster administrator,
+    # so they should have proper certificates;
+    # and besides, they may be in an insecure network, so cert verification is a must
+    insecureSkipVerify: false
+  authorization:
+    type: Bearer
+    credentials:
+      name: prometheus-sa-token
+      key: token
+  relabelings:
+  - targetLabel: instance
+    sourceLabels: [ __address__ ]
+    regex: (.*):\d*
+    action: replace
+  - targetLabel: job
+    action: replace
+    replacement: kube-scheduler
+  metricRelabelings:
+  - action: keep
+    sourceLabels: [ __name__ ]
+    regex: kubernetes_build_info|kubernetes_feature_enabled

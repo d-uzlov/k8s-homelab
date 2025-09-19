@@ -3,9 +3,9 @@
 
 ```bash
 
-mkdir -p ./metrics/component-monitoring/k8s-misc/env/
+mkdir -p ./metrics/component-monitoring/k8s-control-plane/static-pod-style/env/
 clusterName=
- cat << EOF > ./metrics/component-monitoring/k8s-misc/env/patch-location-tag.yaml
+ cat << EOF > ./metrics/component-monitoring/k8s-control-plane/static-pod-style/env/patch-location-tag.yaml
 - op: add
   path: /spec/endpoints/0/relabelings/0
   value:
@@ -14,8 +14,14 @@ clusterName=
     action: replace
 EOF
 
-kl apply -k ./metrics/component-monitoring/k8s-misc/
+kl apply -k ./metrics/component-monitoring/k8s-control-plane/static-pod-style/
 
+```
+
+# cleanup
+
+```bash
+kl delete -k ./metrics/component-monitoring/k8s-control-plane/static-pod-style/
 ```
 
 # apiserver
