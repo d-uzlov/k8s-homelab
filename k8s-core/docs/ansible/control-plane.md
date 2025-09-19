@@ -149,6 +149,10 @@ ansible-playbook ./k8s-core/docs/ansible/control-plane-apiserver-playbook.yaml -
 ansible-playbook ./k8s-core/docs/ansible/control-plane-scheduler-playbook.yaml --limit control-plane-1
 ansible-playbook ./k8s-core/docs/ansible/control-plane-controller_manager-playbook.yaml --limit control-plane-1
 
+ansible-playbook ./k8s-core/docs/ansible/control-plane-apiserver-playbook.yaml
+ansible-playbook ./k8s-core/docs/ansible/control-plane-scheduler-playbook.yaml
+ansible-playbook ./k8s-core/docs/ansible/control-plane-controller_manager-playbook.yaml
+
 # this allows apiserver to talk to kubelets
 kl create clusterrolebinding system:cluster-admins --clusterrole cluster-admin --group cluster-admins
 
