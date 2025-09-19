@@ -45,7 +45,7 @@ Removing such infrastructure daemonsets from control plane nodes would require y
 which is not the work I'm looking forward to do,
 _and_ it would compromise them as proper cluster nodes!
 
-3. Do you want to add auth config, you need to copy it manually.
+3. Do you want to add auth config? You need to copy it manually.
 Any other config? Copy it manually.
 
 4. For any non-standard deployment you need to understand inner workings that kubeadm is trying to hide from you.
@@ -91,6 +91,7 @@ cp ./k8s-core/docs/etcd/env/config-$etcd_cluster_name/etcd-client.pem ./k8s-core
 cp ./k8s-core/docs/etcd/env/config-$etcd_cluster_name/etcd-client-key.pem ./k8s-core/docs/ansible/env/cluster-$cluster_name/pki/etcd-client-key.pem
 
 # initialize empty auth config if it's missing
+
  [ -f k8s-core/docs/ansible/env/cluster-$cluster_name/auth-config.yaml ] || cat << EOF > ./k8s-core/docs/ansible/env/cluster-$cluster_name/auth-config.yaml
 ---
 apiVersion: apiserver.config.k8s.io/v1beta1
@@ -99,8 +100,6 @@ jwt: []
 EOF
 
 ```
-
-Check out [auth-oidc.md](../auth-oidc.md) for details about customizing auth config.
 
 # ansible inventory
 
@@ -126,11 +125,14 @@ control-plane-1:
   # you are expected to point k8s_apiserver_loadbalancer_endpoint to this virtual IP
   keepalived_apiserver_virtual_ip: 10.3.0.255
   keepalived_apiserver_virtual_ip_prefix: 16
+  # random number in range [1, 255], must be the same for all instances holding an address
   keepalived_apiserver_virtual_router_id: 87
 ```
 
 Note that each control plane host must have its own `k8s_apiserver_advertise_address`,
 but all other options will be shared between hosts in a cluster.
+
+You will need to re-run the playbook whenever control plane host IP is changed.
 
 # deploy
 
@@ -164,3 +166,18 @@ or deploy something like konnectivity proxy:
 ansible-playbook ./k8s-core/docs/ansible/control-plane-teardown-playbook.yaml --limit control-plane-1
 
 ```
+
+# Next actions
+
+- generate admin kubeconfig
+- [join worker nodes](./node.md)
+- [CSR approver](../../kubelet-csr-approver/readme.md)
+- install CoreDNS (not covered here yet)
+- Install CNI
+- - [cilium](../../../network/cilium/readme.md) (recommended)
+- Advanced auth: [auth-oidc.md](../auth-oidc.md)
+
+# upgrade
+
+Change image version in docker-compose files.
+Run the control plane playbooks, preferably one node at a time.

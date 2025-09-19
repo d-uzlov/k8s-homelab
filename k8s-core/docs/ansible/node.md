@@ -42,3 +42,9 @@ ansible-playbook ./k8s-core/docs/ansible/node-kubelet-playbook.yaml --limit work
 ansible-playbook ./k8s-core/docs/ansible/node-kubelet-playbook.yaml
 
 ```
+
+# upgrade
+
+Download new versions of tools in [dependencies](./node-dependencies.md).
+
+Then simply run the playbook. No special actions needed.

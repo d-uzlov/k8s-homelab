@@ -44,6 +44,8 @@ References:
 
 # 2. You must use proper shutdown method
 
+**Note**: this is fixed in latest versions of systemd.
+
 `/usr/sbin/shutdown` and `/usr/sbin/reboot` are aliases to `/bin/systemctl`.
 
 But `systemctl` does not respect `systemd` inhibitor locks when called as `shutdown` or `reboot`.

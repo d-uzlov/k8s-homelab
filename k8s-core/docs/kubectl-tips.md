@@ -93,41 +93,6 @@ namespace=cilium
 kl api-resources --verbs=list --namespaced -o name | xargs -n 1 $(alias kl | sed "s/.*'\(.*\)'.*/\1/g") get --show-kind --ignore-not-found -n $namespace
 ```
 
-# Re-initialize CNI on the node
-
-One time I [gracefully!] rebooted all nodes in my cluster,
-and after the reboot there was no cluster connectivity for unknown reason.
-
-Rebooting the nodes did nothing.
-
-Deleting CNI pods did nothing.
-
-The easy way to solve this is to completely re-initialize CNI on the node.
-
-Run on the node with network issues:
-
-```bash
-sudo rm -rf /etc/cni/ && sudo reboot
-```
-
-# Taint nodes if necessary
-
-```bash
-kl taint nodes node-name key=value:type
-kl label node node-name key=value
-# value is optional
-# for example
-kl taint nodes --overwrite n100.k8s.lan weak-node=:PreferNoSchedule
-kl label node --overwrite n100.k8s.lan weak-node=
-```
-
-Key and value can be whatever.
-
-Allowed types are:
-- `NoExecute`
-- `NoSchedule`
-- `PreferNoSchedule`
-
 # Delete failed pods
 
 During graceful shutdown k8s likes to create a myriad of pods in a `Failed` state,
@@ -158,22 +123,6 @@ kl describe node | grep -e PodCIDR -e Name:
 ```bash
 
 kl -n pgo-cnpg-test get secret postgres-app -o json | jq -r '.data | map(@base64d) | .[]'
-
-```
-
-# Kubeconfig certificate expiration
-
-```bash
-
-kubeconfigPath=./_env/cp.k8s.lan.yaml
-
-for certContent in $(cat $kubeconfigPath | grep client-certificate-data | cut -f2 -d : | tr -d ' '); do
-  echo $certContent | base64 -d | openssl x509 -text -out - | grep "Not After"
-done
-
-# if the admin certificate has expired,
-# run the following on the master node
-sudo kubeadm certs renew admin.conf
 
 ```
 
