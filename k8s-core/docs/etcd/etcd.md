@@ -5,130 +5,120 @@ This file provides instructions to create an etcd cluster.
 The main intent is to use it as an external etcd for k8s.
 
 References:
-- https://etcd.io/docs/v3.3/op-guide/clustering/
+- https://etcd.io/docs/v3.6/op-guide/clustering/
 - https://github.com/etcd-io/etcd/tree/main/hack/tls-setup
-
-# Prerequisites
-
-- 1 or 3 VMs or LXC containers dedicated to etcd
-- - 1 is no redundancy, 2 is still no redundancy, with 3 instances one may fail without affecting clients
-- Network connectivity between hosts, L3 should be enough
-- DNS records for all etcd hosts
-
-# Installation
-
-References:
 - https://etcd.io/docs/v3.6/install/
 - https://github.com/justmeandopensource/kubernetes/blob/master/kubeadm-external-etcd/2%20simple-cluster-tls.md
 - https://docs.ondat.io/docs/prerequisites/etcd/etcd-outside-the-cluster/
+- https://github.com/justmeandopensource/kubernetes/blob/master/kubeadm-external-etcd/2%20simple-cluster-tls.md
+- https://github.com/etcd-io/etcd/blob/main/hack/tls-setup/README.md
+
+# prerequisites
+
+- 1 or 3 VMs or LXC containers dedicated to etcd
+- - 1 is no redundancy, 2 is still no redundancy, with 3 instances one may fail without affecting clients
+- L3 connectivity between hosts, L3 should be enough
+- DNS records for all etcd hosts
 
 ```bash
 
-# make sure that you have "test-etcd" group is present in ansible inventory
-ansible-inventory --graph test-etcd
+# install cfssl
+wget -q --show-progress https://github.com/cloudflare/cfssl/releases/download/v1.6.5/cfssl_1.6.5_linux_amd64 -O ./k8s-core/docs/etcd/env/cfssl_1.6.5_linux_amd64
+wget -q --show-progress https://github.com/cloudflare/cfssl/releases/download/v1.6.5/cfssljson_1.6.5_linux_amd64 -O ./k8s-core/docs/etcd/env/cfssljson_1.6.5_linux_amd64
 
-# run on a single host when upgrading
-# don't forget to consult upgrade guide before running this
-ansible-playbook ./k8s-core/docs/etcd/etcd-playbook.yaml
-ansible-playbook ./k8s-core/docs/etcd/etcd-playbook.yaml --limit "k8s1-etcd3.k8s.lan"
+chmod +x ./k8s-core/docs/etcd/env/cfssl_1.6.5_linux_amd64
+chmod +x ./k8s-core/docs/etcd/env/cfssljson_1.6.5_linux_amd64
+sudo cp ./k8s-core/docs/etcd/env/cfssl_1.6.5_linux_amd64 /usr/local/bin/cfssl
+sudo cp ./k8s-core/docs/etcd/env/cfssljson_1.6.5_linux_amd64 /usr/local/bin/cfssljson
 
 ```
 
-# Setup aliases
+# generate ca cert
 
 ```bash
 
-cluster_name=
-node1=k8s1-etcd1.k8s.lan
-node2=k8s1-etcd2.k8s.lan
-node3=k8s1-etcd3.k8s.lan
+# cluster and node names must correspond to values in ansible inventory
+etcd_cluster_name=
 
- cat << EOF > ~/.bashrc.d/etcd-aliases.sh
-# you may want to add this to your bashrc
-alias etcdctl_cluster="ETCDCTL_API=3 /usr/local/bin/etcdctl \
-  --endpoints=https://$node1:2379,https://$node2:2379,https://$node3:2379 \
-  --cacert=./k8s-core/docs/etcd/env/config-$cluster_name/ca.pem \
-  --cert=./k8s-core/docs/etcd/env/config-$cluster_name/etcd-client.pem \
-  --key=./k8s-core/docs/etcd/env/config-$cluster_name/etcd-client-key.pem"
+mkdir -p ./k8s-core/docs/etcd/env/config-$etcd_cluster_name/
 
-alias etcdctl_node1="ETCDCTL_API=3 /usr/local/bin/etcdctl \
-  --endpoints=https://$node1:2379 \
-  --cacert=./k8s-core/docs/etcd/env/config-$cluster_name/ca.pem \
-  --cert=./k8s-core/docs/etcd/env/config-$cluster_name/etcd-client.pem \
-  --key=./k8s-core/docs/etcd/env/config-$cluster_name/etcd-client-key.pem"
+cfssl gencert -initca ./k8s-core/docs/etcd/ca-csr.json | cfssljson -bare ./k8s-core/docs/etcd/env/config-$etcd_cluster_name/ca
 
-alias etcdctl_node2="ETCDCTL_API=3 /usr/local/bin/etcdctl \
-  --endpoints=https://$node2:2379 \
-  --cacert=./k8s-core/docs/etcd/env/config-$cluster_name/ca.pem \
-  --cert=./k8s-core/docs/etcd/env/config-$cluster_name/etcd-client.pem \
-  --key=./k8s-core/docs/etcd/env/config-$cluster_name/etcd-client-key.pem"
+```
 
-alias etcdctl_node3="ETCDCTL_API=3 /usr/local/bin/etcdctl \
-  --endpoints=https://$node3:2379 \
-  --cacert=./k8s-core/docs/etcd/env/config-$cluster_name/ca.pem \
-  --cert=./k8s-core/docs/etcd/env/config-$cluster_name/etcd-client.pem \
-  --key=./k8s-core/docs/etcd/env/config-$cluster_name/etcd-client-key.pem"
+# ansible inventory
+
+You need to add your etcd nodes into ansible inventory,
+and set a few additional parameters.
+
+See example:
+
+```yaml
+etcd-1:
+  ansible_host: etcd-1.k8s.lan
+  ansible_python_interpreter: auto_silent
+  # cluster name is used for local directory structure
+  etcd_cluster_name: my-etcd-cluster
+  etcd_cluster_token: qwe123
+  etcd_node_name: etcd-1.k8s.lan
+  etcd_node_peer_address: https://etcd-1.k8s.lan:2380
+  # node1_name=node1_address,node2_name=...
+  etcd_init_cluster_nodes: etcd-1.k8s.lan=https://etcd-1.k8s.lan:2380,etcd-2.k8s.lan=https://etcd-2.k8s.lan:2380,etcd-3.k8s.lan=https://etcd-3.k8s.lan:2380
+```
+
+You can generate `etcd_cluster_token` like this:
+
+```bash
+echo $(LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 20)
+```
+
+# install
+
+This playbook is suitable for initial cluster setup
+or for cluster updates.
+
+If you have a failed node and want to replace it
+you will need to run additional manual commands.
+See [disaster-recovery](./etcdctl.md#disaster-recovery).
+
+```bash
+
+ansible-inventory --graph etcd
+
+# you are encouraged to run the playbook one node at a time,
+ansible-playbook ./k8s-core/docs/etcd/etcd-playbook.yaml --limit k8s1-etcd1.k8s.lan
+
+# unless you are initializing a new cluster
+ansible-playbook ./k8s-core/docs/etcd/etcd-playbook.yaml
+
+```
+
+# create client certificate
+
+```bash
+
+etcd_cluster_name=b2788
+etcd_client_name=invalid
+
+ cat << EOF > ./k8s-core/docs/etcd/env/config-$etcd_cluster_name/client-$etcd_client_name.json
+{
+  "CN": "$etcd_client_name",
+  "key": {
+    "algo": "ecdsa",
+    "size": 384
+  },
+  "hosts": [
+    "$etcd_client_name"
+  ]
+}
 EOF
 
-```
-
-# Test connection
-
-```bash
-
-etcdctl_cluster member list -w table
-etcdctl_cluster endpoint status -w table
-etcdctl_cluster endpoint health -w table
-
-```
-
-# Disaster recovery
-
-Imagine `k8s1-etcd1.k8s.lan` is unavailable.
-Cluster is still working but is unhealthy.
-You need to replace it with a new node, or just reinitialize the old one.
-The process is the same for both cases.
-
-Adjust node names and addresses appropriately.
-
-```bash
-
-etcdctl_cluster member list -w table
-# replace ID with your value
-etcdctl_cluster member remove b5a71f0b96b3191f
-etcdctl_cluster member list -w table
-
-# Choose any name.
-# Here I reuse the old name because I re-init the old node.
-# Set correct URL for your new node.
-etcdctl_cluster member add k8s1-etcd1.k8s.lan --peer-urls=https://k8s1-etcd1.k8s.lan:2380
-
-# change --initial-cluster-state=new to --initial-cluster-state=existing in docker-compose.yml
-# On an existing failed node you also need to remove the old data folder.
-cd /opt/etcd/
-sudo docker compose down
-sudo nano ./docker-compose.yml
-sudo rm -r /opt/etcd/data/
-sudo docker compose up
-
-```
-
-# Shrink etcd DB
-
-```bash
-
-etcdctl_cluster endpoint status --write-out=json | jq .
-# check database size
-etcdctl_cluster endpoint status --write-out=json | jq .[].Status.dbSize | numfmt --to=iec
-
-# get current cluster revision
-etcdctl_cluster endpoint status --write-out=json | jq .[].Status.header.revision
-# substitute your revision
-etcdctl_cluster compact 816183644
-
-# defrag one node at a time
-etcdctl_node1 defrag
-etcdctl_node2 defrag
-etcdctl_node3 defrag
+cfssl gencert \
+  -ca ./k8s-core/docs/etcd/env/config-$etcd_cluster_name/ca.pem \
+  -ca-key ./k8s-core/docs/etcd/env/config-$etcd_cluster_name/ca-key.pem \
+  -config ./k8s-core/docs/etcd/ca-config.json \
+  -profile=etcd \
+  ./k8s-core/docs/etcd/env/config-$etcd_cluster_name/client-$etcd_client_name.json \
+  | cfssljson -bare ./k8s-core/docs/etcd/env/config-$etcd_cluster_name/client-$etcd_client_name
 
 ```

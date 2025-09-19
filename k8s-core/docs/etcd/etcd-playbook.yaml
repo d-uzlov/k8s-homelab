@@ -2,30 +2,16 @@
 - name: install etcd
   hosts: etcd
   become: true
+  serial: 1
 
   tasks:
 
-  - name: remove built-in etcd package
-    ansible.builtin.apt:
-      name:
-      - etcd
-      state: absent
-
-  - name: create /opt/etcd
-    become: true
-    ansible.builtin.file:
-      path: /opt/etcd/
-      state: directory
-      owner: root
-      mode: "0755"
-
-  - name: copy docker-compose.yml
-    become: true
-    ansible.builtin.copy:
-      src: ./docker-compose.yaml
-      dest: /opt/etcd/docker-compose.yml
-      owner: root
-      mode: "0644"
+  - name: stat etcd cert
+    delegate_to: localhost
+    become: false
+    ansible.builtin.stat:
+      path: "./env/config-{{ etcd_cluster_name }}/{{ ansible_host }}.pem"
+    register: etcd_node_cert_stat
 
   - name: create /opt/etcd/pki
     become: true
@@ -35,34 +21,61 @@
       owner: root
       mode: "0755"
 
-  - name: copy common pki
-    become: true
+  - name: copy ca
     ansible.builtin.copy:
-      src: "./env/config-{{ etcd_cluster_name }}/{{ item }}.pem"
-      dest: /opt/etcd/pki/{{ item }}.pem
+      src: ./env/config-{{ etcd_cluster_name }}/ca.pem
+      dest: /opt/etcd/pki/ca.pem
       owner: root
+      group: root
       mode: "0644"
-    loop:
-    - ca
-    - etcd-client
-    - etcd-client-key
+    register: copy_ca
 
-  - name: copy peer pki
+  - name: create etcd node CSR
+    delegate_to: localhost
+    become: false
+    ansible.builtin.template:
+      src: ./node-csr-template.json
+      dest: ./env/config-{{ etcd_cluster_name }}/{{ ansible_host }}.json
+    when: copy_ca.changed or not etcd_node_cert_stat.stat.exists
+
+  - name: create etcd node cert
+    delegate_to: localhost
+    become: false
+    ansible.builtin.shell: |
+      set -e
+      set -o pipefail
+      cfssl gencert \
+        -ca ./env/config-{{ etcd_cluster_name }}/ca.pem \
+        -ca-key ./env/config-{{ etcd_cluster_name }}/ca-key.pem \
+        -config ./ca-config.json \
+        -profile etcd \
+        ./env/config-{{ etcd_cluster_name }}/{{ ansible_host }}.json \
+        | cfssljson -bare ./env/config-{{ etcd_cluster_name }}/{{ ansible_host }}
+    register: cfssl_run
+    when: copy_ca.changed or not etcd_node_cert_stat.stat.exists
+
+  - name: remove built-in etcd package
+    ansible.builtin.apt:
+      name:
+      - etcd
+      state: absent
+
+  - name: copy pki
     become: true
     ansible.builtin.copy:
-      src: "./env/config-{{ etcd_cluster_name }}/{{ ansible_host }}-{{ item }}.pem"
-      dest: /opt/etcd/pki/{{ item }}.pem
+      src: ./env/config-{{ etcd_cluster_name }}/{{ item.source }}.pem
+      dest: /opt/etcd/pki/{{ item.dest }}.pem
       owner: root
-      mode: "0644"
+      mode: preserve
     loop:
-    - etcd-peer
-    - etcd-peer-key
+    - { source: "{{ ansible_host }}", dest: etcd-node }
+    - { source: "{{ ansible_host }}-key", dest: etcd-node-key }
 
-  - name: copy etcd.env
+  - name: copy docker-compose.yml
     become: true
-    ansible.builtin.copy:
-      src: ./env/config-{{ etcd_cluster_name }}/{{ ansible_host }}-etcd.env
-      dest: /opt/etcd/.env
+    ansible.builtin.template:
+      src: ./docker-compose.yaml
+      dest: /opt/etcd/docker-compose.yml
       owner: root
       mode: "0644"
 

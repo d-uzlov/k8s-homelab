@@ -21,7 +21,7 @@ and set a few additional parameters.
 See example:
 
 ```yaml
-trixie-n100:
+worker-1:
   ansible_host: worker-1.k8s.lan
   ansible_python_interpreter: auto_silent
   # must be the same as value in control plane nodes

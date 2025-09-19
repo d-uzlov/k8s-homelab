@@ -14,18 +14,18 @@ services:
     - --auto-compaction-mode=periodic
     - --peer-client-cert-auth
     - --peer-trusted-ca-file=/etc/etcd/pki/ca.pem
-    - --peer-cert-file=/etc/etcd/pki/etcd-peer.pem
-    - --peer-key-file=/etc/etcd/pki/etcd-peer-key.pem
+    - --peer-cert-file=/etc/etcd/pki/etcd-node.pem
+    - --peer-key-file=/etc/etcd/pki/etcd-node-key.pem
     - --client-cert-auth
     - --trusted-ca-file=/etc/etcd/pki/ca.pem
-    - --cert-file=/etc/etcd/pki/etcd-client.pem
-    - --key-file=/etc/etcd/pki/etcd-client-key.pem
+    - --cert-file=/etc/etcd/pki/etcd-node.pem
+    - --key-file=/etc/etcd/pki/etcd-node-key.pem
     - --initial-cluster-state=new
-    - --initial-cluster-token=${CLUSTER_TOKEN:?error}
-    - --name=${NODE_NAME:?error}
-    - --initial-advertise-peer-urls=${NODE_ADDRESS:?error}
-    - --initial-cluster=${CLUSTER_NODES}
-    - --advertise-client-urls=${NODE_ADDRESS:?error}
+    - --initial-cluster-token={{ etcd_cluster_token }}
+    - --name={{ etcd_node_name }}
+    - --initial-advertise-peer-urls={{ etcd_node_peer_address }}
+    - --initial-cluster={{ etcd_init_cluster_nodes }}
+    - --advertise-client-urls={{ etcd_node_peer_address }}
     - --listen-client-urls=https://0.0.0.0:2379
     - --listen-peer-urls=https://0.0.0.0:2380
     # - --listen-metrics-urls=https://0.0.0.0:2381
@@ -37,10 +37,6 @@ services:
     - ./pki:/etc/etcd/pki/:ro
     # deploy:
     #   resources:
-    #     reservations:
-    #       memory: 50M
-    #       cpus: 0.05
     #     limits:
-    #       # cadvisor memory usage heavily depends on the amount of cgroups on the system
     #       memory: 200M
     #       cpus: 0.3
