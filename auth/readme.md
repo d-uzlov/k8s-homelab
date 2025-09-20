@@ -37,7 +37,7 @@ Additional notes:
 - Authelia: Device Grant was added in Beta-7: https://www.authelia.com/roadmap/active/openid-connect-1.0-provider/#beta-7
 - - I can't find any info on how to use it in the docs
 
-# Comparison from 
+# Comparison from lastlogin-net/obligator
 
 References:
 - https://github.com/lastlogin-net/obligator/blob/main/README.md#comparison-is-the-thief-of-joy
