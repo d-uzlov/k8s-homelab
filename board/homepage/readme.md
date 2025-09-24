@@ -87,9 +87,10 @@ kl apply -k ./board/homepage/
 kl -n homepage get pod -o wide
 
 kl apply -k ./board/homepage/httproute-private/
-kl apply -k ./board/homepage/httproute-authentik/
-kl -n homepage get httproute
-kl -n homepage describe httproute
+kl apply -k ./board/homepage/httproute-protected/
+# don't forget to add https://homepage-protected-url/oauth2/callback to the list of allowed redirect URIs
+kl -n homepage get htr
+kl -n homepage describe htr homepage-protected
 
 ```
 
