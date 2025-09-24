@@ -42,18 +42,24 @@ spec:
     group: cert-manager.io
     kind: $issuer_kind
     name: $issuer_prefix-staging
-  # shown in the cert info, doesn't seem to do anything else
+  # common name is supposed to be the name of the person managing the certificate
+  # it's not used for DNS name validation
   commonName: $domain_name
   dnsNames:
   - $domain_name
   - '*.$domain_name'
   secretName: cert-$domain_name-staging
   privateKey:
+    # EdDSA (ed25519 and Ed448) is better than ECDSA but State doesn't want us to use secure algorithms
+    # https://community.letsencrypt.org/t/support-ed25519-and-ed448/69868/5
+    # ECDSA with sizes other than 256 seems to be much slower
+    # https://github.com/letsencrypt/boulder/issues/3649
     algorithm: ECDSA
     size: 256
     rotationPolicy: Always
 EOF
-# add annotations that allow you to copy this certificate automatically between namespaces
+
+# [optionally] add annotations that allow you to copy this certificate automatically between namespaces
 # useful for classic k8s ingress
 # you don't need it for gateway API
 replicator_label=copy-wild-cert=main
@@ -70,12 +76,23 @@ sed ./ingress/manual-certificates/env/$domain_name-cert-staging.yaml \
 
 ```
 
-Save environment info to automate ingress deployment:
+Save environment info to automate ingress deployment.
+If you don't have a separate domain for protected resources,
+just put main domain into into `public-protected.env`.
 
 ```bash
 
 mkdir -p ./ingress/manual-certificates/domain-info/env/
- cat << EOF > ./ingress/manual-certificates/domain-info/env/main-domain.env
+
+# for websites open to anyone
+ cat << EOF > ./ingress/manual-certificates/domain-info/env/public-open.env
+# used to deploy environment-agnostic ingress
+domain_suffix=$domain_name
+secret_name=cert-$domain_name-production
+EOF
+
+# for websites behind OIDC auth
+ cat << EOF > ./ingress/manual-certificates/domain-info/env/public-protected.env
 # used to deploy environment-agnostic ingress
 domain_suffix=$domain_name
 secret_name=cert-$domain_name-production
@@ -120,6 +137,8 @@ kl -n $cert_namespace get cert
 # deploy the production certificate without the fear of getting banned by letsencrypt limits
 kl -n $cert_namespace apply -f ./ingress/manual-certificates/env/$domain_name-cert-production.yaml
 kl -n $cert_namespace get cert
+
+kl -n $cert_namespace get secret
 
 # if you want to use the certificate with gateway API from a different namespace
 # modify secret name in the reference grant before applying
