@@ -2,6 +2,7 @@
 # casdoor
 
 References:
+- https://github.com/casdoor/casdoor
 - https://casdoor.org/docs/basic/try-with-helm
 
 # Generate config
@@ -9,17 +10,6 @@ References:
 You only need to do this when updating the app.
 
 ```bash
-# https://hub.docker.com/r/casbin/casdoor-helm-charts/tags
-helm show values oci://registry-1.docker.io/casbin/casdoor-helm-charts --version v1.910.0 > ./auth/casdoor/default-values.yaml
-
-helm template \
-  casdoor \
-  oci://registry-1.docker.io/casbin/casdoor-helm-charts \
-  --version v1.910.0 \
-  --namespace casdoor \
-  --values ./auth/casdoor/values.yaml \
-  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/part-of|d' -e '\|app.kubernetes.io/version|d' \
-  > ./auth/casdoor/casdoor.gen.yaml
 
 # https://hub.docker.com/r/bitnamicharts/redis/tags
 helm show values oci://registry-1.docker.io/bitnamicharts/redis --version 20.6.2 > ./auth/casdoor/redis/default-values.yaml
@@ -42,15 +32,6 @@ Prerequisites:
 - [postgres](./postgres-cnpg/readme.md)
 
 Generate passwords and set up config.
-
-```bash
-
-mkdir -p ./auth/casdoor/config/env/
- cat << EOF > ./auth/casdoor/config/env/master_key.env
-master_key=$(LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 32)
-EOF
-
-```
 
 ```bash
 
@@ -93,17 +74,21 @@ kl -n casdoor get pod -o wide
 kl -n casdoor logs deployments/casdoor
 
 # go to private ingress and change admin user
-echo "https://${ingress_address}"
-# default credentials:
+# default credentials (from https://casdoor.org/docs/overview#casdoor):
 # user: admin
 # password: 123
-# source: https://casdoor.org/docs/overview#casdoor
+# generate new good password
+LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 32
 
-# after you finished the initial set up process, it's safe to open public access to casdoor
+# after you changed the admin password, it's safe to open public access to casdoor
 kl apply -k ./auth/casdoor/httproute-public/
-kl -n casdoor get httproute
+kl -n casdoor get htr
 
-# now go to ./auth/casdoor/env/app.conf and change origin parameter
+# don't forget to change the app.conf to use public address as origin
+
+# fetch oidc info
+ingress_address=$(kl -n casdoor get httproute casdoor-public -o go-template --template "{{ (index .spec.hostnames 0)}}")
+curl https://${ingress_address}/.well-known/openid-configuration | jq
 
 ```
 
