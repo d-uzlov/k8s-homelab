@@ -2,17 +2,16 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-# namespace: echo
+namespace: echo
 
 resources:
 - ./httproute.yaml
-- ./auth.yaml
 - ../../../ingress/manual-certificates/domain-info/
 
 replacements:
 - source:
     kind: ConfigMap
-    name: main-domain-info
+    name: domain-info-public-protected
     fieldPath: data.domain_suffix
   targets:
   - select:
@@ -23,11 +22,3 @@ replacements:
       index: 1
     fieldPaths:
     - spec.hostnames.0
-  - select:
-      kind: AuthorizationPolicy
-      name: echo.echo-protected
-    options:
-      delimiter: .
-      index: 1
-    fieldPaths:
-    - spec.rules.0.to.0.operation.hosts.0

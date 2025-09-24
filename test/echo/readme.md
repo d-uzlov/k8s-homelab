@@ -14,10 +14,12 @@ kl apply -k ./test/echo/
 kl -n echo get pod -o wide
 
 kl apply -k ./test/echo/httproute-public/
+# don't forget to add https://echo-protected-url/oauth2/callback to the list of allowed redirect URIs
 kl apply -k ./test/echo/httproute-protected/
-kl -n echo get httproute
+kl -n echo get htr
 kl -n echo describe htr echo-public
-kl -n gateways get authorizationpolicy
+kl -n echo describe htr echo-protected
+kl -n gateways get ap
 
 ```
 
