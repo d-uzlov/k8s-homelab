@@ -154,7 +154,7 @@ This is just a standard setup for a new DNS server, it's not specific for acme-d
 
 `domain_suffix` must match the value from `./ingress/cert-manager/acme-dns/env/acme-dns.env`.
 
-- Create A record `$actual_acmedns_server_domain` that points to your acme-dns external address
+- Create `A` or `AAAA` record `$actual_acmedns_server_domain` that points to your acme-dns external address
 - - `$actual_acmedns_server_domain. A $actual_acmedns_server_ip`
 - - For example: `acme-ns.example.org. A 100.200.150.250`
 - Point NS record in the parent `$domain_suffix` to `$actual_acmedns_server_domain`:
@@ -165,7 +165,7 @@ This is just a standard setup for a new DNS server, it's not specific for acme-d
 - - UDP port access must be configured
 - - TCP is optional but may theoretically be required in some scenarios
 
-In case you have a single public IP, if you already have
+In case you have a single public IP, if you already host
 a public DNS server and don't want to replace it with acme-dns,
 you can probably setup DNS forwarding,
 but this is out of scope of this documentation.

@@ -18,16 +18,17 @@ Also, sharing an issuer is less secure than using separate ones.
 
 ```bash
 
-acmedns_mgmt="https://"$(kl -n cm-acme-dns get httproute management -o go-template --template "{{ (index .spec.hostnames 0)}}")
+# for bootstrap, when you don't have a public certificate yet, you will probably need to use management service 
 acmedns_mgmt="http://"$(kl -n cm-acme-dns get svc management -o go-template --template "{{ (index .status.loadBalancer.ingress 0).ip}}")
+# if you already have working ingress, it will be safer to use it
+acmedns_mgmt="https://"$(kl -n cm-acme-dns get httproute management -o go-template --template "{{ (index .spec.hostnames 0)}}")
 # acmedns_mgmt="https://"$(kl -n cm-acme-dns get ingress management -o go-template --template "{{ (index .spec.rules 0).host}}")
 
-# Set to your actual domain
-managed_domain=meoe.cloudns.be
+# domain that needs DNS01 challenge
+managed_domain=domain.example.com
 
 # save output, we will need it for the cert-manager issuer
-curl -X POST "$acmedns_mgmt/register" | jq . \
-  > ./ingress/cert-manager/acme-dns/env/$managed_domain-domain-info.json
+curl -X POST "$acmedns_mgmt/register" | jq > ./ingress/cert-manager/acme-dns/env/$managed_domain-domain-info.json
 
 echo "This is your full domain: $(jq -r .fulldomain ./ingress/cert-manager/acme-dns/env/$managed_domain-domain-info.json)"
 
@@ -58,7 +59,7 @@ jq -n \
   > ./ingress/cert-manager/acme-dns/env/$managed_domain-acmedns.json
 
 # set to your email
-domain_admin_email=meoe@ya.ru
+domain_admin_email=user@example.com
 # example: domain_admin_email=user@example.org
 secret_name=${domain_admin_email/@/-at-}
 secret_name=${secret_name/_/-}
