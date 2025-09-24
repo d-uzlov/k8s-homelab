@@ -1,0 +1,51 @@
+---
+# https://istio.io/latest/docs/reference/config/security/authorization-policy/
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: main-public.https-main-protected.oidc
+  namespace: gateways
+spec:
+  targetRefs:
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: main-public
+  action: CUSTOM
+  provider:
+    name: REPLACE_ME_PROVIDER_NAME
+  rules:
+  - to:
+    - operation:
+        hosts:
+        - '*.REPLACE_ME_PROTECTED_DOMAIN_SUFFIX'
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: main-public.https-main-open.allow
+  namespace: gateways
+spec:
+  targetRefs:
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: main-public
+  action: ALLOW
+  rules:
+  - to:
+    - operation:
+        notHosts:
+        - '*.REPLACE_ME_PROTECTED_DOMAIN_SUFFIX'
+---
+# https://istio.io/latest/docs/reference/config/security/request_authentication/
+apiVersion: security.istio.io/v1
+kind: RequestAuthentication
+metadata:
+  name: main-public.jwt
+  namespace: gateways
+spec:
+  targetRefs:
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: main-public
+  jwtRules:
+  - issuer: https://dex.example.com/

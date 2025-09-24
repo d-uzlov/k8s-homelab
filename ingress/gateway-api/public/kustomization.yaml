@@ -14,7 +14,8 @@ configMapGenerator:
   envs:
   - ./env/gateway-class.env
   options:
-    disableNameSuffixHash: true
+    annotations:
+      config.kubernetes.io/local-config: 'true'
 
 replacements:
 - source:
@@ -38,3 +39,39 @@ replacements:
     fieldPaths:
     - spec.listeners.1.tls.certificateRefs.0.name
     # - spec.listeners.2.tls.certificateRefs.0.name
+- source:
+    kind: ConfigMap
+    name: main-domain-info
+    fieldPath: data.domain_suffix
+  targets:
+  - select:
+      kind: Gateway
+      name: main-public
+    options:
+      delimiter: .
+      index: 1
+    fieldPaths:
+    - spec.listeners.1.hostname
+- source:
+    kind: ConfigMap
+    name: domain-info-public-protected
+    fieldPath: data.secret_name
+  targets:
+  - select:
+      kind: Gateway
+      name: main-public
+    fieldPaths:
+    - spec.listeners.2.tls.certificateRefs.0.name
+- source:
+    kind: ConfigMap
+    name: domain-info-public-protected
+    fieldPath: data.domain_suffix
+  targets:
+  - select:
+      kind: Gateway
+      name: main-public
+    options:
+      delimiter: .
+      index: 1
+    fieldPaths:
+    - spec.listeners.2.hostname
