@@ -29,17 +29,19 @@ helm template \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/part-of|d' -e '\|app.kubernetes.io/version|d' \
   > ./auth/dex/dex.gen.yaml
 
+wget https://github.com/dexidp/dex/raw/refs/tags/v2.44.0/config.yaml.dist -O ./auth/dex/dex-config-sample.yaml
+
 ```
 
 # config
 
 ```bash
 
-[ -f ./auth/dex/env/dex-config.yaml ] || wget https://github.com/dexidp/dex/raw/refs/heads/master/config.yaml.dist -O ./auth/dex/env/dex-config.yaml
+[ -f ./auth/dex/env/dex-config.yaml ] || cp ./auth/dex/dex-config-sample.yaml ./auth/dex/env/dex-config.yaml
 
 ```
 
-See comments in the config file for documentation.
+See comments in the sample config file for documentation.
 
 # Deploy
 
@@ -47,37 +49,24 @@ Prerequisites:
 - Create namespace first
 - [postgres](./postgres-cnpg/readme.md)
 
-Generate passwords and set up config.
-
-```bash
-
-mkdir -p ./auth/dex/config/env/
- cat << EOF > ./auth/dex/config/env/master_key.env
-master_key=$(LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 32)
-EOF
-
-```
-
 ```bash
 
 kl create ns auth-dex
 kl label ns auth-dex pod-security.kubernetes.io/enforce=baseline
 
+# as OIDC issuer, Dex needs a single URL that clients will access
+# if you want to deploy it as private issuer, and then switch to public,
+# don't forget to update all references
 kl apply -k ./auth/dex/httproute-private/
+kl apply -k ./auth/dex/httproute-public/
 kl -n auth-dex get htr
 
 kl apply -k ./auth/dex/
 kl -n auth-dex get pod -o wide
 
-ingress_address=$(kl -n auth-dex get httproute dex-private -o go-template --template "{{ (index .spec.hostnames 0)}}")
 # show discovery info
+ingress_address=$(kl -n auth-dex get httproute dex-private -o go-template --template "{{ (index .spec.hostnames 0)}}")
 curl "https://$ingress_address/.well-known/openid-configuration" | jq
-
-# after you finished the initial set up process, it's safe to open public access to dex
-kl apply -k ./auth/dex/httproute-public/
-kl -n auth-dex get httproute
-
-# now go to ./auth/dex/env/app.conf and change origin parameter
 
 ```
 
