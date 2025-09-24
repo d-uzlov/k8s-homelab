@@ -1,0 +1,138 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: oauth2-proxy
+  name: oauth2-proxy
+  namespace: auth-oauth2-proxy
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: http
+    protocol: TCP
+    appProtocol: http
+    name: http
+  - port: 44180
+    protocol: TCP
+    appProtocol: http
+    targetPort: metrics
+    name: metrics
+  selector:
+    app: oauth2-proxy
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oauth2-proxy
+  namespace: auth-oauth2-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oauth2-proxy
+  template:
+    metadata:
+      labels:
+        app: oauth2-proxy
+    spec:
+      containers:
+      - name: oauth2-proxy
+        image: quay.io/oauth2-proxy/oauth2-proxy:v7.12.0
+        imagePullPolicy: IfNotPresent
+        args:
+        - --http-address=0.0.0.0:4180
+        - --https-address=0.0.0.0:4443
+        - --metrics-address=0.0.0.0:44180
+        - --upstream=static://200
+        - --session-store-type=cookie
+        # - --session-cookie-minimal
+        # - --set-xauthrequest
+        - --set-authorization-header
+        # - --pass-access-token
+        - --pass-authorization-header
+        # - --pass-user-headers
+        # - --pass-host-header
+        # - --config=/etc/oauth2_proxy/oauth2_proxy.cfg
+        - --provider=oidc
+        - --scope=openid profile email groups
+        # - --provider-display-name=Dex at Meoe
+        # - --code-challenge-method=S256
+        # redirect-url is not needed, oauth2-proxy by default will use the request url
+        # - --redirect-url=https://example.com/callback
+        - --email-domain=*
+        # https://github.com/oauth2-proxy/oauth2-proxy/issues/2677
+        - --skip-provider-button
+        - --ping-path=/ping
+        - --ready-path=/ready
+        - --exclude-logging-path=/ping,/ready
+        - --standard-logging=true
+        - --auth-logging=true
+        - --request-logging=false
+        - --reverse-proxy
+        # required to have proper client ip in logs
+        - --real-client-ip-header=X-Forwarded-For
+        env:
+        - name: OAUTH2_PROXY_OIDC_ISSUER_URL
+          valueFrom:
+            secretKeyRef:
+              name: oauth2-proxy
+              key: issuer
+        - name: OAUTH2_PROXY_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: oauth2-proxy
+              key: client-id
+        - name: OAUTH2_PROXY_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: oauth2-proxy
+              key: client-secret
+        - name: OAUTH2_PROXY_COOKIE_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: oauth2-proxy
+              key: cookie-secret
+        ports:
+        - containerPort: 4180
+          name: http
+          protocol: TCP
+        - containerPort: 44180
+          protocol: TCP
+          name: metrics
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 0
+          timeoutSeconds: 1
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+            scheme: HTTP
+          initialDelaySeconds: 0
+          timeoutSeconds: 5
+          successThreshold: 1
+          periodSeconds: 10
+        resources: {}
+        # volumeMounts:
+        # - mountPath: /etc/oauth2_proxy/oauth2_proxy.cfg
+        #   name: config
+        #   subPath: oauth2_proxy.cfg
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsGroup: 2000
+          runAsNonRoot: true
+          runAsUser: 2000
+      # volumes:
+      # - name: config
+      #   configMap:
+      #     defaultMode: 420
+      #     name: oauth2-proxy
