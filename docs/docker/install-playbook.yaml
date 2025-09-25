@@ -1,0 +1,19 @@
+---
+- name: install and configure docker
+  hosts: docker
+  become: true
+  pre_tasks:
+  - name: check if docker compose is present
+    ansible.builtin.command: docker compose version
+    register: docker_ver_check
+    changed_when: false
+    failed_when: false
+  - name: Set docker_installed fact
+    ansible.builtin.set_fact:
+      docker_installed: "{{ docker_ver_check.rc == 0 }}"
+
+  tasks:
+  - name: install docker if missing
+    import_role:
+      name: geerlingguy.docker
+    when: not docker_installed

@@ -35,10 +35,11 @@ dockerd --validate --config-file ./docs/docker/env/daemon.json
 
 Edit `daemon.json` manually.
 
-I would recommend to at least use journald for logs:
+Here is a minimal useful config:
 
 ```json
 {
+  "cgroup-parent": "docker.slice",
   "log-driver": "journald"
 }
 ```
@@ -54,6 +55,9 @@ ansible-galaxy collection install community.docker
 
 ansible-inventory --graph docker
 
-ansible-playbook ./docs/docker/playbook.yaml
+ansible-playbook ./docs/docker/install-playbook.yaml
+ansible-playbook ./docs/docker/configure-playbook.yaml
+
+ansible-playbook ./docs/docker/configure-playbook.yaml --limit debian-ws
 
 ```

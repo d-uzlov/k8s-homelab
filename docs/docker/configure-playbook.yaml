@@ -1,0 +1,89 @@
+---
+- name: install and configure docker
+  hosts: docker
+  become: true
+  pre_tasks:
+  - name: validate configuration (locally)
+    run_once: true
+    delegate_to: localhost
+    ansible.builtin.command: dockerd --validate --config-file ./env/daemon.json
+    changed_when: false
+
+  tasks:
+
+  - name: copy docker config
+    ansible.builtin.copy:
+      src: ./env/daemon.json
+      dest: /etc/docker/daemon.json
+      owner: root
+      mode: "0644"
+    notify:
+    - restart_docker_service
+
+  - name: copy docker.slice
+    copy:
+      src: ./docker.slice
+      dest: /etc/systemd/system/docker.slice
+      owner: root
+      group: root
+      mode: "0644"
+    notify:
+    - systemd_daemon-reload
+    - restart_docker_slice
+
+  - name: copy docker-patch-oom.sh
+    copy:
+      src: ./docker-patch-oom.sh
+      dest: /opt/docker-patch-oom.sh
+      owner: root
+      group: root
+      mode: "0755"
+    notify:
+    - systemd_daemon-reload
+    - restart_docker_patch
+
+  - name: copy docker_oom_patcher.service
+    copy:
+      src: ./docker_oom_patcher.service
+      dest: /etc/systemd/system/docker_oom_patcher.service
+      owner: root
+      group: root
+      mode: "0644"
+    notify:
+    - systemd_daemon-reload
+    - restart_docker_patch
+
+  - name: Add {{ ansible_facts['env']['SUDO_USER'] }} to docker group
+    ansible.builtin.user:
+      name: "{{ ansible_facts['env']['SUDO_USER'] }}"
+      groups: docker
+      append: yes
+
+  handlers:
+  - name: systemd_daemon-reload
+    ansible.builtin.systemd_service:
+      daemon_reload: true
+  - name: restart docker.slice
+    listen:
+    - restart_docker_slice
+    ansible.builtin.systemd_service:
+      name: docker.slice
+      enabled: true
+      state: started
+      daemon_reload: false
+  - name: restart docker.service
+    listen:
+    - restart_docker_service
+    ansible.builtin.systemd_service:
+      name: docker.service
+      enabled: true
+      state: restarted
+      daemon_reload: false
+  - name: restart docker_oom_patcher.service
+    listen:
+    - restart_docker_patch
+    ansible.builtin.systemd_service:
+      name: docker_oom_patcher.service
+      enabled: true
+      state: restarted
+      daemon_reload: false
