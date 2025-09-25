@@ -2997,6 +2997,7 @@
         "type": "prometheus",
         "uid": "${prometheus_datasource}"
       },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -3120,7 +3121,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(max by(pod, container) (\r\n  avg_over_time(container_memory_rss{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\", invalid=$total}[$__interval])\r\n  or\r\n  avg_over_time(container_memory_rss{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\", invalid=$total}[$__rate_interval])\r\n))",
+          "expr": "sum(max by(pod, container) (\r\n  sum_over_time(container_memory_rss{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\", invalid=$total}[$__interval])\r\n  / on(job, instance, node) group_left()\r\n  count_over_time(up{location=\"$location\", node=~\"$pod_nodes\", invalid=$total}[$__interval])\r\n  or\r\n  # I assuma that when __rate_interval is needed, the interval is short enough to not have issues with short-lived containers blowing up the average\r\n  avg_over_time(container_memory_rss{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\", invalid=$total}[$__rate_interval])\r\n))",
           "hide": false,
           "instant": false,
           "legendFormat": "Total",
@@ -3368,7 +3369,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(max by(pod, container) (\r\n  avg_over_time(container_memory_usage_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\", invalid=$total}[$__interval])\r\n  -\r\n  avg_over_time(container_memory_cache{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\", invalid=$total}[$__interval])\r\n  or\r\n  avg_over_time(container_memory_usage_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\", invalid=$total}[$__rate_interval])\r\n  -\r\n  avg_over_time(container_memory_cache{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\", invalid=$total}[$__rate_interval])\r\n))",
+          "expr": "sum(max by(pod, container) (\r\n  (\r\n    + sum_over_time(container_memory_usage_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\", invalid=$total}[$__interval])\r\n    - sum_over_time(container_memory_cache{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\", invalid=$total}[$__interval])\r\n  )\r\n  / on(job, instance, node) group_left()\r\n  count_over_time(up{location=\"$location\", node=~\"$pod_nodes\", invalid=$total}[$__interval])\r\n  or\r\n  # I assuma that when __rate_interval is needed, the interval is short enough to not have issues with short-lived containers blowing up the average\r\n  avg_over_time(container_memory_usage_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\", invalid=$total}[$__rate_interval])\r\n  -\r\n  avg_over_time(container_memory_cache{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\", invalid=$total}[$__rate_interval])\r\n))",
           "hide": false,
           "instant": false,
           "legendFormat": "Total",
@@ -3616,7 +3617,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(max by(pod, container) (\r\n  avg_over_time(container_memory_working_set_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\", invalid=$total}[$__interval])\r\n  or\r\n  avg_over_time(container_memory_working_set_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\", invalid=$total}[$__rate_interval])\r\n))",
+          "expr": "sum(max by(pod, container) (\r\n  sum_over_time(container_memory_working_set_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\", invalid=$total}[$__interval])\r\n  / on(job, instance, node) group_left()\r\n  count_over_time(up{location=\"$location\", node=~\"$pod_nodes\", invalid=$total}[$__interval])\r\n  or\r\n  # I assuma that when __rate_interval is needed, the interval is short enough to not have issues with short-lived containers blowing up the average\r\n  avg_over_time(container_memory_working_set_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\", invalid=$total}[$__rate_interval])\r\n))",
           "hide": false,
           "instant": false,
           "legendFormat": "Total",
@@ -3864,7 +3865,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(max by(pod, container) (\r\n  avg_over_time(container_memory_usage_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\", invalid=$total}[$__interval])\r\n  or\r\n  avg_over_time(container_memory_usage_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\", invalid=$total}[$__rate_interval])\r\n))",
+          "expr": "sum(max by(pod, container) (\r\n  sum_over_time(container_memory_usage_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\", invalid=$total}[$__interval])\r\n  / on(job, instance, node) group_left()\r\n  count_over_time(up{location=\"$location\", node=~\"$pod_nodes\", invalid=$total}[$__interval])\r\n  or\r\n  # I assuma that when __rate_interval is needed, the interval is short enough to not have issues with short-lived containers blowing up the average\r\n  avg_over_time(container_memory_usage_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", name=~\"$container_name\", invalid=$total}[$__rate_interval])\r\n))",
           "hide": false,
           "instant": false,
           "legendFormat": "Total",
@@ -4848,7 +4849,7 @@
         "y": 145
       },
       "id": 38,
-      "maxDataPoints": 100,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "asTable": true,
@@ -4949,7 +4950,7 @@
         "y": 145
       },
       "id": 52,
-      "maxDataPoints": 100,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "asTable": true,
@@ -5099,7 +5100,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(pod) (kube_summary_pod_ephemeral_storage_used_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"})",
+          "expr": "max by(pod) (avg_over_time(kube_summary_pod_ephemeral_storage_used_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]))",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -5111,7 +5112,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(kube_summary_pod_ephemeral_storage_used_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", invalid=$total})",
+          "expr": "sum(\r\n  sum_over_time(kube_summary_pod_ephemeral_storage_used_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", invalid=$total}[$__interval])\r\n  / on(job) group_left()\r\n  sum by(job) (count_over_time(up{location=\"$location\", job=\"kube-summary-exporter\", invalid=$total}[$__interval]))\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "Total",
@@ -5210,7 +5211,7 @@
         "y": 153
       },
       "id": 45,
-      "maxDataPoints": 100,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "asTable": true,
@@ -5236,7 +5237,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(pod) (kube_summary_pod_ephemeral_storage_used_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"})\r\n-\r\nsum by(pod) (kube_summary_container_logs_used_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"})",
+          "expr": "max by(pod) (avg_over_time(kube_summary_pod_ephemeral_storage_used_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]))\r\n-\r\nsum by(pod) (avg_over_time(kube_summary_container_logs_used_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]))",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -5249,7 +5250,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(kube_summary_pod_ephemeral_storage_used_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", invalid=$total})\r\n-\r\nsum(kube_summary_container_logs_used_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", invalid=$total})",
+          "expr": "+ sum(\r\n  sum_over_time(kube_summary_pod_ephemeral_storage_used_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", invalid=$total}[$__interval])\r\n  / on(job) group_left()\r\n  sum by(job) (count_over_time(up{location=\"$location\", job=\"kube-summary-exporter\", invalid=$total}[$__interval]))\r\n)\r\n- sum(\r\n  sum_over_time(kube_summary_container_logs_used_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", container!=\"\", invalid=$total}[$__interval])\r\n  / on(job) group_left()\r\n  sum by(job) (count_over_time(up{location=\"$location\", job=\"kube-summary-exporter\", invalid=$total}[$__interval]))\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "Total",
@@ -5374,7 +5375,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(pod) (kube_summary_container_logs_used_bytes{container!=\"\", location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"})",
+          "expr": "sum by(pod) (avg_over_time(kube_summary_container_logs_used_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", container!=\"\"}[$__interval]))",
           "instant": false,
           "legendFormat": "{{pod}}",
           "range": true,
@@ -5386,7 +5387,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(kube_summary_container_logs_used_bytes{container!=\"\", location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", invalid=$total})",
+          "expr": "sum(\r\n  sum_over_time(kube_summary_container_logs_used_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", container!=\"\", invalid=$total}[$__interval])\r\n  / on(job) group_left()\r\n  sum by(job) (count_over_time(up{location=\"$location\", job=\"kube-summary-exporter\", invalid=$total}[$__interval]))\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "Total",
@@ -5485,7 +5486,7 @@
         "y": 161
       },
       "id": 39,
-      "maxDataPoints": 100,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "asTable": true,
@@ -5512,7 +5513,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(pod) (kube_summary_container_rootfs_used_bytes{container!=\"\", location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"})",
+          "expr": "sum by(pod) (avg_over_time(kube_summary_container_rootfs_used_bytes{container!=\"\", location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]))",
           "instant": false,
           "legendFormat": "{{pod}}",
           "range": true,
@@ -5524,7 +5525,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(kube_summary_container_rootfs_used_bytes{container!=\"\", location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", invalid=$total})",
+          "expr": "sum(\r\n  sum_over_time(kube_summary_container_rootfs_used_bytes{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", container!=\"\", invalid=$total}[$__interval])\r\n  / on(job) group_left()\r\n  sum by(job) (count_over_time(up{location=\"$location\", job=\"kube-summary-exporter\", invalid=$total}[$__interval]))\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "Total",
@@ -5761,7 +5762,7 @@
         "y": 169
       },
       "id": 37,
-      "maxDataPoints": 100,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "asTable": true,
@@ -5786,7 +5787,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(pod) (ephemeral_storage_container_volume_usage{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\"})",
+          "expr": "max by(pod) (avg_over_time(ephemeral_storage_container_volume_usage{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\"}[$__interval]))",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
@@ -5798,7 +5799,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(ephemeral_storage_container_volume_usage{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", invalid=$total})",
+          "expr": "sum(avg_over_time(ephemeral_storage_container_volume_usage{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", invalid=$total}[$__interval]))",
           "hide": false,
           "instant": false,
           "legendFormat": "Total",
@@ -6046,5 +6047,5 @@
   "timezone": "browser",
   "title": "Namespace / Pods",
   "uid": "vsl6ot4yad5hedtly8ey",
-  "version": 6
+  "version": 3
 }
