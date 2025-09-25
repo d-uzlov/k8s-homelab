@@ -3,6 +3,7 @@
 
 References:
 - https://airensoft.gitbook.io/ovenplayer/
+- https://docs.ovenplayer.com/api-reference/api
 
 # Default keys
 

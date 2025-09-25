@@ -30,17 +30,18 @@ export function setButtons(containerId, values, checkSelected) {
 }
 
 const soundButtonsContainer = document.getElementById("volume-select-buttons");
-export function setSoundButtons(playerInstance, currentVolume, currentMute, saveSettings) {
+export function setSoundButtons(playerInstance, currentVolume, currentMute, saveVolumeMute) {
   soundButtonsContainer.textContent = '';
 
   const muteStyle = currentMute ? redBorder : '';
   const mute = createButton('Mute', function () {
     playerInstance.setMute(true);
-    saveSettings();
+    saveVolumeMute(null, true);
   }, muteStyle);
   soundButtonsContainer.appendChild(mute);
 
-  const options = [1, 5, 15, 50, 100];
+  // in decibels
+  const options = [-20, -15, -10, -5, 0];
   for (let i = 0; i < options.length; i++) {
     const element = options[i];
     let style = '';
@@ -49,8 +50,12 @@ export function setSoundButtons(playerInstance, currentVolume, currentMute, save
     }
     const button = createButton(element, function () {
       playerInstance.setMute(false);
-      playerInstance.setVolume(element);
-      saveSettings();
+      console.log('element', element);
+      const realVolume = Math.pow(10, element * 0.1);
+      console.log('realVolume', realVolume);
+      // player expected volume in 1-100 range
+      playerInstance.setVolume(realVolume * 100);
+      saveVolumeMute(element, false);
     }, style);
     soundButtonsContainer.appendChild(button);
   }

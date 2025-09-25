@@ -17,10 +17,15 @@ const omePlayerType = {
 const settingsPreferKey = 'prefer';
 
 function updateVolumeButtons(playerInstance) {
-  setSoundButtons(playerInstance, playerInstance.getVolume(), playerInstance.getMute(), function () {
+  let settings = getSettings();
+  setSoundButtons(playerInstance, settings.volume, settings.mute, function (volume, mute) {
     saveSettings('', 'volume', function (settings) {
-      settings.volume = playerInstance.getVolume();
-      settings.mute = playerInstance.getMute();
+      if (volume != null) {
+        settings.volume = volume;
+      }
+      if (mute != null) {
+        settings.mute = mute;
+      }
     });
   });
 }
@@ -124,6 +129,7 @@ function setQualityButtons(appInfo, setSourceFile, selectedType, selectedFile) {
       qualityButtons.push({
         name: link.resolution,
         file: link.file,
+        type: metaType.llhls,
         action: () => setSourceFile(metaType.llhls, link.file),
       });
     }
