@@ -1,0 +1,36 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg-lldap
+  namespace: auth-lldap
+spec:
+  instances: 2
+  storage:
+    size: REPLACE_ME_SIZE
+    storageClass: REPLACE_ME_STORAGE_CLASS
+  primaryUpdateStrategy: unsupervised
+  enableSuperuserAccess: true
+  resources:
+    requests:
+      memory: 100Mi
+    limits:
+      memory: 300Mi
+  postgresql:
+    parameters:
+      # https://github.com/cloudnative-pg/cloudnative-pg/issues/3680#issuecomment-3092148543
+      wal_keep_size: 1GB
+      max_slot_wal_keep_size: 1GB
+      hot_standby_feedback: "on"
+  managed:
+    services:
+      disabledDefaultServices: ["ro", "r"]
+  affinity:
+    enablePodAntiAffinity: true
+    podAntiAffinityType: required
+    topologyKey: kubernetes.io/hostname
+  plugins:
+  - name: barman-cloud.cloudnative-pg.io
+    isWALArchiver: true
+    parameters:
+      barmanObjectName: s3-lldap-backup

@@ -1,0 +1,24 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: auth-lldap
+
+resources:
+- ./httproute.yaml
+- ../../../ingress/manual-certificates/domain-info/
+
+replacements:
+- source:
+    kind: ConfigMap
+    name: domain-info-public-protected
+    fieldPath: data.domain_suffix
+  targets:
+  - select:
+      kind: HTTPRoute
+      name: lldap-protected
+    options:
+      delimiter: .
+      index: 1
+    fieldPaths:
+    - spec.hostnames.0

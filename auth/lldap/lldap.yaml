@@ -1,0 +1,67 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lldap
+spec:
+  selector:
+    app: lldap
+  ports:
+  - name: web
+    port: 80
+    targetPort: web
+  - name: ldap
+    port: 3890
+    targetPort: ldap
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lldap
+spec:
+  selector:
+    matchLabels:
+      app: lldap
+  template:
+    metadata:
+      labels:
+        app: lldap
+    spec:
+      containers:
+      - name: lldap
+        image: docker.io/lldap/lldap:v0.6.2-alpine
+        ports:
+        - name: ldap
+          containerPort: 3890
+        - name: ldaps
+          containerPort: 6360
+        - name: web
+          containerPort: 17170
+        env:
+        - name: LLDAP_JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: lldap-config
+              key: jwt_secret
+        - name: LLDAP_KEY_SEED
+          valueFrom:
+            secretKeyRef:
+              name: lldap-config
+              key: key_seed
+        - name: LLDAP_LDAP_BASE_DN
+          value: dc=example,dc=com
+        - name: LLDAP_LDAP_USER_PASS
+          valueFrom:
+            secretKeyRef:
+              name: lldap-config
+              key: admin_pass
+        - name: LLDAP_DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: pg-lldap-app
+              key: fqdn-uri
+        # args: []
+        # resources:
+        #   limits:
+        #     memory: "128Mi"
+        #     cpu: "500m"
