@@ -1,0 +1,25 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: all-dragonfly-clusters
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: dragonfly
+  namespaceSelector:
+    any: true
+  podMetricsEndpoints:
+  - port: admin
+    relabelings:
+    - targetLabel: instance
+      action: replace
+      sourceLabels: [ location, __meta_kubernetes_namespace, __meta_kubernetes_pod_name ]
+      separator: /
+    - targetLabel: dragonfly_cluster
+      action: replace
+      sourceLabels: [ __meta_kubernetes_pod_label_app ]
