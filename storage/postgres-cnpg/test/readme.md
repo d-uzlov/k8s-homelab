@@ -102,7 +102,7 @@ kl cnpg -n pgo-cnpg-test psql pg-main -- -c "SELECT * FROM test;"
 
 mkdir -p ./storage/postgres-cnpg/test/backups/env/
 
-cluster_name=trixie
+cluster_name=
 user_name=${cluster_name}.pgo-cnpg-test.$(openssl rand -hex 10)
 
  cat << EOF > ./storage/postgres-cnpg/test/backups/env/s3-info.env

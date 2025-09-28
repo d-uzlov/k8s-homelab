@@ -15,7 +15,7 @@ References:
 
 mkdir -p ./auth/dex/postgres-cnpg/backups/env/
 
-cluster_name=trixie
+cluster_name=
 namespace=auth-dex
 user_name=${cluster_name}.$namespace.$(openssl rand -hex 3)
 
