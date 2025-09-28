@@ -5,46 +5,9 @@ Current version seems to have a memory leak.
 
 References:
 - https://github.com/zitadel/zitadel
-- https://zitadel.com/docs/self-hosting/deploy/kubernetes
-
-# Generate config
-
-You only need to do this when updating the app.
-
-```bash
-helm repo add zitadel https://charts.zitadel.com
-helm repo update zitadel
-helm search repo zitadel/zitadel --versions --devel | head
-helm show values zitadel/zitadel --version 8.13.1 > ./auth/zitadel/default-values.yaml
-```
-
-```bash
-# https://hub.docker.com/r/bitnamicharts/redis/tags
-# helm show values oci://registry-1.docker.io/bitnamicharts/redis --version 20.6.2 > ./auth/authentik/redis-default-values.yaml
-
-helm template \
-  zitadel \
-  zitadel/zitadel \
-  --version 8.13.1 \
-  --namespace zitadel \
-  --values ./auth/zitadel/values.yaml \
-  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/part-of|d' -e '\|app.kubernetes.io/version|d' \
-  > ./auth/zitadel/zitadel.gen.yaml
-
-```
+- https://zitadel.com/docs/self-hosting/deploy/compose
 
 # Deploy
-
-Generate passwords and set up config.
-
-```bash
-
-mkdir -p ./auth/zitadel/config/env/
- cat << EOF > ./auth/zitadel/config/env/master_key.env
-master_key=$(LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 32)
-EOF
-
-```
 
 ```bash
 
@@ -75,12 +38,13 @@ kl -n zitadel logs deployments/zitadel
 
 # go here to set up access
 echo "https://"$(kl -n zitadel get httproute zitadel-private -o go-template --template "{{ (index .spec.hostnames 0)}}")/if/flow/initial-setup/
+# print default user login
+echo "zitadel-admin@zitadel.$(kl -n zitadel get httproute zitadel-private -o go-template --template "{{ (index .spec.hostnames 0)}}")"
+# default password is Password1!
+
 # after you finished the initial set up process, it's safe to open public access to zitadel
 kl apply -k ./auth/zitadel/httproute-public/
 kl -n zitadel get httproute
-
-# print default user login
-echo "zitadel-admin@zitadel.$(kl -n zitadel get httproute zitadel-private -o go-template --template "{{ (index .spec.hostnames 0)}}")"
 
 # zitadel has single issuer URL for all projects/apps
 # print issuer URL
