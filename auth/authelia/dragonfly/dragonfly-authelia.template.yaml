@@ -1,0 +1,39 @@
+---
+apiVersion: dragonflydb.io/v1alpha1
+kind: Dragonfly
+metadata:
+  namespace: auth-authelia
+  name: df-authelia
+spec:
+  replicas: 2
+  # by default df tries to use docker.dragonflydb.io registry which is unlikely to be cached
+  image: ghcr.io/dragonflydb/dragonfly:v1.34.1
+  imagePullPolicy: IfNotPresent
+  authentication:
+    passwordFromSecret:
+      name: dragonfly-auth
+      key: password
+  args:
+  - --dbfilename=db-dump
+  # proactor_threads arg is not respected: https://github.com/dragonflydb/dragonfly/issues/4251
+  - --proactor_threads=1
+  snapshot:
+    # save data every 5 minutes
+    cron: "*/5 * * * *"
+    persistentVolumeClaimSpec:
+      storageClassName: REPLACE_ME
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 2Gi
+  resources:
+    requests:
+      cpu: 10m
+      memory: 30Mi
+    limits:
+      cpu: 1000m
+      # dragonfly checks available memory on start, and exits if it thinks it's not enough
+      # you need 256Mi per thread, and dragonfly wants to keep 20% of memory for cache,
+      # so it's actually 320Mi per thread
+      memory: 320Mi

@@ -1,0 +1,27 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: auth-authelia
+
+resources:
+- ./authelia.yaml
+
+configMapGenerator:
+- name: authelia-config
+  files:
+  - ./config/00_common.yaml
+  - ./config/01_notifications.yaml
+  - ./config/02_oidc_jwks.yaml
+  - ./config/env/10_oidc_clients.yaml
+
+secretGenerator:
+- name: authelia-secrets
+  envs:
+  - ./env/authelia-secret.env
+- name: authelia-ldap-auth
+  envs:
+  - ./env/ldap-auth.env
+- name: authelia-keys
+  files:
+  - jwks_key=./env/jwks_key

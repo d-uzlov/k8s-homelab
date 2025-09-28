@@ -1,0 +1,29 @@
+---
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: s3-authelia-backup
+spec:
+  configuration:
+    # endpoint and bucket should be set as a patch
+    # destinationPath: s3://backups/
+    # endpointURL: http://minio:9000
+    s3Credentials:
+      accessKeyId:
+        name: postgres-backup-s3-info
+        key: user_name
+      secretAccessKey:
+        name: postgres-backup-s3-info
+        key: user_secret
+    wal:
+      compression: snappy
+  instanceSidecarConfiguration:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 40Mi
+      limits:
+        # while average memory usage is low,
+        # when creating a backup the plugin needs a lot of memory just for a split second
+        # (around 230Mi for an empty database)
+        memory: 300Mi
