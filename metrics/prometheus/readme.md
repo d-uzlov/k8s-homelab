@@ -4,13 +4,15 @@
 References:
 - https://github.com/prometheus/prometheus/releases
 
-# Prerequisites
+# prerequisites
 
 - [Prometheus Operator](../prometheus-operator/readme.md)
 
-# Deploy
+# deploy
 
 ```bash
+
+curl -fsSL https://github.com/prometheus/prometheus/raw/refs/heads/main/documentation/examples/rbac-setup.yml > ./metrics/prometheus/rbac.yaml
 
 kl create ns prometheus
 kl label ns prometheus pod-security.kubernetes.io/enforce=baseline
@@ -24,14 +26,14 @@ Don't forget ro deploy child resources:
 - [prompp prometheus](./prompp/readme.md)
 - [alertmanager](./alertmanager/readme.md)
 
-# Cleanup
+# cleanup
 
 ```bash
 kl delete -k ./metrics/prometheus/
 kl delete ns prometheus
 ```
 
-# Useful commands
+# useful commands
 
 ```bash
 
