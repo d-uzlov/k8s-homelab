@@ -49,8 +49,12 @@ openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out ./auth/autheli
 # get ldap connection credentials from your ldap server
 
  cat << EOF > ./auth/authelia/env/ldap-auth.env
-user=cn=admin,dc=example,dc=com
+user=UID=admin,OU=people,DC=example,DC=com
 password=
+EOF
+
+ cat << EOF > ./auth/authelia/env/domain.env
+domain=authelia.example.com
 EOF
 
 mkdir -p ./auth/authelia/dragonfly/env/

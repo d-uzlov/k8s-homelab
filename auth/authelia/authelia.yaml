@@ -39,7 +39,7 @@ spec:
     spec:
       containers:
       - name: authelia
-        image: ghcr.io/authelia/authelia:4.39.6
+        image: ghcr.io/authelia/authelia:4.39.10
         ports:
         - name: http
           containerPort: 9091
@@ -48,17 +48,21 @@ spec:
           containerPort: 9959
           protocol: TCP
         command:
-        - authelia
+        - /entrypoint.sh
         resources:
-          limits: {}
-          requests: {}
+          requests:
+            memory: 50Mi
+            cpu: 10m
+          limits:
+            memory: 100Mi
         securityContext:
           readOnlyRootFilesystem: true
         env:
-        - name: POSTGRES_ADDRESS
-          value: pg-authelia-rw.auth-authelia.svc.cluster.local
         - name: AUTHELIA_DOMAIN
-          value: authelia-private.meoe.cloudns.be
+          valueFrom:
+            configMapKeyRef:
+              name: authelia-domain
+              key: domain
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
@@ -122,6 +126,8 @@ spec:
           successThreshold: 1
           timeoutSeconds: 1
         volumeMounts:
+        - mountPath: /run
+          name: tmp
         - mountPath: /notifications
           name: config-dir
         - mountPath: /config
@@ -130,6 +136,9 @@ spec:
           name: secrets
         - mountPath: /secrets/keys
           name: keys
+        - mountPath: /entrypoint.sh
+          name: entrypoint
+          subPath: entrypoint.sh
       volumes:
       - name: config-dir
         emptyDir:
@@ -143,3 +152,9 @@ spec:
       - name: keys
         secret:
           secretName: authelia-keys
+      - name: entrypoint
+        configMap:
+          name: authelia-entrypoint
+          defaultMode: 0555
+      - name: tmp
+        emptyDir: {}
