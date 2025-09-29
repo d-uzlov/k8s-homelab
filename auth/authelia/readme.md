@@ -64,7 +64,7 @@ password=$(LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 32)
 EOF
 
 kl get sc
-storage_class=tulip-nvmeof
+storage_class=
 sed "s/storageClassName: REPLACE_ME/storageClassName: $storage_class/" ./auth/authelia/dragonfly/dragonfly-authelia.template.yaml > ./auth/authelia/dragonfly/env/dragonfly-authelia.yaml
 
 touch ./auth/authelia/config/env/10_oidc_clients.yaml
@@ -84,6 +84,7 @@ kl create ns auth-authelia
 kl label ns auth-authelia pod-security.kubernetes.io/enforce=baseline
 
 kl apply -k ./auth/authelia/dragonfly/
+kl -n casdoor get dragonfly
 kl -n auth-authelia get pod -o wide -L role
 kl -n auth-authelia get pvc
 kl -n auth-authelia get svc

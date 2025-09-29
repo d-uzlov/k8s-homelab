@@ -5,47 +5,23 @@ References:
 - https://github.com/casdoor/casdoor
 - https://casdoor.org/docs/basic/try-with-helm
 
-# Generate config
-
-You only need to do this when updating the app.
+# config
 
 ```bash
 
-# https://hub.docker.com/r/bitnamicharts/redis/tags
-helm show values oci://registry-1.docker.io/bitnamicharts/redis --version 20.6.2 > ./auth/casdoor/redis/default-values.yaml
+mkdir -p ./auth/casdoor/dragonfly/env/
 
-helm template \
-  redis \
-  oci://registry-1.docker.io/bitnamicharts/redis \
-  --version 20.6.2 \
-  --namespace casdoor \
-  --values ./auth/casdoor/redis/values.yaml \
-  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/part-of|d' -e '\|app.kubernetes.io/version|d' -e 's/redis-data/data/' \
-  > ./auth/casdoor/redis/redis.gen.yaml
+ cat << EOF > ./auth/casdoor/dragonfly/env/password.env
+password=$(LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 32)
+EOF
 
-```
+kl get sc
+storage_class=tulip-nvmeof
+sed "s/storageClassName: REPLACE_ME/storageClassName: $storage_class/" ./auth/casdoor/dragonfly/dragonfly-casdoor.template.yaml > ./auth/casdoor/dragonfly/env/dragonfly-casdoor.yaml
 
-# Deploy
+mkdir -p ./auth/casdoor/env/
 
-Prerequisites:
-- Create namespace first
-- [postgres](./postgres-cnpg/readme.md)
-
-Generate passwords and set up config.
-
-```bash
-
-kl create ns casdoor
-kl label ns casdoor pod-security.kubernetes.io/enforce=baseline
-
-kl apply -k ./auth/casdoor/redis/
-kl -n casdoor get pods -o wide
-
-kl apply -k ./auth/casdoor/httproute-private/
-kl -n casdoor get httproute
-
-ingress_address=$(kl -n casdoor get httproute casdoor-private -o go-template --template "{{ (index .spec.hostnames 0)}}")
-postgres_password=$(kl -n casdoor get secret pg-casdoor-app -o json | jq -r '.data.password | @base64d')
+# edit config manually (add passwords and address)
 
  cat << EOF > ./auth/casdoor/env/app.conf
 appname = casdoor
@@ -56,7 +32,7 @@ copyrequestbody = true
 driverName = postgres
 dataSourceName = "user=app password=${postgres_password} host=pg-casdoor-rw port=5432 dbname=app sslmode=require"
 dbName = app
-redisEndpoint = redis-master:6379,db,zvVXAd3jN1rzlorPvs9q
+redisEndpoint = df-casdoor:6379,db,${redis_password}
 defaultStorageProvider =
 isCloudIntranet = true
 authState = "casdoor"
@@ -68,6 +44,31 @@ origin = "https://${ingress_address}"
 enableGzip = true
 ldapServerPort = 10389
 EOF
+
+```
+
+# deploy
+
+Prerequisites:
+- Create namespace first
+- [postgres](./postgres-cnpg/readme.md)
+
+```bash
+
+kl create ns casdoor
+kl label ns casdoor pod-security.kubernetes.io/enforce=baseline
+
+kl apply -k ./auth/casdoor/dragonfly/
+kl -n casdoor get dragonfly
+kl -n casdoor get pod -o wide -L role
+kl -n casdoor get pvc
+kl -n casdoor get svc
+
+kl apply -k ./auth/casdoor/httproute-private/
+kl -n casdoor get httproute
+
+ingress_address=$(kl -n casdoor get httproute casdoor-private -o go-template --template "{{ (index .spec.hostnames 0)}}")
+postgres_password=$(kl -n casdoor get secret pg-casdoor-app -o json | jq -r '.data.password | @base64d')
 
 kl apply -k ./auth/casdoor/
 kl -n casdoor get pod -o wide
@@ -92,13 +93,10 @@ curl https://${ingress_address}/.well-known/openid-configuration | jq
 
 ```
 
-Don't forget to enable `Projects -> your_project -> your_application -> Grant Types -> Refresh Token`.
-
 # Cleanup
 
 ```bash
-kl -n casdoor delete job init
-kl -n casdoor delete job setup
 kl delete -k ./auth/casdoor/
+kl delete -k ./auth/casdoor/dragonfly/
 kl delete ns casdoor
 ```
