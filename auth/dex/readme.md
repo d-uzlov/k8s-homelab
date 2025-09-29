@@ -85,3 +85,11 @@ kl delete ns dex
 openssl rand -hex 20
 
 ```
+
+Dex developers don't want to add good UX.
+So you will need to add every redirect URL manually,
+and then redeploy Dex to apply changes.
+
+References:
+- https://github.com/dexidp/dex/issues/448
+- https://github.com/dexidp/dex/pull/3771

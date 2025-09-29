@@ -34,7 +34,7 @@ metadata:
     app.kubernetes.io/instance: dex
 spec:
   replicas: 1
-  revisionHistoryLimit: 10
+  revisionHistoryLimit: 0
   selector:
     matchLabels:
       app.kubernetes.io/name: dex
@@ -45,18 +45,22 @@ spec:
         app.kubernetes.io/name: dex
         app.kubernetes.io/instance: dex
     spec:
+      securityContext:
+        fsGroup: 0
       containers:
       - name: dex
         securityContext: {}
-        image: "ghcr.io/dexidp/dex:v2.44.0"
+        image: ghcr.io/dexidp/dex:v2.44.0
         imagePullPolicy: IfNotPresent
-        args:
-        - dex
-        - serve
-        - --web-http-addr=0.0.0.0:5556
-        - --telemetry-addr=0.0.0.0:5558
-        - /etc/dex/config.yaml
-        env: []
+        command:
+        - /entrypoint.sh
+        args: []
+        env:
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pg-dex-app
+              key: password
         ports:
         - name: http
           containerPort: 5556
@@ -72,12 +76,26 @@ spec:
           httpGet:
             path: /healthz/ready
             port: telemetry
-        resources: {}
+        resources:
+          requests:
+            memory: 15Mi
+          limits:
+            memory: 30Mi
         volumeMounts:
-        - name: config
-          mountPath: /etc/dex
-          readOnly: true
+        - mountPath: /run
+          name: tmp
+        - mountPath: /etc/dex
+          name: config
+        - mountPath: /entrypoint.sh
+          name: entrypoint
+          subPath: entrypoint.sh
       volumes:
       - name: config
         secret:
           secretName: dex-config
+      - name: entrypoint
+        configMap:
+          name: dex-entrypoint
+          defaultMode: 0555
+      - name: tmp
+        emptyDir: {}
