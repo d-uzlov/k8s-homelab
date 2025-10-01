@@ -12,7 +12,59 @@ References:
 
 mkdir -p ./board/homepage/config/env/
 
+# user-facing services
+ingress_domain_suffix=
+sed -e "s|AUTOMATIC_REPLACE_DOMAIN_SUFFIX|$ingress_domain_suffix|g" \
+  ./board/homepage/config/services-user.tmpl.yaml \
+  >> ./board/homepage/config/env/services-user.yaml
+
+```
+
+Manually edit `./board/homepage/config/env/services-*`
+to account for your local environment.
+
+# Deploy
+
+```bash
+
+kl create ns homepage
+kl label ns homepage pod-security.kubernetes.io/enforce=baseline
+
+# regenerate config after any changes
+# Rename files lexicographically to change its order in the page.
+cat ./board/homepage/config/env/services-*.yaml > ./board/homepage/config/env/services.yaml && kl apply -k ./board/homepage/config/
+
+kl apply -k ./board/homepage/
+kl -n homepage get pod -o wide
+
+kl apply -k ./board/homepage/httproute-private/
+kl apply -k ./board/homepage/httproute-protected/
+# don't forget to add https://homepage-protected-url/oauth2/callback to the list of allowed redirect URIs
+kl -n homepage get htr
+kl -n homepage describe htr homepage-protected
+
+# homepage requires a sticky session to work correctly
+#   https://github.com/gethomepage/homepage/discussions/2305
+# when using istio, you can configure sticky session with this file
+kl apply -f ./board/homepage/istio-sticky-session.yaml
+
+```
+
+# Cleanup
+
+```bash
+kl delete -k ./board/homepage/httproute-protected/
+kl delete -k ./board/homepage/httproute-private/
+kl delete -k ./board/homepage/
+kl delete ns homepage
+```
+
+# widgets
+
+```bash
+
 # ============= Proxmox =============
+# cluster statistics
 echo "- Proxmox:" >> ./board/homepage/config/env/services-proxmox.yaml
 # any node ip
 proxmox_api_endpoint=
@@ -29,6 +81,8 @@ proxmox_password=
         username: $proxmox_username
         password: $proxmox_password
 EOF
+
+# ============= Proxmox =============
 # statistics for each individual node
 readable_node_name=
 exact_node_name=
@@ -61,44 +115,4 @@ truenas_api_key=
         nasType: scale
 EOF
 
-# user-facing services
-ingress_domain_suffix=
-sed -e "s|AUTOMATIC_REPLACE_DOMAIN_SUFFIX|$ingress_domain_suffix|g" \
-  ./board/homepage/config/services-user.tmpl.yaml \
-  >> ./board/homepage/config/env/services-user.yaml
-
-```
-
-Manually edit `./board/homepage/config/env/services-*`
-to account for your local environment.
-
-# Deploy
-
-```bash
-
-kl create ns homepage
-kl label ns homepage pod-security.kubernetes.io/enforce=baseline
-
-# regenerate config after any changes
-# Rename files lexicographically to change its order in the page.
-cat ./board/homepage/config/env/services-*.yaml > ./board/homepage/config/env/services.yaml && kl apply -k ./board/homepage/config/
-
-kl apply -k ./board/homepage/
-kl -n homepage get pod -o wide
-
-kl apply -k ./board/homepage/httproute-private/
-kl apply -k ./board/homepage/httproute-protected/
-# don't forget to add https://homepage-protected-url/oauth2/callback to the list of allowed redirect URIs
-kl -n homepage get htr
-kl -n homepage describe htr homepage-protected
-
-```
-
-# Cleanup
-
-```bash
-kl delete -k ./board/homepage/httproute-protected/
-kl delete -k ./board/homepage/httproute-private/
-kl delete -k ./board/homepage/
-kl delete ns homepage
 ```
