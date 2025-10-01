@@ -6,14 +6,21 @@ metadata:
   namespace: prometheus
 spec:
   hostnames:
-  - alertmanager-protected.suffix-automatic-replace
+  - alertmanager-a.suffix-automatic-replace
   parentRefs:
-  - kind: Gateway
+  - group: gateway.networking.k8s.io
+    kind: Gateway
     namespace: gateways
     name: main-public
-    sectionName: https-main
+    sectionName: https-main-protected
   rules:
-  - backendRefs:
-    - kind: Service
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - group: ''
+      kind: Service
       name: alertmanager
       port: 9093
+      weight: 1

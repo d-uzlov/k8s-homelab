@@ -82,11 +82,8 @@ kl apply -k ./metrics/prometheus/main/ingress-wildcard/
 kl -n prometheus get ingress
 
 kl apply -k ./metrics/prometheus/main/httproute-private/
-kl apply -k ./metrics/prometheus/main/httproute-authentik/
+kl apply -k ./metrics/prometheus/main/httproute-protected/
 kl -n prometheus get htr
-kl -n prometheus describe htr prometheus-main-private
-kl -n prometheus describe htr prometheus-main-authentik
-kl -n gateways get ap prometheus.prometheus-main-authentik
 
 kl -n prometheus exec sts/prometheus-main -- df -h | grep /prometheus\$
 

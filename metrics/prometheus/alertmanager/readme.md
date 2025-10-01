@@ -35,10 +35,9 @@ kl -n prometheus get pod -o wide
 kl -n grafana apply -k ./metrics/prometheus/alertmanager/grafana-datasource/
 
 # private gateway
-kl apply -k ./metrics/prometheus/alertmanager/httproute/
+kl apply -k ./metrics/prometheus/alertmanager/httproute-private/
 kl apply -k ./metrics/prometheus/alertmanager/httproute-protected/
-kl -n prometheus get httproute
-kl -n prometheus describe httproute alertmanager
+kl -n prometheus get htr
 
 ```
 

@@ -62,8 +62,9 @@ kl -n cilium get pod -o wide
 
 kl -n cilium delete job hubble-generate-certs
 
-kl apply -k ./network/cilium/hubble-ingress-route/
-kl apply -k ./network/cilium/httproute-hubble-authentik/
+kl apply -f ./network/cilium/hubble-allow-ingress.yaml
+kl apply -k ./network/cilium/hubble-httproute-private/
+kl apply -k ./network/cilium/hubble-httproute-protected/
 kl -n cilium get htr
 
 ```

@@ -29,6 +29,7 @@ kl label ns auth-lldap pod-security.kubernetes.io/enforce=baseline
 kl apply -k ./auth/lldap/
 kl -n auth-lldap get pod
 
+kl apply -k ./auth/lldap/httproute-private/
 kl apply -k ./auth/lldap/httproute-protected/
 kl -n auth-lldap get htr
 

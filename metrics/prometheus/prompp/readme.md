@@ -73,6 +73,7 @@ kl -n prometheus get pod -o wide
 kl -n grafana apply -k ./metrics/prometheus/prompp/grafana-datasource/
 
 kl apply -k ./metrics/prometheus/prompp/httproute-private/
+kl apply -k ./metrics/prometheus/prompp/httproute-protected/
 kl -n prometheus get htr
 
 ```
