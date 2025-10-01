@@ -1,8 +1,6 @@
 #!/bin/sh
 set -eu
 
-# Path to watch (file or directory)
-config_path=/config
 poll_period=2
 
 pid_file=/run/authelia-pid
@@ -10,23 +8,27 @@ shutdown_file=/run/shutdown-requested
 reload_file=/run/reload-requested
 
 sigterm_handler() {
-  echo "Entrypoint: received SIGTERM/SIGINT, forwarding..."
+  echo "$(date) Entrypoint: sigterm_handler: received SIGTERM/SIGINT, forwarding..."
   touch $shutdown_file
   pid="$(cat $pid_file)"
   kill -TERM "$pid" || true
   wait "$pid" || true
-  echo Entrypoint: app finished
+  echo "$(date) Entrypoint: sigterm_handler: app finished"
 }
 
 trap sigterm_handler TERM INT
 
+print_config_hash() {
+  sha1sum /config/* | sha1sum
+}
+
 poll_for_config_changes() {
-  old_hash=$(sha1sum $config_path/* | sha1sum)
+  old_hash=$(print_config_hash)
   while true; do
     sleep $poll_period
-    new_hash=$(sha1sum $config_path/* | sha1sum)
+    new_hash=$(print_config_hash)
     if [ "$old_hash" != "$new_hash" ]; then
-      echo "Entrypoint: checksum change detected, restarting app"
+      echo "$(date) Entrypoint: poll loop: checksum change detected, restarting app"
       old_hash="$new_hash"
       pid="$(cat $pid_file)"
       touch $reload_file
@@ -39,22 +41,22 @@ poll_for_config_changes() {
 poll_for_config_changes &
 
 while [ ! -f "$shutdown_file" ]; do
+  echo "$(date) Entrypoint: run loop: starting application"
   authelia &
   pid=$!
   echo $pid > $pid_file
   wait $pid || {
     exit_code=$?
-    # when dex receives termination signal it exits with an error,
-    # so we need to have special handling for reload requests
-    if [ -f "$reload_file" ]; then
-      echo Entrypoint: detected reload
-      rm $reload_file
-    elif [ -f "$shutdown_file" ]; then
-      echo Entrypoint: detected shutdown, exiting
-      exit 0
-    else
-      echo Entrypoint: application failed, exiting
-      exit $exit_code
-    fi
+    true
   }
+  if [ -f "$shutdown_file" ]; then
+    echo "$(date) Entrypoint: run loop: exiting: detected shutdown"
+    exit 0
+  elif [ -f "$reload_file" ]; then
+    echo "$(date) Entrypoint: run loop: detected reload"
+    rm $reload_file
+  else
+    echo "$(date) Entrypoint: run loop: exiting: application finished with exit_code $exit_code"
+    exit $exit_code
+  fi
 done

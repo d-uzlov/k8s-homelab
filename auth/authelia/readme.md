@@ -68,6 +68,7 @@ storage_class=
 sed "s/storageClassName: REPLACE_ME/storageClassName: $storage_class/" ./auth/authelia/dragonfly/dragonfly-authelia.template.yaml > ./auth/authelia/dragonfly/env/dragonfly-authelia.yaml
 
 touch ./auth/authelia/config/env/10_oidc_clients.yaml
+[ -f ./auth/authelia/config/env/01_notifications.yaml ] || cp ./auth/authelia/config/01_notifications-filesystem.yaml ./auth/authelia/config/env/01_notifications.yaml
 
 ```
 
@@ -94,23 +95,8 @@ kl -n auth-authelia get htr
 
 kl apply -k ./auth/authelia/
 kl -n auth-authelia get pod -o wide
-kl -n auth-authelia logs deployments/authelia
-
-# go here to set up access
-echo "https://"$(kl -n auth-authelia get httproute authelia-private -o go-template --template "{{ (index .spec.hostnames 0)}}")/if/flow/initial-setup/
-# after you finished the initial set up process, it's safe to open public access to authelia
-kl apply -k ./auth/authelia/httproute-public/
-kl -n auth-authelia get httproute
-
-# print default user login
-echo "authelia-admin@authelia.$(kl -n auth-authelia get httproute authelia-private -o go-template --template "{{ (index .spec.hostnames 0)}}")"
-
-# authelia has single issuer URL for all projects/apps
-# print issuer URL
-echo https://$(kl -n auth-authelia get httproute authelia-private -o go-template --template "{{ (index .spec.hostnames 0)}}")
-# print discovery URL
-echo https://$(kl -n auth-authelia get httproute authelia-private -o go-template --template "{{ (index .spec.hostnames 0)}}")/.well-known/openid-configuration
-curl https://$(kl -n auth-authelia get httproute authelia-private -o go-template --template "{{ (index .spec.hostnames 0)}}")/.well-known/openid-configuration | jq
+kl -n auth-authelia logs deployments/authelia --tail 30
+kl -n auth-authelia logs deployments/authelia > ./authelia.log
 
 ```
 
@@ -143,5 +129,12 @@ secret=$(openssl rand -hex 20)
 echo $secret
 docker run --rm ghcr.io/authelia/authelia:4.39.6 authelia crypto hash generate pbkdf2 --variant sha512 --password $secret --random.charset rfc3986
 docker run --rm ghcr.io/authelia/authelia:4.39.6 authelia crypto hash generate pbkdf2 --help
+
+# authelia has single issuer URL for all projects/apps
+# issuer URL
+echo https://$(kl -n auth-authelia get httproute authelia-private -o go-template --template "{{ (index .spec.hostnames 0)}}")
+# discovery URL
+echo https://$(kl -n auth-authelia get httproute authelia-private -o go-template --template "{{ (index .spec.hostnames 0)}}")/.well-known/openid-configuration
+curl https://$(kl -n auth-authelia get httproute authelia-private -o go-template --template "{{ (index .spec.hostnames 0)}}")/.well-known/openid-configuration | jq
 
 ```
