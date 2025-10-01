@@ -13,6 +13,7 @@ kl label ns echo pod-security.kubernetes.io/enforce=baseline
 kl apply -k ./test/echo/
 kl -n echo get pod -o wide
 
+kl apply -k ./test/echo/httproute-private/
 kl apply -k ./test/echo/httproute-public/
 # don't forget to add https://echo-protected-url/oauth2/callback to the list of allowed redirect URIs
 kl apply -k ./test/echo/httproute-protected/

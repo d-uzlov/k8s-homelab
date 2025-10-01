@@ -15,9 +15,6 @@ kl apply -k ./ingress/gateway-api/protected/
 kl -n gateways get gateway main-protected
 kl -n gateways describe gateway main-protected
 
-# kl -n gateways describe httproute http-redirect-public
-# kl -n gateways describe tlsroute protected-tls-redirect
-
 kl -n gateways get gateway
 
 ```

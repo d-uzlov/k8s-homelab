@@ -103,7 +103,7 @@ kl -n victoria-metrics logs sts/vlogs-server-0
 
 # TODO add a separate domain for queries?
 kl apply -k ./metrics/victoria-metrics/victoria-logs/httproute-private/
-kl apply -k ./metrics/victoria-metrics/victoria-logs/httproute-authentik/
+kl apply -k ./metrics/victoria-metrics/victoria-logs/httproute-protected/
 kl -n victoria-metrics get htr
 
 kl apply -k ./metrics/victoria-metrics/vector/

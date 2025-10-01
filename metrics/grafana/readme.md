@@ -95,9 +95,7 @@ kl -n grafana get pod -o wide
 
 kl apply -k ./metrics/grafana/httproute-private/
 kl apply -k ./metrics/grafana/httproute-public/
-kl -n grafana get httproute
-kl -n grafana describe httproute grafana-private
-kl -n grafana describe httproute grafana-public
+kl -n grafana get htr
 
 kl label ns --overwrite grafana copy-wild-cert=main
 kl apply -k ./metrics/kube-prometheus-stack/grafana-ingress-wildcard/
