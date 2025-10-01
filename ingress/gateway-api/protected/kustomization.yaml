@@ -5,14 +5,12 @@ kind: Kustomization
 namespace: gateways
 
 resources:
-- ./public-gateway.yaml
-- ./public-redirect.yaml
+# - ./public-gateway.yaml
+- ./protected-gateway.yaml
 - ../../../ingress/manual-certificates/domain-info/
-# - ./protected-gateway.yaml
-- ./protected-tls-redirect.yaml
 
 configMapGenerator:
-- name: main-public-gateway-class-info
+- name: main-protected-gateway-class-info
   envs:
   - ./env/gateway-class.env
   options:
@@ -22,37 +20,24 @@ configMapGenerator:
 replacements:
 - source:
     kind: ConfigMap
-    name: main-public-gateway-class-info
+    name: main-protected-gateway-class-info
     fieldPath: data.gateway_class
   targets:
   - select:
       kind: Gateway
-      name: main-public
+      name: main-protected
     fieldPaths:
     - spec.gatewayClassName
 - source:
     kind: ConfigMap
-    name: main-domain-info
+    name: domain-info-public-protected
     fieldPath: data.secret_name
   targets:
   - select:
       kind: Gateway
-      name: main-public
+      name: main-protected
     fieldPaths:
-    - spec.listeners.2.tls.certificateRefs.0.name
-- source:
-    kind: ConfigMap
-    name: main-domain-info
-    fieldPath: data.domain_suffix
-  targets:
-  - select:
-      kind: Gateway
-      name: main-public
-    options:
-      delimiter: .
-      index: 1
-    fieldPaths:
-    - spec.listeners.2.hostname
+    - spec.listeners.1.tls.certificateRefs.0.name
 - source:
     kind: ConfigMap
     name: domain-info-public-protected
@@ -60,7 +45,7 @@ replacements:
   targets:
   - select:
       kind: Gateway
-      name: main-public
+      name: main-protected
     options:
       delimiter: .
       index: 1

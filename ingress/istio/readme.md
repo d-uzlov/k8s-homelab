@@ -20,6 +20,7 @@ helm search repo istio/base --versions --devel | head
 ```bash
 
 helm show values istio/base --version 1.27.1 > ./ingress/istio/base/default-values.yaml
+
 helm template \
   --include-crds \
   istio-base \
@@ -31,6 +32,7 @@ helm template \
   > ./ingress/istio/base/istio-base.gen.yaml
 
 helm show values istio/istiod --version 1.27.1 > ./ingress/istio/istiod/default-values.yaml
+
 helm template \
   --include-crds \
   istio-istiod \
@@ -70,9 +72,7 @@ extensionProviders:
 $(cat ./ingress/istio/mesh-config/env/extension-*.yaml)
 EOF
 
-mkdir -p ./ingress/istio/istiod/env/ &&
-kl kustomize ./ingress/istio/mesh-config/ > ./ingress/istio/istiod/env/mesh-config.yaml &&
-kl apply -k ./ingress/istio/istiod/
+mkdir -p ./ingress/istio/istiod/env/ && kl kustomize ./ingress/istio/mesh-config/ > ./ingress/istio/istiod/env/mesh-config.yaml && kl apply -k ./ingress/istio/istiod/
 
 kl -n istio get pod -o wide
 # check if istio created its gateway class
