@@ -36,7 +36,6 @@ Generate passwords and set up config.
 mkdir -p ./cloud/nextcloud/main-app/env/
 
  cat << EOF > ./cloud/nextcloud/main-app/env/passwords.env
-redis_password=$(LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 20)
 admin_name=admin
 admin_password=$(LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 20)
 EOF
@@ -45,6 +44,16 @@ EOF
 # k8s pod CIDR
 trusted_proxies=10.201.0.0/16
 EOF
+
+mkdir -p ./cloud/nextcloud/dragonfly/env/
+
+ cat << EOF > ./cloud/nextcloud/dragonfly/env/password.env
+password=$(LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 32)
+EOF
+
+kl get sc
+storage_class=
+sed "s/storageClassName: REPLACE_ME/storageClassName: $storage_class/" ./cloud/nextcloud/dragonfly/dragonfly-nextcloud.template.yaml > ./cloud/nextcloud/dragonfly/env/dragonfly-nextcloud.yaml
 
 ```
 
@@ -58,6 +67,12 @@ Prerequisites:
 
 kl create ns nextcloud
 kl label ns nextcloud pod-security.kubernetes.io/enforce=baseline
+
+kl apply -k ./cloud/nextcloud/dragonfly/
+kl -n nextcloud get dragonfly
+kl -n nextcloud get pod -o wide -L role
+kl -n nextcloud get pvc
+kl -n nextcloud get svc
 
 # ingress with wildcard certificate
 kl label ns --overwrite nextcloud copy-wild-cert=main
