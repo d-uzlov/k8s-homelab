@@ -53,6 +53,8 @@ client_id=
 client_secret=6583367cc16b0f7d3fb8d9671048f53ad1eaee4c
 
 # test that connection parameters are correct
+# if your auth provider supports device code grant, it's more convenient to use it
+kl oidc-login setup --oidc-issuer-url $issuer_url --oidc-client-id $client_id --oidc-extra-scope offline_access --skip-open-browser
 kl oidc-login setup --oidc-issuer-url $issuer_url --oidc-client-id $client_id --oidc-extra-scope offline_access --skip-open-browser --grant-type device-code
 # in case your provider uses setup for confidential client, add client secret param
 kl oidc-login setup --oidc-issuer-url $issuer_url --oidc-client-id $client_id --oidc-extra-scope offline_access --skip-open-browser --grant-type device-code --oidc-client-secret $client_secret
@@ -109,52 +111,5 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 cargo install jwt-cli
 
 jq .id_token -r ~/.kube/cache/oidc-login/2a873c56504aaa8ba00a4f6dfcc252dde71566fc68a648175bd71b685b5949d4 | jwt decode -
-
-```
-
-# Test requesting token manually
-
-```bash
-
-# =========== public clients (without client secret) ===========
-
-issuer_url=https://auth.example.com/token/
-client_id=
-
-discovery_info=$(curl -sS $issuer_url/.well-known/openid-configuration)
-device_endpoint=$(echo $discovery_info | jq .device_authorization_endpoint -r)
-token_endpoint=$(echo $discovery_info | jq .token_endpoint -r)
-
-# request device node token
-request_info=$(curl -sS --data-urlencode client_id=$client_id --data-urlencode "scope=offline_access openid" -X POST $device_endpoint)
-# some applications provide verification_uri_complete, some require user to manually type user_code at verification_uri page, and some provide the complete value in verification_uri
-echo $request_info | jq
-# open the supplied link and confirm the access
-# after access is granted, obtain access token and refresh token
-device_code=$(echo $request_info | jq .device_code -r)
-token=$(curl -sS --data-urlencode client_id=${client_id} --data-urlencode client_secret=$client_secret --data-urlencode grant_type=urn:ietf:params:oauth:grant-type:device_code --data-urlencode device_code=$device_code -X POST $token_endpoint)
-echo $token | jq
-# extract refresh token
-refresh_token=$(echo $token | jq .refresh_token -r)
-# try to refresh access token
-curl -sS --data-urlencode client_id=$client_id --data-urlencode grant_type=refresh_token --data-urlencode refresh_token=$refresh_token --data-urlencode "scope=offline_access openid" -X POST $token_endpoint | jq
-
-# =========== confidential clients (using client secret) ===========
-
-issuer_url=https://auth.example.com/token/
-client_id=
-client_secret=
-
-discovery_info=$(curl -sS $issuer_url/.well-known/openid-configuration)
-device_endpoint=$(echo $discovery_info | jq .device_authorization_endpoint -r)
-token_endpoint=$(echo $discovery_info | jq .token_endpoint -r)
-
-request_info=$(curl -sS -u "$client_id:$client_secret" --data-urlencode "scope=offline_access openid" -X POST $device_endpoint)
-echo $request_info | jq
-device_code=$(echo $request_info | jq .device_code -r)
-token=$(curl -sS -u "$client_id:$client_secret" --data-urlencode grant_type=urn:ietf:params:oauth:grant-type:device_code --data-urlencode device_code=$device_code -X POST $token_endpoint)
-echo $token | jq
-refresh_token=$(echo $token | jq .refresh_token -r)
-curl -sS -u "$client_id:$client_secret" --data-urlencode grant_type=refresh_token --data-urlencode refresh_token=$refresh_token --data-urlencode "scope=offline_access openid" -X POST $token_endpoint | jq
 
 ```

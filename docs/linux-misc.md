@@ -19,6 +19,20 @@ sudo visudo
 
 ```
 
+# set cpu governor
+
+```bash
+
+# check current value
+cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+
+# set value now
+echo powersave | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+
+
+
+```
+
 # Power state statistics
 
 cX is core states.

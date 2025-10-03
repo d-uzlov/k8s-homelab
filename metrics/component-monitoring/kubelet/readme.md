@@ -50,6 +50,9 @@ curl -sS --insecure -H "Authorization: Bearer $bearer" https://$nodeIp:10250/met
 # liveness/readiness probe statistics
 curl -sS --insecure -H "Authorization: Bearer $bearer" https://$nodeIp:10250/metrics/probes > ./kubelet-probes.log
 
+node_name=
+kl get --raw "/api/v1/nodes/$node_name/proxy/stats/summary" > ./kubelet-summary.log
+
 # watch for some metric
 while true; do
 curl -k -H "Authorization: Bearer $bearer" https://$nodeIp:10250/metrics/cadvisor | grep immich-postgresql-0 | grep container_fs_writes_bytes_total | grep container=\"postgresql\" | sed "s/^/$(date +%H-%M-%S) /" >> ./cadvisor.log

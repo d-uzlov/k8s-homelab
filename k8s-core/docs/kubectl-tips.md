@@ -89,8 +89,9 @@ kl get pod -A --field-selector spec.nodeName=n100.k8s.lan
 
 ```bash
 # set to your value
-namespace=cilium
-kl api-resources --verbs=list --namespaced -o name | xargs -n 1 $(alias kl | sed "s/.*'\(.*\)'.*/\1/g") get --show-kind --ignore-not-found -n $namespace
+namespace=
+kubeconfig=
+kl api-resources --verbs=list --namespaced -o name | xargs -n 1 kubecolor --kubeconfig "$kubeconfig" get --show-kind --ignore-not-found -n $namespace
 ```
 
 # Delete failed pods
