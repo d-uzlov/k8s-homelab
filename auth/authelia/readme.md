@@ -54,7 +54,10 @@ password=
 EOF
 
  cat << EOF > ./auth/authelia/env/domain.env
+# domain is used for browser cookies
 domain=authelia.example.com
+# name is used for TOTP default name
+name=example dot com
 EOF
 
 mkdir -p ./auth/authelia/dragonfly/env/
@@ -68,6 +71,7 @@ storage_class=
 sed "s/storageClassName: REPLACE_ME/storageClassName: $storage_class/" ./auth/authelia/dragonfly/dragonfly-authelia.template.yaml > ./auth/authelia/dragonfly/env/dragonfly-authelia.yaml
 
 touch ./auth/authelia/config/env/10_oidc_clients.yaml
+touch ./auth/authelia/config/env/03_ldap_attributes.yaml
 [ -f ./auth/authelia/config/env/01_notifications.yaml ] || cp ./auth/authelia/config/01_notifications-filesystem.yaml ./auth/authelia/config/env/01_notifications.yaml
 
 ```
@@ -85,18 +89,20 @@ kl create ns auth-authelia
 kl label ns auth-authelia pod-security.kubernetes.io/enforce=baseline
 
 kl apply -k ./auth/authelia/dragonfly/
-kl -n casdoor get dragonfly
+kl -n auth-authelia get dragonfly
 kl -n auth-authelia get pod -o wide -L role
 kl -n auth-authelia get pvc
 kl -n auth-authelia get svc
 
 kl apply -k ./auth/authelia/httproute-private/
+kl apply -k ./auth/authelia/httproute-public/
 kl -n auth-authelia get htr
 
 kl apply -k ./auth/authelia/
 kl -n auth-authelia get pod -o wide
+
 kl -n auth-authelia logs deployments/authelia --tail 30
-kl -n auth-authelia logs deployments/authelia > ./authelia.log
+kl -n auth-authelia logs deployments/authelia --follow > ./authelia.log
 
 ```
 
@@ -125,16 +131,13 @@ kl delete ns authelia
 ```bash
 
 # generate new client secret
-secret=$(openssl rand -hex 20)
-echo $secret
-docker run --rm ghcr.io/authelia/authelia:4.39.6 authelia crypto hash generate pbkdf2 --variant sha512 --password $secret --random.charset rfc3986
-docker run --rm ghcr.io/authelia/authelia:4.39.6 authelia crypto hash generate pbkdf2 --help
+docker run --rm ghcr.io/authelia/authelia:4.39.6 authelia crypto hash generate pbkdf2 --variant sha512 --random --random.charset rfc3986
 
 # authelia has single issuer URL for all projects/apps
 # issuer URL
-echo https://$(kl -n auth-authelia get httproute authelia-private -o go-template --template "{{ (index .spec.hostnames 0)}}")
+echo https://$(kl -n auth-authelia get httproute authelia-public -o go-template --template "{{ (index .spec.hostnames 0)}}")
 # discovery URL
-echo https://$(kl -n auth-authelia get httproute authelia-private -o go-template --template "{{ (index .spec.hostnames 0)}}")/.well-known/openid-configuration
-curl https://$(kl -n auth-authelia get httproute authelia-private -o go-template --template "{{ (index .spec.hostnames 0)}}")/.well-known/openid-configuration | jq
+echo https://$(kl -n auth-authelia get httproute authelia-public -o go-template --template "{{ (index .spec.hostnames 0)}}")/.well-known/openid-configuration
+curl https://$(kl -n auth-authelia get httproute authelia-public -o go-template --template "{{ (index .spec.hostnames 0)}}")/.well-known/openid-configuration | jq
 
 ```
