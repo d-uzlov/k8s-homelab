@@ -24,7 +24,7 @@
           "type": "prometheus",
           "uid": "${prometheus_datasource}"
         },
-        "enable": true,
+        "enable": false,
         "hide": false,
         "iconColor": "red",
         "name": "Node reboot",
@@ -41,7 +41,7 @@
           "type": "prometheus",
           "uid": "${prometheus_datasource}"
         },
-        "enable": true,
+        "enable": false,
         "hide": false,
         "iconColor": "super-light-red",
         "name": "Node info missing",
@@ -57,7 +57,7 @@
           "type": "prometheus",
           "uid": "${prometheus_datasource}"
         },
-        "enable": true,
+        "enable": false,
         "hide": false,
         "iconColor": "orange",
         "name": "Container restart",
@@ -72,7 +72,7 @@
           "type": "prometheus",
           "uid": "${prometheus_datasource}"
         },
-        "enable": true,
+        "enable": false,
         "hide": false,
         "iconColor": "purple",
         "name": "Manifest change",
@@ -1066,7 +1066,7 @@
         "y": 21
       },
       "id": 46,
-      "maxDataPoints": 500,
+      "maxDataPoints": 250,
       "options": {
         "alignValue": "left",
         "legend": {
@@ -1386,7 +1386,7 @@
         "y": 32
       },
       "id": 53,
-      "maxDataPoints": 500,
+      "maxDataPoints": 250,
       "options": {
         "alignValue": "left",
         "legend": {
@@ -1970,17 +1970,17 @@
         "y": 60
       },
       "id": 33,
-      "maxDataPoints": 500,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "asTable": true,
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
-          "sortBy": "Last *",
+          "sortBy": "Mean",
           "sortDesc": true
         },
         "tooltip": {
@@ -1996,7 +1996,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(pod) (\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(pod, container) (\r\n    max_over_time(kube_pod_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval])\r\n    or\r\n    (\r\n      avg_over_time(kube_pod_init_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval])\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]) == 1)\r\n    )\r\n  )\r\n)",
+          "expr": "sum by(pod) (\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(pod, container) (\r\n    sum_over_time(kube_pod_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval])\r\n    / on(job) group_left()\r\n    count_over_time(up{job=\"kube-state-metrics\", location=\"$location\"}[$__interval])\r\n    # avg_over_time(kube_pod_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n    or\r\n    (\r\n      sum_over_time(kube_pod_init_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval])\r\n      / on(job) group_left()\r\n      count_over_time(up{job=\"kube-state-metrics\", location=\"$location\"}[$__interval])\r\n      # avg_over_time(kube_pod_init_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]) == 1)\r\n    )\r\n  )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -2009,7 +2009,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(pod, container) (\r\n    max_over_time(kube_pod_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval])\r\n    or\r\n    (\r\n      avg_over_time(kube_pod_init_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval])\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]) == 1)\r\n    )\r\n  )\r\n)",
+          "expr": "sum(\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(pod, container) (\r\n    sum_over_time(kube_pod_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval])\r\n    / on(job) group_left()\r\n    count_over_time(up{job=\"kube-state-metrics\", location=\"$location\"}[$__interval])\r\n    # avg_over_time(kube_pod_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n    or\r\n    (\r\n      sum_over_time(kube_pod_init_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval])\r\n      / on(job) group_left()\r\n      count_over_time(up{job=\"kube-state-metrics\", location=\"$location\"}[$__interval])\r\n      # avg_over_time(kube_pod_init_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]) == 1)\r\n    )\r\n  )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "Total",
@@ -2134,12 +2134,12 @@
         "y": 60
       },
       "id": 55,
-      "maxDataPoints": 500,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "asTable": true,
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "displayMode": "table",
           "placement": "right",
@@ -2160,7 +2160,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(pod) (\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(pod, container) (\r\n    max_over_time(kube_pod_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval])\r\n    or\r\n    (\r\n      avg_over_time(kube_pod_init_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval])\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]) == 1)\r\n    )\r\n  )\r\n)",
+          "expr": "sum by(pod) (\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(pod, container) (\r\n    sum_over_time(kube_pod_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval])\r\n    / on(job) group_left()\r\n    count_over_time(up{job=\"kube-state-metrics\", location=\"$location\"}[$__interval])\r\n    # avg_over_time(kube_pod_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n    or\r\n    (\r\n      sum_over_time(kube_pod_init_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval])\r\n      / on(job) group_left()\r\n      count_over_time(up{job=\"kube-state-metrics\", location=\"$location\"}[$__interval])\r\n      # avg_over_time(kube_pod_init_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]) == 1)\r\n    )\r\n  )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -2173,7 +2173,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(pod, container) (\r\n    max_over_time(kube_pod_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval])\r\n    or\r\n    (\r\n      avg_over_time(kube_pod_init_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval])\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]) == 1)\r\n    )\r\n  )\r\n)",
+          "expr": "sum(\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(pod, container) (\r\n    sum_over_time(kube_pod_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval])\r\n    / on(job) group_left()\r\n    count_over_time(up{job=\"kube-state-metrics\", location=\"$location\"}[$__interval])\r\n    # avg_over_time(kube_pod_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n    or\r\n    (\r\n      sum_over_time(kube_pod_init_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"cpu\"}[$__interval])\r\n      / on(job) group_left()\r\n      count_over_time(up{job=\"kube-state-metrics\", location=\"$location\"}[$__interval])\r\n      # avg_over_time(kube_pod_init_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]) == 1)\r\n    )\r\n  )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "Total",
@@ -2765,17 +2765,17 @@
         "y": 82
       },
       "id": 54,
-      "maxDataPoints": 500,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "asTable": true,
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
-          "sortBy": "Last *",
+          "sortBy": "Mean",
           "sortDesc": true
         },
         "tooltip": {
@@ -2791,7 +2791,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(pod) (\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(pod, container) (\r\n    avg_over_time(kube_pod_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n    or\r\n    (\r\n      avg_over_time(kube_pod_init_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]) == 1)\r\n    )\r\n  )\r\n)",
+          "expr": "sum by(pod) (\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(pod, container) (\r\n    sum_over_time(kube_pod_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n    / on(job) group_left()\r\n    count_over_time(up{job=\"kube-state-metrics\", location=\"$location\"}[$__interval])\r\n    # avg_over_time(kube_pod_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n    or\r\n    (\r\n      sum_over_time(kube_pod_init_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n      / on(job) group_left()\r\n      count_over_time(up{job=\"kube-state-metrics\", location=\"$location\"}[$__interval])\r\n      # avg_over_time(kube_pod_init_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]) == 1)\r\n    )\r\n  )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -2804,7 +2804,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(pod, container) (\r\n    avg_over_time(kube_pod_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n    or\r\n    (\r\n      avg_over_time(kube_pod_init_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]) == 1)\r\n    )\r\n  )\r\n)",
+          "expr": "sum(\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(pod, container) (\r\n    sum_over_time(kube_pod_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\", invalid=$total}[$__interval])\r\n    / on(job) group_left()\r\n    count_over_time(up{job=\"kube-state-metrics\", location=\"$location\", invalid=$total}[$__interval])\r\n    # avg_over_time(kube_pod_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n    or\r\n    (\r\n      sum_over_time(kube_pod_init_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\", invalid=$total}[$__interval])\r\n      / on(job) group_left()\r\n      count_over_time(up{job=\"kube-state-metrics\", location=\"$location\", invalid=$total}[$__interval])\r\n      # avg_over_time(kube_pod_init_container_resource_requests{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]) == 1)\r\n    )\r\n  )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "Total",
@@ -2928,18 +2928,18 @@
         "x": 12,
         "y": 82
       },
-      "id": 32,
-      "maxDataPoints": 500,
+      "id": 65,
+      "maxDataPoints": 150,
       "options": {
         "legend": {
           "asTable": true,
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
-          "sortBy": "Last *",
+          "sortBy": "Mean",
           "sortDesc": true
         },
         "tooltip": {
@@ -2955,7 +2955,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(pod) (\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(pod, container) (\r\n    max_over_time(kube_pod_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n    or\r\n    (\r\n      avg_over_time(kube_pod_init_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]) == 1)\r\n    )\r\n  )\r\n)",
+          "expr": "sum by(pod) (\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(pod, container) (\r\n    sum_over_time(kube_pod_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n    / on(job) group_left()\r\n    count_over_time(up{job=\"kube-state-metrics\", location=\"$location\"}[$__interval])\r\n    # avg_over_time(kube_pod_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n    or\r\n    (\r\n      sum_over_time(kube_pod_init_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n      / on(job) group_left()\r\n      count_over_time(up{job=\"kube-state-metrics\", location=\"$location\"}[$__interval])\r\n      # avg_over_time(kube_pod_init_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]) == 1)\r\n    )\r\n  )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -2968,7 +2968,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(pod, container) (\r\n    max_over_time(kube_pod_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n    or\r\n    (\r\n      avg_over_time(kube_pod_init_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]) == 1)\r\n    )\r\n  )\r\n)",
+          "expr": "sum(\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(pod, container) (\r\n    sum_over_time(kube_pod_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\", invalid=$total}[$__interval])\r\n    / on(job) group_left()\r\n    count_over_time(up{job=\"kube-state-metrics\", location=\"$location\", invalid=$total}[$__interval])\r\n    # avg_over_time(kube_pod_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n    or\r\n    (\r\n      sum_over_time(kube_pod_init_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\", invalid=$total}[$__interval])\r\n      / on(job) group_left()\r\n      count_over_time(up{job=\"kube-state-metrics\", location=\"$location\", invalid=$total}[$__interval])\r\n      # avg_over_time(kube_pod_init_container_resource_limits{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\", resource=\"memory\"}[$__interval])\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_status_running{location=\"$location\", namespace=\"$namespace\", pod=~\"$pod\", uid=~\"$pod_uid\"}[$__interval]) == 1)\r\n    )\r\n  )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "Total",
@@ -6047,5 +6047,5 @@
   "timezone": "browser",
   "title": "Namespace / Pods",
   "uid": "vsl6ot4yad5hedtly8ey",
-  "version": 3
+  "version": 12
 }

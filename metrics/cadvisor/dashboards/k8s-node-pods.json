@@ -916,7 +916,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "capacity"
+              "options": "allocatable"
             },
             "properties": [
               {
@@ -991,7 +991,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "(\r\n  node_memory_MemTotal_bytes{location=\"$location\", node=\"$node\",}\r\n-\r\n  node_memory_MemFree_bytes{location=\"$location\", node=\"$node\",}\r\n-\r\n  node_memory_Buffers_bytes{location=\"$location\", node=\"$node\",}\r\n-\r\n  node_memory_Cached_bytes{location=\"$location\", node=\"$node\",}\r\n)\r\n",
+          "expr": "+ node_memory_MemTotal_bytes{location=\"$location\", node=\"$node\"}\r\n- node_memory_MemFree_bytes{location=\"$location\", node=\"$node\"}\r\n- node_memory_Buffers_bytes{location=\"$location\", node=\"$node\"}\r\n- node_memory_Cached_bytes{location=\"$location\", node=\"$node\"}",
           "hide": false,
           "instant": false,
           "legendFormat": "node RSS",
@@ -1004,7 +1004,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "(\r\n  node_memory_MemTotal_bytes{location=\"$location\", node=\"$node\",}\r\n-\r\n  node_memory_MemFree_bytes{location=\"$location\", node=\"$node\",}\r\n)\r\n",
+          "expr": "+ node_memory_MemTotal_bytes{location=\"$location\", node=\"$node\",}\r\n- node_memory_MemFree_bytes{location=\"$location\", node=\"$node\",}",
           "hide": false,
           "instant": false,
           "legendFormat": "node RAW",
@@ -1043,7 +1043,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(max by(pod, container) (avg_over_time(kube_pod_container_resource_requests{location=\"$location\", node=\"$node\", namespace=~\"$namespace\", resource=\"memory\"}[$__interval])))",
+          "expr": "sum(\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(namespace, pod, container) (\r\n    sum_over_time(kube_pod_container_resource_requests{location=\"$location\", node=\"$node\", namespace=~\"$namespace\", resource=\"memory\"}[$__interval])\r\n    / on(job) group_left()\r\n    count_over_time(up{job=\"kube-state-metrics\", location=\"$location\"}[$__interval])\r\n    or\r\n    (\r\n      sum_over_time(kube_pod_init_container_resource_requests{location=\"$location\", node=\"$node\", namespace=~\"$namespace\", resource=\"memory\"}[$__interval])\r\n      / on(job) group_left()\r\n      count_over_time(up{job=\"kube-state-metrics\", location=\"$location\"}[$__interval])\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_info{location=\"$location\", namespace=~\"$namespace\", restart_policy=\"Always\"}[$__interval]))\r\n      and on(location, namespace, pod, uid)\r\n      (max_over_time(kube_pod_info{location=\"$location\", node=\"$node\", namespace=~\"$namespace\"}[$__interval]))\r\n    )\r\n  )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "pod requests",
@@ -1056,7 +1056,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(max by(pod, container) (avg_over_time(kube_pod_container_resource_limits{location=\"$location\", node=\"$node\", namespace=~\"$namespace\", resource=\"memory\", invalid=$capacity}[$__interval])))",
+          "expr": "sum(\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(namespace, pod, container) (\r\n    sum_over_time(kube_pod_container_resource_limits{location=\"$location\", node=\"$node\", namespace=~\"$namespace\", resource=\"memory\"}[$__interval])\r\n    / on(job) group_left()\r\n    count_over_time(up{job=\"kube-state-metrics\", location=\"$location\"}[$__interval])\r\n    or\r\n    (\r\n      sum_over_time(kube_pod_init_container_resource_limits{location=\"$location\", node=\"$node\", namespace=~\"$namespace\", resource=\"memory\"}[$__interval])\r\n      / on(job) group_left()\r\n      count_over_time(up{job=\"kube-state-metrics\", location=\"$location\"}[$__interval])\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_info{location=\"$location\", namespace=~\"$namespace\", restart_policy=\"Always\"}[$__interval]))\r\n      and on(location, namespace, pod, uid)\r\n      (max_over_time(kube_pod_info{location=\"$location\", node=\"$node\", namespace=~\"$namespace\"}[$__interval]))\r\n    )\r\n  )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "pod limits",
@@ -1069,9 +1069,9 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "avg(avg_over_time(kube_node_status_capacity{location=\"$location\", node=~\"$node\", resource=\"memory\", invalid=$capacity}[$__interval]))",
+          "expr": "avg(avg_over_time(kube_node_status_allocatable{location=\"$location\", node=~\"$node\", resource=\"memory\", invalid=$capacity}[$__interval]))",
           "instant": false,
-          "legendFormat": "capacity",
+          "legendFormat": "allocatable",
           "range": true,
           "refId": "capacity"
         }
@@ -1285,7 +1285,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(namespace, pod) (\r\n  # max by(namespace, pod, container) helps to avoid artifacts when pod is restarted and max_over_time fetches both old and new pod info\r\n  max by(namespace, pod, container) (max_over_time(kube_pod_container_resource_requests{location=\"$location\", node=\"$node\", namespace=~\"$namespace\", resource=\"memory\"}[$__interval]))\r\n)",
+          "expr": "sum by(namespace, pod) (\r\n  # max by(pod, container) eliminates artifacts when pod UID changes\r\n  max by(namespace, pod, container) (\r\n    sum_over_time(kube_pod_container_resource_requests{location=\"$location\", node=\"$node\", namespace=~\"$namespace\", resource=\"memory\"}[$__interval])\r\n    / on(job) group_left()\r\n    count_over_time(up{job=\"kube-state-metrics\", location=\"$location\"}[$__interval])\r\n    or\r\n    (\r\n      sum_over_time(kube_pod_init_container_resource_requests{location=\"$location\", node=\"$node\", namespace=~\"$namespace\", resource=\"memory\"}[$__interval])\r\n      / on(job) group_left()\r\n      count_over_time(up{job=\"kube-state-metrics\", location=\"$location\"}[$__interval])\r\n      and on(location, namespace, pod, uid, container)\r\n      (max_over_time(kube_pod_init_container_info{location=\"$location\", namespace=~\"$namespace\", restart_policy=\"Always\"}[$__interval]))\r\n      and on(location, namespace, pod, uid)\r\n      (max_over_time(kube_pod_info{location=\"$location\", node=\"$node\", namespace=~\"$namespace\"}[$__interval]))\r\n    )\r\n  )\r\n)",
           "hide": false,
           "instant": false,
           "legendFormat": "{{namespace}}/{{pod}}",
@@ -2059,6 +2059,23 @@
         ],
         "query": "Show : \"\", Hide : \"invalid123\"",
         "type": "custom"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prometheus_datasource}"
+        },
+        "definition": "query_result(group by(pod) (last_over_time(kube_pod_info{location=\"$location\", namespace=~\"$namespace\"}[$__range])))",
+        "name": "pod",
+        "options": [],
+        "query": {
+          "qryType": 3,
+          "query": "query_result(group by(pod) (last_over_time(kube_pod_info{location=\"$location\", namespace=~\"$namespace\"}[$__range])))",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "/pod=\"(?<text>[^\"]+)|pod=\"(?<value>[^\"]+)/g",
+        "type": "query"
       }
     ]
   },
@@ -2070,5 +2087,5 @@
   "timezone": "browser",
   "title": "Node / Pods",
   "uid": "9ays84j4ksi5cwo0n786",
-  "version": 8
+  "version": 2
 }

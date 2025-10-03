@@ -51,15 +51,36 @@ spec:
         description: >-
           instance {{ $labels.instance }}: {{ $labels.id }}:
           {{ $value | humanizePercentage }}
-        summary: Cgroup is throttling on > 30% of scheduling periods
+        summary: Cgroup is throttling on > 80% of scheduling periods
       expr: |-
         (
           increase(container_cpu_cfs_throttled_periods_total{namespace="", name=""}[5m])
           /
           increase(container_cpu_cfs_periods_total{namespace="", name=""}[5m])
-        ) > 0.3
+        ) > 0.8
         # cut removed containers instantly
         and container_cpu_cfs_throttled_periods_total{namespace="", name=""}
+      for: 15m
+      labels:
+        severity: info
+    - alert: CgroupCpuThrottlingDuration
+      annotations:
+        description: >-
+          instance {{ $labels.instance }}: {{ $labels.id }}:
+          {{ $value | humanizeDuration }}
+        summary: Cgroup spent >30s throttling over the last 5 minutes
+      expr: |-
+        (
+          increase(container_cpu_cfs_throttled_seconds_total{namespace="", name=""}[5m]) > 30
+          # cut removed containers instantly
+          and container_cpu_cfs_throttled_periods_total{namespace="", name=""}
+        ) or (
+          increase(container_cpu_cfs_throttled_seconds_total{namespace="", name=""}[5m]) > 10
+          # cut removed containers instantly
+          and container_cpu_cfs_throttled_periods_total{namespace="", name=""}
+          and ignoring(alertname, alertstate, severity)
+          ALERTS{alertname="CgroupCpuThrottlingDuration", alertstate="firing"}
+        )
       for: 15m
       labels:
         severity: info
