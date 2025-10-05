@@ -6,9 +6,14 @@ But you can also update disk info without reboot:
 
 ```bash
 
+lsblk | grep " /$"
+
 sudo growpart /dev/sda 1
 
 sudo resize2fs /dev/sda1
+
+# check the result
+df -h /
 
 ```
 
