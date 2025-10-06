@@ -72,6 +72,21 @@ Hot unplug can still work randomly without any additional configuration,
 but only if you are lucky and required VM memory is empty.
 You can't rely on it.
 
+Older kernels usually set `CONFIG_MEMORY_HOTPLUG_DEFAULT_ONLINE=y`.
+New kernels have a set of parameters, with default being `CONFIG_MHP_DEFAULT_ONLINE_TYPE_OFFLINE=y`.
+This means that `/sys/devices/system/memory/auto_online_blocks` will be `offline` by default,
+and kernel will not enable hot-plugged memory automatically.
+You will need to add `memhp_default_state=online` to kernel parameters:
+
+```bash
+
+# edit GRUB_CMDLINE_LINUX_DEFAULT
+sudo nano /etc/default/grub
+sudo update-grub
+sudo reboot
+
+```
+
 References:
 - https://lore.proxmox.com/pve-user/4567346d-2a49-4989-9080-21a632113df3%40mattcorallo.com/T/
 - https://docs.kernel.org/admin-guide/mm/memory-hotplug.html

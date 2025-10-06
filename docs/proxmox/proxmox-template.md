@@ -41,10 +41,10 @@ Check Debian cloud image archive for new versions:
 
 # this is just an arbitrary version at the time of writing this
 # this is periodically updated
-version=20250911-2232
+version=20250924-2245
 wget https://cloud.debian.org/images/cloud/trixie/$version/debian-13-generic-amd64-$version.tar.xz
 
-# tar will produce disk.raw in the current directory
+# tar will produce disk.raw in ./debian-13-generic-amd64-$version
 rm -rf ./debian-13-generic-amd64-$version
 mkdir -p ./debian-13-generic-amd64-$version
 tar --verbose --extract --directory ./debian-13-generic-amd64-$version --file debian-13-generic-amd64-$version.tar.xz

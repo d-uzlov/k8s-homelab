@@ -8,6 +8,8 @@ But you can also update disk info without reboot:
 
 lsblk | grep " /$"
 
+# sda1 is the default for standard debian cloud image
+
 sudo growpart /dev/sda 1
 
 sudo resize2fs /dev/sda1
