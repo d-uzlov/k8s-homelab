@@ -20,7 +20,7 @@ containerd_url=https://github.com/containerd/containerd/releases/download/v$cont
 
 wget $containerd_url -O ./k8s-core/docs/ansible/env/$containerd_archive
 mkdir -p ./k8s-core/docs/ansible/env/containerd-$containerd_version/
-tar Czxvf ./k8s-core/docs/ansible/env/containerd-$containerd_version/ ./k8s-core/docs/ansible/env/$containerd_archive
+tar --verbose --extract --directory ./k8s-core/docs/ansible/env/containerd-$containerd_version/ --file ./k8s-core/docs/ansible/env/$containerd_archive
 ./k8s-core/docs/ansible/env/containerd-$containerd_version/bin/containerd --version
 
 wget https://github.com/containerd/containerd/raw/refs/heads/main/containerd.service -O ./k8s-core/docs/ansible/containerd.service
@@ -28,7 +28,7 @@ wget https://github.com/containerd/containerd/raw/refs/heads/main/containerd.ser
 # Check new versions here:
 # https://github.com/opencontainers/runc/releases
 
-runc_version=1.3.1
+runc_version=1.3.2
 runc_file=runc-$runc_version.amd64
 
 wget https://github.com/opencontainers/runc/releases/download/v$runc_version/runc.amd64 -O ./k8s-core/docs/ansible/env/$runc_file
@@ -44,7 +44,7 @@ crictl_url=https://github.com/kubernetes-sigs/cri-tools/releases/download/$crict
 
 wget $crictl_url -O ./k8s-core/docs/ansible/env/$crictl_archive
 mkdir -p ./k8s-core/docs/ansible/env/crictl-$crictl_version/
-sudo tar zxvf ./k8s-core/docs/ansible/env/$crictl_archive -C ./k8s-core/docs/ansible/env/crictl-$crictl_version/
+tar --verbose --extract --directory ./k8s-core/docs/ansible/env/crictl-$crictl_version/ --file ./k8s-core/docs/ansible/env/$crictl_archive
 ./k8s-core/docs/ansible/env/crictl-$crictl_version/crictl --version
 
 # sudo crictl config --set runtime-endpoint=unix:///run/containerd/containerd.sock --set image-endpoint=unix:///run/containerd/containerd.sock
@@ -56,13 +56,28 @@ wget https://dl.k8s.io/$kubelet_version/bin/linux/amd64/kubelet -O ./k8s-core/do
 chmod +x ./k8s-core/docs/ansible/env/$kubelet_file
 ./k8s-core/docs/ansible/env/$kubelet_file --version
 
-kubeadm_version=v1.34.1
-kubeadm_file=kubeadm-$kubeadm_version.amd64
+# kubeadm_version=v1.34.1
+# kubeadm_file=kubeadm-$kubeadm_version.amd64
 
-wget https://dl.k8s.io/$kubeadm_version/bin/linux/amd64/kubeadm -O ./k8s-core/docs/ansible/env/$kubeadm_file
-chmod +x ./k8s-core/docs/ansible/env/$kubeadm_file
-./k8s-core/docs/ansible/env/$kubeadm_file version --output short
+# wget https://dl.k8s.io/$kubeadm_version/bin/linux/amd64/kubeadm -O ./k8s-core/docs/ansible/env/$kubeadm_file
+# chmod +x ./k8s-core/docs/ansible/env/$kubeadm_file
+# ./k8s-core/docs/ansible/env/$kubeadm_file version --output short
 
+```
+
+# ansible inventory
+
+You need to add your k8s nodes into ansible inventory,
+and set a few additional parameters.
+
+See example:
+
+```yaml
+worker-1:
+  ansible_host: worker-1.k8s.lan
+  ansible_python_interpreter: auto_silent
+  # [optional] name of the folder containing OCI proxy settings
+  oci_proxy_id: local-proxy
 ```
 
 # additional guides
@@ -76,6 +91,7 @@ chmod +x ./k8s-core/docs/ansible/env/$kubeadm_file
 
 ansible-inventory --graph kubelet
 
-ansible-playbook ./k8s-core/docs/ansible/k8s-node-dependencies-playbook.yaml
+ansible-playbook ./k8s-core/docs/ansible/node-dependencies-playbook.yaml
+ansible-playbook ./k8s-core/docs/ansible/node-dependencies-playbook.yaml --limit worker-1
 
 ```

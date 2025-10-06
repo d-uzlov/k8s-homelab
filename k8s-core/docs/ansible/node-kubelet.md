@@ -5,7 +5,7 @@
 
 # ansible inventory
 
-You need to add your control plane nodes into ansible inventory,
+You need to add your k8s nodes into ansible inventory,
 and set a few additional parameters.
 
 See example:
