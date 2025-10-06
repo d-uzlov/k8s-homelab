@@ -38,7 +38,7 @@ export DEB_BUILD_PROFILES='nodoc'
 
 debian/rules debian/control
 
-wget https://github.com/d-uzlov/k8s-cgroup-burst-operator/raw/refs/heads/main/cgroup-burst.patch -O ./debian/patches/features/all/cgroup-burst.patch
+curl -fsSL https://raw.githubusercontent.com/d-uzlov/k8s-homelab/refs/heads/master/docs/linux/kernel-6.12-burst-unlock.patch > ./debian/patches/features/all/cgroup-burst.patch
 echo features/all/cgroup-burst.patch >> debian/patches/series
 
 git clean -dfX ./debian

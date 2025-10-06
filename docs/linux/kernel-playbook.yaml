@@ -1,0 +1,71 @@
+---
+- name: install linux kernel on debian
+  hosts: modified_linux_kernel
+  pre_tasks:
+
+  tasks:
+
+  - name: check current kernel
+    ansible.builtin.shell: uname -r | grep "^{{ kernel_uname }}$"
+    register: uname_check
+    changed_when: false
+    failed_when: false
+
+  - name: set kernel_matching fact
+    ansible.builtin.set_fact:
+      kernel_matching: "{{ uname_check.rc == 0 }}"
+
+  # - name: end play when required kernel is already installed
+  #   ansible.builtin.meta: end_host
+  #   when: kernel_matching
+
+  - name: create ./kernel-packages-{{ kernel_version }}/
+    ansible.builtin.file:
+      path: ./kernel-packages-{{ kernel_version }}/
+      state: directory
+      mode: "0755"
+    when: not kernel_matching
+
+  - name: copy packages for {{ kernel_version }}
+    ansible.builtin.copy:
+      src: ./env/kernel-packages-{{ kernel_version }}/
+      dest: ./kernel-packages-{{ kernel_version }}/
+      mode: "0644"
+    when: not kernel_matching
+
+  - name: install dependencies
+    become: true
+    ansible.builtin.apt:
+      install_recommends: false
+      name: "{{ kernel_dependencies }}"
+    when: not kernel_matching
+
+  - name: install packages for {{ kernel_version }}
+    become: true
+    ansible.builtin.shell: dpkg -i ./kernel-packages-{{ kernel_version }}/*.deb
+    when: not kernel_matching
+    notify:
+    - reboot
+
+  - name: update grub commandline
+    become: true
+    ansible.builtin.lineinfile:
+      path: /etc/default/grub
+      regexp: '^GRUB_CMDLINE_LINUX_DEFAULT='
+      line: 'GRUB_CMDLINE_LINUX_DEFAULT="{{ kernel_grub_commandline }}"'
+      create: false
+      backup: true
+      state: present
+    notify:
+    - update-grub
+    - reboot
+
+  handlers:
+
+  - name: update-grub
+    become: true
+    ansible.builtin.command: update-grub
+
+  - name: reboot
+    become: true
+    ansible.builtin.reboot: {}
