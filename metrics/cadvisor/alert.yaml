@@ -98,33 +98,68 @@ spec:
   groups:
   - name: alert-cadvisor-memory
     rules:
-    - alert: ContainerRSSCloseToLimit
+    - alert: K8sContainerMemoryAbove90
       annotations:
         description: >-
           {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }}:
           {{ $value | humanizePercentage }}
-        summary: Container RSS is above 90% of memory limit
+        summary: Container RSS + kernel memory usage is above 90% of memory limit
       expr: |-
-        container_memory_rss / container_spec_memory_limit_bytes{} > 0.9
-        and
-        container_memory_working_set_bytes / container_spec_memory_limit_bytes{} > 0.97
-        and
-        container_spec_memory_limit_bytes != 0
+        (
+          (container_memory_usage_bytes{namespace!="", pod!="", container!=""} - container_memory_cache{namespace!="", pod!="", container!=""}) / container_spec_memory_limit_bytes{namespace!="", pod!="", container!=""} > 0.9
+          and
+          container_spec_memory_limit_bytes != 0
+        ) or (
+          (container_memory_usage_bytes{namespace!="", pod!="", container!=""} - container_memory_cache{namespace!="", pod!="", container!=""}) / container_spec_memory_limit_bytes{namespace!="", pod!="", container!=""} > 0.8
+          and
+          container_spec_memory_limit_bytes != 0
+          and ignoring(alertname, alertstate, severity)
+          ALERTS{alertname="K8sContainerMemoryAbove90", alertstate="firing"}
+        )
       for: 5m
       labels:
         severity: warning
-    - alert: ContainerRSSAtLimit
+    - alert: DockerContainerMemoryAbove90
       annotations:
         description: >-
-          {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }}:
+          {{ $labels.instance }}:
+          {{ $labels.container_label_com_docker_compose_project }}/{{ $labels.container_label_com_docker_compose_service }}:
           {{ $value | humanizePercentage }}
-        summary: Container RSS is above 97% of memory limit
+        summary: Container RSS + kernel memory usage is above 90% of memory limit
       expr: |-
-        container_memory_rss / container_spec_memory_limit_bytes{} > 0.97
-        and
-        container_memory_working_set_bytes / container_spec_memory_limit_bytes{} > 0.99
-        and
-        container_spec_memory_limit_bytes != 0
-      for: 0m
+        (
+          (container_memory_usage_bytes{container_label_com_docker_compose_image!=""} - container_memory_cache{container_label_com_docker_compose_image!=""}) / container_spec_memory_limit_bytes{container_label_com_docker_compose_image!=""} > 0.9
+          and
+          container_spec_memory_limit_bytes != 0
+        ) or (
+          (container_memory_usage_bytes{container_label_com_docker_compose_image!=""} - container_memory_cache{container_label_com_docker_compose_image!=""}) / container_spec_memory_limit_bytes{container_label_com_docker_compose_image!=""} > 0.8
+          and
+          container_spec_memory_limit_bytes != 0
+          and ignoring(alertname, alertstate, severity)
+          ALERTS{alertname="DockerContainerMemoryAbove90", alertstate="firing"}
+        )
+      for: 5m
+      labels:
+        severity: warning
+    - alert: CgroupContainerMemoryAbove90
+      annotations:
+        description: >-
+          {{ $labels.instance }}:
+          {{ $labels.id }}:
+          {{ $value | humanizePercentage }}
+        summary: Container RSS + kernel memory usage is above 90% of memory limit
+      expr: |-
+        (
+          (container_memory_usage_bytes{container_label_com_docker_compose_image="", namespace="", pod=""} - container_memory_cache{container_label_com_docker_compose_image="", namespace="", pod=""}) / container_spec_memory_limit_bytes{container_label_com_docker_compose_image="", namespace="", pod=""} > 0.9
+          and
+          container_spec_memory_limit_bytes != 0
+        ) or (
+          (container_memory_usage_bytes{container_label_com_docker_compose_image="", namespace="", pod=""} - container_memory_cache{container_label_com_docker_compose_image="", namespace="", pod=""}) / container_spec_memory_limit_bytes{container_label_com_docker_compose_image="", namespace="", pod=""} > 0.8
+          and
+          container_spec_memory_limit_bytes != 0
+          and ignoring(alertname, alertstate, severity)
+          ALERTS{alertname="CgroupContainerMemoryAbove90", alertstate="firing"}
+        )
+      for: 5m
       labels:
         severity: warning
