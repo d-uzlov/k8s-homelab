@@ -30,7 +30,7 @@ Kubecolor can be used as a direct replacement for kubectl.
 
 ```bash
 # check latest version: https://github.com/kubecolor/kubecolor/releases
-kubecolor_version=0.5.1
+kubecolor_version=0.5.2
 wget "https://github.com/kubecolor/kubecolor/releases/download/v$kubecolor_version/kubecolor_${kubecolor_version}_linux_amd64.tar.gz" -O ./k8s-core/docs/env/kubecolor_${kubecolor_version}_linux_amd64.tar.gz
 mkdir -p ./k8s-core/docs/env/kubecolor_${kubecolor_version}_linux_amd64
 tar -xzf "./k8s-core/docs/env/kubecolor_${kubecolor_version}_linux_amd64.tar.gz" -C ./k8s-core/docs/env/kubecolor_${kubecolor_version}_linux_amd64

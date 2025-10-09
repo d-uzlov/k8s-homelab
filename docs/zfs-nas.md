@@ -1,7 +1,7 @@
 
 # ZFS nas
 
-This file roughyl describes what you should do
+This file roughly describes what you should do
 to create a NAS from empty Debian system using ZFS for file storage.
 
 # Debian: install ZFS

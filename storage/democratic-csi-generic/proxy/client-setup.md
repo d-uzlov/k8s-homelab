@@ -12,6 +12,13 @@ sudo nvme list-subsys
 
 ```
 
+Note that you need at least linux 6.16 to be able to safely use nvmeof.
+Earlier versions will work, but they can randomly hang when disconnecting from nvme share.
+See discussion here: https://github.com/linux-nvme/nvme-cli/issues/2603#issuecomment-3368536714
+
+Apparently, the issue was fixed in this commit: https://github.com/torvalds/linux/commit/f42d4796ee10
+The first linux kernel release to include it is 6.16.
+
 # iSCSI
 
 ```bash

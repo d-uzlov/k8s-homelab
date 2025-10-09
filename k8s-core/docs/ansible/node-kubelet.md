@@ -1,7 +1,9 @@
 
 # prerequisites:
 
-- [cluster CA](./control-plane-ca.md)
+- [control plane](./control-plane.md)
+- Have cluster CA key in local filesystem
+- [node dependencies](./node-dependencies.md)
 
 # ansible inventory
 

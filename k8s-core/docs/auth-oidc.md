@@ -50,7 +50,7 @@ kl krew upgrade oidc-login
 issuer_url=https://auth.example.com/token/
 client_id=
 # optional, only set when provider requires it
-client_secret=6583367cc16b0f7d3fb8d9671048f53ad1eaee4c
+client_secret=
 
 # test that connection parameters are correct
 # if your auth provider supports device code grant, it's more convenient to use it
@@ -63,18 +63,14 @@ kl oidc-login setup --oidc-issuer-url $issuer_url --oidc-client-id $client_id --
 # Alternatively, you can alter it manually.
 # Add a new user to `users` section:
 
-# this username is only for the client side
-username=oidc
-
 cat << EOF
-- name: $username
+- name: REPLACE_ME_USERNAME
   user:
     exec:
       apiVersion: client.authentication.k8s.io/v1
       args:
       - oidc-login
       - get-token
-      # - -v=8
       - --grant-type=device-code
       - --oidc-issuer-url=$issuer_url
       - --oidc-client-id=$client_id
@@ -88,14 +84,34 @@ EOF
 
 ```
 
+You will also need to add context that will use this new user (adjust actual values for your config):
+
+```yaml
+- context:
+    cluster: example
+    user: oidc
+  name: oidc@example
+```
+
 Note that even after you set up authentication (user is verified by the cluster),
-you will most likely need additional authorization setup (user is allowed to do things):
+you will most likely need additional authorization setup (user is allowed to do things).
+
+See example how you can set up authorization specific to a single user.
+As an alternative, you can use group for permissions, but it's not covered here [yet].
 
 ```bash
 
-# user id will depend on your cluster auth setup
-user_id=
-kl create clusterrolebinding oidc-cluster-admin --clusterrole cluster-admin --user 'user_id'
+# auth whoami is available without any special authorization
+kl auth whoami
+
+user_context=oidc@example
+user_id=$(kl --context $user_context auth whoami -o json | jq .status.userInfo.username -r)
+echo $user_id
+
+admin_context=admin@example
+kl --context $admin_context create clusterrolebinding "oidc-cluster-admin:$user_id" --clusterrole cluster-admin --user "$user_id"
+
+# kl delete clusterrolebinding "oidc-cluster-admin:$user_id"
 
 ```
 

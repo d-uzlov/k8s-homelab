@@ -52,6 +52,7 @@ kl label ns cgroup-burst pod-security.kubernetes.io/enforce=privileged
 # add label to all nodes that have compatible kernel
 node=
 kl label node $node cgroup.meoe.io/node=enable
+kl label node --all cgroup.meoe.io/node=enable
 
 kl apply -k ./k8s-core/cgroup-burst/
 kl -n cgroup-burst get pod -o wide
