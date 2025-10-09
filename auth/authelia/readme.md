@@ -2,34 +2,8 @@
 # Authelia
 
 References:
-- https://www.authelia.com/integration/kubernetes/chart/
-
-Authelia needs an LDAP backend.
-I didn't find a good LDAP provider with high availability.
-
-# Generate config
-
-You only need to do this when updating the app.
-
-```bash
-helm repo add authelia https://charts.authelia.com
-helm repo update authelia
-helm search repo authelia/authelia --versions --devel | head
-helm show values authelia/authelia --version 0.10.46 > ./auth/authelia/default-values.yaml
-```
-
-```bash
-
-helm template \
-  authelia \
-  authelia/authelia \
-  --version 0.10.46 \
-  --namespace authelia \
-  --values ./auth/authelia/values.yaml \
-  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/part-of|d' -e '\|app.kubernetes.io/version|d' \
-  > ./auth/authelia/authelia.gen.yaml
-
-```
+- https://www.authelia.com/configuration/prologue/introduction/
+- https://github.com/authelia/authelia
 
 # config
 
