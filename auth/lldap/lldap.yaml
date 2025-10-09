@@ -19,6 +19,7 @@ kind: Deployment
 metadata:
   name: lldap
 spec:
+  minReadySeconds: 10
   selector:
     matchLabels:
       app: lldap
@@ -61,7 +62,12 @@ spec:
               name: pg-lldap-app
               key: fqdn-uri
         # args: []
-        # resources:
-        #   limits:
-        #     memory: "128Mi"
-        #     cpu: "500m"
+        resources:
+          # while average usage is low, when doing authentication
+          # there is a brief peak (likely for the password hashing?)
+          # this peak is not likely to be captured by metrics
+          # but if memory limit is not enough, authentication will not be possible
+          requests:
+            memory: 100Mi
+          limits:
+            memory: 100Mi
