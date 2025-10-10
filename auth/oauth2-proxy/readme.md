@@ -31,7 +31,7 @@ kl create ns auth-oauth2-proxy
 kl label ns auth-oauth2-proxy pod-security.kubernetes.io/enforce=baseline
 
 kl apply -k ./auth/oauth2-proxy/
-kl -n auth-oauth2-proxy get pod
+kl -n auth-oauth2-proxy get pod -o wide
 
 ```
 
@@ -40,4 +40,22 @@ kl -n auth-oauth2-proxy get pod
 ```bash
 kl delete -k ./auth/oauth2-proxy/
 kl delete ns auth-oauth2-proxy
+```
+
+# istio mesh config
+
+Add this to your istio mesh config:
+
+```yaml
+extensionProviders:
+- name: oauth2-proxy
+  envoyExtAuthzHttp:
+    service: oauth2-proxy.auth-oauth2-proxy.svc.cluster.local
+    port: '80'
+    includeHeadersInCheck: [ "authorization", "cookie", "x-auth-request-access-token" ]
+    headersToUpstreamOnAllow:
+    - authorization
+    - path
+    - x-auth-request-*
+    headersToDownstreamOnDeny: [ "content-type", "set-cookie" ]
 ```
