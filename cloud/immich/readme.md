@@ -53,17 +53,15 @@ userdata_sc=fast
 userdata_size=1Ti
 EOF
 
-mkdir -p ./cloud/immich/postgres/env/
-mkdir -p ./cloud/immich/main-app/env/
-tee << EOF ./cloud/immich/postgres/env/passwords.env ./cloud/immich/main-app/env/passwords.env > /dev/null
-postgres-password=$(LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 20)
-password=$(LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 20)
+mkdir -p ./cloud/immich/dragonfly/env/
+
+ cat << EOF > ./cloud/immich/dragonfly/env/password.env
+password=$(LC_ALL=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 32)
 EOF
 
-postgresStorageClass=
-sed -e "s/STORAGE_CLASS/$postgresStorageClass/" \
-  ./cloud/immich/postgres/patch-template.yaml \
-  > ./cloud/immich/postgres/env/patch.yaml
+kl get sc
+storage_class=
+sed "s/storageClassName: REPLACE_ME/storageClassName: $storage_class/" ./cloud/immich/dragonfly/dragonfly-immich.template.yaml > ./cloud/immich/dragonfly/env/dragonfly-immich.yaml
 
 ```
 
@@ -78,10 +76,11 @@ Prerequisites:
 kl create ns immich
 kl label ns immich pod-security.kubernetes.io/enforce=baseline
 
-# wildcard ingress
-kl label ns --overwrite onlyoffice copy-wild-cert=main
-kl apply -k ./cloud/onlyoffice/ingress-wildcard/
-kl -n onlyoffice get ingress
+kl apply -k ./cloud/immich/dragonfly/
+kl -n immich get dragonfly
+kl -n immich get pod -o wide -L role
+kl -n immich get pvc
+kl -n immich get svc
 
 kl apply -k ./cloud/immich/pvc/
 kl -n immich get pvc
