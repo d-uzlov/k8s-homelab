@@ -5,6 +5,7 @@ References:
 - https://immich.app/docs/install/kubernetes
 - https://github.com/immich-app/immich-charts/blob/main/README.md
 - https://meichthys.github.io/foss_photo_libraries/
+- https://github.com/tensorchord/cloudnative-vectorchord/pkgs/container/cloudnative-vectorchord
 
 # Upgrades
 
