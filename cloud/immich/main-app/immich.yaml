@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
       - name: immich-server
-        image: ghcr.io/immich-app/immich-server:v1.132.3
+        image: ghcr.io/immich-app/immich-server:v1.135.3
         ports:
         - name: http
           containerPort: 2283
@@ -36,15 +36,24 @@ spec:
         # - name: IMMICH_LOG_LEVEL
         #   value: verbose
         - name: DB_HOSTNAME
-          value: immich-postgresql
+          valueFrom:
+            secretKeyRef:
+              name: pg-immich-app
+              key: host
         - name: DB_DATABASE_NAME
-          value: immich
+          valueFrom:
+            secretKeyRef:
+              name: pg-immich-app
+              key: dbname
         - name: DB_USERNAME
-          value: immich
+          valueFrom:
+            secretKeyRef:
+              name: pg-immich-app
+              key: user
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: postgres-password
+              name: pg-immich-app
               key: password
         - name: IMMICH_MACHINE_LEARNING_URL
           value: http://immich-machine-learning:3003
@@ -84,7 +93,7 @@ spec:
           requests:
             memory: 400Mi
           limits:
-            memory: 500Mi
+            memory: 1000Mi
       volumes:
       - name: library
         persistentVolumeClaim:

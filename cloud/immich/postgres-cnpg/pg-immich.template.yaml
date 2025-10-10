@@ -1,0 +1,40 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  namespace: immich
+  name: pg-immich
+spec:
+  imageName: ghcr.io/tensorchord/cloudnative-vectorchord:17.5-0.3.0
+  instances: 2
+  storage:
+    size: REPLACE_ME_SIZE
+    storageClass: REPLACE_ME_STORAGE_CLASS
+  primaryUpdateStrategy: unsupervised
+  resources:
+    requests:
+      memory: 500Mi
+    limits:
+      # when immich does migrations postgres was getting OOM-killed with 500Mi limit
+      memory: 1500Mi
+  postgresql:
+    parameters:
+      # https://github.com/cloudnative-pg/cloudnative-pg/issues/3680#issuecomment-3092148543
+      wal_keep_size: 1GB
+      max_slot_wal_keep_size: 1GB
+      hot_standby_feedback: "on"
+    shared_preload_libraries:
+    - vchord.so
+  managed:
+    services:
+      disabledDefaultServices: [ "ro", "r" ]
+  affinity:
+    enablePodAntiAffinity: true
+    podAntiAffinityType: required
+    topologyKey: kubernetes.io/hostname
+  plugins:
+  - name: barman-cloud.cloudnative-pg.io
+    isWALArchiver: true
+    enabled: true
+    parameters:
+      barmanObjectName: s3-immich-backup

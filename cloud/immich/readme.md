@@ -68,6 +68,10 @@ sed -e "s/STORAGE_CLASS/$postgresStorageClass/" \
 
 # Deploy
 
+Prerequisites:
+- Create namespace first
+- [postgres](./postgres-cnpg/readme.md)
+
 ```bash
 
 kl create ns immich
@@ -77,10 +81,6 @@ kl label ns immich pod-security.kubernetes.io/enforce=baseline
 kl label ns --overwrite onlyoffice copy-wild-cert=main
 kl apply -k ./cloud/onlyoffice/ingress-wildcard/
 kl -n onlyoffice get ingress
-
-kl apply -k ./cloud/immich/postgres/
-kl -n immich get pvc
-kl -n immich get pod -o wide
 
 kl apply -k ./cloud/immich/pvc/
 kl -n immich get pvc
