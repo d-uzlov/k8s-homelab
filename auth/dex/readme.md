@@ -64,9 +64,11 @@ kl -n auth-dex get htr
 kl apply -k ./auth/dex/
 kl -n auth-dex get pod -o wide
 
+ingress_address=$(kl -n auth-dex get httproute dex-public -o go-template --template "{{ (index .spec.hostnames 0)}}")
 # show discovery info
-ingress_address=$(kl -n auth-dex get httproute dex-private -o go-template --template "{{ (index .spec.hostnames 0)}}")
 curl "https://$ingress_address/.well-known/openid-configuration" | jq
+# show issuer url
+curl "https://$ingress_address/.well-known/openid-configuration" | jq .issuer -r
 
 ```
 

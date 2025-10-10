@@ -86,7 +86,7 @@ kl apply -k ./cloud/immich/pvc/
 kl -n immich get pvc
 
 kl apply -k ./cloud/immich/immich-route-private/
-kl -n immich get httproute
+kl -n immich get htr
 
 kl apply -k ./cloud/immich/main-app/
 kl -n immich get pod -o wide
@@ -120,22 +120,19 @@ References:
 - https://github.com/immich-app/immich/discussions/11862
 - https://www.reddit.com/r/immich/comments/1gph4ay/how_to_pick_a_multilingual_ml_model_for_immich/
 
-# Authentik SSO
-
-Prerequisites:
-- [Authentik](../../auth/authentik/readme.md)
+# OIDC setup
 
 References:
 - https://immich.app/docs/administration/oauth/
 - https://docs.goauthentik.io/integrations/services/immich/
 
-In authentik:
+Setup actions:
 
-- Create provider of type OAuth2/OpenID
-- Add `Redirect URIs/Origins` domains (change `immich.example.com` to your ingress domain):
+- Create OIDC client
+- Add allowed redirect URIs (change `immich.example.com` to your ingress domain):
 - - https://immich.example.com/auth/login
 - - https://immich.example.com/user-settings
-- - app.immich:///oauth-callback (required for the immich mobile app)
+- - `app.immich:///oauth-callback` (required for the immich mobile app)
 - Create `immich` application linked to this provider
 - Go to settings in Immich web UI: `Administration -> Authentication Settings -> OAuth`
 - Set `Issuer URL` to value from Provider (open provider details to see it)
@@ -149,27 +146,3 @@ In authentik:
 
 Accounts are linked based on email match.
 Match should be exact, including case.
-
-# Set admin rights on account
-
-References:
-- https://www.reddit.com/r/immich/comments/1gmdzya/quick_guide_on_how_to_make_a_user_admin/
-- https://github.com/immich-app/immich/discussions/3295
-
-```bash
-
-# list users
-echo 'SELECT "email", "name", "isAdmin" FROM public.users;' | kl -n immich exec pods/immich-postgresql-0 -it -- psql immich --user=immich
-
-# choose how you want to select users
-selector="WHERE name='username'"
-selector="WHERE email='dudlaspama@yandex.ru'"
-# if you want to list all current admin accounts
-selector="WHERE \"isAdmin\"='true'"
-
-# check if user is admin
-echo 'SELECT "email", "name", "isAdmin" FROM public.users '"$selector;" | kl -n immich exec pods/immich-postgresql-0 -it -- psql immich --user=immich
-# enable or disable admin rights for specified user
-echo 'UPDATE public.users SET "isAdmin"=true  '"$selector;" | kl -n immich exec pods/immich-postgresql-0 -it -- psql immich --user=immich
-echo 'UPDATE public.users SET "isAdmin"=false '"$selector;" | kl -n immich exec pods/immich-postgresql-0 -it -- psql immich --user=immich
-```
