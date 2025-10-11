@@ -2,7 +2,7 @@
 # barman-cloud plugin for CNPG
 
 References:
-- https://cloudnative-pg.io/plugin-barman-cloud/docs/
+- https://cloudnative-pg.io/plugin-barman-cloud/docs/intro/
 - https://github.com/cloudnative-pg/plugin-barman-cloud/
 
 # generate config
