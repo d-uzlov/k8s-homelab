@@ -1,0 +1,35 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: immich-self
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  jobLabel: app
+  selector:
+    matchLabels:
+      app: immich
+  endpoints:
+  - port: metrics2
+    scheme: http
+    scrapeTimeout: 1s
+    relabelings:
+    - targetLabel: job
+      action: replace
+      replacement: immich-self
+    - targetLabel: instance
+      action: replace
+      sourceLabels: [ location, __meta_kubernetes_namespace, __meta_kubernetes_pod_name ]
+      separator: /
+    metricRelabelings:
+    - action: labeldrop
+      # keep meta-labels on scrape metrics, only drop them on actual exported metrics
+      regex: container|endpoint|namespace|pod|service
+    - sourceLabels: [ __name__ ]
+      action: keep
+      regex: target_info
+    - action: labeldrop
+      regex: process_.*

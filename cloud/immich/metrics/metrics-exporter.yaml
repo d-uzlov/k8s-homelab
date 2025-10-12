@@ -1,0 +1,48 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metrics-exporter
+spec:
+  selector:
+    matchLabels:
+      app: metrics-exporter
+  template:
+    metadata:
+      labels:
+        app: metrics-exporter
+    spec:
+      # terminationGracePeriodSeconds: 1
+      containers:
+      - name: metrics-exporter
+        image: docker.io/eithan1231/immich-exporter:2025-05-12-commit-241dce4
+        ports:
+        - name: http
+          # port seems to be hardcoded to 3000
+          containerPort: 3000
+        env:
+        - name: IMMICH_HOST
+          value: immich-server
+        - name: IMMICH_KEY
+          valueFrom:
+            secretKeyRef:
+              name: metrics-api-key
+              key: api-key
+        resources:
+          requests:
+            memory: 40Mi
+            cpu: 10m
+          limits:
+            memory: 60Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: metrics-exporter
+spec:
+  selector:
+    app: metrics-exporter
+  ports:
+  - name: http
+    port: 80
+    targetPort: http

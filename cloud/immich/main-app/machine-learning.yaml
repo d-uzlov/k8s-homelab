@@ -26,6 +26,8 @@ spec:
       labels:
         app: machine-learning
     spec:
+      securityContext:
+        fsGroup: 1000
       containers:
       - name: immich-machine-learning
         image: ghcr.io/immich-app/immich-machine-learning:v2.0.1
@@ -66,8 +68,9 @@ spec:
           requests:
             memory: 200Mi
           limits:
-            # when doing active work, machine-learning uses a lot of memory
-            memory: 1024Mi
+            # it gets OOM-killed with 1Gi limit
+            memory: 4096Mi
       volumes:
       - name: cache
-        emptyDir: {}
+        persistentVolumeClaim:
+          claimName: ml-cache

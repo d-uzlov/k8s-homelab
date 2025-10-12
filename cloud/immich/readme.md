@@ -16,42 +16,14 @@ References:
 **Note**: Immich sometimes makes breaking changes in the config.
 Always check out the discussions or release notes before changing the container image version.
 
-# Helm config
-
-Immich has simple deployment.
-I used helm deployment as an example, and to set up postgres,
-but the main app deployment is managed manually.
-
-```bash
-helm repo add immich https://immich-app.github.io/immich-charts
-helm repo update immich
-helm search repo immich/immich --versions --devel | head
-helm show values immich/immich --version 0.8.5 > ./cloud/immich/default-values.yaml
-```
-
-```bash
-
-helm template \
-  immich \
-  immich/immich \
-  --version 0.8.5 \
-  --values ./cloud/immich/values.yaml \
-  --namespace immich \
-  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' -e '\|^#|d' \
-  > ./cloud/immich/deployment.gen.yaml
-
-```
-
 # Local config
 
 ```bash
 
 mkdir -p ./cloud/immich/pvc/env/
- cat << EOF > ./cloud/immich/pvc/env/pvc.env
-# userdata uses ReadWriteMany type volumes
-userdata_sc=fast
-userdata_size=1Ti
-EOF
+
+cp ./cloud/immich/pvc/user-data.template.yaml ./cloud/immich/pvc/env/user-data.yaml
+cp ./cloud/immich/pvc/ml-cache.template.yaml ./cloud/immich/pvc/env/ml-cache.yaml
 
 mkdir -p ./cloud/immich/dragonfly/env/
 
@@ -62,6 +34,32 @@ EOF
 kl get sc
 storage_class=
 sed "s/storageClassName: REPLACE_ME/storageClassName: $storage_class/" ./cloud/immich/dragonfly/dragonfly-immich.template.yaml > ./cloud/immich/dragonfly/env/dragonfly-immich.yaml
+
+mkdir -p ./cloud/immich/main-app/env/
+
+# example:
+# location_tag=vps/k8s/clusterName
+location_tag=
+# a friendly name for immich deployment
+immichClusterName=
+
+ cat << EOF > ./cloud/immich/main-app/env/patch-location-tag.yaml
+- op: add
+  path: /spec/endpoints/0/relabelings/0
+  value:
+    targetLabel: location
+    replacement: $location_tag
+    action: replace
+EOF
+
+ cat << EOF > ./cloud/immich/main-app/env/patch-immich-cluster-tag.yaml
+- op: add
+  path: /spec/endpoints/0/relabelings/0
+  value:
+    targetLabel: immich_cluster
+    replacement: $immichClusterName
+    action: replace
+EOF
 
 ```
 
@@ -82,7 +80,8 @@ kl -n immich get pod -o wide -L role
 kl -n immich get pvc
 kl -n immich get svc
 
-kl apply -k ./cloud/immich/pvc/
+kl apply -f ./cloud/immich/pvc/env/user-data.yaml
+kl apply -f ./cloud/immich/pvc/env/ml-cache.yaml
 kl -n immich get pvc
 
 kl apply -k ./cloud/immich/immich-route-private/
@@ -146,3 +145,47 @@ Setup actions:
 
 Accounts are linked based on email match.
 Match should be exact, including case.
+
+# metrics
+
+References:
+- https://github.com/eithan1231/immich-exporter
+
+```bash
+
+mkdir -p ./cloud/immich/metrics/env/
+
+# example:
+# location_tag=vps/k8s/clusterName
+location_tag=
+# a friendly name for immich deployment
+immichClusterName=
+
+ cat << EOF > ./cloud/immich/main-app/env/patch-location-tag.yaml
+- op: add
+  path: /spec/relabelings/0
+  value:
+    targetLabel: location
+    replacement: $location_tag
+    action: replace
+EOF
+
+ cat << EOF > ./cloud/immich/main-app/env/patch-immich-cluster-tag.yaml
+- op: add
+  path: /spec/relabelings/0
+  value:
+    targetLabel: immich_cluster
+    replacement: $immichClusterName
+    action: replace
+EOF
+
+# generate an API key for the exporter
+
+ cat << EOF > ./cloud/immich/metrics/env/api-key.env
+api-key=
+EOF
+
+kl apply -k ./cloud/immich/metrics/
+kl -n immich get pod -o wide
+
+```

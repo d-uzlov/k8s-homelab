@@ -3,6 +3,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: immich-server
+  labels:
+    app: immich
 spec:
   selector:
     app: immich
@@ -10,6 +12,9 @@ spec:
   - name: http
     port: 80
     targetPort: http
+  - name: metrics2
+    port: 8082
+    targetPort: metrics2
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -32,6 +37,8 @@ spec:
         ports:
         - name: http
           containerPort: 2283
+        - name: metrics2
+          containerPort: 8082
         env:
         # - name: IMMICH_LOG_LEVEL
         #   value: verbose
@@ -57,6 +64,11 @@ spec:
               key: password
         - name: IMMICH_MACHINE_LEARNING_URL
           value: http://immich-machine-learning:3003
+        - name: IMMICH_TELEMETRY_INCLUDE
+          # https://docs.immich.app/install/environment-variables/#prometheus
+          value: host
+        - name: IMMICH_TRUSTED_PROXIES
+          value: 10.0.0.0/8,192.168.0.0/16,172.16.0.0/12
         - name: REDIS_HOSTNAME
           value: df-immich
         - name: REDIS_PORT
