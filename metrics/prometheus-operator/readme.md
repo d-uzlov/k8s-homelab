@@ -12,6 +12,7 @@ References:
 - https://technotim.live/posts/kube-grafana-prometheus/
 - https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack
 - https://github.com/prometheus-operator/kube-prometheus
+- https://github.com/prometheus-operator/prometheus-operator/releases
 
 # Generate config
 
@@ -21,7 +22,7 @@ You only need to do this if you change `values.yaml` file.
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update prometheus-community
 helm search repo prometheus-community/kube-prometheus-stack --versions --devel | head
-helm show values prometheus-community/kube-prometheus-stack --version 77.6.1 > ./metrics/prometheus-operator/default-values.yaml
+helm show values prometheus-community/kube-prometheus-stack --version 78.1.0 > ./metrics/prometheus-operator/default-values.yaml
 ```
 
 When updating deployment don't forget to also download new CRDs:
@@ -32,7 +33,7 @@ When updating deployment don't forget to also download new CRDs:
 helm template \
   prometheus-operator \
   prometheus-community/kube-prometheus-stack \
-  --version 77.6.1 \
+  --version 78.1.0 \
   --values ./metrics/prometheus-operator/values.yaml \
   --namespace prometheus-operator \
   | sed \
