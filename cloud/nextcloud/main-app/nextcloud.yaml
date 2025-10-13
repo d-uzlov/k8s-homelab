@@ -57,7 +57,7 @@ spec:
         - name: PGCONNECT_TIMEOUT
           value: '1'
       - name: init-filesystem
-        image: docker.io/nextcloud:31.0.4-fpm
+        image: docker.io/nextcloud:32.0.0-fpm
         command:
         - bash
         - -c
@@ -95,7 +95,7 @@ spec:
           name: config
           subPath: shared-lock
       - name: install
-        image: docker.io/nextcloud:31.0.4-fpm
+        image: docker.io/nextcloud:32.0.0-fpm
         command:
         - bash
         - -c
@@ -103,6 +103,8 @@ spec:
           set -eu
           trap : TERM INT
           umask 0
+          # seems like nextcloud 32 wants redis to be setup before running installation
+          /scripts/init-php-conf.sh
           (
             set -eu
             if ! flock -n 9; then
@@ -112,7 +114,6 @@ spec:
             /scripts/install.sh /mnt/shared-lock/version.php
             /scripts/setup-env.sh
           ) 9> /mnt/shared-lock/nextcloud-init-sync.lock & wait -n
-          /scripts/init-php-conf.sh
         securityContext:
           readOnlyRootFilesystem: true
         env:
@@ -163,6 +164,12 @@ spec:
             secretKeyRef:
               name: dragonfly-auth
               key: password
+        - name: REDIS_HOST_PASSWORD
+          # wow, in nextcloud 32 installation stopped working without REDIS_HOST_PASSWORD env
+          valueFrom:
+            secretKeyRef:
+              name: dragonfly-auth
+              key: password
         - name: PHP_CONF_D_LOCATION
           value: /mnt/php-conf-d
         volumeMounts:
@@ -196,7 +203,7 @@ spec:
         - mountPath: /tmp
           name: tmp
       - name: init-nginx
-        image: docker.io/nextcloud:31.0.4-fpm
+        image: docker.io/nextcloud:32.0.0-fpm
         command:
         - bash
         - -c
@@ -231,7 +238,7 @@ spec:
           name: nginx-webroot
       containers:
       - name: nextcloud
-        image: docker.io/nextcloud:31.0.4-fpm
+        image: docker.io/nextcloud:32.0.0-fpm
         ports:
         - name: php
           containerPort: 9000
@@ -239,6 +246,20 @@ spec:
         - /scripts/run.sh
         securityContext:
           readOnlyRootFilesystem: true
+        env:
+        - name: REDIS_HOST
+          value: df-nextcloud
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: dragonfly-auth
+              key: password
+        - name: REDIS_HOST_PASSWORD
+          # wow, in nextcloud 32 installation stopped working without REDIS_HOST_PASSWORD env
+          valueFrom:
+            secretKeyRef:
+              name: dragonfly-auth
+              key: password
         volumeMounts:
         - mountPath: /scripts
           name: scripts

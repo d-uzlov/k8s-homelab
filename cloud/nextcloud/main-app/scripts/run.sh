@@ -22,5 +22,6 @@ ln -s --target-directory /tmp/user-skeleton/ \
 php occ config:system:set skeletondirectory --value /tmp/user-skeleton/
 php occ maintenance:repair --include-expensive
 php occ db:add-missing-indices
+php occ maintenance:mode --off
 
 exec php-fpm

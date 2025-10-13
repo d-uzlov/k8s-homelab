@@ -51,13 +51,12 @@ if [ "${RELEASE_DATE}" != "${PREV_RELEASE_DATE}" ]; then
   fi
 fi
 
-SSL_CERTIFICATES_DIR="/usr/share/ca-certificates/ds"
-mkdir -p ${SSL_CERTIFICATES_DIR}
-if find "${DATA_DIR}/certs" -type f \( -name "*.crt" -o -name "*.pem" \) -print -quit >/dev/null 2>&1; then
-  cp -f ${DATA_DIR}/certs/* ${SSL_CERTIFICATES_DIR}
-  chmod 644 ${SSL_CERTIFICATES_DIR}/*.{crt,pem} 2>/dev/null
-  chmod 400 ${SSL_CERTIFICATES_DIR}/*.key 2>/dev/null
-fi
+SSL_CERTIFICATES_DIR="/usr/share/ca-certificates/ds"; mkdir -p ${SSL_CERTIFICATES_DIR}
+# find "${DATA_DIR}/certs" -type f \( -iname '*.crt' -o -iname '*.pem' -o -iname '*.key' \) -exec cp -f {} "${SSL_CERTIFICATES_DIR}"/ \;
+# if find "${SSL_CERTIFICATES_DIR}" -maxdepth 1 -type f | read _; then
+#   find "${SSL_CERTIFICATES_DIR}" -type f \( -iname '*.crt' -o -iname '*.pem' \) -exec chmod 644 {} \;
+#   find "${SSL_CERTIFICATES_DIR}" -type f -iname '*.key' -exec chmod 400 {} \;
+# fi
 
 if [[ -z $SSL_CERTIFICATE_PATH ]] && [[ -f ${SSL_CERTIFICATES_DIR}/${COMPANY_NAME}.crt ]]; then
   SSL_CERTIFICATE_PATH=${SSL_CERTIFICATES_DIR}/${COMPANY_NAME}.crt
@@ -72,6 +71,7 @@ fi
 
 #When set, the well known "root" CAs will be extended with the extra certificates in file
 NODE_EXTRA_CA_CERTS=${NODE_EXTRA_CA_CERTS:-${SSL_CERTIFICATES_DIR}/extra-ca-certs.pem}
+NODE_EXTRA_ENVIRONMENT=
 if [[ -f ${NODE_EXTRA_CA_CERTS} ]]; then
   NODE_EXTRA_ENVIRONMENT="${NODE_EXTRA_CA_CERTS}"
 elif [[ -f ${SSL_CERTIFICATE_PATH} ]]; then
@@ -274,8 +274,7 @@ waiting_for_connection(){
 waiting_for_db_ready(){
   case $DB_TYPE in
     "oracle")
-      PDB="XEPDB1"
-      ORACLE_SQL="sqlplus $DB_USER/$DB_PWD@//$DB_HOST:$DB_PORT/$PDB"
+      ORACLE_SQL="sqlplus $DB_USER/$DB_PWD@//$DB_HOST:$DB_PORT/${DB_NAME}"
       DB_TEST="echo \"SELECT version FROM V\$INSTANCE;\" | $ORACLE_SQL 2>/dev/null | grep \"Connected\" | wc -l"
       ;;
     *)
@@ -411,8 +410,8 @@ update_ds_settings(){
   WOPI_PRIVATE_KEY="${DATA_DIR}/wopi_private.key"
   WOPI_PUBLIC_KEY="${DATA_DIR}/wopi_public.key"
 
-  [ ! -f "${WOPI_PRIVATE_KEY}" ] && echo "Generating WOPI private key..." && openssl genpkey -algorithm RSA -outform PEM -out "${WOPI_PRIVATE_KEY}" >/dev/null 2>&1 && echo "Done"
-  [ ! -f "${WOPI_PUBLIC_KEY}" ] && echo "Generating WOPI public key..." && openssl rsa -RSAPublicKey_out -in "${WOPI_PRIVATE_KEY}" -outform "MS PUBLICKEYBLOB" -out "${WOPI_PUBLIC_KEY}" >/dev/null 2>&1  && echo "Done"
+  [ ! -f "${WOPI_PRIVATE_KEY}" ] && echo -n "Generating WOPI private key..." && openssl genpkey -algorithm RSA -outform PEM -out "${WOPI_PRIVATE_KEY}" >/dev/null 2>&1 && echo "Done"
+  [ ! -f "${WOPI_PUBLIC_KEY}" ] && echo -n "Generating WOPI public key..." && openssl rsa -RSAPublicKey_out -in "${WOPI_PRIVATE_KEY}" -outform "MS PUBLICKEYBLOB" -out "${WOPI_PUBLIC_KEY}" >/dev/null 2>&1  && echo "Done"
   WOPI_MODULUS=$(openssl rsa -pubin -inform "MS PUBLICKEYBLOB" -modulus -noout -in "${WOPI_PUBLIC_KEY}" | sed 's/Modulus=//' | xxd -r -p | openssl base64 -A)
   WOPI_EXPONENT=$(openssl rsa -pubin -inform "MS PUBLICKEYBLOB" -text -noout -in "${WOPI_PUBLIC_KEY}" | grep -oP '(?<=Exponent: )\d+')
   
@@ -510,7 +509,7 @@ upgrade_mysql_tbl() {
 }
 
 upgrade_mssql_tbl() {
-  CONN_PARAMS="-U $DB_USER -P "$DB_PWD" -C"
+  CONN_PARAMS="-d $DB_NAME -U $DB_USER -P "$DB_PWD" -C"
   MSSQL="/opt/mssql-tools18/bin/sqlcmd -S $DB_HOST,$DB_PORT $CONN_PARAMS"
 
   $MSSQL < "$APP_DIR/server/schema/mssql/removetbl.sql" >/dev/null 2>&1
@@ -518,8 +517,7 @@ upgrade_mssql_tbl() {
 }
 
 upgrade_oracle_tbl() {
-  PDB="XEPDB1"
-  ORACLE_SQL="sqlplus $DB_USER/$DB_PWD@//$DB_HOST:$DB_PORT/$PDB"
+  ORACLE_SQL="sqlplus $DB_USER/$DB_PWD@//$DB_HOST:$DB_PORT/${DB_NAME}"
 
   $ORACLE_SQL @$APP_DIR/server/schema/oracle/removetbl.sql >/dev/null 2>&1
   $ORACLE_SQL @$APP_DIR/server/schema/oracle/createdb.sql >/dev/null 2>&1
@@ -547,35 +545,34 @@ create_mysql_tbl() {
 create_mssql_tbl() {  
   create_mssql_db
 
-  CONN_PARAMS="-U $DB_USER -P "$DB_PWD" -C"
+  CONN_PARAMS="-d $DB_NAME -U $DB_USER -P "$DB_PWD" -C"
   MSSQL="/opt/mssql-tools18/bin/sqlcmd -S $DB_HOST,$DB_PORT $CONN_PARAMS"
 
   $MSSQL < "$APP_DIR/server/schema/mssql/createdb.sql" >/dev/null 2>&1
 }
 
 create_oracle_tbl() {
-  PDB="XEPDB1"
-  ORACLE_SQL="sqlplus $DB_USER/$DB_PWD@//$DB_HOST:$DB_PORT/$PDB"
+  ORACLE_SQL="sqlplus $DB_USER/$DB_PWD@//$DB_HOST:$DB_PORT/${DB_NAME}"
 
   $ORACLE_SQL @$APP_DIR/server/schema/oracle/createdb.sql >/dev/null 2>&1
 }
 
 update_welcome_page() {
   WELCOME_PAGE="${APP_DIR}-example/welcome/docker.html"
-  if [[ -e $WELCOME_PAGE ]]; then
-    DOCKER_CONTAINER_ID=$(basename $(cat /proc/1/cpuset))
-    (( ${#DOCKER_CONTAINER_ID} < 12 )) && DOCKER_CONTAINER_ID=$(hostname)
-    if (( ${#DOCKER_CONTAINER_ID} >= 12 )); then
-      if [[ -x $(command -v docker) ]]; then
-        DOCKER_CONTAINER_NAME=$(docker inspect --format="{{.Name}}" $DOCKER_CONTAINER_ID)
-        sed 's/$(sudo docker ps -q)/'"${DOCKER_CONTAINER_NAME#/}"'/' -i $WELCOME_PAGE
-        JWT_MESSAGE=$(echo $JWT_MESSAGE | sed 's/$(sudo docker ps -q)/'"${DOCKER_CONTAINER_NAME#/}"'/')
-      else
-        sed 's/$(sudo docker ps -q)/'"${DOCKER_CONTAINER_ID::12}"'/' -i $WELCOME_PAGE
-        JWT_MESSAGE=$(echo $JWT_MESSAGE | sed 's/$(sudo docker ps -q)/'"${DOCKER_CONTAINER_ID::12}"'/')
-      fi
-    fi
-  fi
+  # if [[ -e $WELCOME_PAGE ]]; then
+  #   DOCKER_CONTAINER_ID=$(basename $(cat /proc/1/cpuset))
+  #   (( ${#DOCKER_CONTAINER_ID} < 12 )) && DOCKER_CONTAINER_ID=$(hostname)
+  #   if (( ${#DOCKER_CONTAINER_ID} >= 12 )); then
+  #     if [[ -x $(command -v docker) ]]; then
+  #       DOCKER_CONTAINER_NAME=$(docker inspect --format="{{.Name}}" $DOCKER_CONTAINER_ID)
+  #       sed 's/$(sudo docker ps -q)/'"${DOCKER_CONTAINER_NAME#/}"'/' -i $WELCOME_PAGE
+  #       JWT_MESSAGE=$(echo $JWT_MESSAGE | sed 's/$(sudo docker ps -q)/'"${DOCKER_CONTAINER_NAME#/}"'/')
+  #     else
+  #       sed 's/$(sudo docker ps -q)/'"${DOCKER_CONTAINER_ID::12}"'/' -i $WELCOME_PAGE
+  #       JWT_MESSAGE=$(echo $JWT_MESSAGE | sed 's/$(sudo docker ps -q)/'"${DOCKER_CONTAINER_ID::12}"'/')
+  #     fi
+  #   fi
+  # fi
 }
 
 update_nginx_settings(){
@@ -655,10 +652,15 @@ for i in ${DS_LIB_DIR}/App_Data/cache/files ${DS_LIB_DIR}/App_Data/docbuilder ${
 done
 
 # change folder rights
+chown ds:ds "${DATA_DIR}"
 for i in ${DS_LOG_DIR} ${DS_LOG_DIR}-example ${LIB_DIR}; do
   chown -R ds:ds "$i"
   chmod -R 755 "$i"
 done
+
+# Bug 75324 - Update permissions for runtime.json
+AI_CONFIG_FILE="${DATA_DIR}/runtime.json"
+[ -f "${AI_CONFIG_FILE}" ] && { chown ds:ds "${AI_CONFIG_FILE}" && chmod 644 "${AI_CONFIG_FILE}"; }
 
 if [ ${ONLYOFFICE_DATA_CONTAINER_HOST} = "localhost" ]; then
 
@@ -767,6 +769,10 @@ fi
 # Fix to resolve the `unknown "cache_tag" variable` error
 start_process documentserver-flush-cache.sh -r false
 
+# nginx used as a proxy, and as data container status service.
+# it run in all cases.
+service nginx start
+
 if [ "${LETS_ENCRYPT_DOMAIN}" != "" -a "${LETS_ENCRYPT_MAIL}" != "" ]; then
   if [ ! -f "${SSL_CERTIFICATE_PATH}" -a ! -f "${SSL_KEY_PATH}" ]; then
     start_process documentserver-letsencrypt.sh ${LETS_ENCRYPT_MAIL} ${LETS_ENCRYPT_DOMAIN}
@@ -779,7 +785,7 @@ if [ "${GENERATE_FONTS}" == "true" ]; then
 fi
 
 if [ "${PLUGINS_ENABLED}" = "true" ]; then
-  echo Installing plugins, please wait...
+  echo -n Installing plugins, please wait...
   start_process documentserver-pluginsmanager.sh -r false --update=\"${APP_DIR}/sdkjs-plugins/plugin-list-default.json\" >/dev/null
   echo Done
 fi
@@ -788,8 +794,4 @@ start_process documentserver-static-gzip.sh ${ONLYOFFICE_DATA_CONTAINER}
 
 echo "${JWT_MESSAGE}" 
 
-# nginx used as a proxy, and as data container status service.
-# it run in all cases.
-service nginx start
-
-start_process tail -f /var/log/${COMPANY_NAME}/**/*.log
+start_process find "$DS_LOG_DIR" "$DS_LOG_DIR-example" -type f -name "*.log" | xargs tail -f
