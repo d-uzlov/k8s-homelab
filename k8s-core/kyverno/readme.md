@@ -17,7 +17,7 @@ You only need to do this if you change `values.yaml` file.
 helm repo add kyverno https://kyverno.github.io/kyverno/
 helm repo update kyverno
 helm search repo kyverno/kyverno --versions --devel | head
-helm show values kyverno/kyverno --version 3.4.0 > ./k8s-core/kyverno/default-values.yaml
+helm show values kyverno/kyverno --version 3.5.2 > ./k8s-core/kyverno/default-values.yaml
 ```
 
 ```bash
@@ -25,7 +25,7 @@ helm show values kyverno/kyverno --version 3.4.0 > ./k8s-core/kyverno/default-va
 helm template --no-hooks \
   kyverno \
   kyverno/kyverno \
-  --version 3.4.0 \
+  --version 3.5.2 \
   --values ./k8s-core/kyverno/values.yaml \
   --namespace kyverno \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' -e '\|app.kubernetes.io/version|d' \
@@ -33,8 +33,6 @@ helm template --no-hooks \
   > ./k8s-core/kyverno/deployment.gen.yaml
 
 ```
-
-The list of CRDs is manually grabbed from the release files, and manually placed into `./k8s-core/kyverno/crds/kustomization.yaml`
 
 # Deploy
 
