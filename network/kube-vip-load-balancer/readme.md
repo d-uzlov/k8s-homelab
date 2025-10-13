@@ -19,7 +19,7 @@ You don't need to do it if you are just deploying it.
 docker run \
   --network host \
   --rm \
-  ghcr.io/kube-vip/kube-vip:v1.0.0 \
+  ghcr.io/kube-vip/kube-vip:v1.0.1 \
   manifest \
   daemonset \
   --log 5 \
