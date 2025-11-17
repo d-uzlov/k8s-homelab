@@ -14,7 +14,7 @@ Additional links:
 - https://github.com/v2ray/discussion/issues/148
 - https://github.com/InvisibleManVPN/InvisibleMan-XRayClient
 
-# Install via docker
+# Install 3x-ui
 
 ```bash
 curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh | sudo bash

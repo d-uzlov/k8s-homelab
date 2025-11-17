@@ -67,6 +67,8 @@ disable
 cd /ports/1/subsystems/
 create test-v2
 
+saveconfig savefile=/etc/nvmet/config.json
+
 ```
 
 References:
@@ -81,15 +83,25 @@ sudo modprobe nvme
 sudo modprobe nvme-tcp
 
 # list targets available on server_ip
-# you can't use domain name, you should resolve it to ip
+# on some systems you can't use domain name, you should resolve it to ip
+server_ip=
 sudo nvme discover --transport tcp --traddr $server_ip -s 4420
 
+subnqn=nqn.2025-01.be.cloudns.meoe:b2788:nas-tulip:pvc-73380965-6558-41bf-ad2f-d109958609ff
 sudo nvme connect --transport tcp --traddr $server_ip --trsvcid 4420 --nr-io-queues 4 --nqn $subnqn
 
+sudo nvme --help
+sudo nvme list -v -o json | jq
 sudo nvme list
+sudo nvme list-secondary
 sudo nvme list-subsys
+sudo nvme list-subsys -o json
 
-sudo nvme disconnect -n $subnqn
+sudo nvme ns-rescan /dev/nvme0
+sudo nvme ns-rescan /dev/nvme0n1
+
+sudo nvme disconnect --help
+sudo nvme disconnect --nqn $subnqn
 
 ```
 

@@ -84,14 +84,9 @@ sudo systemctl enable --now nvmet.service
 sudo systemctl status nvmet.service
 
 # create a tcp port listening on all IPs on port 4420
-
- sudo nvmetcli << EOF
-cd /ports
-create 1
-cd 1
-set addr adrfam=ipv4 trtype=tcp traddr=0.0.0.0 trsvcid=4420
-EOF
-echo saveconfig /etc/nvmet/config.json | sudo nvmetcli
+echo '/ports create 1' | sudo nvmetcli
+echo '/ports/1 set addr adrfam=ipv4 trtype=tcp traddr=0.0.0.0 trsvcid=4421' | sudo nvmetcli
+sudo nvmetcli save /etc/nvmet/config.json
 
 # interactive shell
 sudo nvmetcli
@@ -142,7 +137,15 @@ sudo cat /etc/exports
 ls /etc/exports.d/*
 sudo cat /etc/exports.d/*
 
+# softreval
+sudo mount -v -t nfs example.com:/nfs-mount /mnt/test-nfs-1 -o timeo=10,retrans=0,softerr,lookupcache=positive,retry=0,actimeo=1,nfsvers=3
+sudo mount -v -t nfs example.com:/nfs-mount /mnt/test-nfs-2 -o timeo=10,retrans=0,softerr,lookupcache=positive,retry=0,actimeo=1,nosoftreval,nfsvers=3
+sudo mount -v -t nfs example.com:/nfs-mount /mnt/test-nfs-1 -o timeo=10,retrans=1,softerr,lookupcache=positive,retry=0,actimeo=1,nfsvers=4.2,clientaddr=0.0.0.0,nconnect=2,max_connect=16,trunkdiscovery
+sudo mount -v -t nfs example.com:/nfs-mount /mnt/test-nfs-2 -o timeo=10,retrans=1,softerr,lookupcache=positive,retry=0,actimeo=1,nfsvers=4.2,clientaddr=0.0.0.0,nconnect=2,max_connect=16,trunkdiscovery
+
 ```
+
+When NFS server goes down, all operations seems to hang for 2 minutes, and then it takes ~15 seconds for `ls`, and ~4 seconds for `touch`.
 
 Additional info:
 - https://docs.oracle.com/cd/E23824_01/html/821-1448/gayne.html

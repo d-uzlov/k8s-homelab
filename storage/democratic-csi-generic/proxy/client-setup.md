@@ -26,9 +26,22 @@ The first linux kernel release to include it is 6.16.
 sudo apt-get -y install open-iscsi
 
 # print detailed info about sessions
+sudo iscsiadm --mode session
+sudo iscsiadm --mode session --print 3
 sudo iscsiadm --mode session -P 3
 # disconnect session
 sudo iscsiadm -m node -T share_iqn -p address:port -u
+
+server_address=
+sudo iscsiadm --mode discoverydb --type sendtargets --portal $server_address --discover
+sudo iscsiadm --mode discovery --type sendtargets --portal $server_address
+sudo iscsiadm --mode node
+# connect
+sudo iscsiadm --mode node --targetname $iqn --portal $server_address --login
+# show all options for target
+sudo iscsiadm --mode node --targetname $iqn --portal $server_address
+# disconnect
+sudo iscsiadm --mode node --targetname $iqn --portal $server_address --logout
 
 ```
 

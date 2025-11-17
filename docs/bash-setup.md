@@ -135,18 +135,31 @@ function timer_stop {
   unset timer_start
 }
 
-term_reset="$(tput sgr0)"
-# term_reset='\[\e[0m\]'
-term_bold="$(tput bold)"
-term_dim="$(tput dim)"
-term_underscore="$(tput smul)"
-term_red="$(tput setaf 1)"
-term_green="$(tput setaf 2)"
-term_yellow="$(tput setaf 3)"
-term_magenta="$(tput setaf 5)"
-term_cyan="$(tput setaf 6)"
-term_white="$(tput setaf 7)"
-term_standout="$(tput smso)"
+if $(which tput); then
+  term_reset="$(tput sgr0)"
+  term_bold="$(tput bold)"
+  term_dim="$(tput dim)"
+  term_underscore="$(tput smul)"
+  term_red="$(tput setaf 1)"
+  term_green="$(tput setaf 2)"
+  term_yellow="$(tput setaf 3)"
+  term_magenta="$(tput setaf 5)"
+  term_cyan="$(tput setaf 6)"
+  term_white="$(tput setaf 7)"
+  term_standout="$(tput smso)"
+else
+  term_reset='\[\e[0m\]'
+  term_bold='\[\e[1m\]'
+  term_dim='\[\e[2m\]'
+  term_underscore='\[\e[4m\]'
+  term_red='\[\e[31m\]'
+  term_green='\[\e[32m\]'
+  term_yellow='\[\e[33m\]'
+  term_magenta='\[\e[35m\]'
+  term_cyan='\[\e[36m\]'
+  term_white='\[\e[97m\]'
+  term_standout='\[\e[3m\]'
+fi
 
 function __prompt_command() {
   # $? check needs to be the first command
@@ -197,6 +210,8 @@ function before_command() {
 trap 'before_command' DEBUG
 PROMPT_COMMAND=__prompt_command
 EOF
+
+# ls foo 2> >(sed 's/^/stderr: /')
 
 ```
 

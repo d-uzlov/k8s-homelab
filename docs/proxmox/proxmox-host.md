@@ -219,7 +219,7 @@ Run on the target system:
 ```bash
 # install dependencies
 curl https://sh.rustup.rs -sSf | sh
-# reload env before runnenig the next command
+# reload env before running the next command
 cargo install uefisettings
 uefisettings
 sudo $(which uefisettings)
@@ -241,7 +241,7 @@ ssh $node sudo -S $bin hii show-ifr > ./docs/proxmox/env/$node-uefi-forms.log
 
 References:
 - https://github.com/linuxboot/uefisettings
-- It seems like currently you can't change any important settings (in 2024Q2):
+- It seems like currently you can't change any important settings (in 2025Q3):
 - - https://github.com/linuxboot/uefisettings/issues/2
 
 # ACME

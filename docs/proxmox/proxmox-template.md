@@ -76,7 +76,7 @@ virt-customize -a disk.raw \
   --run ~/cloud-scripts/init-user-skel.sh
 
 # clean files created during customization
-virt-customize -a disk.raw --run ~/cloud-scripts/image-cleanup.sh --truncate /etc/hostname --truncate /etc/machine-id
+virt-customize -a disk.raw --run ~/cloud-scripts/image-cleanup.sh --truncate /etc/hostname --truncate /etc/machine-id --truncate /etc/nvme/hostid
 
 ```
 
@@ -101,6 +101,8 @@ sudo virt-customize -a /dev/zvol/rpool/data/$disk_name \
   --copy-in ~/cloud-scripts/cloud-systemd/cloud-boot.service:/etc/systemd/system/ \
   --run-command 'sudo systemctl enable cloud-boot.service' \
   --run ~/cloud-scripts/init-user-skel.sh
+
+sudo virt-customize -a /dev/zvol/rpool/data/$disk_name --run ~/cloud-scripts/image-cleanup.sh --truncate /etc/hostname --truncate /etc/machine-id --truncate /etc/nvme/hostid
 
 ```
 
