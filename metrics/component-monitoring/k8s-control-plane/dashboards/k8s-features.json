@@ -40,24 +40,122 @@
               "viz": false
             },
             "insertNulls": false,
-            "lineWidth": 0,
+            "lineWidth": 3,
             "spanNulls": false
           },
           "mappings": [
             {
               "options": {
                 "0": {
-                  "color": "blue",
+                  "color": "#5795f280",
                   "index": 0,
                   "text": "disabled"
                 },
                 "1": {
-                  "color": "green",
+                  "color": "#73bf6980",
                   "index": 1,
                   "text": "enabled"
                 },
                 "2": {
-                  "color": "orange",
+                  "color": "#ff983080",
+                  "index": 2,
+                  "text": "mixed"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 14,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 4,
+      "maxDataPoints": 250,
+      "options": {
+        "alignValue": "center",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "perPage": 15,
+        "rowHeight": 0.9,
+        "showValue": "auto",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(avg by(name) (avg_over_time(kubernetes_feature_enabled{name=~\"$feature\", instance=~\"$instance\"}[$__interval])) == 0)\r\nor\r\n(avg by(name) (avg_over_time(kubernetes_feature_enabled{name=~\"$feature\", instance=~\"$instance\"}[$__interval])) == 1)\r\nor\r\n(avg by(name) (avg_over_time(kubernetes_feature_enabled{name=~\"$feature\", instance=~\"$instance\"}[$__interval])) * 0 + 2)",
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "feature state (summary over instances)",
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisPlacement": "auto",
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 3,
+            "spanNulls": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "#5795f280",
+                  "index": 0,
+                  "text": "disabled"
+                },
+                "1": {
+                  "color": "#73bf6980",
+                  "index": 1,
+                  "text": "enabled"
+                },
+                "2": {
+                  "color": "#ff983080",
                   "index": 2,
                   "text": "mixed"
                 }
@@ -81,9 +179,10 @@
         "h": 32,
         "w": 12,
         "x": 0,
-        "y": 0
+        "y": 14
       },
-      "id": 4,
+      "id": 5,
+      "maxDataPoints": 250,
       "options": {
         "alignValue": "center",
         "legend": {
@@ -108,14 +207,14 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "(avg by(name) (avg_over_time(kubernetes_feature_enabled{name=~\"$feature\", instance=~\"$instance\"}[$__interval])) == 0)\r\nor\r\n(avg by(name) (avg_over_time(kubernetes_feature_enabled{name=~\"$feature\", instance=~\"$instance\"}[$__interval])) == 1)\r\nor\r\n(avg by(name) (avg_over_time(kubernetes_feature_enabled{name=~\"$feature\", instance=~\"$instance\"}[$__interval])) * 0 + 2)",
+          "expr": "max by(human_name) (label_join(\r\n  (avg by(instance, job, name) (avg_over_time(kubernetes_feature_enabled{name=~\"$feature\", instance=~\"$instance\"}[$__interval])) == 0)\r\n  or\r\n  (avg by(instance, job, name) (avg_over_time(kubernetes_feature_enabled{name=~\"$feature\", instance=~\"$instance\"}[$__interval])) == 1)\r\n  or\r\n  (avg by(instance, job, name) (avg_over_time(kubernetes_feature_enabled{name=~\"$feature\", instance=~\"$instance\"}[$__interval])) * 0 + 2)\r\n, \"human_name\", \": \", \"name\", \"job\", \"instance\"\r\n))",
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "feature state",
+      "title": "feature state (instance details)",
       "type": "state-timeline"
     },
     {
@@ -300,6 +399,22 @@
                 "value": {
                   "type": "color-background"
                 }
+              },
+              {
+                "id": "custom.width",
+                "value": 113
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "stage"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 96
               }
             ]
           }
@@ -309,7 +424,7 @@
         "h": 32,
         "w": 12,
         "x": 12,
-        "y": 0
+        "y": 14
       },
       "id": 3,
       "options": {
@@ -326,7 +441,7 @@
         "sortBy": [
           {
             "desc": false,
-            "displayName": "name"
+            "displayName": "job"
           }
         ]
       },
@@ -350,10 +465,6 @@
       "title": "features",
       "transformations": [
         {
-          "id": "merge",
-          "options": {}
-        },
-        {
           "id": "organize",
           "options": {
             "excludeByName": {
@@ -363,12 +474,11 @@
             "includeByName": {},
             "indexByName": {
               "Time": 0,
-              "Value #apiserver": 3,
-              "Value #kube-controller-manager": 5,
-              "Value #kube-scheduler": 4,
-              "Value #kubelet": 2,
-              "name": 6,
-              "node": 1
+              "Value": 5,
+              "instance": 2,
+              "job": 3,
+              "name": 1,
+              "stage": 4
             },
             "renameByName": {
               "Value #apiserver": "apiserver",
@@ -452,7 +562,7 @@
             "value": ""
           }
         ],
-        "query": "vertical",
+        "query": "",
         "type": "textbox"
       },
       {
@@ -485,5 +595,5 @@
   "timezone": "browser",
   "title": "k8s features",
   "uid": "edocfeat4ojmmkar5sc",
-  "version": 5
+  "version": 3
 }

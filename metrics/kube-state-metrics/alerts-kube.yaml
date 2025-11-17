@@ -60,12 +60,12 @@ spec:
   groups:
   - name: alert-ksm-kube-app-status
     rules:
-    - alert: KubePodCrashLooping
+    - alert: KubePodContainerCrashLooping
       annotations:
         description: >-
-          {{ $labels.namespace }}/{{ $labels.pod }}
+          {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }}
         summary: Pod is in state CrashLoopBackOff
-      expr: max_over_time(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}[5m]) > 0
+      expr: avg_over_time(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}[5m]) > 0.5
       for: 5m
       labels:
         severity: warning
@@ -265,7 +265,7 @@ spec:
         (
           time()
           -
-          max by (namespace, job_name, cluster) (
+          max by(namespace, job_name, cluster) (
             kube_job_status_start_time
             and
             kube_job_status_active > 0

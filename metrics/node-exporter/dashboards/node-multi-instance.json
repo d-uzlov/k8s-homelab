@@ -479,7 +479,7 @@
         "y": 18
       },
       "id": 328,
-      "maxDataPoints": 500,
+      "maxDataPoints": 250,
       "options": {
         "alignValue": "left",
         "legend": {
@@ -572,7 +572,7 @@
         "y": 30
       },
       "id": 333,
-      "maxDataPoints": 500,
+      "maxDataPoints": 250,
       "options": {
         "alignValue": "left",
         "legend": {
@@ -711,7 +711,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(location, instance) (\r\n  (node_time_seconds{instance=~\"$instance\"} - timestamp(node_time_seconds))\r\n)\r\nor\r\nmax by(location, instance) (\r\n  (windows_time_current_timestamp_seconds{instance=~\"$instance\"} - timestamp(windows_time_current_timestamp_seconds))\r\n)",
+          "expr": "max by(location, instance) (\r\n  (node_time_seconds{instance=~\"$instance\"} - timestamp(node_time_seconds{instance=~\"$instance\"}))\r\n)\r\nor\r\nmax by(location, instance) (\r\n  (windows_time_current_timestamp_seconds{instance=~\"$instance\"} - timestamp(windows_time_current_timestamp_seconds{instance=~\"$instance\"}))\r\n)",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{location}}/{{instance}}",
@@ -1054,7 +1054,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(location, instance) (avg_over_time(instance_mode:node_cpu_seconds:irate{instance=~\"$instance\", mode!~\"idle|steal\"}[$__interval]) / on(instance) group_left() node:cpu_cores)",
+          "expr": "sum by(location, instance) (avg_over_time(instance_mode:node_cpu_seconds:irate{instance=~\"$instance\", mode!~\"idle|steal\"}[$__interval]) / on(instance) group_left() node:cpu_cores{instance=~\"$instance\"})",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -1069,7 +1069,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(location, instance) (avg_over_time(instance_mode:windows_cpu_time:irate{instance=~\"$instance\", mode!~\"idle|steal\"}[$__interval]) / on(instance) group_left() node:cpu_cores)",
+          "expr": "sum by(location, instance) (avg_over_time(instance_mode:windows_cpu_time:irate{instance=~\"$instance\", mode!~\"idle|steal\"}[$__interval]) / on(instance) group_left() node:cpu_cores{instance=~\"$instance\"})",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -1175,7 +1175,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(location, instance) (\r\n(\r\nnode_memory_MemTotal_bytes{instance=~\"$instance\"}\r\n-\r\nnode_memory_MemFree_bytes\r\n-\r\n(\r\n    node_memory_Cached_bytes\r\n    +\r\n    node_memory_Buffers_bytes\r\n    +\r\n    node_memory_SReclaimable_bytes\r\n)\r\n- (node_zfs_arc_size or node_memory_MemTotal_bytes * 0)\r\n) / node_memory_MemTotal_bytes\r\n)",
+          "expr": "max by(location, instance) (\r\n(\r\nnode_memory_MemTotal_bytes{instance=~\"$instance\"}\r\n- node_memory_MemFree_bytes{instance=~\"$instance\"}\r\n- node_memory_Cached_bytes{instance=~\"$instance\"}\r\n- node_memory_Buffers_bytes{instance=~\"$instance\"}\r\n- node_memory_SReclaimable_bytes{instance=~\"$instance\"}\r\n- (node_zfs_arc_size{instance=~\"$instance\"} or node_memory_MemTotal_bytes{instance=~\"$instance\"} * 0)\r\n) / node_memory_MemTotal_bytes{instance=~\"$instance\"}\r\n)",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{location}}/{{instance}}",
@@ -1189,7 +1189,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(location, instance) (\r\n(\r\nnode_memory_size_bytes{instance=~\"$instance\"}\r\n-\r\nnode_memory_free_bytes\r\n-\r\n(\r\n    node_memory_inactive_bytes\r\n    +\r\n    node_memory_cache_bytes\r\n    +\r\n    node_memory_buffer_bytes\r\n)\r\n) / node_memory_size_bytes\r\n)",
+          "expr": "max by(location, instance) (\r\n(\r\n+ node_memory_size_bytes{instance=~\"$instance\"}\r\n- node_memory_free_bytes{instance=~\"$instance\"}\r\n- node_memory_cache_bytes{instance=~\"$instance\"}\r\n- node_memory_buffer_bytes{instance=~\"$instance\"}\r\n) / node_memory_size_bytes{instance=~\"$instance\"}\r\n)",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -1204,7 +1204,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(location, instance) (\r\n(\r\nwindows_memory_physical_total_bytes{instance=~\"$instance\"}\r\n-\r\nwindows_memory_available_bytes\r\n) / windows_memory_physical_total_bytes\r\n)",
+          "expr": "max by(location, instance) (\r\n(\r\n+ windows_memory_physical_total_bytes{instance=~\"$instance\"}\r\n- windows_memory_available_bytes{instance=~\"$instance\"}\r\n) / windows_memory_physical_total_bytes{instance=~\"$instance\"}\r\n)",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -2504,5 +2504,5 @@
   "timezone": "browser",
   "title": "Node  / Multi-instance overview",
   "uid": "rYdddlPWkmi",
-  "version": 0
+  "version": 3
 }

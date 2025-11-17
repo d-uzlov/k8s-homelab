@@ -11,7 +11,7 @@ location_tag=
 
  cat << EOF > ./metrics/cadvisor/cadvisor-k8s/env/patch-location-tag.yaml
 - op: add
-  path: /spec/endpoints/0/relabelings/-
+  path: /spec/endpoints/0/relabelings/0
   value:
     targetLabel: location
     replacement: $clusterName

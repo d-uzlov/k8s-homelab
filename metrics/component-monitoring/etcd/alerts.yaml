@@ -154,12 +154,13 @@ spec:
       annotations:
         description: >-
           {{ $labels.server_version }}:
-          {{ $value }} versions
+          {{ $value }} instances
         summary: etcd cluster is running several different version
       expr: |-
-        count without(instance) (etcd_server_version)
+        # need to use explicit last_over_time because instant queries are equivalent to last_over_time([5m])
+        count without(instance) (last_over_time(etcd_server_version[1m]))
         and ignoring(server_version)
-        (count without(server_version) (count without(instance) (etcd_server_version)) != 1)
+        (count without(server_version) (count without(instance) (last_over_time(etcd_server_version[1m]))) != 1)
       for: 1m
       labels:
         severity: warning

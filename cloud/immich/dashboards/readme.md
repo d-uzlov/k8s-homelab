@@ -5,7 +5,6 @@
 
  # force all panels to use the default data source min interval
  sed -i '/\"interval\":/d' ./cloud/immich/dashboards/*.json
- sed -i 's/\"version\"\: [0-9]+/\"version\": 0/' ./cloud/immich/dashboards/*.json
  sed -i '/\"pluginVersion\":/d' ./cloud/immich/dashboards/*.json
  # avoid id collisions
  sed -i 's/^  \"id\": .*,/  \"id\": null,/' ./cloud/immich/dashboards/*.json

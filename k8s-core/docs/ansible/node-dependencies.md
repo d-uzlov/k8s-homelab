@@ -63,6 +63,20 @@ chmod +x ./k8s-core/docs/ansible/env/$kubelet_file
 # chmod +x ./k8s-core/docs/ansible/env/$kubeadm_file
 # ./k8s-core/docs/ansible/env/$kubeadm_file version --output short
 
+containerd config default > ./k8s-core/docs/ansible/containerd-config.toml
+
+```
+
+Edit containerd config:
+
+```toml
+
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+SystemdCgroup = true
+
+[plugins."io.containerd.cri.v1.images".registry]
+config_path = "/etc/containerd/certs.d"
+
 ```
 
 # ansible inventory

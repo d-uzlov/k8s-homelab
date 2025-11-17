@@ -1914,7 +1914,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(node_cpu_seconds_total{instance=\"$instance\", mode=~\"system|user|nice|iowait|softirq|irq\"}[$__rate_interval]))",
+          "expr": "sum(rate(node_cpu_seconds_total{instance=\"$instance\", mode=~\"system|user|nice|iowait|softirq|irq|interrupt\"}[$__rate_interval]))",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -2051,7 +2051,7 @@
           "expr": "sum by(device) (rate(node_network_receive_bytes_total{instance=\"$instance\"}[$__rate_interval]))",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "{{device}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "A",
           "step": 240
@@ -2198,7 +2198,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max(\r\navg_over_time(node_memory_MemTotal_bytes{instance=\"$instance\"}[$__interval])\r\n-\r\navg_over_time(node_memory_MemFree_bytes{instance=\"$instance\"}[$__interval])\r\n-\r\navg_over_time(node_memory_Cached_bytes{instance=\"$instance\"}[$__interval])\r\n-\r\navg_over_time(node_memory_Buffers_bytes{instance=\"$instance\"}[$__interval])\r\n-\r\navg_over_time(node_memory_SReclaimable_bytes{instance=\"$instance\"}[$__interval])\r\n)",
+          "expr": "# linux\r\nmax(\r\n+ avg_over_time(node_memory_MemTotal_bytes{instance=\"$instance\"}[$__interval])\r\n- avg_over_time(node_memory_MemFree_bytes{instance=\"$instance\"}[$__interval])\r\n- avg_over_time(node_memory_Cached_bytes{instance=\"$instance\"}[$__interval])\r\n- avg_over_time(node_memory_Buffers_bytes{instance=\"$instance\"}[$__interval])\r\n- avg_over_time(node_memory_SReclaimable_bytes{instance=\"$instance\"}[$__interval])\r\n)\r\nor\r\n# freebsd\r\nmax(\r\n+ avg_over_time(node_memory_size_bytes{instance=\"$instance\"}[$__interval])\r\n- avg_over_time(node_memory_free_bytes{instance=\"$instance\"}[$__interval])\r\n- avg_over_time(node_memory_cache_bytes{instance=\"$instance\"}[$__interval])\r\n- avg_over_time(node_memory_buffer_bytes{instance=\"$instance\"}[$__interval])\r\n)",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -2213,7 +2213,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max(\r\navg_over_time(node_memory_Cached_bytes{instance=\"$instance\"}[$__interval])\r\n+\r\navg_over_time(node_memory_Buffers_bytes{instance=\"$instance\"}[$__interval])\r\n+\r\navg_over_time(node_memory_SReclaimable_bytes{instance=\"$instance\"}[$__interval])\r\n)",
+          "expr": "# linux\r\nmax(\r\n+ avg_over_time(node_memory_Cached_bytes{instance=\"$instance\"}[$__interval])\r\n+ avg_over_time(node_memory_Buffers_bytes{instance=\"$instance\"}[$__interval])\r\n+ avg_over_time(node_memory_SReclaimable_bytes{instance=\"$instance\"}[$__interval])\r\n)\r\nor\r\n# freebsd\r\nmax(\r\n+ avg_over_time(node_memory_cache_bytes{instance=\"$instance\"}[$__interval])\r\n+ avg_over_time(node_memory_buffer_bytes{instance=\"$instance\"}[$__interval])\r\n)",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "cache",
@@ -2227,7 +2227,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max(\r\navg_over_time(node_memory_MemFree_bytes{instance=\"$instance\"}[$__interval])\r\n)",
+          "expr": "# linux\r\nmax(avg_over_time(node_memory_MemFree_bytes{instance=\"$instance\"}[$__interval]))\r\nor\r\n# freebsd\r\nmax(avg_over_time(node_memory_free_bytes{instance=\"$instance\"}[$__interval]))",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "free",
@@ -2241,7 +2241,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max(\r\navg_over_time(node_memory_MemTotal_bytes{instance=\"$instance\"}[$__interval])\r\n)",
+          "expr": "# linux\r\nmax(avg_over_time(node_memory_MemTotal_bytes{instance=\"$instance\"}[$__interval]))\r\nor\r\n# freebsd\r\nmax(avg_over_time(node_memory_size_bytes{instance=\"$instance\"}[$__interval]))",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -2348,7 +2348,7 @@
           "expr": "sum by(device) (rate(node_network_transmit_bytes_total{instance=\"$instance\"}[$__rate_interval]))",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "{{device}} ",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "B",
           "step": 240
@@ -2572,12 +2572,7 @@
               "id": "byName",
               "options": "Mounted on"
             },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 260
-              }
-            ]
+            "properties": []
           },
           {
             "matcher": {
@@ -2639,6 +2634,21 @@
               {
                 "id": "min",
                 "value": 0
+              },
+              {
+                "id": "custom.width",
+                "value": 253
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*/"
+            },
+            "properties": [
+              {
+                "id": "filterable"
               }
             ]
           }
@@ -2661,14 +2671,21 @@
           ],
           "show": false
         },
-        "showHeader": true
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Mounted on"
+          }
+        ]
       },
       "targets": [
         {
           "datasource": {
             "uid": "${prometheus_datasource}"
           },
-          "expr": "max by (mountpoint) (node_filesystem_size_bytes{instance=\"$instance\", fstype!=\"\", mountpoint!=\"\"})\n",
+          "editorMode": "code",
+          "expr": "max by(mountpoint) (node_filesystem_size_bytes{instance=\"$instance\", fstype!=\"\", mountpoint!=\"\"})",
           "format": "table",
           "instant": true,
           "intervalFactor": 1,
@@ -2679,7 +2696,8 @@
           "datasource": {
             "uid": "${prometheus_datasource}"
           },
-          "expr": "max by (mountpoint) (node_filesystem_avail_bytes{instance=\"$instance\", fstype!=\"\", mountpoint!=\"\"})\n",
+          "editorMode": "code",
+          "expr": "max by(mountpoint) (node_filesystem_avail_bytes{instance=\"$instance\", fstype!=\"\", mountpoint!=\"\"})",
           "format": "table",
           "instant": true,
           "intervalFactor": 1,
@@ -2721,10 +2739,19 @@
           "options": {
             "alias": "Used",
             "binary": {
-              "left": "Value #A (lastNotNull)",
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value #A (lastNotNull)"
+                }
+              },
               "operator": "-",
-              "reducer": "sum",
-              "right": "Value #B (lastNotNull)"
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value #B (lastNotNull)"
+                }
+              }
             },
             "mode": "binary",
             "reduce": {
@@ -2737,10 +2764,19 @@
           "options": {
             "alias": "Used, %",
             "binary": {
-              "left": "Used",
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Used"
+                }
+              },
               "operator": "/",
-              "reducer": "sum",
-              "right": "Value #A (lastNotNull)"
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value #A (lastNotNull)"
+                }
+              }
             },
             "mode": "binary",
             "reduce": {
@@ -2752,23 +2788,19 @@
           "id": "organize",
           "options": {
             "excludeByName": {},
-            "indexByName": {},
+            "includeByName": {},
+            "indexByName": {
+              "Used": 3,
+              "Used, %": 4,
+              "Value #A (lastNotNull)": 1,
+              "Value #B (lastNotNull)": 2,
+              "mountpoint": 0
+            },
             "renameByName": {
               "Value #A (lastNotNull)": "Size",
               "Value #B (lastNotNull)": "Available",
               "mountpoint": "Mounted on"
             }
-          }
-        },
-        {
-          "id": "sortBy",
-          "options": {
-            "fields": {},
-            "sort": [
-              {
-                "field": "Mounted on"
-              }
-            ]
           }
         }
       ],
@@ -2866,7 +2898,7 @@
           "expr": "max by(mountpoint) (node_filesystem_size_bytes{instance=\"$instance\",device!~'rootfs'})",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "{{mountpoint}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "A",
           "step": 240
@@ -2970,7 +3002,7 @@
           "expr": "1 - max by(mountpoint) ((node_filesystem_avail_bytes{instance=\"$instance\",device!~'rootfs'}) / node_filesystem_size_bytes{instance=\"$instance\",device!~'rootfs'})",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "{{mountpoint}}",
+          "legendFormat": "__auto",
           "range": true,
           "refId": "A",
           "step": 240
@@ -3203,7 +3235,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(node_forks_total{instance=\"$instance\"}[$__rate_interval]))",
+          "expr": "# linux\r\nsum(rate(node_forks_total{instance=\"$instance\"}[$__rate_interval]))\r\nor\r\n# freebsd\r\nsum(rate(node_exec_forks_total{instance=\"$instance\"}[$__rate_interval]))",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -3410,10 +3442,10 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(node_context_switches_total{instance=\"$instance\"}[$__rate_interval]))",
+          "expr": "# linux\r\nsum(rate(node_context_switches_total{instance=\"$instance\"}[$__rate_interval]))\r\nor\r\n# freebsd\r\nsum(rate(node_exec_context_switches_total{instance=\"$instance\"}[$__rate_interval]))",
           "format": "time_series",
           "intervalFactor": 1,
-          "legendFormat": "Context switches",
+          "legendFormat": "context switches",
           "range": true,
           "refId": "A",
           "step": 240
@@ -3424,13 +3456,73 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(node_intr_total{instance=\"$instance\"}[$__rate_interval]))",
+          "expr": "# linux\r\nsum(rate(node_intr_total{instance=\"$instance\"}[$__rate_interval]))",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
-          "legendFormat": "Interrupts",
+          "legendFormat": "interrupts",
           "range": true,
           "refId": "B",
+          "step": 240
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "# freebsd\r\nsum(rate(node_exec_device_interrupts_total{instance=\"$instance\"}[$__rate_interval]))",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 1,
+          "legendFormat": "hw interrupts",
+          "range": true,
+          "refId": "C",
+          "step": 240
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "# freebsd\r\nsum(rate(node_exec_software_interrupts_total{instance=\"$instance\"}[$__rate_interval]))",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 1,
+          "legendFormat": "sw interrupts",
+          "range": true,
+          "refId": "D",
+          "step": 240
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "# freebsd\r\nsum(rate(node_exec_system_calls_total{instance=\"$instance\"}[$__rate_interval]))",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 1,
+          "legendFormat": "syscalls",
+          "range": true,
+          "refId": "E",
+          "step": 240
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "# freebsd\r\nsum(rate(node_exec_traps_total{instance=\"$instance\"}[$__rate_interval]))",
+          "format": "time_series",
+          "hide": false,
+          "intervalFactor": 1,
+          "legendFormat": "traps",
+          "range": true,
+          "refId": "F",
           "step": 240
         }
       ],
