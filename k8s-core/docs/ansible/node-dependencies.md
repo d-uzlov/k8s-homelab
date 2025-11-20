@@ -14,7 +14,7 @@ mkdir -p ./k8s-core/docs/ansible/env/
 # Check new versions here:
 # https://github.com/containerd/containerd/releases
 
-containerd_version=2.1.4
+containerd_version=2.2.0
 containerd_archive=containerd-$containerd_version-linux-amd64.tar.gz
 containerd_url=https://github.com/containerd/containerd/releases/download/v$containerd_version/$containerd_archive
 
@@ -48,20 +48,6 @@ tar --verbose --extract --directory ./k8s-core/docs/ansible/env/crictl-$crictl_v
 ./k8s-core/docs/ansible/env/crictl-$crictl_version/crictl --version
 
 # sudo crictl config --set runtime-endpoint=unix:///run/containerd/containerd.sock --set image-endpoint=unix:///run/containerd/containerd.sock
-
-kubelet_version=v1.34.1
-kubelet_file=kubelet-$kubelet_version.amd64
-
-wget https://dl.k8s.io/$kubelet_version/bin/linux/amd64/kubelet -O ./k8s-core/docs/ansible/env/$kubelet_file
-chmod +x ./k8s-core/docs/ansible/env/$kubelet_file
-./k8s-core/docs/ansible/env/$kubelet_file --version
-
-# kubeadm_version=v1.34.1
-# kubeadm_file=kubeadm-$kubeadm_version.amd64
-
-# wget https://dl.k8s.io/$kubeadm_version/bin/linux/amd64/kubeadm -O ./k8s-core/docs/ansible/env/$kubeadm_file
-# chmod +x ./k8s-core/docs/ansible/env/$kubeadm_file
-# ./k8s-core/docs/ansible/env/$kubeadm_file version --output short
 
 containerd config default > ./k8s-core/docs/ansible/containerd-config.toml
 

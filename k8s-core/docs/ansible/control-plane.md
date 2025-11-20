@@ -116,9 +116,12 @@ control-plane-1:
   metrics_tls_name: control-plane-1.example.com
   # cluster name is used to separate folder structure of different clusters
   k8s_cluster_name: example-cluster
+  k8s_image_apiserver: registry.k8s.io/kube-apiserver:v1.34.2
+  k8s_image_scheduler: registry.k8s.io/kube-scheduler:v1.34.2
+  k8s_image_controller: registry.k8s.io/kube-controller-manager:v1.34.2
   k8s_apiserver_advertise_address: 10.3.1.2
   k8s_apiserver_etcd_endpoints: https://etcd1.example.com.:2379,https://etcd2.example.com.:2379,https://etcd3.example.com.:2379
-  k8s_apiserver_loadbalancer_endpoint: k8s-example-cp.example.com
+  k8s_apiserver_loadbalancer_endpoint: k8s-cp.example.com
   k8s_cluster_service_cidr: 10.202.0.0/16
   k8s_cluster_kubernetes_svc_ip: 10.202.0.1
   # pod CIDR may be meaningless depending on your CNI choice and config
@@ -132,9 +135,16 @@ control-plane-1:
 ```
 
 Note that each control plane host must have its own `k8s_apiserver_advertise_address`,
-but all other options will be shared between hosts in a cluster.
+but all other options should be shared between hosts in a cluster.
 
 You will need to re-run the playbook whenever control plane host IP is changed.
+
+`k8s_apiserver_loadbalancer_endpoint` is how external workloads can access apiserver. This includes CNI, because they can't use cluster network.
+Here we primarily use it to fill the list of alt names for apiserver certificate.
+Additionally, controller-manager and scheduler currently also use it, but it's optional and can be changed later.
+
+`k8s_apiserver_advertise_address` is used to fill the list of available endpoints for `kubernetes.default` service,
+which is used by applications running inside tbe cluster.
 
 # deploy
 
@@ -145,16 +155,13 @@ First make sure that each host has docker:
 
 ansible-inventory --graph k8s_control_plane
 
-ansible-playbook ./k8s-core/docs/ansible/control-plane-apiserver-playbook.yaml --limit control-plane-1
-ansible-playbook ./k8s-core/docs/ansible/control-plane-scheduler-playbook.yaml --limit control-plane-1
+ansible-playbook ./k8s-core/docs/ansible/control-plane-apiserver-playbook.yaml          --limit control-plane-1
+ansible-playbook ./k8s-core/docs/ansible/control-plane-scheduler-playbook.yaml          --limit control-plane-1
 ansible-playbook ./k8s-core/docs/ansible/control-plane-controller_manager-playbook.yaml --limit control-plane-1
 
 ansible-playbook ./k8s-core/docs/ansible/control-plane-apiserver-playbook.yaml
 ansible-playbook ./k8s-core/docs/ansible/control-plane-scheduler-playbook.yaml
 ansible-playbook ./k8s-core/docs/ansible/control-plane-controller_manager-playbook.yaml
-
-# this allows apiserver to talk to kubelets
-kl create clusterrolebinding system:cluster-admins --clusterrole cluster-admin --group cluster-admins
 
 ```
 
@@ -176,12 +183,15 @@ ansible-playbook ./k8s-core/docs/ansible/control-plane-teardown-playbook.yaml --
 # Next actions
 
 - generate admin kubeconfig
+- create admin kubeconfig: not covered yet
+- configure local kubectl: [kubectl](../kubectl-tips.md)
+- setup ACLs for kubelets: `kl create clusterrolebinding system:cluster-admins --clusterrole cluster-admin --group cluster-admins`
 - [join worker nodes](./node.md)
 - [CSR approver](../../kubelet-csr-approver/readme.md)
 - install CoreDNS (not covered here yet)
-- Install CNI
+- install CNI
 - - [cilium](../../../network/cilium/readme.md) (recommended)
-- Advanced auth: [auth-oidc.md](../auth-oidc.md)
+- advanced auth: [auth-oidc.md](../auth-oidc.md)
 
 # upgrade
 

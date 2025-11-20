@@ -5,6 +5,17 @@
 - Have cluster CA key in local filesystem
 - [node dependencies](./node-dependencies.md)
 
+```bash
+
+kubelet_version=v1.34.2
+kubelet_file=kubelet-$kubelet_version.amd64
+
+wget https://dl.k8s.io/$kubelet_version/bin/linux/amd64/kubelet -O ./k8s-core/docs/ansible/env/$kubelet_file
+chmod +x ./k8s-core/docs/ansible/env/$kubelet_file
+./k8s-core/docs/ansible/env/$kubelet_file --version
+
+```
+
 # ansible inventory
 
 You need to add your k8s nodes into ansible inventory,
@@ -20,6 +31,7 @@ worker-1:
   k8s_apiserver_loadbalancer_endpoint: k8s-example-cp.example.com
   # must be the same as value in control plane nodes
   k8s_cluster_name: example-cluster
+  kubelet_version: v1.34.2
   # how to register node in a cluster
   # may be the same as host address, or it may be different, it's just a matter of preference
   k8s_node_name: worker-1.k8s.lan
