@@ -47,6 +47,7 @@ kl delete ns metrics-cadvisor
 
 ```bash
 
+kl exec deployments/alpine -- apk add curl
 kl exec deployments/alpine -- curl -sS http://cadvisor.metrics-cadvisor:8999/metrics > ./cadvisor.prom
 
 ```

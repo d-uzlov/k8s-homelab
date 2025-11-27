@@ -46,20 +46,28 @@ spec:
       for: 15m
       labels:
         severity: info
-    - alert: CgroupCpuThrottling
+    - alert: CgroupCpuThrottlingPeriods
       annotations:
         description: >-
           instance {{ $labels.instance }}: {{ $labels.id }}:
           {{ $value | humanizePercentage }}
-        summary: Cgroup is throttling on > 80% of scheduling periods
+        summary: Cgroup is throttling on > 20% of scheduling periods
       expr: |-
         (
-          increase(container_cpu_cfs_throttled_periods_total{namespace="", name=""}[5m])
-          /
-          increase(container_cpu_cfs_periods_total{namespace="", name=""}[5m])
-        ) > 0.8
-        # cut removed containers instantly
-        and container_cpu_cfs_throttled_periods_total{namespace="", name=""}
+          # filter /kubepods, because we only get {namespace="", name="", id="/kubepods..."} for pod-level metrics, which are likely affected by sandbox containers, which are irrelevant
+          + increase(container_cpu_cfs_throttled_periods_total{namespace="", name="", id!~"/kubepods.*"}[5m])
+          / increase(container_cpu_cfs_periods_total{namespace="", name="", id!~"/kubepods.*"}[5m])
+          # cut removed containers instantly
+          and container_cpu_cfs_throttled_periods_total{namespace="", name="", id!~"/kubepods.*"}
+        ) > 0.2
+        or (
+          + increase(container_cpu_cfs_throttled_periods_total{namespace="", name="", id!~"/kubepods.*"}[5m])
+          / increase(container_cpu_cfs_periods_total{namespace="", name="", id!~"/kubepods.*"}[5m])
+          # cut removed containers instantly
+          and container_cpu_cfs_throttled_periods_total{namespace="", name="", id!~"/kubepods.*"}
+          and ignoring(alertname, alertstate, severity)
+          ALERTS{alertname="CgroupCpuThrottlingPeriods", alertstate="firing"}
+        ) > 0.1
       for: 15m
       labels:
         severity: info
@@ -71,13 +79,14 @@ spec:
         summary: Cgroup spent >30s throttling over the last 5 minutes
       expr: |-
         (
-          increase(container_cpu_cfs_throttled_seconds_total{namespace="", name=""}[5m]) > 30
+          # filter /kubepods, because we only get {namespace="", name="", id="/kubepods..."} for pod-level metrics, which are likely affected by sandbox containers, which are irrelevant
+          increase(container_cpu_cfs_throttled_seconds_total{namespace="", name="", id!~"/kubepods.*"}[5m]) > 30
           # cut removed containers instantly
-          and container_cpu_cfs_throttled_periods_total{namespace="", name=""}
+          and container_cpu_cfs_throttled_seconds_total{namespace="", name="", id!~"/kubepods.*"}
         ) or (
-          increase(container_cpu_cfs_throttled_seconds_total{namespace="", name=""}[5m]) > 10
+          increase(container_cpu_cfs_throttled_seconds_total{namespace="", name="", id!~"/kubepods.*"}[5m]) > 10
           # cut removed containers instantly
-          and container_cpu_cfs_throttled_periods_total{namespace="", name=""}
+          and container_cpu_cfs_throttled_seconds_total{namespace="", name="", id!~"/kubepods.*"}
           and ignoring(alertname, alertstate, severity)
           ALERTS{alertname="CgroupCpuThrottlingDuration", alertstate="firing"}
         )
@@ -106,13 +115,13 @@ spec:
         summary: Container RSS + kernel memory usage is above 90% of memory limit
       expr: |-
         (
-          (container_memory_usage_bytes{namespace!="", pod!="", container!=""} - container_memory_cache{namespace!="", pod!="", container!=""}) / container_spec_memory_limit_bytes{namespace!="", pod!="", container!=""} > 0.9
-          and
-          container_spec_memory_limit_bytes != 0
+          (container_memory_usage_bytes{namespace!="", pod!="", container!=""} - container_memory_cache{namespace!="", pod!="", container!=""})
+          / (container_spec_memory_limit_bytes{namespace!="", pod!="", container!=""} != 0)
+          > 0.9
         ) or (
-          (container_memory_usage_bytes{namespace!="", pod!="", container!=""} - container_memory_cache{namespace!="", pod!="", container!=""}) / container_spec_memory_limit_bytes{namespace!="", pod!="", container!=""} > 0.8
-          and
-          container_spec_memory_limit_bytes != 0
+          (container_memory_usage_bytes{namespace!="", pod!="", container!=""} - container_memory_cache{namespace!="", pod!="", container!=""})
+          / (container_spec_memory_limit_bytes{namespace!="", pod!="", container!=""} != 0)
+          > 0.8
           and ignoring(alertname, alertstate, severity)
           ALERTS{alertname="K8sContainerMemoryAbove90", alertstate="firing"}
         )
@@ -128,13 +137,13 @@ spec:
         summary: Container RSS + kernel memory usage is above 90% of memory limit
       expr: |-
         (
-          (container_memory_usage_bytes{container_label_com_docker_compose_image!=""} - container_memory_cache{container_label_com_docker_compose_image!=""}) / container_spec_memory_limit_bytes{container_label_com_docker_compose_image!=""} > 0.9
-          and
-          container_spec_memory_limit_bytes != 0
+          (container_memory_usage_bytes{container_label_com_docker_compose_image!=""} - container_memory_cache{container_label_com_docker_compose_image!=""})
+          / (container_spec_memory_limit_bytes{container_label_com_docker_compose_image!=""} != 0)
+          > 0.9
         ) or (
-          (container_memory_usage_bytes{container_label_com_docker_compose_image!=""} - container_memory_cache{container_label_com_docker_compose_image!=""}) / container_spec_memory_limit_bytes{container_label_com_docker_compose_image!=""} > 0.8
-          and
-          container_spec_memory_limit_bytes != 0
+          (container_memory_usage_bytes{container_label_com_docker_compose_image!=""} - container_memory_cache{container_label_com_docker_compose_image!=""})
+          / (container_spec_memory_limit_bytes{container_label_com_docker_compose_image!=""} != 0)
+          > 0.8
           and ignoring(alertname, alertstate, severity)
           ALERTS{alertname="DockerContainerMemoryAbove90", alertstate="firing"}
         )
@@ -150,13 +159,13 @@ spec:
         summary: Container RSS + kernel memory usage is above 90% of memory limit
       expr: |-
         (
-          (container_memory_usage_bytes{container_label_com_docker_compose_image="", namespace="", pod=""} - container_memory_cache{container_label_com_docker_compose_image="", namespace="", pod=""}) / container_spec_memory_limit_bytes{container_label_com_docker_compose_image="", namespace="", pod=""} > 0.9
-          and
-          container_spec_memory_limit_bytes != 0
+          (container_memory_usage_bytes{container_label_com_docker_compose_image="", namespace="", pod="", id!~"/kubepods.*"} - container_memory_cache{container_label_com_docker_compose_image="", namespace="", pod="", id!~"/kubepods.*"})
+          / (container_spec_memory_limit_bytes{container_label_com_docker_compose_image="", namespace="", pod="", id!~"/kubepods.*"} != 0)
+          > 0.9
         ) or (
-          (container_memory_usage_bytes{container_label_com_docker_compose_image="", namespace="", pod=""} - container_memory_cache{container_label_com_docker_compose_image="", namespace="", pod=""}) / container_spec_memory_limit_bytes{container_label_com_docker_compose_image="", namespace="", pod=""} > 0.8
-          and
-          container_spec_memory_limit_bytes != 0
+          (container_memory_usage_bytes{container_label_com_docker_compose_image="", namespace="", pod="", id!~"/kubepods.*"} - container_memory_cache{container_label_com_docker_compose_image="", namespace="", pod="", id!~"/kubepods.*"})
+          / (container_spec_memory_limit_bytes{container_label_com_docker_compose_image="", namespace="", pod="", id!~"/kubepods.*"} != 0)
+          > 0.8
           and ignoring(alertname, alertstate, severity)
           ALERTS{alertname="CgroupContainerMemoryAbove90", alertstate="firing"}
         )
