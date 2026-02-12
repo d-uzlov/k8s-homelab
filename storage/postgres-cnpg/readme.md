@@ -21,12 +21,13 @@ helm show values cnpg/cloudnative-pg --version 0.26.0 > ./storage/postgres-cnpg/
 
 ```bash
 
-kubectl kustomize "github.com/cloudnative-pg/cloudnative-pg/config/crd?ref=v1.27.0" > ./storage/postgres-cnpg/crd.yaml
+# cnpg helm charts and main repo tags use off-by-one different numbering
+kubectl kustomize "github.com/cloudnative-pg/cloudnative-pg/config/crd?ref=v1.28.1" > ./storage/postgres-cnpg/crd.yaml
 
 helm template \
   cnpg \
   cnpg/cloudnative-pg \
-  --version 0.26.0 \
+  --version 0.27.1 \
   --namespace pgo-cnpg \
   --values ./storage/postgres-cnpg/values.yaml \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/instance|d' -e '\|app.kubernetes.io/part-of|d' \
