@@ -9,8 +9,9 @@ Prerequisites:
 # check out the latest release
 # https://go.dev/doc/devel/release
 
-release=1.25.0
+release=1.26.0
 filename=go$release.linux-amd64.tar.gz
+
 curl -OL https://golang.org/dl/$filename &&
 sudo rm -rf /usr/local/go &&
 sudo tar -C /usr/local -xzf $filename &&

@@ -135,7 +135,7 @@ function timer_stop {
   unset timer_start
 }
 
-if $(which tput); then
+if [ $(which tput) ]; then
   term_reset="$(tput sgr0)"
   term_bold="$(tput bold)"
   term_dim="$(tput dim)"

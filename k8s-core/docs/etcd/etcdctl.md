@@ -72,15 +72,21 @@ Adjust node names and addresses appropriately.
 
 ```bash
 
+# find misbehaving node
+etcdctl_cluster endpoint health -w table
+# get id of that node
 etcdctl_cluster member list -w table
-# replace ID with your value
-etcdctl_cluster member remove b5a71f0b96b3191f
+node_id=
+
+etcdctl_cluster member remove $node_id
 etcdctl_cluster member list -w table
 
 # Choose any name.
 # Here I reuse the old name because I re-init the old node.
 # Set correct URL for your new node.
-etcdctl_cluster member add etcd1.k8s.lan --peer-urls=https://etcd1.k8s.lan:2380
+peer_url=https://etcd1.k8s.lan:2380
+peer_name=etcd1.k8s.lan
+etcdctl_cluster member add $peer_name --peer-urls=$peer_url
 
 # change --initial-cluster-state=new to --initial-cluster-state=existing in docker-compose.yml
 # On an existing failed node you also need to remove the old data folder.
@@ -88,7 +94,10 @@ cd /opt/etcd/
 sudo docker compose down
 sudo nano ./docker-compose.yml
 sudo rm -r /opt/etcd/data/
+# start node, look if logs are fine
 sudo docker compose up
+# if everything is working, start in daemon mode
+sudo docker compose up -d
 
 ```
 

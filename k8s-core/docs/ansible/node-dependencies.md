@@ -3,11 +3,6 @@
 
 ```bash
 
-# check out the latest stable release
-echo $(curl -Ls https://dl.k8s.io/release/stable.txt)
-# see also: https://kubernetes.io/releases/
-# see also: https://kubernetes.io/releases/download/
-
 mkdir -p ./k8s-core/docs/ansible/env/
 
 # https://github.com/containerd/containerd/blob/main/docs/getting-started.md

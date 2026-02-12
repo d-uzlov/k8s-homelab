@@ -7,6 +7,11 @@
 
 ```bash
 
+# check out the latest stable release
+echo $(curl -Ls https://dl.k8s.io/release/stable.txt)
+# see also: https://kubernetes.io/releases/
+# see also: https://kubernetes.io/releases/download/
+
 kubelet_version=v1.34.2
 kubelet_file=kubelet-$kubelet_version.amd64
 
