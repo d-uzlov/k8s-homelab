@@ -913,7 +913,7 @@
       "id": 20,
       "maxDataPoints": 500,
       "options": {
-        "alignValue": "left",
+        "alignValue": "center",
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
@@ -1051,7 +1051,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "(\r\n  avg_over_time(pve_cpu_usage_ratio{location=\"$location\", id=~\"$guest\"}[$__interval])\r\n  *\r\n  avg_over_time(pve_cpu_usage_limit{location=\"$location\", id=~\"$guest\"}[$__interval])\r\n  * on(id, cluster) group_left(name, type)\r\n  last_over_time(pve_guest_info{location=\"$location\", id=~\"$guest\", name!=\"\"}[$__interval])\r\n) and on(id, cluster)\r\nmax_over_time(pve_up{location=\"$location\", id=~\"$guest\"}[$__interval]) == 1",
+          "expr": "(\r\n  avg_over_time(pve_cpu_usage_ratio{location=\"$location\", id=~\"$guest\"}[$__interval])\r\n  *\r\n  avg_over_time(pve_cpu_usage_limit{location=\"$location\", id=~\"$guest\"}[$__interval])\r\n  * on(id, cluster) group_left(name, type)\r\n  count without(node) (topk by(id, node) (1, sum_over_time(pve_guest_info{location=\"$location\", id=~\"$guest\", name!=\"\"}[$__interval])))\r\n) and on(id, cluster)\r\nmax_over_time(pve_up{location=\"$location\", id=~\"$guest\"}[$__interval]) == 1",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -1160,7 +1160,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "(\r\n  max_over_time(pve_cpu_usage_ratio{location=\"$location\", id=~\"$guest\"}[$__interval])\r\n  * on(id, cluster) group_left(name, type)\r\n  last_over_time(pve_guest_info{location=\"$location\", id=~\"$guest\", name!=\"\"}[$__interval])\r\n) and on(id, cluster)\r\nmax_over_time(pve_up{location=\"$location\", id=~\"$guest\"}[$__interval]) == 1",
+          "expr": "(\r\n  max_over_time(pve_cpu_usage_ratio{location=\"$location\", id=~\"$guest\"}[$__interval])\r\n  * on(id, cluster) group_left(name, type)\r\n  count without(node) (topk by(id, node) (1, sum_over_time(pve_guest_info{location=\"$location\", id=~\"$guest\", name!=\"\"}[$__interval])))\r\n) and on(id, cluster)\r\nmax_over_time(pve_up{location=\"$location\", id=~\"$guest\"}[$__interval]) == 1",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -1201,24 +1201,22 @@
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
-            "pointSize": 5,
+            "pointSize": 3,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "never",
+            "showPoints": "auto",
             "spanNulls": false,
             "stacking": {
               "group": "A",
               "mode": "none"
             },
             "thresholdsStyle": {
-              "mode": "area"
+              "mode": "off"
             }
           },
-          "decimals": 1,
           "links": [],
           "mappings": [],
-          "max": 1.05,
           "min": 0,
           "thresholds": {
             "mode": "absolute",
@@ -1226,14 +1224,10 @@
               {
                 "color": "transparent",
                 "value": 0
-              },
-              {
-                "color": "red",
-                "value": 0.9
               }
             ]
           },
-          "unit": "percentunit"
+          "unit": "bytes"
         },
         "overrides": []
       },
@@ -1269,7 +1263,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "(\r\n  max_over_time(pve_memory_usage_bytes{location=\"$location\", id=~\"$guest\"}[$__interval])\r\n  /\r\n  max_over_time(pve_memory_size_bytes{location=\"$location\", id=~\"$guest\"}[$__interval])\r\n  * on(id, cluster) group_left(name, type)\r\n  last_over_time(pve_guest_info{location=\"$location\", id=~\"$guest\", name!=\"\"}[$__interval])\r\n) and on(id, cluster)\r\nmax_over_time(pve_up{location=\"$location\", id=~\"$guest\"}[$__interval]) == 1",
+          "expr": "(\r\n  max_over_time(pve_memory_usage_bytes{location=\"$location\", id=~\"$guest\"}[$__interval])\r\n  * on(id, cluster) group_left(name, type)\r\n  count without(node) (topk by(id, node) (1, sum_over_time(pve_guest_info{location=\"$location\", id=~\"$guest\", name!=\"\"}[$__interval])))\r\n) and on(id, cluster)\r\nmax_over_time(pve_up{location=\"$location\", id=~\"$guest\"}[$__interval]) == 1",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{name}} ({{type}})",
@@ -1278,6 +1272,114 @@
         }
       ],
       "title": "memory usage",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 3,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "area"
+            }
+          },
+          "decimals": 1,
+          "links": [],
+          "mappings": [],
+          "max": 1.05,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "transparent",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 0.9
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 72
+      },
+      "id": 26,
+      "maxDataPoints": 200,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "(\r\n  max_over_time(pve_memory_usage_bytes{location=\"$location\", id=~\"$guest\"}[$__interval])\r\n  /\r\n  max_over_time(pve_memory_size_bytes{location=\"$location\", id=~\"$guest\"}[$__interval])\r\n  * on(id, cluster) group_left(name, type)\r\n  count without(node) (topk by(id, node) (1, sum_over_time(pve_guest_info{location=\"$location\", id=~\"$guest\", name!=\"\"}[$__interval])))\r\n) and on(id, cluster)\r\nmax_over_time(pve_up{location=\"$location\", id=~\"$guest\"}[$__interval]) == 1",
+          "format": "time_series",
+          "intervalFactor": 1,
+          "legendFormat": "{{name}} ({{type}})",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "memory usage %",
       "type": "timeseries"
     },
     {
@@ -1310,11 +1412,11 @@
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
-            "pointSize": 5,
+            "pointSize": 3,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "never",
+            "showPoints": "auto",
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -1348,7 +1450,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 72
+        "y": 80
       },
       "id": 13,
       "maxDataPoints": 200,
@@ -1376,7 +1478,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "rate(pve_network_receive_bytes{location=\"$location\", id=~\"$guest\"}[$__rate_interval])\r\n* on(id, cluster) group_left(name, type)\r\nlast_over_time(pve_guest_info{location=\"$location\", id=~\"$guest\", name!=\"\"}[$__interval])\r\nand on(id, cluster)\r\nmax_over_time(pve_up{location=\"$location\", id=~\"$guest\"}[$__interval]) == 1",
+          "expr": "rate(pve_network_receive_bytes{location=\"$location\", id=~\"$guest\"}[$__rate_interval])\r\n* on(id, cluster) group_left(name, type)\r\ncount without(node) (topk by(id, node) (1, sum_over_time(pve_guest_info{location=\"$location\", id=~\"$guest\", name!=\"\"}[$__interval])))\r\nand on(id, cluster)\r\nmax_over_time(pve_up{location=\"$location\", id=~\"$guest\"}[$__interval]) == 1",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -1418,11 +1520,11 @@
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
-            "pointSize": 5,
+            "pointSize": 3,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "never",
+            "showPoints": "auto",
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -1456,7 +1558,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 80
+        "y": 88
       },
       "id": 23,
       "maxDataPoints": 200,
@@ -1484,7 +1586,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "rate(pve_network_transmit_bytes{location=\"$location\", id=~\"$guest\"}[$__rate_interval])\r\n* on(id, cluster) group_left(name, type)\r\nlast_over_time(pve_guest_info{location=\"$location\", id=~\"$guest\", name!=\"\"}[$__interval])\r\nand on(id, cluster)\r\nmax_over_time(pve_up{location=\"$location\", id=~\"$guest\"}[$__interval]) == 1",
+          "expr": "rate(pve_network_transmit_bytes{location=\"$location\", id=~\"$guest\"}[$__rate_interval])\r\n* on(id, cluster) group_left(name, type)\r\ncount without(node) (topk by(id, node) (1, sum_over_time(pve_guest_info{location=\"$location\", id=~\"$guest\", name!=\"\"}[$__interval])))\r\nand on(id, cluster)\r\nmax_over_time(pve_up{location=\"$location\", id=~\"$guest\"}[$__interval]) == 1",
           "format": "time_series",
           "hide": false,
           "intervalFactor": 1,
@@ -1526,11 +1628,11 @@
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
-            "pointSize": 5,
+            "pointSize": 3,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "never",
+            "showPoints": "auto",
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -1565,7 +1667,7 @@
         "h": 11,
         "w": 24,
         "x": 0,
-        "y": 88
+        "y": 96
       },
       "id": 12,
       "maxDataPoints": 200,
@@ -1593,7 +1695,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "rate(pve_disk_read_bytes{location=\"$location\", id=~\"$guest\"}[$__rate_interval])\r\n* on(id, cluster) group_left(name, type) pve_guest_info\r\nand on(id, cluster) pve_up == 1",
+          "expr": "rate(pve_disk_read_bytes{location=\"$location\", id=~\"$guest\"}[$__rate_interval])\r\n* on(id, cluster) group_left(name, type)\r\ncount without(node) (topk by(id, node) (1, sum_over_time(pve_guest_info{location=\"$location\", id=~\"$guest\", name!=\"\"}[$__interval])))\r\nand on(id, cluster)\r\nmax_over_time(pve_up{location=\"$location\", id=~\"$guest\"}[$__interval]) == 1",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{name}} ({{type}})",
@@ -1634,11 +1736,11 @@
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
-            "pointSize": 5,
+            "pointSize": 3,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "never",
+            "showPoints": "auto",
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -1673,7 +1775,7 @@
         "h": 11,
         "w": 24,
         "x": 0,
-        "y": 99
+        "y": 107
       },
       "id": 24,
       "maxDataPoints": 200,
@@ -1701,7 +1803,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "rate(pve_disk_write_bytes{location=\"$location\", id=~\"$guest\"}[$__rate_interval])\r\n* on(id, cluster) group_left(name, type)\r\nlast_over_time(pve_guest_info{location=\"$location\", id=~\"$guest\", name!=\"\"}[$__interval])\r\nand on(id, cluster)\r\nmax_over_time(pve_up{location=\"$location\", id=~\"$guest\"}[$__interval]) == 1",
+          "expr": "rate(pve_disk_write_bytes{location=\"$location\", id=~\"$guest\"}[$__rate_interval])\r\n* on(id, cluster) group_left(name, type)\r\ncount without(node) (topk by(id, node) (1, sum_over_time(pve_guest_info{location=\"$location\", id=~\"$guest\", name!=\"\"}[$__interval])))\r\nand on(id, cluster)\r\nmax_over_time(pve_up{location=\"$location\", id=~\"$guest\"}[$__interval]) == 1",
           "format": "time_series",
           "intervalFactor": 1,
           "legendFormat": "{{name}} ({{type}})",
@@ -1864,12 +1966,12 @@
     ]
   },
   "time": {
-    "from": "now-7d",
+    "from": "now-1d",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Proxmox / Guest list",
+  "title": "proxmox / guest list",
   "uid": "cdnsz3qi9ybk0fgl",
-  "version": 3
+  "version": 7
 }
