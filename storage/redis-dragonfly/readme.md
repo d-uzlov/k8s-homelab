@@ -6,6 +6,7 @@ Dragonfly is a redis-compatible database.
 Unlike redis, it has a k8s operator.
 
 References:
+- https://github.com/dragonflydb/dragonfly-operator/releases
 - https://github.com/dragonflydb/dragonfly-operator/pkgs/container/dragonfly-operator%2Fhelm%2Fdragonfly-operator
 
 # update
@@ -14,8 +15,8 @@ References:
 
 mkdir -p ./storage/redis-dragonfly/env/
 
-wget https://github.com/dragonflydb/dragonfly-operator/raw/refs/tags/v1.2.1/manifests/crd.yaml -O ./storage/redis-dragonfly/crd.yaml
-wget https://github.com/dragonflydb/dragonfly-operator/raw/refs/tags/v1.2.1/manifests/dragonfly-operator.yaml -O ./storage/redis-dragonfly/env/dragonfly-operator.raw.yaml
+wget https://github.com/dragonflydb/dragonfly-operator/raw/refs/tags/v1.4.0/manifests/crd.yaml -O ./storage/redis-dragonfly/crd.yaml
+wget https://github.com/dragonflydb/dragonfly-operator/raw/refs/tags/v1.4.0/manifests/dragonfly-operator.yaml -O ./storage/redis-dragonfly/env/dragonfly-operator.raw.yaml
 
 yq 'select(.kind != "CustomResourceDefinition" and .kind != "Namespace")' ./storage/redis-dragonfly/env/dragonfly-operator.raw.yaml \
   | sed 's/namespace: dragonfly-operator-system/namespace: operator-dragonfly/' \
