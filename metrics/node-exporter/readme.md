@@ -20,7 +20,7 @@ helm show values prometheus-community/prometheus-node-exporter --version 4.46.1 
 helm template \
   node-exporter \
   prometheus-community/prometheus-node-exporter \
-  --version 4.46.1 \
+  --version 4.52.1 \
   --values ./metrics/node-exporter/values.yaml \
   --namespace node-exporter \
   | sed \
