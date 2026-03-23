@@ -44,6 +44,7 @@ rules:
   - probes
   - probes/status
   - prometheusrules
+  - prometheusrules/status
   verbs:
   - '*'
 - apiGroups:
@@ -94,6 +95,7 @@ rules:
   - watch
 - apiGroups:
   - ""
+  - events.k8s.io
   resources:
   - events
   verbs:
@@ -113,6 +115,17 @@ rules:
   - storageclasses
   verbs:
   - get
+- apiGroups:
+  - discovery.k8s.io
+  resources:
+  - endpointslices
+  verbs:
+  - get
+  - create
+  - list
+  - watch
+  - update
+  - delete
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -173,20 +186,20 @@ spec:
     spec:
       containers:
         - name: prometheus-operator
-          image: "quay.io/prometheus-operator/prometheus-operator:v0.86.0"
+          image: "quay.io/prometheus-operator/prometheus-operator:v0.89.0"
           imagePullPolicy: "IfNotPresent"
           args:
             - --kubelet-endpoints=true
             - --kubelet-endpointslice=false
             - --log-level=debug
             - --localhost=127.0.0.1
-            - --prometheus-config-reloader=quay.io/prometheus-operator/prometheus-config-reloader:v0.86.0
+            - --prometheus-config-reloader=quay.io/prometheus-operator/prometheus-config-reloader:v0.89.0
             - --config-reloader-cpu-request=1m
             - --config-reloader-cpu-limit=0
             - --config-reloader-memory-request=30Mi
             - --config-reloader-memory-limit=50Mi
             - --enable-config-reloader-probes=true
-            - --thanos-default-base-image=quay.io/thanos/thanos:v0.39.2
+            - --thanos-default-base-image=quay.io/thanos/thanos:v0.41.0
             - --secret-field-selector=type!=kubernetes.io/dockercfg,type!=kubernetes.io/service-account-token,type!=helm.sh/release.v1
             - --web.enable-tls=true
             - --web.cert-file=/cert/tls.crt
@@ -314,7 +327,7 @@ metadata:
     app.kubernetes.io/name: prometheus-operator-prometheus-operator
     app.kubernetes.io/component: prometheus-operator-webhook
 webhooks:
-  - name: prometheusrulemutate.monitoring.coreos.com
+  - name: prometheusrulevalidate.monitoring.coreos.com
     failurePolicy: Ignore
     rules:
       - apiGroups:
@@ -331,6 +344,26 @@ webhooks:
         namespace: prometheus-operator
         name: prometheus-operator
         path: /admission-prometheusrules/validate
+    timeoutSeconds: 10
+    admissionReviewVersions: ["v1", "v1beta1"]
+    sideEffects: None
+  - name: alertmanagerconfigsvalidate.monitoring.coreos.com
+    failurePolicy: Ignore
+    rules:
+      - apiGroups:
+          - monitoring.coreos.com
+        apiVersions:
+          - v1alpha1
+        resources:
+          - alertmanagerconfigs
+        operations:
+          - CREATE
+          - UPDATE
+    clientConfig:
+      service:
+        namespace: prometheus-operator
+        name: prometheus-operator
+        path: /admission-alertmanagerconfigs/validate
     timeoutSeconds: 10
     admissionReviewVersions: ["v1", "v1beta1"]
     sideEffects: None
