@@ -13,7 +13,7 @@ You only need to do this when updating the app.
 
 mkdir -p ./storage/postgres-cnpg/barman-cloud/env/
 
-wget https://github.com/cloudnative-pg/plugin-barman-cloud/releases/download/v0.11.0/manifest.yaml \
+wget https://github.com/cloudnative-pg/plugin-barman-cloud/releases/download/v0.12.0/manifest.yaml \
   -O ./storage/postgres-cnpg/barman-cloud/env/barman-cloud-manifest-raw.gen.yaml
 
 yq 'select(.kind == "CustomResourceDefinition")' ./storage/postgres-cnpg/barman-cloud/env/barman-cloud-manifest-raw.gen.yaml > ./storage/postgres-cnpg/barman-cloud/barman-cloud-crd.gen.yaml
