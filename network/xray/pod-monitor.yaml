@@ -1,0 +1,25 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: 3xui
+  labels:
+    prometheus.io/instance: main
+    instance.prometheus.io/main: enable
+    instance.prometheus.io/prompp: enable
+spec:
+  selector:
+    matchLabels:
+      app: 3xui
+  podMetricsEndpoints:
+  - portNumber: 9090
+    relabelings:
+    - targetLabel: instance
+      action: replace
+      sourceLabels: [ location, __meta_kubernetes_namespace, __meta_kubernetes_pod_name ]
+      separator: /
+    metricRelabelings:
+    - action: drop
+      sourceLabels: [ __name__ ]
+      regex: go_.*|process_.*|promhttp_.*
+  

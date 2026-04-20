@@ -1,0 +1,165 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: 3xui
+spec:
+  selector:
+    matchLabels:
+      app: 3xui
+  serviceName: s3xui
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: 3xui
+    spec:
+      containers:
+      - name: 3xui
+        image: ghcr.io/mhsanaei/3x-ui:v2.8.11
+        command:
+        - /bin/sh
+        - -c
+        - |
+          set -e
+          echo "copying /app files..."
+          cp $(find . -type f -maxdepth 1) /app-tmp/
+          echo "copying /app done"
+          cd /app-tmp/
+          echo "copying bin files..."
+          cp -n -R /app/* /app-tmp/
+          echo "copying bin done"
+          echo "configuring x-ui settings"
+          /app-tmp/x-ui setting -listenIP=:: 2>&1
+          /app-tmp/x-ui setting -port="$PANEL_PORT" 2>&1
+          /app-tmp/x-ui setting -webBasePath="$PANEL_BASE_PATH" 2>&1
+          /app-tmp/x-ui setting -username="$XUI_USERNAME" -password="$XUI_PASSWORD" 2>&1
+          /app-tmp/x-ui cert -webCert=/mnt/cert/tls.crt -webCertKey=/mnt/cert/tls.key 2>&1
+          echo
+          echo "running exec /app-tmp/x-ui"
+          exec /app-tmp/x-ui run
+        securityContext:
+          readOnlyRootFilesystem: true
+        ports:
+        - containerPort: 12053
+          name: panel
+        - containerPort: 2096
+          name: sub
+        env:
+        - name: PANEL_PORT
+          value: '12053'
+        - name: PANEL_BASE_PATH
+          valueFrom:
+            configMapKeyRef:
+              name: 3xui
+              key: panelBasePath
+        - name: XUI_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: 3xui-pass
+              key: username
+        - name: XUI_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: 3xui-pass
+              key: password
+        - name: XRAY_VMESS_AEAD_FORCED
+          value: 'false'
+        - name: XUI_ENABLE_FAIL2BAN
+          value: 'false'
+        - name: XUI_DB_FOLDER
+          value: /etc/x-ui/
+          # XUI_BIN_FOLDER tells 3x-ui panel where xray binary is located
+        - name: XUI_BIN_FOLDER
+          value: /app-tmp/bin/
+          # XUI_MAIN_FOLDER is for x-ui update script, to be able to update geo files
+        - name: XUI_MAIN_FOLDER
+          value: /app-tmp/
+        - name: TZ
+          value: UTC
+        volumeMounts:
+        - mountPath: /etc/x-ui/
+          name: config
+          subPath: etc
+        # /app-tmp/bin/ is persistent storage, unlike /app-tmp/
+        # this way panel can manage xray version and geo files in persistent way
+        - mountPath: /app-tmp/bin/
+          name: config
+          subPath: bin
+        - mountPath: /mnt/cert/
+          name: cert
+        - mountPath: /etc/init.d/x-ui
+          name: cert
+          subPath: tls.crt
+        - mountPath: /tmp/
+          name: tmp
+          subPath: tmp
+        - mountPath: /var/run/
+          name: tmp
+          subPath: var-run
+        - mountPath: /var/log/
+          name: tmp
+          subPath: var-log
+        - mountPath: /app-tmp/
+          name: tmp
+          subPath: app
+        - mountPath: /etc/ssl/certs/cluster-ca.pem
+          name: trust-bundle
+          subPath: ca.crt
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - curl --fail --silent -k "https://localhost:${PANEL_PORT}${PANEL_BASE_PATH}" --output /dev/null
+      - name: exporter
+        # https://github.com/hteppl/3x-ui-exporter
+        image: docker.io/hteppl/x-ui-exporter:v1.4.0
+        ports:
+        - name: metrics
+          containerPort: 9090
+        env:
+        - name: METRICS_PORT
+          value: '9090'
+        - name: UPDATE_INTERVAL
+          value: '10'
+        - name: PANEL_BASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: 3xui
+              key: metrics_address
+        - name: PANEL_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: 3xui-pass
+              key: username
+        - name: PANEL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: 3xui-pass
+              key: password
+        volumeMounts:
+        - mountPath: /etc/ssl/certs/cluster-ca.pem
+          name: trust-bundle
+          subPath: ca.crt
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: cert
+        secret:
+          secretName: 3xui-cert
+      - name: trust-bundle
+        configMap:
+          name: ca.trust-manager.default
+      # 3xui-config and 3xui-pass are added to the volume list
+      # to ask k8s to restart the pod when they change, they should not be mounted anywhere
+      - name: 3xui-config
+        configMap:
+          name: 3xui
+      - name: 3xui-pass
+        secret:
+          secretName: 3xui-pass
+  # volumeClaimTemplates spec is filled via a patch
+  volumeClaimTemplates:
+  - metadata:
+      name: config

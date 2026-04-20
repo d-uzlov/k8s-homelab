@@ -1,0 +1,27 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: vpn-xray
+
+resources:
+- ./3x-ui.yaml
+- ./certificate.yaml
+- ./service.yaml
+- ./pod-monitor.yaml
+
+patches:
+- path: ./env/3x-ui.yaml
+- target:
+    kind: PodMonitor
+  path: ./env/patch-location-tag.yaml
+
+secretGenerator:
+- name: 3xui-pass
+  envs:
+  - ./env/pass.env
+
+configMapGenerator:
+- name: 3xui
+  envs:
+  - ./env/config.env
