@@ -7,32 +7,6 @@ References:
 - https://github.com/dexidp/dex/pkgs/container/dex
 - https://charts.dexidp.io/
 
-# generate config
-
-You only need to do this when updating the app.
-
-```bash
-helm repo add dex https://charts.dexidp.io
-helm repo update dex
-helm search repo dex/dex --versions --devel | head
-helm show values dex/dex --version 0.24.0 > ./auth/dex/default-values.yaml
-```
-
-```bash
-
-helm template \
-  dex \
-  dex/dex \
-  --version 0.24.0 \
-  --namespace auth-dex \
-  --values ./auth/dex/values.yaml \
-  | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by|d' -e '\|app.kubernetes.io/part-of|d' -e '\|app.kubernetes.io/version|d' \
-  > ./auth/dex/dex.gen.yaml
-
-wget https://github.com/dexidp/dex/raw/refs/tags/v2.44.0/config.yaml.dist -O ./auth/dex/dex-config-sample.yaml
-
-```
-
 # config
 
 ```bash
