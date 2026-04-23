@@ -37,6 +37,18 @@
       "tooltip": "",
       "type": "link",
       "url": "/d/OEyH9tQZk/qbittorrent-torrents-list?${prometheus_datasource:queryparam}﻿&﻿${cluster:queryparam}﻿&﻿${instance:queryparam}﻿&${__url_time_range}"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": false,
+      "title": "New link",
+      "tooltip": "",
+      "type": "link",
+      "url": "/d/OEyH9tQZkbgq/qbittorrent-torrents-list?${prometheus_prometheus_datasource:queryparam}&${cluster:queryparam}&${instance:queryparam}&${__url_time_range}&var-torrent=${torrent}"
     }
   ],
   "panels": [
@@ -1514,7 +1526,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "max by(name) (\r\ndelta(qbittorrent_torrent_eta{instance=\"$instance\", hash=~\"$torrent\"}[5m]) != 0\r\nand (qbittorrent_torrent_eta{instance=\"$instance\", hash=~\"$torrent\"} offset 5m)\r\nand max_over_time(qbittorrent_torrent_eta{instance=\"$instance\", hash=~\"$torrent\"}[5m]) != 8640000\r\nand on(instalce, hash) (max_over_time(qbittorrent_torrent_state{instance=\"$instance\", hash=~\"$torrent\", state=~\"downloading|forcedDL|queuedDL\"}[$__interval]) == 1)\r\nunless (max_over_time(qbittorrent_torrent_state{instance=\"$instance\", hash=~\"$torrent\", state!~\"downloading|forcedDL|queuedDL\"}[$__interval]) == 1)\r\n)",
+          "expr": "max by(name) (\r\n+ (avg_over_time(qbittorrent_torrent_eta{instance=\"$instance\", hash=~\"$torrent\"}[2m]) != 0)\r\n- avg_over_time(qbittorrent_torrent_eta{instance=\"$instance\", hash=~\"$torrent\"}[2m] offset 5m)\r\nand max_over_time(qbittorrent_torrent_eta{instance=\"$instance\", hash=~\"$torrent\"}[5m]) != 8640000\r\nand abs(\r\n+ (avg_over_time(qbittorrent_torrent_eta{instance=\"$instance\", hash=~\"$torrent\"}[2m]) != 0)\r\n- avg_over_time(qbittorrent_torrent_eta{instance=\"$instance\", hash=~\"$torrent\"}[2m] offset 5m)\r\n) < 60*60*24*7\r\nand on(instalce, hash) (max_over_time(qbittorrent_torrent_state{instance=\"$instance\", hash=~\"$torrent\", state=~\"downloading|forcedDL|queuedDL\"}[$__interval]) == 1)\r\nunless (max_over_time(qbittorrent_torrent_state{instance=\"$instance\", hash=~\"$torrent\", state!~\"downloading|forcedDL|queuedDL\"}[$__interval]) == 1)\r\n)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "upload"
@@ -2152,6 +2164,7 @@
         },
         "definition": "query_result(count by(name, hash) (last_over_time(qbittorrent_torrent_save_path{instance=\"$instance\", hash=~\".*($hash_filter).*\", name=~\".*(?i:$name_filter).*\", save_path=~\"($path_prefix).*\"}[$__range])) * count by(name, hash) (last_over_time(qbittorrent_torrent_state{instance=\"$instance\", hash=~\".*($hash_filter).*\", name=~\".*(?i:$name_filter).*\", state=~\"($state).*\"}[$__range])) * count by(name, hash) (last_over_time(qbittorrent_torrent_info{instance=\"$instance\", hash=~\".*($hash_filter).*\", name=~\".*(?i:$name_filter).*\", category=~\"($category).*\"}[$__range])))",
         "includeAll": true,
+        "multi": true,
         "name": "torrent",
         "options": [],
         "query": {
@@ -2174,5 +2187,5 @@
   "timezone": "browser",
   "title": "qBittorrent torrents list",
   "uid": "OEyH9tQZkbgq",
-  "version": 10
+  "version": 13
 }

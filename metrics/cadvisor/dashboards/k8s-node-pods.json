@@ -37,7 +37,7 @@
           "type": "prometheus",
           "uid": "${prometheus_datasource}"
         },
-        "enable": true,
+        "enable": false,
         "expr": "(node_boot_time_seconds{node=~\"$node\"} offset $__interval unless node_boot_time_seconds{node=~\"$node\"}) unless changes(node_boot_time_seconds{node=~\"$node\"}[$__interval]) > 0",
         "hide": false,
         "iconColor": "light-red",
@@ -257,7 +257,7 @@
         "sortBy": [
           {
             "desc": true,
-            "displayName": "Mem RSS"
+            "displayName": "Mem req"
           }
         ]
       },
@@ -321,7 +321,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by(namespace, pod) (\r\n  max by(namespace, pod, container) (last_over_time(container_memory_rss{location=\"$location\", node=\"$node\", namespace=~\"$namespace\"}[$__range]))\r\n)",
+          "expr": "sum by(namespace, pod) (\r\n+ max by(namespace, pod, container) (last_over_time(container_memory_usage_bytes{location=\"$location\", node=\"$node\", namespace=~\"$namespace\"}[$__range]))\r\n- max by(namespace, pod, container) (last_over_time(container_memory_cache{location=\"$location\", node=\"$node\", namespace=~\"$namespace\"}[$__range]))\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -2087,5 +2087,5 @@
   "timezone": "browser",
   "title": "Node / Pods",
   "uid": "9ays84j4ksi5cwo0n786",
-  "version": 2
+  "version": 1
 }
