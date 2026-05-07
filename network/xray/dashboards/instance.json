@@ -243,7 +243,7 @@
         ]
       },
       "gridPos": {
-        "h": 16,
+        "h": 9,
         "w": 12,
         "x": 12,
         "y": 1
@@ -433,7 +433,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(instance) (rate(x_ui_inbound_down_bytes{instance=~\"$instance\", id=~\"$inbound_id\"}[$__rate_interval])) * $__rate_interval_ms / 1000",
+          "expr": "sum by(instance) (rate(x_ui_inbound_down_bytes{instance=~\"$instance\", id=~\"$inbound_id\"}[$__rate_interval])) * $__interval_ms / 1000",
           "hide": false,
           "legendFormat": "down",
           "range": true,
@@ -444,7 +444,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(instance) (rate(x_ui_inbound_up_bytes{instance=~\"$instance\", id=~\"$inbound_id\"}[$__rate_interval])) * $__rate_interval_ms / 1000",
+          "expr": "sum by(instance) (rate(x_ui_inbound_up_bytes{instance=~\"$instance\", id=~\"$inbound_id\"}[$__rate_interval])) * $__interval_ms / 1000",
           "hide": false,
           "legendFormat": "up",
           "range": true,
@@ -453,6 +453,161 @@
       ],
       "title": "instance throughput total",
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "uid": "${prometheus_datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "displayName": "",
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "/.*/"
+            },
+            "properties": [
+              {
+                "id": "filterable"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "id"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 64
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 10
+      },
+      "id": 48,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(id, email) (increase(x_ui_client_down_bytes{instance=~\"$instance\", id=~\"$inbound_id\"}[$__range]))",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "",
+          "refId": "down_increase"
+        },
+        {
+          "datasource": {
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(id, email) (last_over_time(x_ui_client_down_bytes{instance=~\"$instance\", id=~\"$inbound_id\"}[$__range]))",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "",
+          "refId": "down_total"
+        },
+        {
+          "datasource": {
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(id, email) (increase(x_ui_client_up_bytes{instance=~\"$instance\", id=~\"$inbound_id\"}[$__range]))",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "",
+          "refId": "up_increase"
+        },
+        {
+          "datasource": {
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(id, email) (last_over_time(x_ui_client_up_bytes{instance=~\"$instance\", id=~\"$inbound_id\"}[$__range]))",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "",
+          "refId": "up_total"
+        }
+      ],
+      "title": "client traffic",
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "Time": 0,
+              "Value #down": 5,
+              "Value #up": 6,
+              "id": 3,
+              "instance": 2,
+              "location": 1,
+              "remark": 4
+            },
+            "renameByName": {
+              "Value #down_increase": "down increase",
+              "Value #down_total": "down total",
+              "Value #up": "",
+              "Value #up_increase": "up increase",
+              "Value #up_total": "up total",
+              "id": ""
+            }
+          }
+        }
+      ],
+      "type": "table"
     },
     {
       "datasource": {
@@ -569,7 +724,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 17
+        "y": 20
       },
       "id": 4,
       "panels": [],
@@ -636,7 +791,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 18
+        "y": 21
       },
       "id": 13,
       "maxDataPoints": 200,
@@ -664,7 +819,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(id, remark) (rate(x_ui_inbound_down_bytes{instance=~\"$instance\", id=~\"$inbound_id\"}[$__rate_interval])) * $__rate_interval_ms / 1000",
+          "expr": "sum by(id, remark) (rate(x_ui_inbound_down_bytes{instance=~\"$instance\", id=~\"$inbound_id\"}[$__rate_interval])) * $__interval_ms / 1000",
           "legendFormat": "{{id}}/{{remark}}",
           "range": true,
           "refId": "A"
@@ -733,7 +888,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 18
+        "y": 21
       },
       "id": 38,
       "maxDataPoints": 200,
@@ -830,7 +985,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 26
+        "y": 29
       },
       "id": 14,
       "maxDataPoints": 200,
@@ -858,7 +1013,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(id, remark) (rate(x_ui_inbound_up_bytes{instance=~\"$instance\", id=~\"$inbound_id\"}[$__rate_interval])) * $__rate_interval_ms / 1000",
+          "expr": "sum by(id, remark) (rate(x_ui_inbound_up_bytes{instance=~\"$instance\", id=~\"$inbound_id\"}[$__rate_interval])) * $__interval_ms / 1000",
           "legendFormat": "{{id}}/{{remark}}",
           "range": true,
           "refId": "A"
@@ -927,7 +1082,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 26
+        "y": 29
       },
       "id": 39,
       "maxDataPoints": 200,
@@ -970,7 +1125,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 34
+        "y": 37
       },
       "id": 41,
       "panels": [],
@@ -1037,7 +1192,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 35
+        "y": 38
       },
       "id": 42,
       "maxDataPoints": 200,
@@ -1065,7 +1220,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(id, email) (rate(x_ui_client_down_bytes{instance=~\"$instance\", id=~\"$inbound_id\"}[$__rate_interval])) * $__rate_interval_ms / 1000",
+          "expr": "sum by(id, email) (rate(x_ui_client_down_bytes{instance=~\"$instance\", id=~\"$inbound_id\"}[$__rate_interval])) * $__interval_ms / 1000",
           "legendFormat": "{{id}}/{{email}}",
           "range": true,
           "refId": "A"
@@ -1134,7 +1289,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 35
+        "y": 38
       },
       "id": 45,
       "maxDataPoints": 200,
@@ -1231,7 +1386,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 43
+        "y": 46
       },
       "id": 44,
       "maxDataPoints": 200,
@@ -1259,7 +1414,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(id, email) (rate(x_ui_client_up_bytes{instance=~\"$instance\", id=~\"$inbound_id\"}[$__rate_interval])) * $__rate_interval_ms / 1000",
+          "expr": "sum by(id, email) (rate(x_ui_client_up_bytes{instance=~\"$instance\", id=~\"$inbound_id\"}[$__rate_interval])) * $__interval_ms / 1000",
           "legendFormat": "{{id}}/{{email}}",
           "range": true,
           "refId": "A"
@@ -1328,7 +1483,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 43
+        "y": 46
       },
       "id": 43,
       "maxDataPoints": 200,
@@ -1495,5 +1650,5 @@
   "timezone": "browser",
   "title": "3x-ui instance details",
   "uid": "CCSvIIEZaMMJid",
-  "version": 4
+  "version": 5
 }
