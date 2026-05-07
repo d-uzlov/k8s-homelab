@@ -9,6 +9,9 @@ Usually you don't use kubectl on your server
 so you only need to run this on your local machine.
 
 ```bash
+
+mkdir -p ./k8s-core/docs/env/
+
 kubectl_version=$(curl -L -s https://dl.k8s.io/release/stable.txt)
 echo $kubectl_version
 wget "https://dl.k8s.io/release/$kubectl_version/bin/linux/amd64/kubectl" -O ./k8s-core/docs/env/kubectl-$kubectl_version
@@ -16,6 +19,7 @@ wget "https://dl.k8s.io/release/$kubectl_version/bin/linux/amd64/kubectl.sha256"
 echo "$(cat ./k8s-core/docs/env/kubectl-$kubectl_version.sha256)  ./k8s-core/docs/env/kubectl-$kubectl_version" | sha256sum --check
 sudo install -o root -g root -m 0755 ./k8s-core/docs/env/kubectl-$kubectl_version /usr/local/bin/kubectl
 kubectl version --client
+
 ```
 
 References:
@@ -30,9 +34,9 @@ Kubecolor can be used as a direct replacement for kubectl.
 
 ```bash
 # check latest version: https://github.com/kubecolor/kubecolor/releases
-kubecolor_version=0.5.2
+kubecolor_version=0.6.0
 wget "https://github.com/kubecolor/kubecolor/releases/download/v$kubecolor_version/kubecolor_${kubecolor_version}_linux_amd64.tar.gz" -O ./k8s-core/docs/env/kubecolor_${kubecolor_version}_linux_amd64.tar.gz
-mkdir -p ./k8s-core/docs/env/kubecolor_${kubecolor_version}_linux_amd64
+mkdir -p ./k8s-core/docs/env/kubecolor_${kubecolor_version}_linux_amd64/
 tar -xzf "./k8s-core/docs/env/kubecolor_${kubecolor_version}_linux_amd64.tar.gz" -C ./k8s-core/docs/env/kubecolor_${kubecolor_version}_linux_amd64
 sudo install -o root -g root -m 0755 ./k8s-core/docs/env/kubecolor_${kubecolor_version}_linux_amd64/kubecolor /usr/local/bin/kubecolor
 kubecolor version --client
@@ -189,7 +193,7 @@ References:
 
 ```bash
 
-kl get flowschemas
+kl get flowschema
 kl get prioritylevelconfiguration
 
 ```

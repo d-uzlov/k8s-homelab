@@ -45,6 +45,7 @@ See example:
 etcd-1:
   ansible_host: etcd-1.k8s.lan
   ansible_python_interpreter: auto_silent
+  etcd_image: gcr.io/etcd-development/etcd:v3.6.11
   # cluster name is used for local directory structure
   etcd_cluster_name: my-etcd-cluster
   etcd_cluster_token: qwe123

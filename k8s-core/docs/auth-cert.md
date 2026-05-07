@@ -120,8 +120,8 @@ kl label ns "$namespace" "rbac/has-external-access=true"
 kl label ns "$namespace" "rbac-user/${short_user_name}=edit"
 kl describe ns "$namespace"
 
-# enable convenience role to view safe cluster-wide resources
-kl apply -f - << EOF
+ # enable convenience role to view safe cluster-wide resources
+ kl apply -f - << EOF
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -136,9 +136,9 @@ subjects:
   name: $full_user_name
 EOF
 
-# give this user access to selected namespace
-# repeat if you want more namespaces
-kl apply -f - << EOF
+ # give this user access to selected namespace
+ # repeat if you want more namespaces
+ kl apply -f - << EOF
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -153,6 +153,7 @@ subjects:
 - kind: User
   name: $full_user_name
 EOF
+
 ```
 
 ## 5. Admin makes the k8s API server publicly accessible
