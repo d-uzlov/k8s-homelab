@@ -9,7 +9,7 @@ Prerequisites:
 # check out the latest release
 # https://go.dev/doc/devel/release
 
-release=1.26.0
+release=1.26.2
 filename=go$release.linux-amd64.tar.gz
 
 curl -OL https://golang.org/dl/$filename &&

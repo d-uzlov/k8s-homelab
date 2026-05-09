@@ -211,8 +211,6 @@ trap 'before_command' DEBUG
 PROMPT_COMMAND=__prompt_command
 EOF
 
-# ls foo 2> >(sed 's/^/stderr: /')
-
 ```
 
 References:

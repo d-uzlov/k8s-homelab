@@ -28,8 +28,8 @@ Add to `settings.json` to the first level (doesn't work at language level):
 
 # Hotkeys setup
 
-Add hotkeys into array in `keybindings.json`:
-`C:/Users/username/AppData/Roaming/Code/User/keybindings.json`
+Use Command Palette `ctrl+P` for `Preferences: Open Default Keyboard Shortcuts (JSON)` to open `keybindings.json`.
+Insert following entries to your key bind array:
 
 ```json
 // general
