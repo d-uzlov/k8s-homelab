@@ -1,5 +1,6 @@
 ---
 # Not created if istiod is running remotely
+# a workaround for https://github.com/kubernetes/kubernetes/issues/93476
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
@@ -51,6 +52,7 @@ data:
     enablePrometheusMerge: true
     rootNamespace: istio
     trustDomain: cluster.local
+# Created if cluster resources are not omitted
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -125,7 +127,6 @@ rules:
   - apiGroups: ["gateway.networking.x-k8s.io"]
     resources:
       - xbackendtrafficpolicies/status
-      - xlistenersets/status
     verbs: ["update", "patch"]
   - apiGroups: ["gateway.networking.k8s.io"]
     resources:
@@ -138,14 +139,15 @@ rules:
       - tcproutes/status
       - tlsroutes/status
       - udproutes/status
+      - listenersets/status
     verbs: ["update", "patch"]
   - apiGroups: ["gateway.networking.k8s.io"]
     resources: ["gatewayclasses"]
     verbs: ["create", "update", "patch", "delete"]
-  - apiGroups: ["inference.networking.x-k8s.io"]
+  - apiGroups: ["inference.networking.k8s.io"]
     resources: ["inferencepools"]
     verbs: ["get", "watch", "list"]
-  - apiGroups: ["inference.networking.x-k8s.io"]
+  - apiGroups: ["inference.networking.k8s.io"]
     resources: ["inferencepools/status"]
     verbs: ["update", "patch"]
   # Needed for multicluster secret reading, possibly ingress certs in the future
@@ -184,6 +186,7 @@ rules:
   - apiGroups: [""]
     verbs: ["get", "watch", "list", "update", "patch", "create", "delete"]
     resources: ["serviceaccounts"]
+# Created if cluster resources are not omitted. Used for multicluster remote secret workflows.
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -204,7 +207,7 @@ rules:
     resources: ["*"]
     verbs: ["get", "list", "watch"]
   - apiGroups: [""]
-    resources: ["endpoints", "pods", "services", "nodes", "replicationcontrollers", "namespaces", "secrets"]
+    resources: ["endpoints", "pods", "services", "nodes", "replicationcontrollers", "namespaces", "secrets", "configmaps"]
     verbs: ["get", "list", "watch"]
   - apiGroups: ["networking.istio.io"]
     verbs: ["get", "watch", "list"]
@@ -234,6 +237,7 @@ rules:
     resources: ["subjectaccessreviews"]
     verbs: ["create"]
 ---
+# Created if cluster resources are not omitted
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -266,6 +270,7 @@ subjects:
     name: istiod
     namespace: istio
 ---
+# Created if cluster resources are not omitted. Used for multicluster remote secret workflows.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -404,7 +409,7 @@ spec:
       serviceAccountName: istiod
       containers:
         - name: discovery
-          image: "docker.io/istio/pilot:1.27.1"
+          image: "registry.istio.io/release/pilot:1.30.4"
           args:
             - "discovery"
             - --monitoringAddr=:15014
@@ -476,11 +481,6 @@ spec:
               value: "false"
             - name: CLUSTER_ID
               value: "Kubernetes"
-            - name: GOMEMLIMIT
-              valueFrom:
-                resourceFieldRef:
-                  resource: limits.memory
-                  divisor: "1"
             - name: GOMAXPROCS
               valueFrom:
                 resourceFieldRef:
@@ -549,6 +549,8 @@ spec:
             name: istio-ca-root-cert
             defaultMode: 420
             optional: true
+---
+
 ---
 
 ---
