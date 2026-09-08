@@ -8,7 +8,7 @@ References:
 
 ```bash
 
-release_tag=release-8.3
+release_tag=release-8.6
 
 (
 cd ./storage/snapshot-controller/crd/
