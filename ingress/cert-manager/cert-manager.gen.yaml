@@ -174,6 +174,9 @@ rules:
   - apiGroups: ["acme.cert-manager.io"]
     resources: ["orders/finalizers"]
     verbs: ["update"]
+  - apiGroups: ["cert-manager.io"]
+    resources: ["clusterissuers/finalizers", "issuers/finalizers"]
+    verbs: ["update"]
   - apiGroups: [""]
     resources: ["secrets"]
     verbs: ["get", "list", "watch"]
@@ -219,8 +222,8 @@ rules:
   - apiGroups: ["networking.k8s.io"]
     resources: ["ingresses"]
     verbs: ["get", "list", "watch", "create", "delete", "update"]
-  - apiGroups: [ "gateway.networking.k8s.io" ]
-    resources: [ "httproutes" ]
+  - apiGroups: ["gateway.networking.k8s.io"]
+    resources: ["httproutes"]
     verbs: ["get", "list", "watch", "create", "delete", "update"]
   # We require the ability to specify a custom hostname when we are creating
   # new ingress resources.
@@ -266,10 +269,10 @@ rules:
     resources: ["ingresses/finalizers"]
     verbs: ["update"]
   - apiGroups: ["gateway.networking.k8s.io"]
-    resources: ["gateways", "httproutes"]
+    resources: ["gateways", "httproutes", "listenersets"]
     verbs: ["get", "list", "watch"]
   - apiGroups: ["gateway.networking.k8s.io"]
-    resources: ["gateways/finalizers", "httproutes/finalizers"]
+    resources: ["gateways/finalizers", "httproutes/finalizers", "listenersets/finalizers"]
     verbs: ["update"]
   - apiGroups: [""]
     resources: ["events"]
@@ -330,8 +333,11 @@ rules:
     resources: ["certificates/status"]
     verbs: ["update"]
   - apiGroups: ["acme.cert-manager.io"]
-    resources: ["challenges", "orders"]
-    verbs: ["create", "delete", "deletecollection", "patch", "update"]
+    resources: ["challenges"]
+    verbs: ["delete", "deletecollection", "patch", "update"]
+  - apiGroups: ["acme.cert-manager.io"]
+    resources: ["orders"]
+    verbs: ["delete", "deletecollection"]
 ---
 # Permission to approve CertificateRequests referencing cert-manager.io Issuers and ClusterIssuers
 apiVersion: rbac.authorization.k8s.io/v1
@@ -619,22 +625,6 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: cm-tokenrequest
-  namespace: cert-manager
-  labels:
-    app: cert-manager
-    app.kubernetes.io/name: cert-manager
-    app.kubernetes.io/instance: cert-manager
-    app.kubernetes.io/component: "controller"
-rules:
-  - apiGroups: [""]
-    resources: ["serviceaccounts/token"]
-    resourceNames: ["cm"]
-    verbs: ["create"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
   name: cm-webhook:dynamic-serving
   namespace: cert-manager
   labels:
@@ -695,26 +685,6 @@ subjects:
     name: cm
     namespace: cert-manager
 ---
-# grant cert-manager permission to create tokens for the serviceaccount
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: cm-cm-tokenrequest
-  namespace: cert-manager
-  labels:
-    app: cert-manager
-    app.kubernetes.io/name: cert-manager
-    app.kubernetes.io/instance: cert-manager
-    app.kubernetes.io/component: "controller"
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: cm-tokenrequest
-subjects:
-  - kind: ServiceAccount
-    name: cm
-    namespace: cert-manager
----
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
@@ -770,8 +740,7 @@ spec:
   ports:
   - protocol: TCP
     port: 9402
-    name: tcp-prometheus-servicemonitor
-    targetPort: http-metrics
+    name: http-metrics
   selector:
     app.kubernetes.io/name: cert-manager
     app.kubernetes.io/instance: cert-manager
@@ -840,7 +809,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: cert-manager-cainjector
-          image: "quay.io/jetstack/cert-manager-cainjector:v1.18.2"
+          image: "quay.io/jetstack/cert-manager-cainjector:v1.21.1"
           imagePullPolicy: IfNotPresent
           args:
           - --v=2
@@ -905,13 +874,13 @@ spec:
           type: RuntimeDefault
       containers:
         - name: cert-manager-controller
-          image: "quay.io/jetstack/cert-manager-controller:v1.18.2"
+          image: "quay.io/jetstack/cert-manager-controller:v1.21.1"
           imagePullPolicy: IfNotPresent
           args:
           - --v=2
           - --cluster-resource-namespace=$(POD_NAMESPACE)
           - --leader-election-namespace=kube-system
-          - --acme-http01-solver-image=quay.io/jetstack/cert-manager-acmesolver:v1.18.2
+          - --acme-http01-solver-image=quay.io/jetstack/cert-manager-acmesolver:v1.21.1
           - --max-concurrent-challenges=60
           - --dns01-recursive-nameservers-only=true
           - --dns01-recursive-nameservers=8.8.8.8:53,1.1.1.1:53
@@ -991,7 +960,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: cert-manager-webhook
-          image: "quay.io/jetstack/cert-manager-webhook:v1.18.2"
+          image: "quay.io/jetstack/cert-manager-webhook:v1.21.1"
           imagePullPolicy: IfNotPresent
           args:
           - --v=2
@@ -1001,7 +970,6 @@ spec:
           - --dynamic-serving-dns-names=cm-webhook
           - --dynamic-serving-dns-names=cm-webhook.$(POD_NAMESPACE)
           - --dynamic-serving-dns-names=cm-webhook.$(POD_NAMESPACE).svc
-          
           ports:
           - name: https
             protocol: TCP
@@ -1050,19 +1018,6 @@ spec:
               memory: 20Mi
       nodeSelector:
         kubernetes.io/os: "linux"
----
-#
-# START crd
----
-# START crd
----
-# START crd
----
-# START crd
----
-# START crd
----
-# START crd
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
