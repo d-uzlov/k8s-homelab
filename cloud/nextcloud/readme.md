@@ -33,6 +33,8 @@ Generate passwords and set up config.
 
 ```bash
 
+docker run --rm -p 8180:8180 -v /mnt/petunia/shared-media/media/torrent/:/data:ro docker.io/rclone/rclone:1.74.3 serve webdav /data --addr :8180 --user webuser --pass EKQiewv0EoSzmT4Myc6ObuHuGoEAqx5p
+
 mkdir -p ./cloud/nextcloud/main-app/env/
 
  cat << EOF > ./cloud/nextcloud/main-app/env/passwords.env
