@@ -13,7 +13,7 @@ References:
 
 ```bash
 
-curl -L https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/experimental-install.yaml > ./ingress/gateway-api/install/experimental-install.yaml
+curl -L https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.2/experimental-install.yaml > ./ingress/gateway-api/install/experimental-install.yaml
 
 kl apply -k ./ingress/gateway-api/install/ --server-side --force-conflicts
 
