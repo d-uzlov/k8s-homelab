@@ -15,8 +15,8 @@ References:
 
 mkdir -p ./storage/redis-dragonfly/env/
 
-wget https://github.com/dragonflydb/dragonfly-operator/raw/refs/tags/v1.4.0/manifests/crd.yaml -O ./storage/redis-dragonfly/crd.yaml
-wget https://github.com/dragonflydb/dragonfly-operator/raw/refs/tags/v1.4.0/manifests/dragonfly-operator.yaml -O ./storage/redis-dragonfly/env/dragonfly-operator.raw.yaml
+wget https://github.com/dragonflydb/dragonfly-operator/raw/refs/tags/v1.6.1/manifests/crd.yaml -O ./storage/redis-dragonfly/crd.yaml
+wget https://github.com/dragonflydb/dragonfly-operator/raw/refs/tags/v1.6.1/manifests/dragonfly-operator.yaml -O ./storage/redis-dragonfly/env/dragonfly-operator.raw.yaml
 
 yq 'select(.kind != "CustomResourceDefinition" and .kind != "Namespace")' ./storage/redis-dragonfly/env/dragonfly-operator.raw.yaml \
   | sed 's/namespace: dragonfly-operator-system/namespace: operator-dragonfly/' \
