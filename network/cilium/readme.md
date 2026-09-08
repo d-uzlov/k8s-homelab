@@ -16,10 +16,11 @@ helm search repo cilium/cilium --versions --devel | head
 helm show values cilium/cilium --version 1.18.2 > ./network/cilium/default-values.yaml
 
 helm template cilium cilium/cilium \
-  --version 1.19.0 \
+  --version 1.20.1 \
   --values ./network/cilium/values.yaml \
   --namespace cilium \
   --api-versions gateway.networking.k8s.io/v1/GatewayClass \
+  | sed -e '\|helm.sh/chart|d' \
   > ./network/cilium/cilium-native.gen.yaml
 
 # also need to enable masquerading for tunneling but I don't care enough about it to configure and test this config
