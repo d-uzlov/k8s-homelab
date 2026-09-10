@@ -48,12 +48,17 @@ server_description=Put your description here
 # has to be enabled on first start, but can be disabled on consequent restarts
 autoupdate=true
 friendly_fire=true
-# this one doesn't seems to work
-max_base_workers=20
+max_base_workers=30
+max_bases=10
 # One of: None,Item,ItemAndEquipment,All
-death_penalty=All
-drop_items_timeout_hours=1
-pal_spawn_rate=3.0
+death_penalty=None
+drop_items_timeout_hours=3
+pal_spawn_rate=2.0
+pal_capture_rate=1.0
+exp_rate=0.3
+hunger_rate=1.0
+supply_drop_minutes=30
+enemy_drop_item_rate=1.0
 EOF
 
 ```
@@ -63,7 +68,8 @@ EOF
 ```bash
 
 kl create ns palworld
-kl label ns palworld pod-security.kubernetes.io/enforce=baseline
+# conflicts with NET_RAW capability
+# kl label ns palworld pod-security.kubernetes.io/enforce=baseline
 
 # kl apply -k ./games/palworld/pvc/
 
@@ -74,7 +80,13 @@ kl apply -k ./games/palworld/main-app/
 kl -n palworld get pvc
 kl -n palworld get pod -o wide
 
-kl -n palworld logs deployments/palworld
+kl -n palworld logs pods/palworld-0 --tail 50 --follow
+
+kl -n palworld exec pods/palworld-0 -- rcon-cli save
+kl -n palworld exec pods/palworld-0 -- backup
+# this will stop the server, restore the backup and shutdown the container, expecting orchestrator to restart it
+kl -n palworld exec pods/palworld-0 -it -- restore
+
 ```
 
 # Cleanup
@@ -82,6 +94,5 @@ kl -n palworld logs deployments/palworld
 ```bash
 kl delete -k ./games/palworld/main-app/
 kl delete -k ./games/palworld/loadbalancer/
-kl delete -k ./games/palworld/pvc/
 kl delete ns palworld
 ```

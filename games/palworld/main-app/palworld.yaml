@@ -5,6 +5,7 @@ metadata:
   name: palworld
 spec:
   replicas: 1
+  serviceName: palworld
   minReadySeconds: 10
   selector:
     matchLabels:
@@ -28,7 +29,7 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
       containers:
       - name: palworld
-        image: docker.io/thijsvanloef/palworld-server-docker:v1.4.2
+        image: docker.io/thijsvanloef/palworld-server-docker:v2.7.3
         ports:
         - name: palworld
           protocol: UDP
@@ -40,12 +41,22 @@ spec:
           containerPort: 25575
         - name: rest
           containerPort: 8212
+        securityContext:
+          capabilities:
+            add:
+            - NET_RAW
         env:
+        - name: LOG_FORMAT_TYPE
+          value: json
         - name: PORT
           value: '8211'
         - name: PLAYERS
           value: '8'
-        - name: MULTITHREADING
+        - name: ENABLE_PERF_THREADING_ARGS
+          value: 'true'
+        - name: WORKER_THREADS_SERVER
+          value: '4'
+        - name: PALWORLD_ALLOW_NEGATIVE_DELTA_TIME
           value: 'true'
         - name: COMMUNITY
           valueFrom:
@@ -82,6 +93,18 @@ spec:
             configMapKeyRef:
               name: palworld-settings
               key: autoupdate
+        - name: PAL_STOMACH_DECREASE_RATE
+          valueFrom:
+            configMapKeyRef:
+              name: palworld-settings
+              key: hunger_rate
+        - name: SUPPLY_DROP_SPAN
+          valueFrom:
+            configMapKeyRef:
+              name: palworld-settings
+              key: supply_drop_minutes
+        - name: ENABLE_GAMEDATA_API
+          value: 'true'
         - name: RCON_ENABLED
           value: 'true'
         - name: RCON_PORT
@@ -106,11 +129,26 @@ spec:
           value: 'true'
         - name: BACKUP_CRON_EXPRESSION
           # every midnight
-          value: 0 0 * * *
+          # value: 0 0 * * *
+          # every hour
+          value: 0 * * * *
         - name: DELETE_OLD_BACKUPS
           value: 'true'
         - name: OLD_BACKUP_DAYS
           value: '30'
+        - name: AUTO_PAUSE_ENABLED
+          value: 'false'
+        # game customization below
+        - name: ENEMY_DROP_ITEM_RATE
+          valueFrom:
+            configMapKeyRef:
+              name: palworld-settings
+              key: enemy_drop_item_rate
+        - name: PAL_CAPTURE_RATE
+          valueFrom:
+            configMapKeyRef:
+              name: palworld-settings
+              key: pal_capture_rate
         - name: PAL_SPAWN_NUM_RATE
           valueFrom:
             configMapKeyRef:
@@ -131,6 +169,16 @@ spec:
             configMapKeyRef:
               name: palworld-settings
               key: max_base_workers
+        - name: BASE_CAMP_MAX_NUM_IN_GUILD
+          valueFrom:
+            configMapKeyRef:
+              name: palworld-settings
+              key: max_bases
+        - name: EXP_RATE
+          valueFrom:
+            configMapKeyRef:
+              name: palworld-settings
+              key: exp_rate
         - name: DEATH_PENALTY
           valueFrom:
             configMapKeyRef:
@@ -166,10 +214,14 @@ spec:
         #       - |
         #         rcon-cli save
         #         backup
-      # volumes:
-      # - name: data
-      #   persistentVolumeClaim:
-      #     claimName: data
+        # volumes:
+        # - name: data
+        #   persistentVolumeClaim:
+        #     claimName: data
+        readinessProbe:
+          exec:
+            command: ["sh", "-c", "pgrep PalServer-Linux >/dev/null"]
+          periodSeconds: 10
   volumeClaimTemplates:
   - apiVersion: v1
     kind: PersistentVolumeClaim
