@@ -197,3 +197,22 @@ ansible-playbook ./k8s-core/docs/ansible/control-plane-teardown-playbook.yaml --
 
 Change image version in docker-compose files.
 Run the control plane playbooks, preferably one node at a time.
+
+# creating new users from local cert
+
+```bash
+
+mkdir -p ./k8s-core/docs/ansible/env/users/
+
+openssl genrsa -out ./k8s-core/docs/ansible/env/users/admin.key 2048
+openssl req -new -key ./k8s-core/docs/ansible/env/users/admin.key -out ./k8s-core/docs/ansible/env/users/admin.csr -subj "/CN=admin/O=system:masters"
+
+openssl x509 -req -in ./k8s-core/docs/ansible/env/users/admin.csr \
+  -CA k8s-core/docs/ansible/env/cluster-trixie/ca/ca.crt -CAkey k8s-core/docs/ansible/env/cluster-trixie/ca/ca.key \
+  -CAcreateserial -out ./k8s-core/docs/ansible/env/users/admin.crt \
+  -days 365 -sha256 \
+  -extfile ./k8s-core/docs/ansible/csr/admin-ext.cnf -extensions v3_ext
+
+```
+
+
