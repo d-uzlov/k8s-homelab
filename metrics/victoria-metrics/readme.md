@@ -20,7 +20,7 @@ helm show values vm/victoria-logs-single --version 0.13.9 > ./metrics/victoria-m
 helm repo add vector https://helm.vector.dev
 helm repo update vector
 helm search repo vector/vector --versions --devel | head
-helm show values vector/vector --version 0.45.0 > ./metrics/victoria-metrics/vector/default-values.yaml
+helm show values vector/vector --version 0.58.0 > ./metrics/victoria-metrics/vector/default-values.yaml
 ```
 
 ```bash
@@ -37,7 +37,7 @@ helm template \
 helm template \
   vector \
   vector/vector \
-  --version 0.45.0 \
+  --version 0.58.0 \
   --values ./metrics/victoria-metrics/vector/values.yaml \
   --namespace victoria-metrics \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' -e '\|app.kubernetes.io/version|d' -e '\|creationTimestamp: null|d' \
