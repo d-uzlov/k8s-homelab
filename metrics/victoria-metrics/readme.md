@@ -15,7 +15,7 @@ You only need to do this if you change `values.yaml` file.
 helm repo add vm https://victoriametrics.github.io/helm-charts/
 helm repo update vm
 helm search repo vm/victoria-logs-single --versions --devel | head
-helm show values vm/victoria-logs-single --version 0.11.13 > ./metrics/victoria-metrics/victoria-logs/default-values.yaml
+helm show values vm/victoria-logs-single --version 0.13.9 > ./metrics/victoria-metrics/victoria-logs/default-values.yaml
 
 helm repo add vector https://helm.vector.dev
 helm repo update vector
@@ -28,7 +28,7 @@ helm show values vector/vector --version 0.45.0 > ./metrics/victoria-metrics/vec
 helm template \
   logs \
   vm/victoria-logs-single \
-  --version 0.11.13 \
+  --version 0.13.9 \
   --values ./metrics/victoria-metrics/victoria-logs/values.yaml \
   --namespace victoria-metrics \
   | sed -e '\|helm.sh/chart|d' -e '\|# Source:|d' -e '\|app.kubernetes.io/managed-by: Helm|d' -e '\|app.kubernetes.io/instance:|d' -e '\|app.kubernetes.io/version|d' -e '\|creationTimestamp: null|d' \
