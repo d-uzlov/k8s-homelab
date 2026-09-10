@@ -51,6 +51,7 @@ while [ ! -f "$shutdown_file" ]; do
       rm $reload_file
     elif [ -f "$shutdown_file" ]; then
       echo Entrypoint: detected shutdown, exiting
+      rm $shutdown_file
       exit 0
     else
       echo Entrypoint: application failed, exiting

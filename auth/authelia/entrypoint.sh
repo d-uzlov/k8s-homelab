@@ -51,6 +51,7 @@ while [ ! -f "$shutdown_file" ]; do
   }
   if [ -f "$shutdown_file" ]; then
     echo "$(date) Entrypoint: run loop: exiting: detected shutdown"
+    rm $shutdown_file
     exit 0
   elif [ -f "$reload_file" ]; then
     echo "$(date) Entrypoint: run loop: detected reload"
