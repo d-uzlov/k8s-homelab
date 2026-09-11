@@ -8,6 +8,10 @@ metadata:
     app: homepage
 spec:
   replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
   selector:
     matchLabels:
       app: homepage
@@ -16,10 +20,17 @@ spec:
       labels:
         app: homepage
     spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - topologyKey: kubernetes.io/hostname
+            labelSelector:
+              matchLabels:
+                app: homepage
       serviceAccountName: homepage
       containers:
       - name: homepage
-        image: ghcr.io/gethomepage/homepage:v1.5.0
+        image: ghcr.io/gethomepage/homepage:v2.3.0
         ports:
         - name: http
           containerPort: 3000
@@ -27,8 +38,10 @@ spec:
         env:
         # - name: LOG_LEVEL
         #   value: debug
-        - name: HOMEPAGE_ALLOWED_HOSTS 
+        - name: HOMEPAGE_ALLOWED_HOSTS
           value: '*'
+        - name: HOMEPAGE_AUTH_ENABLED
+          value: 'false'
         volumeMounts:
         - mountPath: /app/config/
           name: config
@@ -44,20 +57,20 @@ spec:
           httpGet:
             port: 3000
           failureThreshold: 3
-          initialDelaySeconds: 0
+          # initialDelaySeconds: 0
           periodSeconds: 1
         livenessProbe:
           httpGet:
             port: 3000
           failureThreshold: 5
-          initialDelaySeconds: 0
+          # initialDelaySeconds: 0
           periodSeconds: 10
         resources:
           requests:
             cpu: 5m
             memory: 128Mi
           limits:
-            memory: 128Mi
+            memory: 160Mi
       volumes:
       - name: config
         configMap:
