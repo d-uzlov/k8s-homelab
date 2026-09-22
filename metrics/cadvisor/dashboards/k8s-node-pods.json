@@ -233,6 +233,66 @@
                 "value": 91
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CPU Req / Node"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 141
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CPU req%"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Last seen"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 238
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "cpu unreq"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 109
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "mem raw unreq"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 144
+              }
+            ]
           }
         ]
       },
@@ -254,12 +314,7 @@
           "show": false
         },
         "showHeader": true,
-        "sortBy": [
-          {
-            "desc": true,
-            "displayName": "Mem req"
-          }
-        ]
+        "sortBy": []
       },
       "targets": [
         {
@@ -281,12 +336,36 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by(namespace, pod) (\r\n  max by(namespace, pod, container) (last_over_time(kube_pod_container_resource_requests{location=\"$location\", node=~\"$node\", namespace=~\"$namespace\", resource=\"cpu\"}[$__range]))\r\n)",
+          "expr": "sum by(namespace, pod) (\r\n  max by(namespace, pod, container) (last_over_time(kube_pod_container_resource_requests{location=\"$location\", node=~\"$node\", namespace=~\"$namespace\", resource=\"cpu\"}[$__range])) != 0\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
           "range": false,
           "refId": "cpu_request"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(namespace, pod) (\r\n  max by(namespace, pod, container) (rate(container_cpu_usage_seconds_total{location=\"$location\", node=~\"$node\", namespace=~\"$namespace\"}[$__range]))\r\n)\r\n/ sum by(namespace, pod) (\r\n  max by(namespace, pod, container) (last_over_time(kube_pod_container_resource_requests{location=\"$location\", node=~\"$node\", namespace=~\"$namespace\", resource=\"cpu\"}[$__range])) != 0\r\n)",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "refId": "cpu_usage_per_request"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "expr": "sum by(namespace, pod) (\r\n  max by(namespace, pod, container) (rate(container_cpu_usage_seconds_total{location=\"$location\", node=~\"$node\", namespace=~\"$namespace\"}[$__range]))\r\n)\r\n- sum by(namespace, pod) (\r\n  max by(namespace, pod, container) (last_over_time(kube_pod_container_resource_requests{location=\"$location\", node=~\"$node\", namespace=~\"$namespace\", resource=\"cpu\"}[$__range]))\r\n  or 0 * max by(namespace, pod, container) (last_over_time(container_memory_usage_bytes{location=\"$location\", node=~\"$node\", namespace=~\"$namespace\"}[$__range]))\r\n)\r\n> 0",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "refId": "cpu_usage_not_requested"
         },
         {
           "datasource": {
@@ -307,7 +386,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by(namespace, pod) (\r\n  max by(namespace, pod, container) (last_over_time(kube_pod_container_resource_limits{location=\"$location\", node=~\"$node\", namespace=~\"$namespace\", resource=\"cpu\"}[$__range]))\r\n)",
+          "expr": "sum by(namespace, pod) (\r\n  max by(namespace, pod, container) (last_over_time(kube_pod_container_resource_limits{location=\"$location\", node=~\"$node\", namespace=~\"$namespace\", resource=\"cpu\"}[$__range])) != 0\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -351,13 +430,28 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by(namespace, pod) (\r\n  max by(namespace, pod, container) (last_over_time(kube_pod_container_resource_requests{location=\"$location\", node=\"$node\", namespace=~\"$namespace\", resource=\"memory\"}[$__range]))\r\n)",
+          "expr": "sum by(namespace, pod) (\r\n  max by(namespace, pod, container) (last_over_time(kube_pod_container_resource_requests{location=\"$location\", node=\"$node\", namespace=~\"$namespace\", resource=\"memory\"}[$__range])) != 0\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
           "refId": "memory_request"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "sum by(namespace, pod) (\r\n  max by(namespace, pod, container) (last_over_time(container_memory_usage_bytes{location=\"$location\", node=~\"$node\", namespace=~\"$namespace\"}[$__range]))\r\n)\r\n- sum by(namespace, pod) (\r\n  max by(namespace, pod, container) (last_over_time(kube_pod_container_resource_requests{location=\"$location\", node=\"$node\", namespace=~\"$namespace\", resource=\"memory\"}[$__range]))\r\n  or 0 * max by(namespace, pod, container) (last_over_time(container_memory_usage_bytes{location=\"$location\", node=~\"$node\", namespace=~\"$namespace\"}[$__range]))\r\n)\r\n> 0",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "memory_not_requested"
         },
         {
           "datasource": {
@@ -381,7 +475,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by(namespace, pod) (\r\n  max by(namespace, pod, container) (last_over_time(kube_pod_container_resource_limits{location=\"$location\", node=\"$node\", namespace=~\"$namespace\", resource=\"memory\"}[$__range]))\r\n)",
+          "expr": "sum by(namespace, pod) (\r\n  max by(namespace, pod, container) (last_over_time(kube_pod_container_resource_limits{location=\"$location\", node=\"$node\", namespace=~\"$namespace\", resource=\"memory\"}[$__range])) != 0\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -426,16 +520,19 @@
             "includeByName": {},
             "indexByName": {
               "Time": 0,
-              "Value #cpu_limit": 8,
+              "Value #cpu_limit": 10,
               "Value #cpu_request": 6,
               "Value #cpu_usage": 5,
+              "Value #cpu_usage_not_requested": 7,
+              "Value #cpu_usage_per_request": 8,
               "Value #last_seen": 1,
-              "Value #memory_limit": 13,
-              "Value #memory_raw": 10,
-              "Value #memory_request": 11,
-              "Value #memory_request_per_node": 12,
-              "Value #memory_rss": 9,
-              "Value #request_per_node": 7,
+              "Value #memory_limit": 16,
+              "Value #memory_not_requested": 13,
+              "Value #memory_raw": 12,
+              "Value #memory_request": 14,
+              "Value #memory_request_per_node": 15,
+              "Value #memory_rss": 11,
+              "Value #request_per_node": 9,
               "namespace": 2,
               "node": 4,
               "pod": 3
@@ -449,10 +546,13 @@
               "Value #cpu_limit": "CPU limit",
               "Value #cpu_request": "CPU Req",
               "Value #cpu_usage": "CPU",
+              "Value #cpu_usage_not_requested": "cpu unreq",
+              "Value #cpu_usage_per_request": "CPU req%",
               "Value #last_seen": "Last seen",
               "Value #limit": "CPU Limit",
               "Value #limit_percent": "Max Limit %",
               "Value #memory_limit": "Mem Limit",
+              "Value #memory_not_requested": "mem raw unreq",
               "Value #memory_raw": "Mem Raw",
               "Value #memory_request": "Mem req",
               "Value #memory_request_per_node": "Mem Req / Node",
@@ -2087,5 +2187,5 @@
   "timezone": "browser",
   "title": "Node / Pods",
   "uid": "9ays84j4ksi5cwo0n786",
-  "version": 1
+  "version": 5
 }

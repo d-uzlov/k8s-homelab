@@ -763,7 +763,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(\r\n  avg_over_time(pve_memory_size_bytes{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval])\r\n  * on(id) group_left(node)\r\n  max_over_time(pve_guest_info{location=\"$location\", id=~\"qemu/.*|lxc/.*\", template=\"0\", node=\"$node_name\"}[$__interval])\r\n  * on(id) group_left()\r\n  avg_over_time(pve_up{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval])\r\n)",
+          "expr": "sum(\r\n  sum by(id) (avg_over_time(pve_memory_size_bytes{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval]))\r\n  * on(id) group_left(node)\r\n  topk by(id, node) (1, max_over_time(pve_guest_info{location=\"$location\", id=~\"qemu/.*|lxc/.*\", template=\"0\", node=\"$node_name\"}[$__interval]))\r\n  * on(id) group_left()\r\n  avg_over_time(pve_up{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval])\r\n)",
           "legendFormat": "allocated",
           "range": true,
           "refId": "allocated"
@@ -798,7 +798,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "+ avg(avg_over_time(pve_memory_size_bytes{location=\"$location\", id=\"node/$node_name\"}[$__interval]))\r\n- sum(\r\n  avg_over_time(pve_memory_size_bytes{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval])\r\n  * on(id) group_left(node)\r\n  max_over_time(pve_guest_info{location=\"$location\", id=~\"qemu/.*|lxc/.*\", template=\"0\", node=\"$node_name\"}[$__interval])\r\n  * on(id) group_left()\r\n  avg_over_time(pve_up{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval])\r\n)",
+          "expr": "+ avg(avg_over_time(pve_memory_size_bytes{location=\"$location\", id=\"node/$node_name\"}[$__interval]))\r\n- sum(\r\n  avg_over_time(pve_memory_size_bytes{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval])\r\n  * on(id) group_left(node)\r\n  topk by(id, node) (1, max_over_time(pve_guest_info{location=\"$location\", id=~\"qemu/.*|lxc/.*\", template=\"0\", node=\"$node_name\"}[$__interval]))\r\n  * on(id) group_left()\r\n  avg_over_time(pve_up{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval])\r\n)",
           "hide": false,
           "legendFormat": "available",
           "range": true,
@@ -910,7 +910,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(node) (\r\n  avg_over_time(pve_cpu_usage_limit{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval])\r\n  * on(id) group_left(node)\r\n  max_over_time(pve_guest_info{location=\"$location\", id=~\"qemu/.*|lxc/.*\", template=\"0\", node=\"$node_name\"}[$__interval])\r\n  * on(id) group_left()\r\n  avg_over_time(pve_up{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval])\r\n)",
+          "expr": "sum by(node) (\r\n  avg_over_time(pve_cpu_usage_limit{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval])\r\n  * on(id) group_left(node)\r\n  topk by(id, node) (1, max_over_time(pve_guest_info{location=\"$location\", id=~\"qemu/.*|lxc/.*\", template=\"0\", node=\"$node_name\"}[$__interval]))\r\n  * on(id) group_left()\r\n  avg_over_time(pve_up{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval])\r\n)",
           "legendFormat": "allocated",
           "range": true,
           "refId": "allocated"
@@ -2079,7 +2079,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(id, name) (\r\n  avg_over_time(pve_memory_size_bytes{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval])\r\n  * on(id) group_left(name)\r\n  max_over_time(pve_guest_info{location=\"$location\", id=~\"qemu/.*|lxc/.*\", template=\"0\", node=\"$node_name\"}[$__interval])\r\n  * on(id) group_left()\r\n  (max_over_time(pve_up{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval]) == 1)\r\n)",
+          "expr": "sum by(id, name) (\r\n  avg_over_time(pve_memory_size_bytes{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval])\r\n  * on(id) group_left(name)\r\n  topk by(id, node) (1, max_over_time(pve_guest_info{location=\"$location\", id=~\"qemu/.*|lxc/.*\", template=\"0\", node=\"$node_name\"}[$__interval]))\r\n  * on(id) group_left()\r\n  (max_over_time(pve_up{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval]) == 1)\r\n)",
           "legendFormat": "{{id}}: {{name}}",
           "range": true,
           "refId": "allocated"
@@ -2190,7 +2190,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(id, name) (\r\n  avg_over_time(pve_cpu_usage_limit{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval])\r\n  * on(id) group_left(name)\r\n  max_over_time(pve_guest_info{location=\"$location\", id=~\"qemu/.*|lxc/.*\", template=\"0\", node=\"$node_name\"}[$__interval])\r\n  * on(id) group_left()\r\n  (max_over_time(pve_up{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval]) == 1)\r\n)",
+          "expr": "sum by(id, name) (\r\n  avg_over_time(pve_cpu_usage_limit{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval])\r\n  * on(id) group_left(name)\r\n  topk by(id, node) (1, max_over_time(pve_guest_info{location=\"$location\", id=~\"qemu/.*|lxc/.*\", template=\"0\", node=\"$node_name\"}[$__interval]))\r\n  * on(id) group_left()\r\n  (max_over_time(pve_up{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval]) == 1)\r\n)",
           "legendFormat": "{{id}}: {{name}}",
           "range": true,
           "refId": "allocated"
@@ -2301,7 +2301,7 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(id, name) (\r\n  avg_over_time(pve_memory_usage_bytes{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval])\r\n  * on(id) group_left(name)\r\n  max_over_time(pve_guest_info{location=\"$location\", id=~\"qemu/.*|lxc/.*\", template=\"0\", node=\"$node_name\"}[$__interval])\r\n  * on(id) group_left()\r\n  (max_over_time(pve_up{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval]) == 1)\r\n)",
+          "expr": "sum by(id, name) (\r\n  avg_over_time(pve_memory_usage_bytes{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval])\r\n  * on(id) group_left(name)\r\n  topk by(id, node) (1, max_over_time(pve_guest_info{location=\"$location\", id=~\"qemu/.*|lxc/.*\", template=\"0\", node=\"$node_name\"}[$__interval]))\r\n  * on(id) group_left()\r\n  (max_over_time(pve_up{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval]) == 1)\r\n)",
           "legendFormat": "{{id}}: {{name}}",
           "range": true,
           "refId": "allocated"
@@ -2412,13 +2412,13 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(id, name) (\r\n+ avg_over_time(pve_cpu_usage_ratio{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval])\r\n* avg_over_time(pve_cpu_usage_limit{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval])\r\n  * on(id) group_left(name)\r\n  max_over_time(pve_guest_info{location=\"$location\", id=~\"qemu/.*|lxc/.*\", template=\"0\", node=\"$node_name\"}[$__interval])\r\n  * on(id) group_left()\r\n  (max_over_time(pve_up{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval]) == 1)\r\n)",
+          "expr": "sum by(id, name) (\r\n+ avg_over_time(pve_cpu_usage_ratio{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval])\r\n* avg_over_time(pve_cpu_usage_limit{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval])\r\n  * on(id) group_left(name)\r\n  topk by(id, node) (1, max_over_time(pve_guest_info{location=\"$location\", id=~\"qemu/.*|lxc/.*\", template=\"0\", node=\"$node_name\"}[$__interval]))\r\n  * on(id) group_left()\r\n  (max_over_time(pve_up{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval]) == 1)\r\n)",
           "legendFormat": "{{id}}: {{name}}",
           "range": true,
           "refId": "allocated"
         }
       ],
-      "title": "cpu by guest: allocated",
+      "title": "cpu by guest: used",
       "transformations": [
         {
           "id": "renameByRegex",
@@ -2523,13 +2523,13 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(id, name) (\r\n  avg_over_time(pve_memory_usage_bytes{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval])\r\n/ avg_over_time(pve_memory_size_bytes{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval])\r\n  * on(id) group_left(name)\r\n  max_over_time(pve_guest_info{location=\"$location\", id=~\"qemu/.*|lxc/.*\", template=\"0\", node=\"$node_name\"}[$__interval])\r\n  * on(id) group_left()\r\n  (max_over_time(pve_up{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval]) == 1)\r\n)",
+          "expr": "sum by(id, name) (\r\n  avg_over_time(pve_memory_usage_bytes{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval])\r\n/ avg_over_time(pve_memory_size_bytes{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval])\r\n  * on(id) group_left(name)\r\n  topk by(id, node) (1, max_over_time(pve_guest_info{location=\"$location\", id=~\"qemu/.*|lxc/.*\", template=\"0\", node=\"$node_name\"}[$__interval]))\r\n  * on(id) group_left()\r\n  (max_over_time(pve_up{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval]) == 1)\r\n)",
           "legendFormat": "{{id}}: {{name}}",
           "range": true,
           "refId": "allocated"
         }
       ],
-      "title": "memory by guest: utilization",
+      "title": "memory by guest: utilization %",
       "transformations": [
         {
           "id": "renameByRegex",
@@ -2634,13 +2634,13 @@
             "uid": "${prometheus_datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by(id, name) (\r\n  avg_over_time(pve_cpu_usage_ratio{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval])\r\n  * on(id) group_left(name)\r\n  max_over_time(pve_guest_info{location=\"$location\", id=~\"qemu/.*|lxc/.*\", template=\"0\", node=\"$node_name\"}[$__interval])\r\n  * on(id) group_left()\r\n  (max_over_time(pve_up{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval]) == 1)\r\n)",
+          "expr": "sum by(id, name) (\r\n  avg_over_time(pve_cpu_usage_ratio{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval])\r\n  * on(id) group_left(name)\r\n  topk by(id, node) (1, max_over_time(pve_guest_info{location=\"$location\", id=~\"qemu/.*|lxc/.*\", template=\"0\", node=\"$node_name\"}[$__interval]))\r\n  * on(id) group_left()\r\n  (max_over_time(pve_up{location=\"$location\", id=~\"qemu/.*|lxc/.*\"}[$__interval]) == 1)\r\n)",
           "legendFormat": "{{id}}: {{name}}",
           "range": true,
           "refId": "allocated"
         }
       ],
-      "title": "cpu by guest: utilization",
+      "title": "cpu by guest: utilization %",
       "transformations": [
         {
           "id": "renameByRegex",
@@ -2725,5 +2725,5 @@
   "timezone": "browser",
   "title": "proxmox / node details",
   "uid": "cdnsz3qi9ybk0fhqq",
-  "version": 8
+  "version": 1
 }
