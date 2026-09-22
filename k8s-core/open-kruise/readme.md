@@ -39,6 +39,11 @@ yq '
   )
 ' ./k8s-core/open-kruise/env/open-kruise.gen.yaml > ./k8s-core/open-kruise/crds.gen.yaml
 
+sed -i \
+  -e 's/name: webhook-service/name: kruise-webhook-service/g' \
+  -e 's/namespace: system/namespace: kruise-system/g' \
+  ./k8s-core/open-kruise/crds.gen.yaml
+
 yq '
   select(
     .kind != "CustomResourceDefinition"
@@ -102,6 +107,7 @@ kl label ns kruise-system pod-security.kubernetes.io/enforce=privileged --overwr
 kl label ns kruise-system control-plane=openkruise --overwrite
 
 kl label ns kube-system kubernetes.io/namespace-type=system-critical --overwrite
+kl label ns cert-manager kubernetes.io/namespace-type=system-critical --overwrite
 
 kl apply -k ./k8s-core/open-kruise/
 kl -n kruise-system get pod -o wide
