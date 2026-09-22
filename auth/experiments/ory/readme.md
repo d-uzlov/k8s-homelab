@@ -72,7 +72,7 @@ kind: Cluster
 metadata:
   name: postgres
 spec:
-  instances: 2
+  instances: 1
   storage:
     size: $storage_size
     storageClass: $storage_class

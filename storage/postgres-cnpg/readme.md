@@ -137,3 +137,11 @@ Unfortunately, no one cas created such a plugin yet.
 
 Also, apparently Yandex Odyssey is a better implementation of the same idea, but CNPG doesn't support it either:
 - https://github.com/cloudnative-pg/cloudnative-pg/issues/718
+
+# delete pod
+
+```bash
+
+kl -n pgo-cnpg-test annotate pod pg-main-2 alpha.cnpg.io/unrecoverable=true
+
+```
