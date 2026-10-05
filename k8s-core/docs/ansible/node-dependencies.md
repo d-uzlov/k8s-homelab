@@ -9,7 +9,7 @@ mkdir -p ./k8s-core/docs/ansible/env/
 # Check new versions here:
 # https://github.com/containerd/containerd/releases
 
-containerd_version=2.3.4
+containerd_version=2.4.1
 containerd_archive=containerd-$containerd_version-linux-amd64.tar.gz
 containerd_url=https://github.com/containerd/containerd/releases/download/v$containerd_version/$containerd_archive
 
@@ -23,7 +23,7 @@ wget https://github.com/containerd/containerd/raw/refs/heads/main/containerd.ser
 # Check new versions here:
 # https://github.com/opencontainers/runc/releases
 
-runc_version=1.5.1
+runc_version=1.5.2
 runc_file=runc-$runc_version.amd64
 
 wget https://github.com/opencontainers/runc/releases/download/v$runc_version/runc.amd64 -O ./k8s-core/docs/ansible/env/$runc_file
@@ -33,7 +33,7 @@ chmod +x ./k8s-core/docs/ansible/env/$runc_file
 # Check new versions here:
 # https://github.com/containers/crun/releases
 
-crun_version=1.29.1
+crun_version=1.30.1
 crun_file=crun-$crun_version-linux-amd64
 
 wget https://github.com/containers/crun/releases/download/$crun_version/crun-$crun_version-linux-amd64 -O ./k8s-core/docs/ansible/env/$crun_file
