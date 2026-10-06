@@ -20,16 +20,16 @@ sudo apt-get install -y devscripts
 mkdir ~/building-linux/
 
 # apt-get source linux
-git clone -b debian/7.1/trixie-backports --single-branch https://salsa.debian.org/kernel-team/linux.git ~/building-linux/linux-trixie-7.1
+git clone -b debian/7.2/trixie-backports --single-branch https://salsa.debian.org/kernel-team/linux.git ~/building-linux/linux-trixie-7.2
 
 cd ~/building-linux/
-rm *.deb *.udeb 7.1.8-burstunlock0.zip *.buildinfo *.changes
+rm *.deb *.udeb ${patch_version}-burstunlock0.zip *.buildinfo *.changes
 
-cd ~/building-linux/linux-trixie-7.1/
+cd ~/building-linux/linux-trixie-7.2/
 
 # check out current patch version
 dch --edit
-patch_version=7.1.13
+patch_version=7.2.6
 
 # Version format need to be exactly this:
 # - '${patch_version}-burstunlock0-0' is the kernel version
@@ -51,7 +51,7 @@ tar -C ~/building-linux/orig/ -xaf ~/building-linux/linux_${patch_version}.orig.
 
 debian/rules debian/control
 
-# patch for 6.19 still works for 7.1
+# patch for 6.19 still works for 7.2
 curl -fsSL https://raw.githubusercontent.com/d-uzlov/k8s-homelab/refs/heads/master/docs/linux/kernel-d13-6.19-burst-unlock.patch > ./debian/patches/features/all/cgroup-burst.patch
 echo features/all/cgroup-burst.patch >> debian/patches/series
 
@@ -62,14 +62,12 @@ fakeroot debian/rules clean
 debian/rules DIR_ORIG=~/building-linux/orig/linux-${patch_version}/ TAR_ORIG=~/building-linux/linux_${patch_version}.orig.tar.xz orig
 
 export MAKEFLAGS=-j$(nproc)
-# debug info is required for some stuff to work, for example BPF CO-RE, even without installing debug packages
 export DEB_BUILD_PROFILES='nodoc pkg.linux.nokerneldbg pkg.linux.nokerneldbginfo'
-# export DEB_BUILD_PROFILES='nodoc'
 export DEB_BUILD_OPTIONS="nodoc terse"
 
 dpkg-buildpackage --build=any,all --no-pre-clean --no-sign > ./build-$(date +%Y%m%d.%H%M).log
 # dpkg-buildpackage --build=any --no-pre-clean --no-sign > ./build-$(date +%Y%m%d.%H%M).log
-ll ~/building-linux/linux-trixie-7.1/build-*
+ll ~/building-linux/linux-trixie-7.2/build-*
 
 # when changing version format, you can run a smaller target to check resulting packages
 # make -f debian/rules.gen binary-indep
@@ -89,7 +87,7 @@ zip --must-match -0 ${patch_version}-burstunlock0.zip \
   linux-base-${patch_version}-burstunlock0-amd64_${patch_version}-burstunlock0-0~bpo13+1_amd64.deb \
   linux-binary-${patch_version}-burstunlock0-amd64_${patch_version}-burstunlock0-0~bpo13+1_amd64.deb \
   linux-bpf-dev_${patch_version}-burstunlock0-0~bpo13+1_amd64.deb \
-  linux-config-7.1_${patch_version}-burstunlock0-0~bpo13+1_amd64.deb \
+  linux-config-7.2_${patch_version}-burstunlock0-0~bpo13+1_amd64.deb \
   linux-cpupower_${patch_version}-burstunlock0-0~bpo13+1_amd64.deb \
   linux-cpupower-dbgsym_${patch_version}-burstunlock0-0~bpo13+1_amd64.deb \
   linux-headers-${patch_version}-burstunlock0-amd64_${patch_version}-burstunlock0-0~bpo13+1_amd64.deb \
@@ -102,7 +100,7 @@ zip --must-match -0 ${patch_version}-burstunlock0.zip \
   linux-modules-${patch_version}-burstunlock0-amd64_${patch_version}-burstunlock0-0~bpo13+1_amd64.deb \
   linux-perf_${patch_version}-burstunlock0-0~bpo13+1_amd64.deb \
   linux-perf-dbgsym_${patch_version}-burstunlock0-0~bpo13+1_amd64.deb \
-  linux-source-7.1_${patch_version}-burstunlock0-0~bpo13+1_all.deb \
+  linux-source-7.2_${patch_version}-burstunlock0-0~bpo13+1_all.deb \
   linux-source_${patch_version}-burstunlock0-0~bpo13+1_all.deb \
   usbip_2.0+${patch_version}-burstunlock0-0~bpo13+1_amd64.deb \
   usbip-dbgsym_2.0+${patch_version}-burstunlock0-0~bpo13+1_amd64.deb
@@ -115,15 +113,20 @@ When building kernel on a remove machine copy resulting zip files to local machi
 
 mkdir -p ./docs/linux/env/
 
+patch_version=7.2.6
+
 rm -f ./docs/linux/env/${patch_version}-burstunlock0.zip
 
 remote=d13-build-7-1.guest.lan
 scp $remote:~/building-linux/${patch_version}-burstunlock0.zip ./docs/linux/env/
 
-test_remote=d13-test-kernel.guest.lan
+test_remote=d13-test-kernel-7-1.guest.lan
 scp ./docs/linux/env/${patch_version}-burstunlock0.zip $test_remote:~/linux-kernel/${patch_version}-burstunlock0.zip
 
+ssh $test_remote
+
 # on the test remote
+patch_version=7.2.6
 mkdir -p ~/linux-kernel/linux-${patch_version}-burstunlock0/
 unzip -d ~/linux-kernel/linux-${patch_version}-burstunlock0/ ~/linux-kernel/${patch_version}-burstunlock0.zip
 
@@ -134,7 +137,8 @@ unzip -d ~/linux-kernel/linux-${patch_version}-burstunlock0/ ~/linux-kernel/${pa
 # libbabeltrace1 libdebuginfod1t64 libdw1t64 libopencsd1 libtraceevent1 is for linux-perf
 # binutils is for linux-source
 # usb.ids is for usbip
-sudo apt install -y libnl-genl-3-200 gcc-14-for-host pahole libconfig11 libbabeltrace1 libdebuginfod1t64 libdw1t64 libopencsd1 libtraceevent1 binutils usb.ids
+# linux-base is for linux-image-7.2.6
+sudo apt install -y libnl-genl-3-200 gcc-14-for-host pahole libconfig11 libbabeltrace1 libdebuginfod1t64 libdw1t64 libopencsd1 libtraceevent1 binutils usb.ids linux-base=4.17~bpo13+1
 
 sudo dpkg -i ~/linux-kernel/linux-${patch_version}-burstunlock0/*.deb
 
