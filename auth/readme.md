@@ -10,10 +10,10 @@ References:
 | LDAP / AD              | ✅      | ✅         | ✅      | 🟠 1    | ✅       | 🟠 2       |
 | Design                 | ✅      | ❌         | ✅      | ✅      | ✅       | ✅         |
 | Passkey / Webauthn     | ✅      | ✅         | ✅      | ✅      | 🟠 3     | 🟠 2       |
-| AD Groups              | ✅      | ✅         | ❌      | ❌      | ✅ 4     | ✅         |
+| AD Groups              | ✅      | ✅         | ✅ 9    | ❌      | ✅ 4     | ✅         |
 | RFC8628 (Device Grant) | 🟠      | ✅         | ✅      | ❌      | ✅       | ✅         |
-| High availability      | 🟠6     | ✅Postgres | ?       | 🟠7     | ?         | ✅Postgres |
-| Custom claims          | ?       | ✅         | ❌8     | ?        | ?         | ❌        |
+| High availability      | 🟠6     | ✅Postgres | ✅ 10   | 🟠7     | ?         | ✅Postgres |
+| Custom claims          | ?       | ✅         | ✅ 8    | ?        | ?         | ❌        |
 
 1. LDAP server has to support Ldap Sync, and in any case the password from the directory won't be used.
 2. Passkey currently cannot be used with external identity providers like Active Directory
@@ -25,7 +25,13 @@ References:
 6. Authelia is stateless. I uses postgres for metadata. But you also need LDAP backend with HA support,
   and it doesn't seem like there there are many available. KaniDM can be used with replication setup, but it has its own issues.
 7. KaniDM does't have a cluster mode. It does have replication with eventual consistency.
-8. https://github.com/casdoor/casdoor/issues/3617
+8. Requested in https://github.com/casdoor/casdoor/issues/3617, now available as Token attributes with the `JWT-Custom` token format:
+  https://casdoor.ai/docs/application/terminology#token-attributes
+9. With "Enable groups" in the LDAP settings, LDAP sync imports groups and OUs as Casdoor groups and assigns users by `memberOf`:
+  https://casdoor.ai/docs/ldap/config
+10. Stateless when sessions are stored in Redis (`redisEndpoint`), so several replicas can run against a shared database (MySQL or Postgres).
+  The Helm chart has `replicaCount` and autoscaling: https://casdoor.ai/docs/basic/try-with-helm
+  Scheduled jobs such as LDAP auto-sync run on every replica, there is no leader election.
 
 Additional notes:
 - Casdoor has very bad support on its github
